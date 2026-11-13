@@ -10,7 +10,8 @@ voter_id = '{{voter.voter_id}}';
 {% endif %}
 </script>
 
-  <h2 class="title">{{election.name}} &mdash; {% translate "Contact Voters" %} <span style="font-size:0.7em;">[<a href="{% url "election@view" election.uuid %}">{% translate "back to election" %}</a>]</span></h2>
+<a class="back-link" href="{% url "election@view" election.uuid %}">{% translate "back to election" %}</a>
+<h1 class="title">{{election.name}} &mdash; {% translate "Contact Voters" %}</h1>
 
 {% if voter %}  
   <p>
@@ -18,23 +19,24 @@ voter_id = '{{voter.voter_id}}';
   </p>
 {% endif %}
 
-<p>
-<b>{% translate "Templates" %}</b>:
-
+<nav class="template-choice" aria-label="{% translate "Templates" %}">
+<span class="label">{% translate "Templates" %}:</span>
+<ul>
 {% for template_option in templates %}
 {% if template_option.0 == template %}
-<b>{{template_option.1}}</b>
+<li><span aria-current="page">{{template_option.1}}</span></li>
 {% else %}
-<a href="?template={{template_option.0}}&voter_id={{voter.voter_login_id}}">{{template_option.1}}</a>
+<li><a href="?template={{template_option.0}}&voter_id={{voter.voter_login_id}}">{{template_option.1}}</a></li>
 {% endif %}
-&nbsp;&nbsp;&nbsp;
 {% endfor %}
+</ul>
+</nav>
 
 <p>
 {% translate "<b>Preview</b>: each voter receives this email, with the fields in angle brackets filled in for them." %}
 </p>
 
-<pre style="margin:10px; border: 1px solid #888; padding:20px">
+<pre class="email-preview">
 {% translate "Subject:" %} {{default_subject|force_escape}}
 
 {{default_body|force_escape}}
@@ -44,15 +46,14 @@ voter_id = '{{voter.voter_id}}';
 {% translate "You may tweak the subject and add a custom message using the form below. Your message appears where <tt>&lt;BODY&gt;</tt> is shown above. Don't paste the preview into it." %}
 </p>
 
-  <form class="prettyform" action="" method="POST" id="email_form">
+  <form class="prettyform form-narrow" action="" method="POST" id="email_form" novalidate>
     <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
     <input type="hidden" name="template" value="{{template}}" />
     <input type="hidden" name="voter_id" value="{{voter.voter_login_id}}" />
-    <table class="pretty">
-     {{email_form.as_table}}
-     </table>
-  <div>
-  <label for="">&nbsp;</label><input type="submit" value="{% translate "Send" %}" id="send_button" class="button" />
+    {% include "_form_fields.html" with form=email_form %}
+  <div class="actions">
+    <button type="submit" id="send_button" class="button">{% translate "Send" %}</button>
+    <a href="{% url "election@view" election.uuid %}">{% translate "cancel" %}</a>
   </div>
   </form>
   

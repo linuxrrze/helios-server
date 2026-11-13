@@ -1,0 +1,35 @@
+{% load i18n %}{% comment %}
+Renders a Django form as a list of fields: label above the control, the help text below
+the label (Django links it to the control with aria-describedby), the error above the
+control, "(optional)" on fields that aren't required, and an error summary at the top
+that links to each field. Usage: {% include "_form_fields.html" with form=my_form %}
+{% endcomment %}
+{% if form.errors %}
+<div class="callout callout-danger error-summary" role="alert">
+  <span class="callout-title">{% translate "Please correct the following:" %}</span>
+  <ul>
+  {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+  {% for field in form.visible_fields %}{% for error in field.errors %}<li><a href="#{{ field.id_for_label }}">{{ field.label }}</a>: {{ error }}</li>{% endfor %}{% endfor %}
+  </ul>
+</div>
+{% endif %}
+{% for field in form.hidden_fields %}{{ field }}{% endfor %}
+{% for field in form.visible_fields %}
+{% if field.widget_type == "checkbox" %}
+<div class="field field-check{% if field.errors %} has-error{% endif %}">
+  {{ field }}
+  <div>
+    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+    {% if field.help_text %}<span class="field-hint" id="{{ field.auto_id }}_helptext">{{ field.help_text }}</span>{% endif %}
+    {{ field.errors }}
+  </div>
+</div>
+{% else %}
+<div class="field{% if field.errors %} has-error{% endif %}">
+  <label for="{{ field.id_for_label }}">{{ field.label }}{% if not field.field.required %} <span class="optional-marker">({% translate "optional" %})</span>{% endif %}</label>
+  {% if field.help_text %}<span class="field-hint" id="{{ field.auto_id }}_helptext">{{ field.help_text }}</span>{% endif %}
+  {{ field.errors }}
+  {{ field }}
+</div>
+{% endif %}
+{% endfor %}

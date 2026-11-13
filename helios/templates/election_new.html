@@ -1,24 +1,22 @@
 {% extends TEMPLATE_BASE %}
 {% load i18n %}
 
+{% block title %}{% translate "Create a New Election" %}{% endblock %}
 {% block content %}
+<a class="back-link" href="/">{% translate "Home" %}</a>
+<h1 class="title">{% translate "Create a New Election" %}</h1>
+<p class="page-lead">{% translate "Start with the basic settings. After that you add the questions, the voters and, if you like, your own trustees. You can change all of this until you freeze the ballot." %}</p>
 
-  <h2 class="title">{% translate "Create a New Election" %}</h2>
-  
 {% if error %}
-<p style="color: red;">
-    {{error}}
-</p>
+<div class="callout callout-danger" role="alert"><p class="error">{{error}}</p></div>
 {% endif %}
-  
-  <form class="prettyform" action="" method="POST" id="create_election_form">
-    <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
-    <table class="pretty">
-     {{election_form.as_table}}
-     </table>
-  <div>
-  <label for="">&nbsp;</label><input class="button" type="submit" value="{% translate "Next &gt;&gt;" %}" id="next_button" />
-  </div>
-  </form>
 
+<form class="prettyform form-narrow" action="" method="POST" id="create_election_form" novalidate>
+  <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
+  {% include "_form_fields.html" with form=election_form %}
+  <div class="actions">
+    <button class="button" type="submit" id="next_button">{% translate "Create election and continue" %}</button>
+    <a href="/">{% translate "cancel" %}</a>
+  </div>
+</form>
 {% endblock %}

@@ -284,3 +284,13 @@ table.pretty .helptext { margin-top: 4px; }
 .result-table tr.winner td { font-weight: 700; }
 .vote-panel .button.large { margin-bottom: .25em; }
 .content-body textarea#badge-html { min-height: 5em; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .9rem; }
+
+/* --- e-mail to voters --------------------------------------------------- */
+.template-choice { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 1em; }
+.template-choice .label { font-weight: 600; }
+.template-choice ul { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.template-choice a, .template-choice [aria-current] { display: inline-block; padding: 4px 12px; border: 1px solid var(--border-color); border-radius: 999px; }
+.template-choice [aria-current] { background: var(--primary-color); border-color: var(--primary-color); color: #fff; font-weight: 600; }
+.email-preview { max-width: 48rem; margin: 0 0 1em; padding: 16px 20px; border: 1px solid var(--border-color); border-radius: var(--radius);
+  background: var(--surface-color); white-space: pre-wrap; overflow-wrap: anywhere; font-size: .9rem; }
+.content-body .back-link + h1, .content-body .back-link + h2 { margin-top: .25em; }

@@ -11,32 +11,32 @@ from .models import Election
 
 
 class ElectionForm(forms.Form):
-  short_name = forms.SlugField(max_length=40, label=_('Short name'), help_text=_('no spaces, will be part of the URL for your election, e.g. my-club-2010'))
-  name = forms.CharField(max_length=100, widget=forms.TextInput(attrs={'size':60}), label=_('Name'), help_text=_('the pretty name for your election, e.g. My Club 2010 Election'))
-  description = forms.CharField(max_length=4000, widget=forms.Textarea(attrs={'cols': 70, 'wrap': 'soft'}), required=False, label=_('Description'))
-  election_type = forms.ChoiceField(label=_("type"), choices = Election.ELECTION_TYPES)
-  use_voter_aliases = forms.BooleanField(required=False, initial=False, label=_('Use voter aliases'), help_text=_('If selected, voter identities will be replaced with aliases, e.g. "V12", in the ballot tracking center'))
+  short_name = forms.SlugField(max_length=40, label=_('Short name'), help_text=_('Letters, digits and hyphens, no spaces. It becomes part of the election\'s web address, e.g. board-2026.'))
+  name = forms.CharField(max_length=100, widget=forms.TextInput(attrs={'size':60}), label=_('Name'), help_text=_('The name voters see, e.g. Board Election 2026.'))
+  description = forms.CharField(max_length=4000, widget=forms.Textarea(attrs={'cols': 70, 'wrap': 'soft'}), required=False, label=_('Description'), help_text=_('Shown on the election page. Explain what is being decided and by whom.'))
+  election_type = forms.ChoiceField(label=_("Type"), choices = Election.ELECTION_TYPES)
+  use_voter_aliases = forms.BooleanField(required=False, initial=False, label=_('Use voter aliases'), help_text=_('The public ballot tracking center then shows aliases such as "V12" instead of the voters\' names.'))
   #use_advanced_audit_features = forms.BooleanField(required=False, initial=True, help_text='disable this only if you want a simple election with reduced security but a simpler user interface')
-  randomize_answer_order = forms.BooleanField(required=False, initial=False, label=_('Randomize answer order'), help_text=_('enable this if you want the answers to questions to appear in random order for each voter'))
-  private_p = forms.BooleanField(required=False, initial=False, label=_("Private?"), help_text=_('A private election is only visible to registered voters.'))
+  randomize_answer_order = forms.BooleanField(required=False, initial=False, label=_('Randomize answer order'), help_text=_('Each voter sees the answers in a different random order, so that no answer profits from being listed first.'))
+  private_p = forms.BooleanField(required=False, initial=False, label=_("Private election"), help_text=_('A private election is only visible to registered voters.'))
   help_email = forms.CharField(required=False, initial="", label=_("Help Email Address"), help_text=_('An email address voters should contact if they need help.'))
   
   if settings.ALLOW_ELECTION_INFO_URL:
     election_info_url = forms.CharField(required=False, initial="", label=_("Election Info Download URL"), help_text=_("the URL of a PDF document that contains extra election information, e.g. candidate bios and statements"))
   
   # times
-  voting_starts_at = DateTimeLocalField(label=_('Voting starts at'), help_text = _('UTC date and time when voting begins'),
+  voting_starts_at = DateTimeLocalField(label=_('Voting starts at'), help_text = _('Date and time in UTC. Leave empty to open voting as soon as you freeze the ballot.'),
                                    required=False)
-  voting_ends_at = DateTimeLocalField(label=_('Voting ends at'), help_text = _('UTC date and time when voting ends'),
+  voting_ends_at = DateTimeLocalField(label=_('Voting ends at'), help_text = _('Date and time in UTC. Leave empty to end voting yourself, by computing the tally.'),
                                    required=False)
 
 class ElectionTimeExtensionForm(forms.Form):
-  voting_extended_until = DateTimeLocalField(label=_('Voting extended until'), help_text = _('UTC date and time voting extended to'),
+  voting_extended_until = DateTimeLocalField(label=_('Voting extended until'), help_text = _('Date and time in UTC.'),
                                    required=False)
   
 class EmailVotersForm(forms.Form):
   subject = forms.CharField(max_length=80, label=_('Subject'))
-  body = forms.CharField(max_length=4000, widget=forms.Textarea, label=_('Body'))
+  body = forms.CharField(max_length=4000, widget=forms.Textarea, label=_('Body'), help_text=_('Your own message. It appears where <BODY> is shown in the preview.'))
   send_to = forms.ChoiceField(label=_("Send To"), initial="all", choices= [('all', _('all voters')), ('voted', _('voters who have cast a ballot')), ('not-voted', _('voters who have not yet cast a ballot'))])
 
   # placeholders shown in the email preview, which voters would receive literally
