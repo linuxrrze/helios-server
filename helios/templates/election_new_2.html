@@ -2,6 +2,9 @@
 {% load i18n %}
 
 {% block content %}
+{# secret keys: never kept when the language is switched (language-switch.js asks first) #}
+<div data-no-preserve>
+
 <script language="javascript">
 
 var SECRET_KEY;
@@ -89,4 +92,5 @@ $(document).ready(function() {
       {% translate "(You need to copy and paste this key and keep it safe,<br />otherwise you won't be able to tally your election.)" %}
   </form>
 {% endif %}
+</div>
 {% endblock %}

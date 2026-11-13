@@ -105,67 +105,295 @@ class EmailLanguageTests(TestCase):
     self.assertTrue(mail.outbox[-1].subject.startswith('Ihre Zugangsdaten'), mail.outbox[-1].subject)
 
 
-class LanguageSwitchConfirmTests(TestCase):
+class LanguageSwitchKeepsInputTests(TestCase):
   """
-  Switching the language reloads the page; the switcher asks first when the
-  page has unsaved input. The script is run in Node with a minimal DOM stub.
+  Switching the language reloads the page; server_ui/media/language-switch.js keeps
+  the input in sessionStorage until the page has been loaded again and asks only
+  if something cannot be kept (passwords, files, secret keys, data-no-preserve).
+  The script is run in Node with a minimal DOM stub.
   """
 
-  NODE_HARNESS = r'''
+  NODE_HARNESS = r"""
 const script = require('fs').readFileSync(0, 'utf8');
-const listeners = {};
-const doc = {addEventListener: (t, f) => (listeners[t] = listeners[t] || []).push(f)};
-const switcherForm = {className: 'language-switcher', parentNode: null,
-  listeners: [], addEventListener(t, f) { this.listeners.push(f); }};
-const switcherButton = {className: '', parentNode: switcherForm};
-const pageForm = {className: '', parentNode: null};
-const pageField = {className: 'field', parentNode: pageForm};
-doc.querySelectorAll = () => [switcherForm];
-let confirmAnswer = false, asked = 0;
-global.document = doc;
-global.window = {confirm: (msg) => { asked++; global.lastMessage = msg; return confirmAnswer; }};
-eval(script);
-function fire(type, target) { (listeners[type] || []).forEach(f => f({target})); }
-function switchLanguage() {
-  let prevented = false;
-  const evt = {target: switcherForm, preventDefault: () => { prevented = true; }};
-  switcherForm.listeners.forEach(f => f(evt));
-  return prevented;
-}
-const r = {};
-r.clean = switchLanguage(); r.askedClean = asked;
-fire('input', switcherButton); r.switcherInputIgnored = !switchLanguage() && asked === 0;
-fire('input', pageField); confirmAnswer = false; r.cancelled = switchLanguage();
-confirmAnswer = true; r.confirmed = !switchLanguage();
-fire('submit', pageForm); asked = 0; r.afterSave = !switchLanguage() && asked === 0;
-fire('change', pageField); confirmAnswer = false; r.change = switchLanguage();
-r.message = global.lastMessage;
-console.log(JSON.stringify(r));
-'''
 
-  def _run_switcher_script(self, language):
-    import json, re, shutil, subprocess
+function el(tag, props, parent) {
+  const e = Object.assign({tagName: tag.toUpperCase(), nodeType: 1, attrs: {}, parentNode: parent || null,
+    type: '', name: '', id: '', value: '', defaultValue: '', checked: false, defaultChecked: false,
+    disabled: false, readOnly: false, form: null, events: [],
+    classList: {contains: (c) => (e.className || '').split(' ').indexOf(c) !== -1},
+    hasAttribute: (a) => a in e.attrs, getAttribute: (a) => (a in e.attrs ? e.attrs[a] : null),
+    dispatchEvent: (evt) => { e.events.push(evt.type); }}, props || {});
+  return e;
+}
+
+// a page: switcher form, a page form with several fields, a secret area
+function page(store, opts) {
+  opts = opts || {};
+  const listeners = {};
+  const switcher = el('form', {className: 'language-switcher', listeners: [],
+    addEventListener(t, f) { this.listeners.push(f); }});
+  switcher.attrs = {'data-page-method': opts.method || 'GET',
+    'data-confirm-lost': 'LOST', 'data-confirm-partial': 'PARTIAL'};
+  const form = el('form', {id: 'f'});
+  const secretArea = el('div', {attrs: {'data-no-preserve': ''}}, form);
+  const f = {
+    csrf: el('input', {type: 'hidden', name: 'csrf_token', value: 'tok', defaultValue: 'tok', form: switcher}, switcher),
+    lang: el('button', {type: 'submit', name: 'language', value: 'de', form: switcher}, switcher),
+    name: el('input', {type: 'text', name: 'name', form}, form),
+    desc: el('textarea', {name: 'description', form}, form),
+    flag: el('input', {type: 'checkbox', name: 'private_p', value: 'on', form}, form),
+    pw: el('input', {type: 'password', name: 'pw', form}, form),
+    file: el('input', {type: 'file', name: 'upload', form}, form),
+    step: el('input', {type: 'hidden', name: 'step', value: 'basics', defaultValue: 'basics', form}, form),
+    key: el('textarea', {name: 'key', form}, secretArea),
+    shown: el('textarea', {name: 'shown', readOnly: true, form}, form),
+    prefilled: el('input', {type: 'text', name: 'prefilled', value: 'server', defaultValue: 'server', form}, form),
+  };
+  const fields = Object.values(f).filter(x => x.tagName !== 'BUTTON');
+  global.document = {
+    readyState: 'complete', forms: [switcher, form],
+    addEventListener: (t, fn) => (listeners[t] = listeners[t] || []).push(fn),
+    querySelectorAll: (sel) => sel === 'form.language-switcher' ? [switcher] : fields,
+  };
+  global.Event = function (type) { this.type = type; };
+  global.window = {
+    location: {pathname: opts.path || '/helios/elections/new', search: ''},
+    pageXOffset: 0, pageYOffset: opts.scroll || 0, scrolled: null,
+    scrollTo(x, y) { this.scrolled = [x, y]; },
+    confirm: (msg) => { p.asked.push(msg); return !!opts.answer; },
+  };
+  Object.defineProperty(global.window, 'sessionStorage', {get() {
+    if (!store) throw new Error('storage disabled');
+    return store;
+  }});
+  const p = {f, asked: [], listeners};
+  p.api = (function () { eval(script); return HeliosFormState; })();
+  p.fire = (type, target) => (listeners[type] || []).forEach(fn => fn({type, target}));
+  p.type = (field, value) => { field.value = value; p.fire('input', field); };
+  p.switchLanguage = () => {
+    let prevented = false;
+    const evt = {currentTarget: switcher, target: switcher, preventDefault: () => { prevented = true; }};
+    switcher.listeners.forEach(fn => fn(evt));
+    return !prevented;
+  };
+  return p;
+}
+
+function storage() {
+  const data = {};
+  return {data, getItem: (k) => (k in data ? data[k] : null), setItem: (k, v) => { data[k] = String(v); },
+          removeItem: (k) => { delete data[k]; }};
+}
+
+const tick = () => new Promise(r => setTimeout(r, 5));
+const r = {};
+(async () => {
+  // typed into normal fields: no question, kept, restored after the reload
+  let store = storage();
+  let p = page(store, {scroll: 300});
+  p.type(p.f.name, 'Board election');
+  p.type(p.f.desc, 'Line 1\nLine 2');
+  p.f.flag.checked = true; p.fire('change', p.f.flag);
+  r.switched = p.switchLanguage();
+  r.asked = p.asked.length;
+  const saved = JSON.parse(store.data['helios-language-switch']);
+  r.savedFields = saved.fields;
+  r.savedText = store.data['helios-language-switch'];
+  p = page(store, {});
+  await tick();
+  r.restored = {name: p.f.name.value, desc: p.f.desc.value, flag: p.f.flag.checked, prefilled: p.f.prefilled.value};
+  r.events = p.f.name.events;
+  r.scrolled = window.scrolled;
+  r.leftAfterRestore = Object.keys(store.data).length;
+
+  // a password typed: ask; "Cancel" stays on the page and stores nothing
+  store = storage();
+  p = page(store, {answer: false});
+  p.type(p.f.name, 'x'); p.type(p.f.pw, 'secret-password');
+  r.pwSwitched = p.switchLanguage();
+  r.pwAsked = p.asked;
+  r.pwStored = Object.keys(store.data).length;
+  // "OK": switch, keep the name, never the password
+  p = page(store, {answer: true});
+  p.type(p.f.name, 'x'); p.type(p.f.pw, 'secret-password');
+  r.pwSwitchedOk = p.switchLanguage();
+  r.pwSavedText = store.data['helios-language-switch'] || '';
+
+  // a secret key in a data-no-preserve area: ask, not stored
+  store = storage();
+  p = page(store, {answer: true});
+  p.type(p.f.key, '{"x": "123"}');
+  r.keySwitched = p.switchLanguage();
+  r.keyAsked = p.asked;
+  r.keyStored = Object.keys(store.data).length;
+
+  // a page that has state only in JavaScript (generated key): ask
+  store = storage();
+  p = page(store, {answer: false});
+  p.api.markUnsaved();
+  r.markedSwitched = p.switchLanguage();
+  r.markedAsked = p.asked;
+
+  // nothing typed: no question, nothing stored
+  store = storage();
+  p = page(store, {});
+  r.cleanSwitched = p.switchLanguage();
+  r.cleanAsked = p.asked.length;
+  r.cleanStored = Object.keys(store.data).length;
+
+  // page answering a POST (form shown again with errors): all fields are kept
+  store = storage();
+  p = page(store, {method: 'POST'});
+  p.switchLanguage();
+  r.postFields = JSON.parse(store.data['helios-language-switch']).fields;
+
+  // saved state of another page or too old: not used, but deleted
+  store = storage();
+  p = page(store, {});
+  p.type(p.f.name, 'elsewhere');
+  p.switchLanguage();
+  p = page(store, {path: '/other'});
+  await tick();
+  r.otherPage = p.f.name.value;
+  r.otherPageLeft = Object.keys(store.data).length;
+  store.data['helios-language-switch'] = JSON.stringify({url: '/helios/elections/new', time: Date.now() - 3600000, fields: {'#f|name|1': 'old'}, hooks: {}});
+  p = page(store, {});
+  await tick();
+  r.expired = p.f.name.value;
+  r.expiredLeft = Object.keys(store.data).length;
+
+  // hook for fields built by JavaScript, registered after the restore has run
+  store = storage();
+  p = page(store, {});
+  p.api.register('editor', {save: () => ({rows: ['a', 'b']}), restore: () => {}});
+  p.switchLanguage();
+  p = page(store, {});
+  await tick();
+  let got = null;
+  p.api.register('editor', {save: () => null, restore: (d) => { got = d; }});
+  r.hookData = got;
+
+  // without sessionStorage: as before, ask when something was typed
+  p = page(null, {answer: false});
+  p.type(p.f.name, 'x');
+  r.noStorageSwitched = p.switchLanguage();
+  r.noStorageAsked = p.asked;
+  p = page(null, {});
+  r.noStorageClean = p.switchLanguage() && p.asked.length === 0;
+
+  console.log(JSON.stringify(r));
+})();
+"""
+
+  def _run(self):
+    import json, shutil, subprocess
+    from django.conf import settings
     node = shutil.which('node')
     if not node:
       self.skipTest('node not installed')
-    page = self.client.get('/', HTTP_ACCEPT_LANGUAGE=language).content.decode()
-    match = re.search(r'<form class="language-switcher".*?</form>\s*<script>(.*?)</script>', page, re.S)
-    self.assertIsNotNone(match, 'switcher script missing')
-    result = subprocess.run([node, '-e', self.NODE_HARNESS], input=match.group(1), capture_output=True, text=True)
+    with open(settings.ROOT_PATH + '/server_ui/media/language-switch.js') as f:
+      script = f.read()
+    result = subprocess.run([node, '-e', self.NODE_HARNESS], input=script, capture_output=True, text=True)
     self.assertEqual(result.returncode, 0, result.stderr)
     return json.loads(result.stdout)
 
-  def test_asks_only_with_unsaved_input(self):
-    r = self._run_switcher_script('en')
-    self.assertFalse(r['clean'])               # nothing typed: switch without asking
-    self.assertEqual(r['askedClean'], 0)
-    self.assertTrue(r['switcherInputIgnored'])  # the switcher itself does not count
-    self.assertTrue(r['cancelled'])             # typed + "Cancel": stay on the page
-    self.assertTrue(r['confirmed'])             # typed + "OK": switch
-    self.assertTrue(r['afterSave'])             # after submitting the page form: no question
-    self.assertTrue(r['change'])                # select/checkbox changes count too
-    self.assertEqual(r['message'], 'Unsaved input on this page will be lost. Switch the language anyway?')
+  def test_input_is_kept_without_asking(self):
+    r = self._run()
+    self.assertTrue(r['switched'])
+    self.assertEqual(r['asked'], 0)
+    self.assertEqual(r['savedFields'], {'#f|name|1': 'Board election', '#f|description|1': 'Line 1\nLine 2',
+                                        '#f|private_p=on|1': True})
+    self.assertEqual(r['restored'], {'name': 'Board election', 'desc': 'Line 1\nLine 2', 'flag': True, 'prefilled': 'server'})
+    self.assertEqual(r['events'], ['input', 'change'])  # dependent display is updated
+    self.assertEqual(r['scrolled'], [0, 300])
+    self.assertEqual(r['leftAfterRestore'], 0)          # storage is empty again
 
-  def test_question_is_translated(self):
-    r = self._run_switcher_script('de')
-    self.assertEqual(r['message'], 'Ungespeicherte Eingaben auf dieser Seite gehen verloren. Sprache trotzdem wechseln?')
+  def test_secrets_are_never_stored(self):
+    r = self._run()
+    for text in (r['savedText'], r['pwSavedText']):
+      self.assertNotIn('csrf', text)
+      self.assertNotIn('tok', text)
+      self.assertNotIn('secret-password', text)
+      self.assertNotIn('"#f|step', text)
+    self.assertNotIn('"#f|pw', r['pwSavedText'])
+    self.assertIn('"#f|name|1":"x"', r['pwSavedText'])
+    self.assertFalse(r['pwSwitched'])                   # asked, "Cancel": stay
+    self.assertEqual(r['pwAsked'], ['PARTIAL'])
+    self.assertEqual(r['pwStored'], 0)
+    self.assertTrue(r['pwSwitchedOk'])
+    self.assertTrue(r['keySwitched'])                   # data-no-preserve area
+    self.assertEqual(r['keyAsked'], ['PARTIAL'])
+    self.assertEqual(r['keyStored'], 0)
+    self.assertFalse(r['markedSwitched'])               # HeliosFormState.markUnsaved()
+    self.assertEqual(r['markedAsked'], ['PARTIAL'])
+    # a page answering a POST keeps all fields, but still no secrets or read-only output
+    self.assertEqual(sorted(r['postFields']), ['#f|description|1', '#f|name|1', '#f|prefilled|1', '#f|private_p=on|1'])
+
+  def test_nothing_typed_nothing_stored(self):
+    r = self._run()
+    self.assertTrue(r['cleanSwitched'])
+    self.assertEqual(r['cleanAsked'], 0)
+    self.assertEqual(r['cleanStored'], 0)
+
+  def test_only_for_the_same_page_and_shortly(self):
+    r = self._run()
+    self.assertEqual(r['otherPage'], '')
+    self.assertEqual(r['otherPageLeft'], 0)
+    self.assertEqual(r['expired'], '')
+    self.assertEqual(r['expiredLeft'], 0)
+
+  def test_hooks_for_javascript_forms(self):
+    r = self._run()
+    self.assertEqual(r['hookData'], {'rows': ['a', 'b']})
+
+  def test_without_storage_asks_as_before(self):
+    r = self._run()
+    self.assertFalse(r['noStorageSwitched'])
+    self.assertEqual(r['noStorageAsked'], ['LOST'])
+    self.assertTrue(r['noStorageClean'])
+
+  def _switcher(self, response):
+    import re
+    match = re.search(r'<form class="language-switcher".*?</form>', response.content.decode(), re.S)
+    self.assertIsNotNone(match, 'switcher missing')
+    return match.group(0)
+
+  def test_switcher_markup(self):
+    switcher = self._switcher(self.client.get('/about?x=1', HTTP_ACCEPT_LANGUAGE='en'))
+    self.assertIn('data-page-method="GET"', switcher)
+    self.assertIn('<input type="hidden" name="next" value="/about?x=1" />', switcher)
+    self.assertIn('data-confirm-lost="Unsaved input on this page will be lost. Switch the language anyway?"', switcher)
+    self.assertIn('data-confirm-partial="Some of your input on this page, such as passwords, files or secret keys, '
+                  'is not kept when the language is switched. Switch the language anyway?"', switcher)
+    self.assertIn('<script src="/static/language-switch.js"></script>', self.client.get('/').content.decode())
+    self.assertEqual(self.client.get('/static/language-switch.js').status_code, 200)
+
+  def test_switcher_returns_to_the_page(self):
+    response = self.client.post('/i18n/setlang/', {'language': 'de', 'next': '/about?x=1'})
+    self.assertEqual(response.status_code, 302)
+    self.assertEqual(response['Location'], '/about?x=1')
+
+  def test_questions_are_translated(self):
+    switcher = self._switcher(self.client.get('/', HTTP_ACCEPT_LANGUAGE='de'))
+    self.assertIn('data-confirm-lost="Ungespeicherte Eingaben auf dieser Seite gehen verloren. Sprache trotzdem wechseln?"', switcher)
+    self.assertIn('data-confirm-partial="Einige Ihrer Eingaben auf dieser Seite', switcher)
+
+  def test_pages_with_secrets_opt_out(self):
+    from django.conf import settings
+    root = settings.ROOT_PATH + '/helios/templates/'
+    for name in ('election_keygenerator', 'trustee_decrypt_and_prove', 'trustee_check_sk', 'election_new_2',
+                 '_castconfirm_password'):
+      with open(root + name + '.html') as f:
+        self.assertIn('data-no-preserve', f.read(), name)
+    with open(root + 'election_keygenerator.html') as f:
+      self.assertIn('HeliosFormState.markUnsaved()', f.read())
+
+  def test_booth_has_no_switcher(self):
+    # the voting booth is a static page without the switcher: switching the language
+    # there cannot lose a ballot, and no ballot choice is ever written to storage
+    from django.conf import settings
+    for path in ('/heliosbooth/vote.html', '/heliosbooth/single-ballot-verify.html', '/heliosverifier/verify.html'):
+      with open(settings.ROOT_PATH + path) as f:
+        text = f.read()
+      self.assertNotIn('language-switch', text, path)
+      self.assertNotIn('sessionStorage', text, path)

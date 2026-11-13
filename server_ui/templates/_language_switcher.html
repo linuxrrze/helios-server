@@ -1,34 +1,18 @@
-{% load i18n %}{% get_current_language as CURRENT_LANGUAGE %}{% get_available_languages as AVAILABLE_LANGUAGES %}
-<form class="language-switcher" action="{% url "set_language" %}" method="post">
+{% load i18n navigation_tags %}{% get_current_language as CURRENT_LANGUAGE %}{% get_available_languages as AVAILABLE_LANGUAGES %}{% current_request as page_request %}
+{% comment %}
+Switching the language reloads the page. language-switch.js keeps what the visitor has
+entered (in sessionStorage, only until the page has been loaded again) and asks first if
+something cannot be kept: passwords, files, secret keys and areas marked data-no-preserve.
+{% endcomment %}
+<form class="language-switcher" action="{% url "set_language" %}" method="post"
+      data-page-method="{{ page_request.method|default:"GET" }}"
+      data-confirm-lost="{% translate "Unsaved input on this page will be lost. Switch the language anyway?" %}"
+      data-confirm-partial="{% translate "Some of your input on this page, such as passwords, files or secret keys, is not kept when the language is switched. Switch the language anyway?" %}">
   {# changing the language is harmless; the token only keeps every POST form uniform (test_csrf_smoke) #}
   <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+  {% if page_request %}<input type="hidden" name="next" value="{{ page_request.get_full_path }}" />{% endif %}
   {% for code, name in AVAILABLE_LANGUAGES %}{% if code != CURRENT_LANGUAGE %}
   {% get_language_info for code as language %}<button type="submit" name="language" value="{{ code }}" lang="{{ code }}">{{ language.name_local }}</button>
   {% endif %}{% endfor %}
 </form>
-<script>
-// Switching the language reloads the page. Ask first if the visitor has typed or
-// changed something on this page that is not saved yet.
-(function () {
-  var dirty = false;
-  function inSwitcher(el) {
-    for (; el; el = el.parentNode) {
-      if (el.className && typeof el.className === 'string' && el.className.indexOf('language-switcher') !== -1) return true;
-    }
-    return false;
-  }
-  function markDirty(evt) { if (!inSwitcher(evt.target)) dirty = true; }
-  document.addEventListener('input', markDirty, true);
-  document.addEventListener('change', markDirty, true);
-  // submitting a page form saves the input; the next page starts clean
-  document.addEventListener('submit', function (evt) { if (!inSwitcher(evt.target)) dirty = false; }, true);
-  var forms = document.querySelectorAll('form.language-switcher');
-  for (var i = 0; i < forms.length; i++) {
-    forms[i].addEventListener('submit', function (evt) {
-      if (dirty && !window.confirm("{% filter escapejs %}{% translate "Unsaved input on this page will be lost. Switch the language anyway?" %}{% endfilter %}")) {
-        evt.preventDefault();
-      }
-    });
-  }
-})();
-</script>
+<script src="/static/language-switch.js"></script>

@@ -1,6 +1,9 @@
 {% extends "helios/templates/cryptobase.html" %}
 {% load i18n %}
 {% block content %}
+{# secret keys: never kept when the language is switched (language-switch.js asks first) #}
+<div data-no-preserve>
+
 <script language="javascript">
 
 var PUBLIC_KEY, PROOF;
@@ -26,6 +29,11 @@ function reuse_key(secret_key_text) {
     $('#reuse').hide();
     setup_public_key_and_proof();
     show_pk();
+}
+
+// a generated or reused key exists only in this page: ask before switching the language
+function key_in_page() {
+    if (window.HeliosFormState) HeliosFormState.markUnsaved();
 }
 
 // start collecting some local randomness
@@ -63,6 +71,7 @@ function setup_public_key_and_proof() {
     // generate PoK of secret key
     PROOF = SECRET_KEY.proveKnowledge(ElGamal.fiatshamir_dlog_challenge_generator);
     PUBLIC_KEY = SECRET_KEY.pk;
+    key_in_page();
 
     var pk_val = jQuery.toJSON({'pok': PROOF, 'public_key': PUBLIC_KEY});
     $('#pk_textarea').val(pk_val);
@@ -185,4 +194,5 @@ function show_pk() {
 
 <div id="applet_div"></div>
 <br /><br />
+</div>
 {% endblock %}

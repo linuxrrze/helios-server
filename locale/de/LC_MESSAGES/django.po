@@ -1179,107 +1179,107 @@ msgstr "Stimmzettel einfrieren"
 msgid "do NOT freeze yet"
 msgstr "noch NICHT einfrieren"
 
-#: helios/templates/election_keygenerator.html:103 helios/templatetags/navigation_tags.py:56
+#: helios/templates/election_keygenerator.html:112 helios/templatetags/navigation_tags.py:56
 msgid "Key Setup"
 msgstr "Schlüssel einrichten"
 
-#: helios/templates/election_keygenerator.html:103 helios/templates/trustee_check_sk.html:55 helios/templates/trustee_decrypt_and_prove.html:135
+#: helios/templates/election_keygenerator.html:112 helios/templates/trustee_check_sk.html:58 helios/templates/trustee_decrypt_and_prove.html:140
 #: helios/templatetags/navigation_tags.py:105
 #, python-format
 msgid "Trustee %(name)s"
 msgstr "Treuhänder*in %(name)s"
 
-#: helios/templates/election_keygenerator.html:106
+#: helios/templates/election_keygenerator.html:115
 msgid "As a trustee, it's time to set up your key for this election."
 msgstr "Als Treuhänder*in richten Sie jetzt Ihren Schlüssel für diese Wahl ein."
 
-#: helios/templates/election_keygenerator.html:109
+#: helios/templates/election_keygenerator.html:118
 msgid "Generate the key pair in your browser."
 msgstr "Erzeugen Sie das Schlüsselpaar in Ihrem Browser."
 
-#: helios/templates/election_keygenerator.html:110
+#: helios/templates/election_keygenerator.html:119
 msgid "Save the secret key in a safe place. Without it, the result can never be decrypted."
 msgstr "Speichern Sie den geheimen Schlüssel an einem sicheren Ort. Ohne ihn kann das Ergebnis nie entschlüsselt werden."
 
-#: helios/templates/election_keygenerator.html:111
+#: helios/templates/election_keygenerator.html:120
 msgid "Upload the public key."
 msgstr "Laden Sie den öffentlichen Schlüssel hoch."
 
-#: helios/templates/election_keygenerator.html:115
+#: helios/templates/election_keygenerator.html:124
 msgid "Please wait for the generator to load..."
 msgstr "Bitte warten Sie, bis der Schlüsselgenerator geladen ist …"
 
-#: helios/templates/election_keygenerator.html:120 helios/templates/election_new_2.html:67
+#: helios/templates/election_keygenerator.html:129 helios/templates/election_new_2.html:70
 msgid "Generate Election Keys"
 msgstr "Wahlschlüssel erzeugen"
 
-#: helios/templates/election_keygenerator.html:123
+#: helios/templates/election_keygenerator.html:132
 #, python-format
 msgid "If you've already generated a keypair, you can <a href=\"%(url)s\">reuse it</a>."
 msgstr "Wenn Sie bereits ein Schlüsselpaar erzeugt haben, können Sie es <a href=\"%(url)s\">wiederverwenden</a>."
 
-#: helios/templates/election_keygenerator.html:127
+#: helios/templates/election_keygenerator.html:136
 msgid "Reusing a Key"
 msgstr "Schlüssel wiederverwenden"
 
-#: helios/templates/election_keygenerator.html:130 helios/templates/election_keygenerator.html:133
+#: helios/templates/election_keygenerator.html:139 helios/templates/election_keygenerator.html:142
 msgid "Enter your complete secret key below:"
 msgstr "Geben Sie unten Ihren vollständigen geheimen Schlüssel ein:"
 
-#: helios/templates/election_keygenerator.html:137
+#: helios/templates/election_keygenerator.html:146
 msgid "reuse"
 msgstr "wiederverwenden"
 
-#: helios/templates/election_keygenerator.html:142 helios/templates/election_keygenerator.html:159
+#: helios/templates/election_keygenerator.html:151 helios/templates/election_keygenerator.html:168
 msgid "Your Secret Key"
 msgstr "Ihr geheimer Schlüssel"
 
-#: helios/templates/election_keygenerator.html:144
+#: helios/templates/election_keygenerator.html:153
 #, python-format
 msgid "Your key has been generated, but you may choose to<br /><a href=\"%(url)s\">clear it from memory and start from scratch</a> if you prefer."
 msgstr "Ihr Schlüssel wurde erzeugt. Sie können ihn aber auch<br /><a href=\"%(url)s\">aus dem Speicher löschen und neu beginnen</a>."
 
-#: helios/templates/election_keygenerator.html:148
+#: helios/templates/election_keygenerator.html:157
 msgid "Show my secret key"
 msgstr "Meinen geheimen Schlüssel anzeigen"
 
-#: helios/templates/election_keygenerator.html:154
+#: helios/templates/election_keygenerator.html:163
 msgid "Below is your trustee secret key. Please copy it and save it securely."
 msgstr "Unten steht Ihr geheimer Treuhänder*innen-Schlüssel. Bitte kopieren Sie ihn und bewahren Sie ihn sicher auf."
 
-#: helios/templates/election_keygenerator.html:155
+#: helios/templates/election_keygenerator.html:164
 msgid "You can also download it to a file. And please don't lose it! Otherwise it will not be possible to decrypt the election tally."
 msgstr "Sie können ihn auch als Datei herunterladen. Verlieren Sie ihn bitte nicht! Sonst kann die Auszählung der Wahl nicht entschlüsselt werden."
 
-#: helios/templates/election_keygenerator.html:165
+#: helios/templates/election_keygenerator.html:174
 msgid "download private key to a file"
 msgstr "privaten Schlüssel als Datei herunterladen"
 
-#: helios/templates/election_keygenerator.html:166
+#: helios/templates/election_keygenerator.html:175
 msgid "ok, I've saved the key, let's move on"
 msgstr "OK, ich habe den Schlüssel gespeichert, weiter"
 
-#: helios/templates/election_keygenerator.html:172
+#: helios/templates/election_keygenerator.html:181
 msgid "Your Public Key"
 msgstr "Ihr öffentlicher Schlüssel"
 
-#: helios/templates/election_keygenerator.html:174
+#: helios/templates/election_keygenerator.html:183
 msgid "It's time to upload the public key to the server."
 msgstr "Jetzt laden Sie den öffentlichen Schlüssel auf den Server hoch."
 
-#: helios/templates/election_keygenerator.html:177
+#: helios/templates/election_keygenerator.html:186
 msgid "The fingerprint of your public key is:"
 msgstr "Der Fingerabdruck Ihres öffentlichen Schlüssels lautet:"
 
-#: helios/templates/election_keygenerator.html:178
+#: helios/templates/election_keygenerator.html:187
 msgid "You may want to save this to confirm that your public key was properly stored by the server."
 msgstr "Speichern Sie ihn ggf., um später zu bestätigen, dass der Server Ihren öffentlichen Schlüssel korrekt gespeichert hat."
 
-#: helios/templates/election_keygenerator.html:179
+#: helios/templates/election_keygenerator.html:188
 msgid "(Your public key is not currently being displayed because you do not need to save it, the fingerprint is sufficient.)"
 msgstr "(Ihr öffentlicher Schlüssel wird nicht angezeigt, da Sie ihn nicht speichern müssen; der Fingerabdruck genügt.)"
 
-#: helios/templates/election_keygenerator.html:183
+#: helios/templates/election_keygenerator.html:192
 msgid "Upload your public key"
 msgstr "Öffentlichen Schlüssel hochladen"
 
@@ -1300,44 +1300,44 @@ msgstr "Wahl anlegen und weiter"
 msgid "Prefer to be guided step by step? Use the <a href=\"%(guided_url)s\">guided setup</a>."
 msgstr "Lieber Schritt für Schritt? Nutzen Sie den <a href=\"%(guided_url)s\">Assistenten</a>."
 
-#: helios/templates/election_new_2.html:11
+#: helios/templates/election_new_2.html:14
 msgid "Have you made sure to copy the private key to a safe place?"
 msgstr "Haben Sie den privaten Schlüssel an einen sicheren Ort kopiert?"
 
-#: helios/templates/election_new_2.html:11
+#: helios/templates/election_new_2.html:14
 msgid "Once you click OK, Helios will not be able to recover the secret key without your help!"
 msgstr "Sobald Sie auf OK klicken, kann Helios den geheimen Schlüssel ohne Ihre Hilfe nicht wiederherstellen!"
 
-#: helios/templates/election_new_2.html:50
+#: helios/templates/election_new_2.html:53
 #, python-format
 msgid "Create a New Election: %(name)s"
 msgstr "Neue Wahl erstellen: %(name)s"
 
-#: helios/templates/election_new_2.html:52
+#: helios/templates/election_new_2.html:55
 msgid "An election managed by Helios"
 msgstr "Eine von Helios verwaltete Wahl"
 
-#: helios/templates/election_new_2.html:55
+#: helios/templates/election_new_2.html:58
 msgid "An election managed by you, the single administrator"
 msgstr "Eine von Ihnen als alleiniger Wahlleitung verwaltete Wahl"
 
-#: helios/templates/election_new_2.html:57
+#: helios/templates/election_new_2.html:60
 msgid "An election managed by multiple trustees"
 msgstr "Eine von mehreren Treuhänder*innen verwaltete Wahl"
 
-#: helios/templates/election_new_2.html:70
+#: helios/templates/election_new_2.html:73
 msgid "Trustees (up to 5)"
 msgstr "Treuhänder*innen (bis zu 5)"
 
-#: helios/templates/election_new_2.html:79
+#: helios/templates/election_new_2.html:82
 msgid "create"
 msgstr "erstellen"
 
-#: helios/templates/election_new_2.html:85
+#: helios/templates/election_new_2.html:88
 msgid "Your Election's Secret Key:"
 msgstr "Geheimer Schlüssel Ihrer Wahl:"
 
-#: helios/templates/election_new_2.html:89
+#: helios/templates/election_new_2.html:92
 msgid "(You need to copy and paste this key and keep it safe,<br />otherwise you won't be able to tally your election.)"
 msgstr "(Sie müssen diesen Schlüssel kopieren und sicher aufbewahren,<br />sonst können Sie Ihre Wahl nicht auszählen.)"
 
@@ -2168,7 +2168,7 @@ msgstr "Möchten Sie diese*n Treuhänder*in wirklich entfernen?"
 msgid "key ready"
 msgstr "Schlüssel bereit"
 
-#: helios/templates/list_trustees.html:67 helios/templates/trustee_decrypt_and_prove.html:139
+#: helios/templates/list_trustees.html:67 helios/templates/trustee_decrypt_and_prove.html:144
 msgid "Public Key Fingerprint:"
 msgstr "Fingerabdruck des öffentlichen Schlüssels:"
 
@@ -2645,149 +2645,149 @@ msgstr "Keine Benutzer*innen zu „%(q)s“ gefunden"
 msgid "Enter a search term to find users"
 msgstr "Geben Sie einen Suchbegriff ein, um Benutzer*innen zu finden"
 
-#: helios/templates/trustee_check_sk.html:47
+#: helios/templates/trustee_check_sk.html:50
 msgid "try again"
 msgstr "erneut versuchen"
 
-#: helios/templates/trustee_check_sk.html:49
+#: helios/templates/trustee_check_sk.html:52
 msgid "your secret key matches!"
 msgstr "Ihr geheimer Schlüssel passt!"
 
-#: helios/templates/trustee_check_sk.html:51
+#: helios/templates/trustee_check_sk.html:54
 msgid "This is not the right secret key: it does not match your public key fingerprint."
 msgstr "Das ist nicht der richtige geheime Schlüssel: Er passt nicht zum Fingerabdruck Ihres öffentlichen Schlüssels."
 
-#: helios/templates/trustee_check_sk.html:55 helios/templatetags/navigation_tags.py:57
+#: helios/templates/trustee_check_sk.html:58 helios/templatetags/navigation_tags.py:57
 msgid "Check Secret Key"
 msgstr "Geheimen Schlüssel überprüfen"
 
-#: helios/templates/trustee_check_sk.html:58
+#: helios/templates/trustee_check_sk.html:61
 #, python-format
 msgid "Your public key fingerprint is: <b>%(hash)s</b>"
 msgstr "Der Fingerabdruck Ihres öffentlichen Schlüssels lautet: <b>%(hash)s</b>"
 
-#: helios/templates/trustee_check_sk.html:62
+#: helios/templates/trustee_check_sk.html:65
 msgid "loading crypto functions..."
 msgstr "Kryptografiefunktionen werden geladen …"
 
-#: helios/templates/trustee_check_sk.html:67
+#: helios/templates/trustee_check_sk.html:70
 msgid "To verify that you have the right secret key, paste it here:"
 msgstr "Um zu überprüfen, ob Sie den richtigen geheimen Schlüssel haben, fügen Sie ihn hier ein:"
 
-#: helios/templates/trustee_check_sk.html:71
+#: helios/templates/trustee_check_sk.html:74
 msgid "check"
 msgstr "überprüfen"
 
-#: helios/templates/trustee_check_sk.html:76
+#: helios/templates/trustee_check_sk.html:79
 msgid "checking your secret key..."
 msgstr "Ihr geheimer Schlüssel wird überprüft …"
 
-#: helios/templates/trustee_decrypt_and_prove.html:108
+#: helios/templates/trustee_decrypt_and_prove.html:113
 msgid "verification failed, you probably used the wrong key."
 msgstr "Überprüfung fehlgeschlagen, Sie haben vermutlich den falschen Schlüssel verwendet."
 
-#: helios/templates/trustee_decrypt_and_prove.html:135
+#: helios/templates/trustee_decrypt_and_prove.html:140
 #, python-format
 msgid "Decrypt Result for %(name)s"
 msgstr "Ergebnis für %(name)s entschlüsseln"
 
-#: helios/templates/trustee_decrypt_and_prove.html:138
+#: helios/templates/trustee_decrypt_and_prove.html:143
 msgid "Trustee:"
 msgstr "Treuhänder*in:"
 
-#: helios/templates/trustee_decrypt_and_prove.html:140
+#: helios/templates/trustee_decrypt_and_prove.html:145
 msgid "Encrypted Tally Fingerprint:"
 msgstr "Fingerabdruck der verschlüsselten Auszählung:"
 
-#: helios/templates/trustee_decrypt_and_prove.html:144
+#: helios/templates/trustee_decrypt_and_prove.html:149
 msgid "The encrypted tally for your election has been computed."
 msgstr "Die verschlüsselte Auszählung Ihrer Wahl wurde berechnet."
 
-#: helios/templates/trustee_decrypt_and_prove.html:145
+#: helios/templates/trustee_decrypt_and_prove.html:150
 msgid "Now it's time to compute and submit your partial decryption."
 msgstr "Jetzt müssen Sie Ihre Teilentschlüsselung berechnen und übermitteln."
 
-#: helios/templates/trustee_decrypt_and_prove.html:149
+#: helios/templates/trustee_decrypt_and_prove.html:154
 msgid "This process is performed in two steps."
 msgstr "Dieser Vorgang erfolgt in zwei Schritten."
 
-#: helios/templates/trustee_decrypt_and_prove.html:150
+#: helios/templates/trustee_decrypt_and_prove.html:155
 msgid "<u>First</u>, your secret key is used to decrypt the tally <em>inside</em> your browser, without connecting to the network."
 msgstr "<u>Erstens</u> wird Ihr geheimer Schlüssel verwendet, um die Auszählung <em>in</em> Ihrem Browser zu entschlüsseln, ohne Verbindung zum Netzwerk."
 
-#: helios/templates/trustee_decrypt_and_prove.html:151
+#: helios/templates/trustee_decrypt_and_prove.html:156
 msgid "You can choose to take your browser \"offline\" for this step, if you'd like."
 msgstr "Wenn Sie möchten, können Sie Ihren Browser für diesen Schritt „offline“ schalten."
 
-#: helios/templates/trustee_decrypt_and_prove.html:152
+#: helios/templates/trustee_decrypt_and_prove.html:157
 msgid "<u>Second</u>, once your decryption factors have been computed, your browser will need to be \"online\" to submit them to the server."
 msgstr "<u>Zweitens</u> muss Ihr Browser, sobald Ihre Entschlüsselungsfaktoren berechnet sind, „online“ sein, um sie an den Server zu übermitteln."
 
-#: helios/templates/trustee_decrypt_and_prove.html:153
+#: helios/templates/trustee_decrypt_and_prove.html:158
 msgid "If you'd like, you can compute your decryption factors, copy them to your clipboard, restart your browser, and<br /> skip to the second step so that your browser is never online when you enter your secret key."
 msgstr "Wenn Sie möchten, können Sie Ihre Entschlüsselungsfaktoren berechnen, in die Zwischenablage kopieren, Ihren Browser neu starten und<br /> direkt zum zweiten Schritt springen, sodass Ihr Browser nie online ist, während Sie Ihren geheimen Schlüssel eingeben."
 
-#: helios/templates/trustee_decrypt_and_prove.html:160
+#: helios/templates/trustee_decrypt_and_prove.html:165
 msgid "FIRST STEP: enter your secret key"
 msgstr "ERSTER SCHRITT: geheimen Schlüssel eingeben"
 
-#: helios/templates/trustee_decrypt_and_prove.html:164
+#: helios/templates/trustee_decrypt_and_prove.html:169
 msgid "Generate partial decryption"
 msgstr "Teilentschlüsselung erzeugen"
 
-#: helios/templates/trustee_decrypt_and_prove.html:168
+#: helios/templates/trustee_decrypt_and_prove.html:173
 msgid "skip to the second step"
 msgstr "direkt zum zweiten Schritt"
 
-#: helios/templates/trustee_decrypt_and_prove.html:169
+#: helios/templates/trustee_decrypt_and_prove.html:174
 msgid "(you need to have already computed your decryption factors.)"
 msgstr "(Sie müssen Ihre Entschlüsselungsfaktoren bereits berechnet haben.)"
 
-#: helios/templates/trustee_decrypt_and_prove.html:174
+#: helios/templates/trustee_decrypt_and_prove.html:179
 msgid "Generating partial decryption factors and proofs..."
 msgstr "Teilentschlüsselungsfaktoren und Beweise werden erzeugt …"
 
-#: helios/templates/trustee_decrypt_and_prove.html:179
+#: helios/templates/trustee_decrypt_and_prove.html:184
 msgid "Submitting and checking your decryption factors and proofs..."
 msgstr "Ihre Entschlüsselungsfaktoren und Beweise werden übermittelt und überprüft …"
 
-#: helios/templates/trustee_decrypt_and_prove.html:184
+#: helios/templates/trustee_decrypt_and_prove.html:189
 msgid "SECOND STEP: upload your partial decryption"
 msgstr "ZWEITER SCHRITT: Teilentschlüsselung hochladen"
 
-#: helios/templates/trustee_decrypt_and_prove.html:186
+#: helios/templates/trustee_decrypt_and_prove.html:191
 msgid "Your partial decryption factors and proofs have been generated below."
 msgstr "Ihre Teilentschlüsselungsfaktoren und Beweise wurden unten erzeugt."
 
-#: helios/templates/trustee_decrypt_and_prove.html:187
+#: helios/templates/trustee_decrypt_and_prove.html:192
 msgid "Your secret key has been cleared from memory."
 msgstr "Ihr geheimer Schlüssel wurde aus dem Speicher gelöscht."
 
-#: helios/templates/trustee_decrypt_and_prove.html:188
+#: helios/templates/trustee_decrypt_and_prove.html:193
 msgid "When you're ready, you can submit this result to the server."
 msgstr "Wenn Sie bereit sind, können Sie dieses Ergebnis an den Server übermitteln."
 
-#: helios/templates/trustee_decrypt_and_prove.html:190
+#: helios/templates/trustee_decrypt_and_prove.html:195
 msgid "Your partial decryption:"
 msgstr "Ihre Teilentschlüsselung:"
 
-#: helios/templates/trustee_decrypt_and_prove.html:193
+#: helios/templates/trustee_decrypt_and_prove.html:198
 msgid "Upload decryption factors to server"
 msgstr "Entschlüsselungsfaktoren auf den Server hochladen"
 
-#: helios/templates/trustee_decrypt_and_prove.html:195
+#: helios/templates/trustee_decrypt_and_prove.html:200
 msgid "reset and restart decryption process"
 msgstr "zurücksetzen und Entschlüsselung neu beginnen"
 
-#: helios/templates/trustee_decrypt_and_prove.html:199
+#: helios/templates/trustee_decrypt_and_prove.html:204
 msgid "Back to election"
 msgstr "Zurück zur Wahl"
 
-#: helios/templates/trustee_decrypt_and_prove.html:199
+#: helios/templates/trustee_decrypt_and_prove.html:204
 msgid "Done!"
 msgstr "Fertig!"
 
-#: helios/templates/trustee_decrypt_and_prove.html:203
+#: helios/templates/trustee_decrypt_and_prove.html:208
 msgid "Error: your secret key was likely incorrect."
 msgstr "Fehler: Ihr geheimer Schlüssel war vermutlich falsch."
 
@@ -3916,9 +3916,13 @@ msgstr "%(election_name)s – Stimme abgegeben"
 msgid "Breadcrumb"
 msgstr "Brotkrümelnavigation"
 
-#: server_ui/templates/_language_switcher.html:28
+#: server_ui/templates/_language_switcher.html:9
 msgid "Unsaved input on this page will be lost. Switch the language anyway?"
 msgstr "Ungespeicherte Eingaben auf dieser Seite gehen verloren. Sprache trotzdem wechseln?"
+
+#: server_ui/templates/_language_switcher.html:10
+msgid "Some of your input on this page, such as passwords, files or secret keys, is not kept when the language is switched. Switch the language anyway?"
+msgstr "Einige Ihrer Eingaben auf dieser Seite, etwa Passwörter, Dateien oder geheime Schlüssel, bleiben beim Wechsel der Sprache nicht erhalten. Sprache trotzdem wechseln?"
 
 #: server_ui/templates/_site_nav.html:6
 msgid "Main navigation"

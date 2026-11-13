@@ -2,6 +2,9 @@
 {% load i18n %}
 
 {% block content %}
+{# secret keys: never kept when the language is switched (language-switch.js asks first) #}
+<div data-no-preserve>
+
 <script>
 function reset() {
     $('#processing').hide();
@@ -81,4 +84,5 @@ function check_sk(sk_value) {
 
 
 <div id="applet_div"></div>
+</div>
 {% endblock %}

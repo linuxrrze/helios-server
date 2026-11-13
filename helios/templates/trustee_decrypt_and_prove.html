@@ -2,6 +2,9 @@
 {% load i18n %}
 
 {% block content %}
+{# secret keys: never kept when the language is switched (language-switch.js asks first) #}
+<div data-no-preserve>
+
 <script language="javascript">
 
 $(document).ready(function() {
@@ -87,6 +90,8 @@ function do_tally() {
   $('#result_textarea').html(factors_and_proofs_json);
   $('#result_div').show();
   $('#first-step-success').show();
+  // the decryption exists only in this page: ask before switching the language
+  if (window.HeliosFormState) HeliosFormState.markUnsaved();
 }
 
 function submit_result() {
@@ -206,4 +211,5 @@ function reset() {
   <div id="applet_div">
   </div>
 
+</div>
 {% endblock %}

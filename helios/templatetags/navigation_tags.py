@@ -178,3 +178,11 @@ def build_site_nav(context):
 @register.inclusion_tag('server_ui/templates/_site_nav.html', takes_context=True)
 def site_nav(context):
   return {'items': build_site_nav(context), 'settings': context.get('settings')}
+
+
+@register.simple_tag(takes_context=True)
+def current_request(context):
+  """The request of the page ({% current_request as request %}), or None: the
+  language switcher sends the visitor back to request.get_full_path and keeps
+  all input of a page that answers a POST (server_ui/media/language-switch.js)."""
+  return getattr(context, 'request', None)
