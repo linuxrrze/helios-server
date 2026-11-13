@@ -3,7 +3,7 @@
     <head>
     <title>{% block title %}{% endblock %}</title>  
     <meta http-equiv="X-UA-Compatible" content="IE=edge,Chrome=1">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="description" content="{% localized_setting "SITE_TITLE" %}">
     <link rel="stylesheet" href="/static/layout.css">
@@ -77,9 +77,9 @@
     </main>
     <footer>
 	 <div class="content-footer">
-	    <div class="logo">
-		{% if settings.FOOTER_LOGO_URL %}{% if settings.ORGANIZATION_URL %}<a href="{{ settings.ORGANIZATION_URL }}">{% endif %}<img src="{{ settings.FOOTER_LOGO_URL }}" alt="{{ organization_name }}">{% if settings.ORGANIZATION_URL %}</a>{% endif %}{% endif %}
-	    </div>
+	    {% if settings.FOOTER_LOGO_URL %}<div class="logo">
+		{% if settings.ORGANIZATION_URL %}<a href="{{ settings.ORGANIZATION_URL }}">{% endif %}<img src="{{ settings.FOOTER_LOGO_URL }}" alt="{{ organization_name }}">{% if settings.ORGANIZATION_URL %}</a>{% endif %}
+	    </div>{% endif %}
 	    <div class="meta">
 		<nav aria-labelledby="footer-nav-title">
 		    <h2 class="screen-reader-text" id="footer-nav-title">{% translate "Contact, imprint and further information" %}</h2>
@@ -96,6 +96,21 @@
 	</div>     
     </footer>
 </div>   
+<script>
+  /* The footer stays at the bottom edge of the window (layout.css): pass its height on,
+     so that focused elements and link targets are not scrolled behind it. */
+  (function () {
+    var footer = document.querySelector('.container > footer');
+    if (!footer) return;
+    function update() {
+      var sticky = getComputedStyle(footer).position === 'sticky';
+      document.documentElement.style.setProperty('--footer-height', sticky ? footer.offsetHeight + 'px' : '0px');
+    }
+    update();
+    if (window.ResizeObserver) new ResizeObserver(update).observe(footer);
+    window.addEventListener('resize', update);
+  })();
+</script>
 
 </body>
 </html>

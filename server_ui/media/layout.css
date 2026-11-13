@@ -10,6 +10,8 @@
  *   --meta-bg-color: #e9edf2;        header bar
  *   --main-bg-url: none;             background image behind the login box on the start
  *                                    page, e.g. url("/static/site/img/background.jpg")
+ *   --footer-position: sticky;       footer bar at the bottom edge of the window; static puts
+ *                                    it at the end of the page instead
  *   --fontfamily: ...;
  * }
  */
@@ -18,6 +20,37 @@ body,html{margin:0;height:100%}:root{--screen-xs:480px;--fontsize:18px;--linehei
 body{font-size:var(--fontsize);line-height:var(--lineheight);font-family:var(--fontfamily)}.screen-reader-text{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}.container{background:var(--main-bg-color)}@media (min-width:480px){.container{background:0 0}}footer{background-color:var(--footer-bg-color);color:#fff}.content-footer a{text-decoration:none;color:#fff}.content-footer a:focus,.content-footer a:hover{text-decoration:underline}ul{font-size:1rem}ul li{font-size:1rem}table{background:#fff;margin-bottom:1.25em;border:solid 1px #ddd}table th{text-align:left}table tfoot,table thead{background:#f5f5f5;font-weight:700}table tfoot tr td,table tfoot tr th,table thead tr td,table thead tr th{padding:.5em .625em .625em;font-size:.875em;color:#222;text-align:left}table tr td,table tr th{padding:.5625em .625em;font-size:.875em;color:#222}table tr.alt,table tr.even,table tr:nth-of-type(even){background:#f9f9f9}table tbody tr td,table tfoot tr td,table tfoot tr th,table thead tr th,table tr td{display:table-cell;line-height:1.125em}.th{line-height:0;display:inline-block;border:solid 4px #fff;box-shadow:0 0 0 1px rgba(0,0,0,.2);transition:all .2s ease-out}.th:focus,.th:hover{box-shadow:0 0 6px 1px rgba(43,166,203,.5)}.th.radius{border-radius:3px}a.th{display:inline-block;max-width:100%}.has-tip{border-bottom:dotted 1px #ccc;cursor:help;font-weight:700;color:#333}.has-tip:focus,.has-tip:hover{border-bottom:dotted 1px #196177;color:#2ba6cb}.has-tip.tip-left,.has-tip.tip-right{float:none!important}.content-body{background:var(--main-bg-color);font-size:1rem}.content-body.login{vertical-align:middle;justify-content:flex-end}@media (min-width:480px){.content-body.login{background-image:var(--main-bg-url);background-size:cover;background-position:center}}.content-body.login a{text-decoration:none;color:#2470cc}.content-body.login a:hover{text-decoration:none}.content-body.login .content{padding:30px 40px 40px 40px}@media (min-width:480px){.content-body.login .content{background:rgba(255,255,255,.8)}}.content-body.login h1,.content-body.login h2,.content-body.login h3{color:var(--primary-color);font-weight:700}.content-body.login h1{line-height:var(--lineheighth1);padding-top:0;padding-bottom:20px}.content-body.login p{margin:0;padding:0 0 11px;line-height:21.9px;font-size:1rem;line-height:1.46rem;color:#444;font-family:Roboto,sans-serif;font-style:normal}.content-body.login a.button{display:block;margin:5px 0;padding:10px 18px;overflow:hidden;cursor:pointer;background:var(--primary-color);color:#fff;font-size:16px;font-size:1rem;text-align:center;font-weight:400;text-decoration:none;transition:.2s background ease;border:1px solid transparent;border-top-color:transparent;border-right-color:transparent;border-bottom-color:transparent;border-left-color:transparent}.content-body.login a.button:focus,.content-body.login a.button:hover{background:var(--primary-color-dark)}.content-body.login a.button .langtext{display:block;font-size:var(--smallfont);font-style:italic}.content-body.login a.button .langtext::before{content:"("}.content-body.login a.button .langtext::after{content:")"}.content-body.login .made-with{padding-top:35px;padding-bottom:0;margin-bottom:0;font-size:var(--smallfont);text-align:right}.row{padding:10px 20px}
 /* login-system icons next to user names (as in foundation-tweaks.css, which this layout does not load) */
 .small-logo{height:15px;vertical-align:middle}.big-logo{height:25px;vertical-align:middle}
+
+/* --- footer bar at the bottom edge of the window -----------------------------
+ * The page used to be a box of exactly 100vh with <main> scrolling inside it. On
+ * phones 100vh is taller than the visible area (browser toolbars), so the page
+ * scrolled as well and the footer moved with it; printing cut <main> off.
+ * Now the page scrolls as a whole and the footer is sticky at the end of it: on
+ * short pages the container fills the window and pushes the footer down, on long
+ * pages it stays at the bottom edge. It keeps its own place at the end of the
+ * page, so whatever its height (logo, FOOTER_LINKS, line breaks) it never covers
+ * the end of the content. base.html passes its height on as --footer-height, so
+ * that focused elements and link targets are not scrolled behind it. */
+:root{--footer-position:sticky}
+html{scroll-padding-bottom:var(--footer-height,4rem)}
+.container{height:auto;min-height:100vh;min-height:100dvh;flex-wrap:nowrap}
+.container main{flex:1 0 auto}
+.container>footer{position:var(--footer-position);bottom:0;z-index:10}
+.content-footer{align-items:center}
+.content-footer .logo{margin:8px 10px}
+.content-footer .logo img{display:block;height:auto}
+.content-footer .meta{margin-left:auto;padding:8px 10px}
+.content-footer .meta ul{margin:0}
+@media (min-width:480px){.content-footer .logo{margin:10px 20px}.content-footer .meta{padding:10px 20px}}
+@media (max-width:479px){.content-footer .logo{margin:6px 10px}.content-footer .logo img{width:96px}.content-footer .meta{padding:6px 10px}.content-footer .meta ul{line-height:20px}.content-footer .meta li{margin:0 3px}}
+/* iPhones (viewport-fit=cover in base.html): keep clear of the rounded corners, the
+ * notch and the home indicator */
+.container>header,.container>main,.container>footer{box-sizing:border-box;padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+.container>header{padding-top:env(safe-area-inset-top,0px)}
+.container>footer{padding-bottom:env(safe-area-inset-bottom,0px)}
+/* very low windows (phones in landscape, strong zoom) need the room for the content */
+@media (max-height:25em){:root{--footer-position:static}html{scroll-padding-bottom:0}}
+@media print{:root{--footer-position:static}html{scroll-padding-bottom:0}.container{min-height:0}.container main{overflow:visible}}
 
 /* multi-line headings overlapped with the fixed 32px line-height */
 h1{line-height:1.2}

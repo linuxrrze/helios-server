@@ -28,6 +28,8 @@ class SiteCustomizationTests(TestCase):
         self.assertNotIn('Imprint', content)
         self.assertNotIn('Accessibility', content)
         self.assertNotIn('class="orghome"', content)
+        # no empty logo box taking up room in the footer bar
+        self.assertNotIn('<div class="logo">', content)
 
     def test_branding_and_footer_links_from_settings(self):
         with self.settings(ORGANIZATION_NAME='Example University', ORGANIZATION_URL='https://www.example.org',
