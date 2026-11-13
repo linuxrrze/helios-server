@@ -3,7 +3,10 @@
 
 {% block title %}{% blocktranslate trimmed with election_name=election.name %}Voters &amp; Ballot Tracking Center for {{ election_name }}{% endblocktranslate %}{% endblock %}
 {% block content %}
-  <h3 class="title">{{election.name}} &mdash; {% translate "Voters and Ballot Tracking Center" %} <span style="font-size:0.7em;">[<a href="{% url "election@view" election.uuid %}">{% translate "back to election" %}</a>]</span></h3>
+<a class="back-link" href="{% url "election@view" election.uuid %}">{% translate "back to election" %}</a>
+<h1 class="title">{{election.name}} &mdash; {% translate "Voters and Ballot Tracking Center" %}</h1>
+
+<p class="page-lead">{% translate "Every ballot cast appears here with its ballot tracker. Voters can check that their tracker is listed: this shows their encrypted ballot was received and will be counted." %}</p>
 
 <p>
 <b>{% translate "Who can vote?" %}</b>
@@ -16,63 +19,61 @@
 
 {% if admin_p and not election.frozen_at %}
 {% if election.private_p %}
-{% translate "<em>Your election is marked private, which means you cannot open registration up more widely</em>." %}<br />
+<p class="muted">{% translate "<em>Your election is marked private, which means you cannot open registration up more widely</em>." %}</p>
 {% else %}
-<form method="post" action="{% url "election@voters@eligibility" election.uuid %}">
+<form method="post" action="{% url "election@voters@eligibility" election.uuid %}" class="card">
 <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
-<input type="radio" name="eligibility" value="openreg" {% if election.openreg and not election.eligibility %}CHECKED{% endif %} /> {% translate "anyone can vote" %}<br />
-<input type="radio" name="eligibility" value="closedreg" {% if not election.openreg %}CHECKED{% endif %} /> {% translate "only voters listed explicitly below can vote" %}<br />
+<fieldset>
+<legend>{% translate "Who can vote?" %}</legend>
+<div class="field-check"><input type="radio" id="elig_openreg" name="eligibility" value="openreg" {% if election.openreg and not election.eligibility %}CHECKED{% endif %} /> <label class="choice" for="elig_openreg">{% translate "anyone can vote" %}</label></div>
+<div class="field-check"><input type="radio" id="elig_closedreg" name="eligibility" value="closedreg" {% if not election.openreg %}CHECKED{% endif %} /> <label class="choice" for="elig_closedreg">{% translate "only voters listed explicitly below can vote" %}</label></div>
 {% if categories %}
-<input type="radio" name="eligibility" value="limitedreg" {% if election.eligibility %}CHECKED{% endif %} /> {% translate "only voters who are members of" %} 
-<select name="category_id">
+<div class="field-check"><input type="radio" id="elig_limitedreg" name="eligibility" value="limitedreg" {% if election.eligibility %}CHECKED{% endif %} /> <label class="choice" for="elig_limitedreg">{% translate "only voters who are members of" %}</label>
+<select name="category_id" aria-label="{% translate "only voters who are members of" %}">
 {% for category in categories %}
 <option value="{{category.id}}" {% if eligibility_category_id == category.id %}SELECTED{% endif %}> {{category.name}}</option>
 {% endfor %}
 </select>
-<br />
+</div>
 {% endif %}
-<input class="button" type="submit" value="{% translate "update" %}" />
+</fieldset>
+<input class="button secondary" type="submit" value="{% translate "update" %}" />
 </form>
 {% endif %}
 {% endif %}
 
-{% if email_voters and election.frozen_at and admin_p %}
-<p>
+{% if admin_p %}
+<div class="actions">
+{% if email_voters and election.frozen_at %}
 {% if can_send_emails %}
 <a class="button" href="{% url "election@voters@email" election.uuid %}">{% translate "email voters" %}</a>
 {% else %}
-<button class="button" disabled style="opacity: 0.5; cursor: not-allowed;" title="{{email_disabled_reason}}">{% blocktranslate trimmed with reason=email_disabled_reason %}email voters (disabled: {{ reason }}){% endblocktranslate %}</button>
+<button class="button" disabled title="{{email_disabled_reason}}">{% blocktranslate trimmed with reason=email_disabled_reason %}email voters (disabled: {{ reason }}){% endblocktranslate %}</button>
 {% endif %}
-</p>
-{% endif %}
-
-{% if election.num_voters > 20 %}
-<p>
-{% if q %}
-<p><em>{% blocktranslate trimmed %}searching for <u>{{ q }}</u>.{% endblocktranslate %}</em> [<a href="?">{% translate "clear search" %}</a>]</p>
-{% else %}
-<form method="get" action="{% url "election@voters@list-pretty" election.uuid %}"><b>{% translate "search" %}</b>: <input type="text" name="q" /> <input type="submit" value="{% translate "search" %}" /></form>
-{% endif %}
-</p>
 {% endif %}
 
-<p>
-<a class="button" href="{% url "election@voters@download-csv" election.uuid %}{% if q %}?q={{q|urlencode}}{% endif %}">{% translate "Download Voters as CSV" %}</a>
-</p>
-
-{% if admin_p %}
-<!-- Add a Voter: WORK HERE-->
 {% if upload_p and not election.openreg %}
-<p>
 {% if can_modify_voters %}
-<a class="button" href="{% url "election@voters@upload" election_uuid=election.uuid %}">{% translate "bulk upload voters" %}</a>
+<a class="button{% if election.frozen_at %} secondary{% endif %}" href="{% url "election@voters@upload" election_uuid=election.uuid %}">{% translate "bulk upload voters" %}</a>
 {% else %}
-<button class="button" disabled style="opacity: 0.5; cursor: not-allowed;" title="{{modify_voters_disabled_reason}}">{% blocktranslate trimmed with reason=modify_voters_disabled_reason %}bulk upload voters (disabled: {{ reason }}){% endblocktranslate %}</button>
+<button class="button secondary" disabled title="{{modify_voters_disabled_reason}}">{% blocktranslate trimmed with reason=modify_voters_disabled_reason %}bulk upload voters (disabled: {{ reason }}){% endblocktranslate %}</button>
 {% endif %}
-</p>
+{% endif %}
 
-{% if voter_files %}
-{% translate "Prior Bulk Uploads:" %}
+<a class="button secondary" href="{% url "election@voters@download-csv" election.uuid %}{% if q %}?q={{q|urlencode}}{% endif %}">{% translate "Download Voters as CSV" %}</a>
+
+{% if not election.frozen_at and election.num_voters > 0 %}
+<form class="inline-action" method="post" action="{% url "election@voters@clear" election.uuid %}" onsubmit="return confirm('{% filter escapejs %}{% blocktranslate trimmed with num_voters=election.num_voters %}Are you sure you want to remove ALL {{ num_voters }} voter(s)? This action cannot be undone.{% endblocktranslate %}{% endfilter %}');">
+<input type="hidden" name="csrf_token" value="{{csrf_token}}" />
+<input class="button danger secondary" type="submit" value="{% translate "clear all voters" %}" />
+</form>
+{% endif %}
+</div>
+
+{% if upload_p and voter_files %}
+<details>
+<summary>{% translate "Prior Bulk Uploads:" %} {{ voter_files|length }}</summary>
+<div class="details-body">
 <ul>
 {% for vf in voter_files %}
 <li>
@@ -84,84 +85,86 @@
  {% blocktranslate trimmed with uploaded_at=vf.uploaded_at|utc_time %}bytes, at {{ uploaded_at }}:{% endblocktranslate %}
 {% if vf.processing_finished_at %}
 <em>{% blocktranslate trimmed with num_voters=vf.num_voters %}done processing: {{ num_voters }} voters loaded{% endblocktranslate %}</em>
-{% else %}
-
-{% if vf.processing_started_at %}
+{% elif vf.processing_started_at %}
 <em>{% translate "currently processing" %}</em>
 {% else %}
 <em>{% translate "not yet processed" %}</em>
 {% endif %}
-
-{% endif %}
 </li>
 {% endfor %}
 </ul>
+</div>
+</details>
 {% endif %}
+{% else %}
+<p><a class="button secondary" href="{% url "election@voters@download-csv" election.uuid %}{% if q %}?q={{q|urlencode}}{% endif %}">{% translate "Download Voters as CSV" %}</a></p>
 {% endif %}
 
-{% if admin_p and not election.frozen_at and election.num_voters > 0 %}
-<p>
-<form style="display: inline;" method="post" action="{% url "election@voters@clear" election.uuid %}" onsubmit="return confirm('{% filter escapejs %}{% blocktranslate trimmed with num_voters=election.num_voters %}Are you sure you want to remove ALL {{ num_voters }} voter(s)? This action cannot be undone.{% endblocktranslate %}{% endfilter %}');">
-<input type="hidden" name="csrf_token" value="{{csrf_token}}" />
-<input class="button alert" type="submit" value="{% translate "clear all voters" %}" />
+{% if election.num_voters > 20 %}
+{% if q %}
+<p><em>{% blocktranslate trimmed %}searching for <u>{{ q }}</u>.{% endblocktranslate %}</em> <a href="?">{% translate "clear search" %}</a></p>
+{% else %}
+<form method="get" action="{% url "election@voters@list-pretty" election.uuid %}" role="search" class="voter-search">
+<label for="voter-search-q">{% translate "search" %}</label>
+<input type="search" id="voter-search-q" name="q" />
+<input class="button secondary" type="submit" value="{% translate "search" %}" />
 </form>
-</p>
 {% endif %}
-
 {% endif %}
 
 {% if voters %}
 
-<p>
-<b>
+<h2>
 {% if election.num_cast_votes %}
 {% blocktranslate trimmed count counter=election.num_cast_votes %}{{ counter }} cast vote{% plural %}{{ counter }} cast votes{% endblocktranslate %}
 {% else %}
 {% translate "no votes yet" %}
 {% endif %}
-</b>
-</p>
+</h2>
 
+<nav class="pager" aria-label="{% translate "Pages" %}">
 {% if voters_page.has_previous %}
-<a href="{% url "election@voters@list-pretty" election.uuid %}?page={{voters_page.previous_page_number}}&limit={{limit}}&q={{q|urlencode}}">{% blocktranslate trimmed %}previous {{ limit }}{% endblocktranslate %}</a> &nbsp;&nbsp;
+<a href="{% url "election@voters@list-pretty" election.uuid %}?page={{voters_page.previous_page_number}}&limit={{limit}}&q={{q|urlencode}}">&larr; {% blocktranslate trimmed %}previous {{ limit }}{% endblocktranslate %}</a>
 {% endif %}
-
-
-{% blocktranslate trimmed with start=voters_page.start_index end=voters_page.end_index %}Voters {{ start }} - {{ end }} (of {{ total_voters }}){% endblocktranslate %}&nbsp;&nbsp;
-
+<span>{% blocktranslate trimmed with start=voters_page.start_index end=voters_page.end_index %}Voters {{ start }} - {{ end }} (of {{ total_voters }}){% endblocktranslate %}</span>
 {% if voters_page.has_next %}
-<a href="{% url "election@voters@list-pretty" election.uuid %}?page={{voters_page.next_page_number}}&limit={{limit}}&q={{q|urlencode}}">{% blocktranslate trimmed %}next {{ limit }}{% endblocktranslate %}</a> &nbsp;&nbsp;
+<a href="{% url "election@voters@list-pretty" election.uuid %}?page={{voters_page.next_page_number}}&limit={{limit}}&q={{q|urlencode}}">{% blocktranslate trimmed %}next {{ limit }}{% endblocktranslate %} &rarr;</a>
 {% endif %}
+</nav>
 
-<table class="pretty">
+<div class="table-scroll">
+<table class="pretty voters-table">
+<thead>
 <tr>
 {% if admin_p or not election.use_voter_aliases %}
 {% if admin_p %}
-<th style="width: 80px;">{% translate "Actions" %}</th>
-<th>{% translate "Login" %}</th>
-<th>{% translate "Email Address" %}</th>
+<th scope="col">{% translate "Actions" %}</th>
+<th scope="col">{% translate "Login" %}</th>
+<th scope="col">{% translate "Email Address" %}</th>
 {% endif %}
-<th>{% translate "Name" %}</th>
+<th scope="col">{% translate "Name" %}</th>
 {% endif %}
 
 {% if election.use_voter_aliases %}
-<th>{% translate "Alias" %}</th>
+<th scope="col">{% translate "Alias" %}</th>
 {% endif %}
-<th>{% translate "Smart Ballot Tracker" %}</th>
+<th scope="col">{% translate "Smart Ballot Tracker" %}</th>
 </tr>
+</thead>
+<tbody>
 {% for voter in voters %}
 <tr>
 {% if admin_p or not election.use_voter_aliases %}
 {% if admin_p %}
-<td style="white-space: nowrap;">
+<td class="row-actions">
 {% if election.frozen_at %}
 {% if can_send_emails %}
-[<a href="{% url "election@voters@email" election.uuid %}?voter_id={{voter.voter_login_id}}">{% translate "email" %}</a>]
+<a href="{% url "election@voters@email" election.uuid %}?voter_id={{voter.voter_login_id}}">{% translate "email" %}</a>
 {% else %}
-[<span style="opacity: 0.5; cursor: not-allowed;" title="{{email_disabled_reason}}">{% translate "email" %}</span>]
+<span class="disabled-action" aria-disabled="true" title="{{email_disabled_reason}}">{% translate "email" %}</span>
 {% endif %}
 {% endif %}
-{% if can_modify_voters %}[<form class="inline-action" method="post" action="{% url "election@voter@delete" election.uuid voter.uuid %}" onsubmit="return confirm('{% filter escapejs %}{% blocktranslate trimmed with name=voter.name|safe %}are you sure you want to remove {{ name }} ?{% endblocktranslate %}{% endfilter %}');"><input type="hidden" name="csrf_token" value="{{csrf_token}}" /><button type="submit" class="link-button">x</button></form>]{% endif %}
+{% if can_modify_voters %}<form class="inline-action" method="post" action="{% url "election@voter@delete" election.uuid voter.uuid %}" onsubmit="return confirm('{% filter escapejs %}{% blocktranslate trimmed with name=voter.name|safe %}are you sure you want to remove {{ name }} ?{% endblocktranslate %}{% endfilter %}');"><input type="hidden" name="csrf_token" value="{{csrf_token}}" /><button type="submit" class="link-button danger">{% translate "remove" %}<span class="screen-reader-text"> {{ voter.name }}</span></button></form>{% endif %}
 </td>
 <td>{{voter.voter_login_id}}</td>
 <td>{{voter.voter_email}}</td>
@@ -171,14 +174,21 @@
 {% if election.use_voter_aliases %}
 <td>{{voter.alias}}</td>
 {% endif %}
-<td><tt style="font-size: 1.4em;">{% if voter.vote_hash %}{{voter.vote_hash}} <span style="font-size:0.8em;"><!-- no link for now --></span>{% else %}&mdash;{% endif %}</tt></td>
+<td>{% if voter.vote_hash %}<tt class="tracker-inline">{{voter.vote_hash}}</tt>{% else %}<span class="muted" aria-label="{% translate "no vote yet" %}">&mdash;</span>{% endif %}</td>
 </tr>
 {% endfor %}
+</tbody>
 </table>
+</div>
 
 {% else %}
-<br /><br />
-<em>{% translate "no voters." %}</em>
+<div class="callout empty-state">
+<p><strong>{% translate "no voters." %}</strong>
+{% if admin_p and upload_p and not election.openreg and can_modify_voters %}
+{% translate "Upload a CSV file with one line per voter to add them." %}
+{% endif %}
+</p>
+</div>
 {% endif %}
 
 {% endblock %}

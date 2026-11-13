@@ -3336,8 +3336,8 @@ class VoterEmailCutoffViewTests(WebTest):
         response = self.client.get(f'/helios/elections/{self.election.uuid}/voters/list')
 
         # Should have disabled span instead of link
-        self.assertContains(response, 'opacity: 0.5')
-        self.assertContains(response, 'cursor: not-allowed')
+        self.assertContains(response, 'aria-disabled="true"')
+        self.assertNotContains(response, 'voters/email?voter_id=test')
 
 
 class DateTimeLocalWidgetTests(TestCase):
@@ -4019,8 +4019,8 @@ class VoterDeleteRestrictionTests(WebTest):
 
         response = self.client.get("/helios/elections/%s/voters/list" % self.election.uuid)
         self.assertStatusCode(response, 200)
-        # Check for the delete [x] button (a POST form, so that it carries a CSRF token)
-        self.assertContains(response, '>x</button></form>]')
+        # Check for the delete button (a POST form, so that it carries a CSRF token)
+        self.assertContains(response, 'action="/helios/elections/%s/voters/%s/delete"' % (self.election.uuid, self.voter.uuid))
 
     def test_voters_list_hides_delete_button_when_blocked(self):
         """Voter list should hide delete [x] button when tallying has started"""
@@ -4031,7 +4031,7 @@ class VoterDeleteRestrictionTests(WebTest):
         response = self.client.get("/helios/elections/%s/voters/list" % self.election.uuid)
         self.assertStatusCode(response, 200)
         # Check that the delete button is not present
-        self.assertNotContains(response, '>x</button></form>]')
+        self.assertNotContains(response, '/voters/%s/delete' % self.voter.uuid)
 
 
 

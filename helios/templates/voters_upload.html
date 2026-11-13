@@ -1,53 +1,44 @@
 {% extends TEMPLATE_BASE %}
 {% load i18n %}
 
+{% block title %}{% translate "Bulk Upload Voters" %} &mdash; {{election.name}}{% endblock %}
 {% block content %}
-  <h2 class="title">{{election.name}} &mdash; {% translate "Bulk Upload Voters" %} <span style="font-size:0.7em;">[<a href="{% url "election@view" election.uuid %}">{% translate "back to election" %}</a>]</span></h2>
+<a class="back-link" href="{% url "election@voters@list-pretty" election.uuid %}">{% translate "Voters and Ballot Tracking Center" %}</a>
+<h1 class="title">{{election.name}} &mdash; {% translate "Bulk Upload Voters" %}</h1>
 
-<form method="post" action="" id="upload_form" enctype="multipart/form-data">
+<form method="post" action="" id="upload_form" enctype="multipart/form-data" class="form-narrow">
 <p>
     {% blocktranslate trimmed %}If you would like to specify your list of voters by name and email address,<br />
-    you can bulk upload a list of such voters here.{% endblocktranslate %}<br /><br />
+    you can bulk upload a list of such voters here.{% endblocktranslate %}
+</p>
+<p>{% translate "Please prepare a text file of comma-separated values with the fields:" %}</p>
+<pre class="email-preview">password,&lt;unique_id&gt;,&lt;email&gt;,&lt;full name&gt;</pre>
+<p>{% translate "or" %}</p>
+<pre class="email-preview">github,&lt;username&gt;</pre>
 
-    {% translate "Please prepare a text file of comma-separated values with the fields:" %}
-</p>
-<pre>
-   password,&lt;unique_id&gt;,&lt;email&gt,&lt;full name&gt;
-</pre>
-<p>
-{% translate "or" %}
-</p>
-<pre>
-   github,&lt;username&gt;
-</pre>
+<p>{% translate "For example:" %}</p>
+<pre class="email-preview">password,bobsmith,bob@acme.org,Bob Smith
+github,benadida</pre>
 
 <p>
-{% translate "For example:" %}
-  </p>
-  <pre>
-      password,bobsmith,bob@acme.org,Bob Smith
-      github,benadida
-      ...
-  </pre> 
+  {% blocktranslate trimmed %}The easiest way to prepare such a file is to use a spreadsheet program and to export as "CSV".{% endblocktranslate %}
+  {% translate "Voters of type password get their voter ID and a password by email when you send the invitation." %}
+</p>
 
-  <p>
-    {% blocktranslate trimmed %}The easiest way to prepare such a file is to use a spreadsheet program and to export as "CSV".{% endblocktranslate %}
-  </p>
-  {% if error %}
-  <div style="color: red;">{{error}}</div>
-  {% endif %}
-    <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
-    
-    <input type="file" name="voters_file" />
-    <input class="button" type="submit" value="{% translate "go" %}" />
+{% if error %}
+<div class="callout callout-danger" role="alert"><p class="error">{{error}}</p></div>
+{% endif %}
+<input type="hidden" name="csrf_token" value="{{csrf_token}}" />
+
+<div class="field">
+  <label for="voters_file">{% translate "CSV file" %}</label>
+  <input type="file" id="voters_file" name="voters_file" accept=".csv,text/csv,text/plain" required />
+</div>
+<div class="actions">
+  <button class="button" type="submit">{% translate "Upload and check" %}</button>
+  <a href="{% url "election@voters@list-pretty" election.uuid %}">{% translate "cancel" %}</a>
+</div>
+<p class="muted">{% translate "Nothing is added yet: on the next page you see the first rows of the file and confirm." %}</p>
 </form>
-
-<div id="processing">
-</div>
-
-<div id="done" style="display:none;">
-  {% translate "OK, done uploading." %}<br />
-  {% blocktranslate trimmed %}You can now <a href="./manage">view the list of voters</a>.{% endblocktranslate %}
-</div>
 
 {% endblock %}
