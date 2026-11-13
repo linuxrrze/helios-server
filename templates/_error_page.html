@@ -1,0 +1,23 @@
+{% load i18n localized_settings %}<!DOCTYPE html>
+{% get_current_language as LANGUAGE_CODE %}<html lang="{{ LANGUAGE_CODE }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}{% endblock %} &ndash; {% localized_setting "SITE_TITLE" %}</title>
+  <link rel="stylesheet" href="/static/layout.css">
+</head>
+<body>
+{% comment %}
+Error pages are rendered without the request context the other pages get (no
+user, no settings), and must not fail themselves, so they don't extend the
+site layout: a plain page with the layout's stylesheet and a way back.
+{% endcomment %}
+<main class="content-body error-page">
+  <div class="content"><div class="row">
+    <h1>{% block heading %}{% endblock %}</h1>
+    <p>{% block message %}{% endblock %}</p>
+    <p class="actions"><a class="button" href="/">{% translate "Go to the start page" %}</a></p>
+  </div></div>
+</main>
+</body>
+</html>

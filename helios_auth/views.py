@@ -25,6 +25,11 @@ from .view_utils import render_template, render_template_raw
 logger = logging.getLogger(__name__)
 
 
+def auth_options(auth_systems):
+  """(system name, button text) for each login option in login_box.html; password has its own form"""
+  return [(s, getattr(AUTH_SYSTEMS[s], 'LOGIN_MESSAGE', None) or s) for s in auth_systems
+          if s != 'password' and s in AUTH_SYSTEMS]
+
 def index(request):
   """
   the page from which one chooses how to log in.
@@ -47,6 +52,7 @@ def index(request):
 
   return render_template(request, 'index', {'return_url' : request.GET.get('return_url', '/'),
                                             'enabled_auth_systems' : ENABLED_AUTH_SYSTEMS,
+                                            'auth_options': auth_options(ENABLED_AUTH_SYSTEMS),
                                             'default_auth_system': DEFAULT_AUTH_SYSTEM,
                                             'default_auth_system_obj': default_auth_system_obj})
 
@@ -70,7 +76,7 @@ def login_box_raw(request, return_url='/', auth_systems = None, use_default_auth
   form = password.LoginForm()
 
   return render_template_raw(request, 'login_box', {
-      'enabled_auth_systems': enabled_auth_systems, 'return_url': return_url,
+      'enabled_auth_systems': enabled_auth_systems, 'auth_options': auth_options(enabled_auth_systems), 'return_url': return_url,
       'default_auth_system': default_auth_system, 'default_auth_system_obj': default_auth_system_obj,
       'form' : form})
   

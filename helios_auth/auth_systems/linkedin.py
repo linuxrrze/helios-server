@@ -3,6 +3,7 @@ LinkedIn Authentication using OAuth 2.0
 
 """
 
+from django.utils.translation import gettext_lazy
 from django.conf import settings
 from django.core.mail import send_mail
 from requests_oauthlib import OAuth2Session
@@ -13,7 +14,7 @@ from helios_auth.utils import format_recipient
 STATUS_UPDATES = False
 
 # display tweaks
-LOGIN_MESSAGE = "Log in with LinkedIn"
+LOGIN_MESSAGE = gettext_lazy("Log in with LinkedIn")
 
 AUTHORIZATION_URL = "https://www.linkedin.com/oauth/v2/authorization"
 TOKEN_URL = "https://www.linkedin.com/oauth/v2/accessToken"

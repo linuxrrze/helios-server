@@ -334,3 +334,12 @@ table.pretty .helptext { margin-top: 4px; }
 .featured-elections { padding-left: 0; list-style: none; }
 .featured-elections li { margin: 0 0 .5em; }
 .welcome { max-width: 48rem; }
+.error-page { display: block; min-height: 100vh; }
+.error-page .content { max-width: 48rem; padding-top: 10vh; }
+/* login options (login_box.html) */
+.login-options { margin: 0 0 1em; padding: 0; list-style: none; }
+.login-options li { margin: 0 0 10px; }
+.content-body .login-option { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 8px 16px; border: 2px solid var(--border-color);
+  border-radius: var(--radius); background: #fff; color: var(--text-color); font-weight: 600; text-decoration: none; }
+.content-body .login-option:hover, .content-body .login-option:focus { border-color: var(--primary-color); }
+.login-option img { width: 28px; height: 28px; object-fit: contain; }

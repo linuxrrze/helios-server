@@ -1,7 +1,5 @@
-{% extends 'base.html' %}
+{% extends '_error_page.html' %}
 {% load i18n %}
 {% block title %}{% translate "Page not found" %}{% endblock %}
-
-{% block content %}
-{% translate "The page you requested could not be found." %}
-{% endblock %}
+{% block heading %}{% translate "Page not found" %}{% endblock %}
+{% block message %}{% translate "The page you requested could not be found." %} {% translate "If you followed a link from an email, check that it was copied completely: links to elections and to trustee pages are long." %}{% endblock %}

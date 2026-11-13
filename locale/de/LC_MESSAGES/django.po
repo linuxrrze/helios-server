@@ -3449,9 +3449,25 @@ msgstr "Wahl für die Wählergruppe %(short_name)s"
 msgid "The voter group has no members."
 msgstr "Die Wählergruppe hat keine Mitglieder."
 
+#: helios_auth/auth_systems/cas.py:35
+msgid "Log in with my NetID"
+msgstr "Mit meiner NetID anmelden"
+
 #: helios_auth/auth_systems/devlogin.py:18 helios_auth/templates/auth/devlogin.html:4 helios_auth/templates/auth/devlogin.html:17
 msgid "Dev Login"
 msgstr "Entwickler-Anmeldung"
+
+#: helios_auth/auth_systems/github.py:22
+msgid "Log in with GitHub"
+msgstr "Mit GitHub anmelden"
+
+#: helios_auth/auth_systems/gitlab.py:19
+msgid "Log in with Gitlab"
+msgstr "Mit GitLab anmelden"
+
+#: helios_auth/auth_systems/google.py:18
+msgid "Log in with my Google Account"
+msgstr "Mit meinem Google-Konto anmelden"
 
 #: helios_auth/auth_systems/ldapauth.py:23
 msgid "Log in with my LDAP Account"
@@ -3460,6 +3476,10 @@ msgstr "Mit meinem LDAP-Konto anmelden"
 #: helios_auth/auth_systems/ldapauth.py:65 helios_auth/auth_systems/password.py:76
 msgid "Bad Username or Password"
 msgstr "Falscher Benutzername oder falsches Passwort"
+
+#: helios_auth/auth_systems/linkedin.py:17
+msgid "Log in with LinkedIn"
+msgstr "Mit LinkedIn anmelden"
 
 #: helios_auth/auth_systems/oidc.py:81 helios_auth/auth_systems/saml.py:76
 msgid "Log in with single sign-on"
@@ -3553,6 +3573,10 @@ msgstr "Fortfahren"
 msgid "JavaScript is disabled. Please press the button to continue."
 msgstr "JavaScript ist deaktiviert. Bitte klicken Sie auf die Schaltfläche, um fortzufahren."
 
+#: helios_auth/auth_systems/yahoo.py:17
+msgid "Log in with my Yahoo Account"
+msgstr "Mit meinem Yahoo-Konto anmelden"
+
 #: helios_auth/templates/base.html:10 helios_auth/templates/index.html:6
 msgid "Authentication"
 msgstr "Anmeldung"
@@ -3606,11 +3630,11 @@ msgstr "OK, verstanden, weiter zur Anmeldung."
 msgid "nope, get me out of here"
 msgstr "nein, lieber nicht"
 
-#: helios_auth/views.py:170
+#: helios_auth/views.py:173
 msgid "The sign-in service cannot be reached right now. Please try again in a few minutes."
 msgstr "Der Anmeldedienst ist gerade nicht erreichbar. Bitte versuchen Sie es in ein paar Minuten erneut."
 
-#: helios_auth/views.py:175
+#: helios_auth/views.py:178
 #, python-format
 msgid "an error occurred trying to contact %(system_name)s, try again later"
 msgstr "bei der Verbindung zu %(system_name)s ist ein Fehler aufgetreten, bitte versuchen Sie es später erneut"
@@ -3985,18 +4009,30 @@ msgstr "Für die Wahlleitung"
 msgid "To create and administer elections, you log in with a login service of this installation. Helios keeps only what it needs to recognize you the next time: your name, email address and user ID, and uses your email address to notify you about your elections."
 msgstr "Um Wahlen anzulegen und zu verwalten, melden Sie sich über einen Anmeldedienst dieser Installation an. Helios speichert nur, was nötig ist, um Sie beim nächsten Mal wiederzuerkennen: Ihren Namen, Ihre E-Mail-Adresse und Benutzer-ID. Ihre E-Mail-Adresse verwendet Helios, um Sie über Ihre Wahlen zu benachrichtigen."
 
-#: templates/404.html:3
+#: templates/404.html:3 templates/404.html:4
 msgid "Page not found"
 msgstr "Seite nicht gefunden"
 
-#: templates/404.html:6
+#: templates/404.html:5
+msgid "If you followed a link from an email, check that it was copied completely: links to elections and to trustee pages are long."
+msgstr "Wenn Sie einem Link aus einer E-Mail gefolgt sind, prüfen Sie, ob er vollständig übernommen wurde: Links zu Wahlen und zu Treuhänder*innen-Seiten sind lang."
+
+#: templates/404.html:5
 msgid "The page you requested could not be found."
 msgstr "Die angeforderte Seite wurde nicht gefunden."
 
-#: templates/500.html:3
+#: templates/500.html:3 templates/500.html:4
 msgid "Server error"
 msgstr "Serverfehler"
 
-#: templates/500.html:6
+#: templates/500.html:5
+msgid "Please try again in a few minutes. If you were casting a ballot, you can simply vote again: only your last ballot counts."
+msgstr "Bitte versuchen Sie es in einigen Minuten erneut. Wenn Sie gerade einen Stimmzettel abgegeben haben, können Sie einfach noch einmal abstimmen: Nur Ihr letzter Stimmzettel zählt."
+
+#: templates/500.html:5
 msgid "There was an error while handling your request."
 msgstr "Bei der Bearbeitung Ihrer Anfrage ist ein Fehler aufgetreten."
+
+#: templates/_error_page.html:19
+msgid "Go to the start page"
+msgstr "Zur Startseite"
