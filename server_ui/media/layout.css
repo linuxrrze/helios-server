@@ -437,6 +437,9 @@ table.pretty .helptext { margin-top: 4px; }
 .content-body input.input-wide { width: 100%; }
 .voters-table .num, .seat-table .num { text-align: right; font-variant-numeric: tabular-nums; }
 .seat-table td input, .seat-table td select { min-width: 8rem; }
+.seat-table tbody th { vertical-align: middle; }
+/* keeps the hidden labels inside the scrolling table (no page-wide overflow on phones) */
+.seat-table td { position: relative; }
 .content-body section.card > h2:first-child { margin-top: 0; font-size: 1.2rem; }
 /* results on phones: a shorter bar so that the share stays visible */
 @media only screen and (max-width: 40em) {

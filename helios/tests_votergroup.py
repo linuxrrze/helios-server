@@ -131,6 +131,20 @@ class VoterGroupViewTests(TestCase):
     self.assertIn('Anna Arp', [v.voter_name for v in voters])
     self.assertEqual(election.trustee_set.count(), 1)
 
+  def test_seat_table_inputs_have_names(self):
+    """Every input of the seat table is labelled by its column and vote (row)"""
+    import re
+    self.login(self.admin)
+    content = self.client.get('/helios/votergroup/prepareelection/g1').content.decode()
+    ids = re.findall(r'<(?:input|select)[^>]* id="(id_form-\d+-[a-z_]+)"', content)
+    self.assertEqual(len(ids), 3 * 5)
+    for field_id in ids:
+      self.assertRegex(content, r'<label class="screen-reader-text" for="%s">[^<]+, vote \d+</label>' % field_id)
+    self.assertIn('<label class="screen-reader-text" for="id_form-2-email">Email, vote 3</label>', content)
+    self.assertIn('<th scope="row" class="num">3</th>', content)
+    content = self.client.get('/helios/votergroup/prepareelection/g1', HTTP_ACCEPT_LANGUAGE='de').content.decode()
+    self.assertIn('for="id_form-0-delegate_to">Übertragen an, Stimme 1</label>', content)
+
   def test_prepare_election_with_voter_aliases(self):
     self.login(self.admin)
     seats = vg.initial_seats(self.group.get_members())

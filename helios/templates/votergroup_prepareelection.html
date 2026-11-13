@@ -14,15 +14,18 @@
   <h2>{% translate "Voters" %}</h2>
   <p>{% translate "One row per vote. A vote can be delegated to another member of the group; the delegated vote is then issued to that member." %}</p>
   <div class="table-scroll">
+  {% translate "First name" as first_name_label %}{% translate "Last name" as last_name_label %}{% translate "Email" as email_label %}{% translate "Login ID" as login_id_label %}{% translate "Delegate to" as delegate_label %}
   <table class="seat-table">
-    <thead><tr><th scope="col">{% translate "First name" %}</th><th scope="col">{% translate "Last name" %}</th><th scope="col">{% translate "Email" %}</th><th scope="col">{% translate "Login ID" %}</th><th scope="col">{% translate "Delegate to" %}</th></tr></thead>
+    <thead><tr><th scope="col" class="num">{% translate "Vote" context "seat table: number of the vote" %}</th><th scope="col">{{ first_name_label }}</th><th scope="col">{{ last_name_label }}</th><th scope="col">{{ email_label }}</th><th scope="col">{{ login_id_label }}</th><th scope="col">{{ delegate_label }}</th></tr></thead>
     {% for seat in form %}
+    {# each field is named by its column and the vote, e.g. "Email, vote 3" #}
     <tr>
-      <td>{{ seat.first_name }}{{ seat.first_name.errors }}</td>
-      <td>{{ seat.last_name }}{{ seat.last_name.errors }}</td>
-      <td>{{ seat.email }}{{ seat.email.errors }}</td>
-      <td>{{ seat.login_id }}{{ seat.login_id.errors }}</td>
-      <td>{{ seat.delegate_to }}{{ seat.delegate_to.errors }}</td>
+      <th scope="row" class="num">{{ forloop.counter }}</th>
+      <td><label class="screen-reader-text" for="{{ seat.first_name.id_for_label }}">{% blocktranslate with field=first_name_label num=forloop.counter %}{{ field }}, vote {{ num }}{% endblocktranslate %}</label>{{ seat.first_name }}{{ seat.first_name.errors }}</td>
+      <td><label class="screen-reader-text" for="{{ seat.last_name.id_for_label }}">{% blocktranslate with field=last_name_label num=forloop.counter %}{{ field }}, vote {{ num }}{% endblocktranslate %}</label>{{ seat.last_name }}{{ seat.last_name.errors }}</td>
+      <td><label class="screen-reader-text" for="{{ seat.email.id_for_label }}">{% blocktranslate with field=email_label num=forloop.counter %}{{ field }}, vote {{ num }}{% endblocktranslate %}</label>{{ seat.email }}{{ seat.email.errors }}</td>
+      <td><label class="screen-reader-text" for="{{ seat.login_id.id_for_label }}">{% blocktranslate with field=login_id_label num=forloop.counter %}{{ field }}, vote {{ num }}{% endblocktranslate %}</label>{{ seat.login_id }}{{ seat.login_id.errors }}</td>
+      <td><label class="screen-reader-text" for="{{ seat.delegate_to.id_for_label }}">{% blocktranslate with field=delegate_label num=forloop.counter %}{{ field }}, vote {{ num }}{% endblocktranslate %}</label>{{ seat.delegate_to }}{{ seat.delegate_to.errors }}</td>
     </tr>
     {% endfor %}
   </table>

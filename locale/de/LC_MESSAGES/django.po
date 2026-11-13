@@ -606,7 +606,7 @@ msgstr "Möchten Sie diesen Stimmzettel wirklich verwerfen und NICHT abgeben?"
 #: helios/templates/election_admin_remove.html:7 helios/templates/election_edit.html:17 helios/templates/election_extend.html:16
 #: helios/templates/election_new.html:18 helios/templates/election_new_guided.html:60 helios/templates/new_trustee.html:39
 #: helios/templates/release_result.html:24 helios/templates/votergroup_memberadd.html:12 helios/templates/votergroup_new.html:14
-#: helios/templates/votergroup_prepareelection.html:37 helios/templates/voters_email.html:70 helios/templates/voters_upload.html:38
+#: helios/templates/votergroup_prepareelection.html:40 helios/templates/voters_email.html:70 helios/templates/voters_upload.html:38
 msgid "cancel"
 msgstr "abbrechen"
 
@@ -1410,7 +1410,7 @@ msgstr "Prüfen Sie Ihre Einstellungen. Nach dem Erstellen der Wahl fügen Sie d
 msgid "Change"
 msgstr "Ändern"
 
-#: helios/templates/election_new_guided.html:49 helios/templates/elections_administered.html:8 helios/templates/votergroup_prepareelection.html:36
+#: helios/templates/election_new_guided.html:49 helios/templates/elections_administered.html:8 helios/templates/votergroup_prepareelection.html:39
 #: helios/templatetags/navigation_tags.py:65 helios/templatetags/navigation_tags.py:66 helios/templatetags/navigation_tags.py:72
 #: helios/templatetags/navigation_tags.py:171 server_ui/templates/index.html:34
 msgid "Create election"
@@ -2946,15 +2946,26 @@ msgstr "Neue Wahl für %(name)s erstellen"
 msgid "One row per vote. A vote can be delegated to another member of the group; the delegated vote is then issued to that member."
 msgstr "Eine Zeile pro Stimme. Eine Stimme kann auf ein anderes Gruppenmitglied übertragen werden; die übertragene Stimme erhält dann dieses Mitglied."
 
-#: helios/templates/votergroup_prepareelection.html:18
+#: helios/templates/votergroup_prepareelection.html:17
 msgid "Delegate to"
 msgstr "Übertragen an"
 
-#: helios/templates/votergroup_prepareelection.html:18
+#: helios/templates/votergroup_prepareelection.html:17
 msgid "Login ID"
 msgstr "Wähler-ID"
 
-#: helios/templates/votergroup_prepareelection.html:31
+#: helios/templates/votergroup_prepareelection.html:19
+msgctxt "seat table: number of the vote"
+msgid "Vote"
+msgstr "Stimme"
+
+#: helios/templates/votergroup_prepareelection.html:24 helios/templates/votergroup_prepareelection.html:25 helios/templates/votergroup_prepareelection.html:26
+#: helios/templates/votergroup_prepareelection.html:27 helios/templates/votergroup_prepareelection.html:28
+#, python-format
+msgid "%(field)s, vote %(num)s"
+msgstr "%(field)s, Stimme %(num)s"
+
+#: helios/templates/votergroup_prepareelection.html:34
 msgid "Election settings"
 msgstr "Wahleinstellungen"
 
@@ -3687,16 +3698,16 @@ msgstr "Die E-Mail-Adresse %(email)s erhält wieder Helios-E-Mails."
 msgid "no spaces, e.g. faculty-council"
 msgstr "ohne Leerzeichen, z. B. fakultaetsrat"
 
-#: helios/votergroup.py:22 helios/templates/votergroup_prepareelection.html:18 helios/templates/votergroup_view.html:19
+#: helios/votergroup.py:22 helios/templates/votergroup_prepareelection.html:17 helios/templates/votergroup_view.html:19
 msgid "First name"
 msgstr "Vorname"
 
-#: helios/votergroup.py:23 helios/templates/votergroup_prepareelection.html:18 helios/templates/votergroup_view.html:19
+#: helios/votergroup.py:23 helios/templates/votergroup_prepareelection.html:17 helios/templates/votergroup_view.html:19
 msgid "Last name"
 msgstr "Nachname"
 
 #: helios/votergroup.py:24 helios/templates/new_trustee.html:20 helios/templates/new_trustee.html:32
-#: helios/templates/votergroup_prepareelection.html:18 helios/templates/votergroup_view.html:19
+#: helios/templates/votergroup_prepareelection.html:17 helios/templates/votergroup_view.html:19
 msgid "Email"
 msgstr "E-Mail"
 
