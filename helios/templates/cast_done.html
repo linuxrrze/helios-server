@@ -18,7 +18,7 @@
   <button type="button" class="button secondary small copy-button" data-copy="vote-hash" hidden>{% translate "Copy" %}</button>
   <span class="muted copy-done" role="status" aria-live="polite"></span>
 </p>
-<p class="muted">{% translate "The tracker is shown in groups of four characters for easier reading; it is one string without spaces. Copying it, the link and the QR code below keep the whole tracker. When you check it, compare all groups." %}</p>
+<p class="muted">{% translate "The tracker is shown in groups of four characters for easier reading; it is one string without spaces. Copying it, the link and the QR code keep the whole tracker. When you check it, compare all groups." %}</p>
 <p>
   {% url "election@voters@list-pretty" election.uuid as voters_url %}{% translate "This ballot tracker mathematically ensures that your ballot is counted." %} {% blocktranslate trimmed %}You can check all ballot trackers by viewing the <a href="{{ voters_url }}">voter list</a>, where your ballot tracker should appear within a few minutes.{% endblocktranslate %}
 </p>

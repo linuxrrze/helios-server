@@ -39,7 +39,7 @@
 <div id="wrapper">
 <div id="banner" class="edge">
   <div style="text-align:center; width: 100%;"><span id="banner_title">Helios Voting Booth</span>
-      <div class="exit"><a id="exit_link" href="javascript:BOOTH.exit();">exit</a></div>
+      <div class="exit"><button type="button" id="exit_link" class="exit-button" onclick="BOOTH.exit();">exit</button></div>
   </div>
 </div>
 <div id="content">
@@ -67,9 +67,9 @@ BOOTH.translate_page = function() {
   var texts = {
     'banner_title': gettext("Helios Voting Booth"),
     'exit_link': gettext("exit"),
-    'progress_1': "(1) " + gettext("Select"),
-    'progress_2': "(2) " + gettext("Review"),
-    'progress_3': "(3) " + gettext("Submit"),
+    'progress_1': gettext("Select"),
+    'progress_2': gettext("Review"),
+    'progress_3': gettext("Submit"),
     'loading_title': gettext("Checking capabilities and loading election booth..."),
     'loading_note': gettext("This may take up to 10 seconds"),
     'processing_title': gettext("Processing..."),
@@ -78,6 +78,17 @@ BOOTH.translate_page = function() {
   };
   for (var id in texts)
     $('#' + id).text(texts[id]);
+  $('#progress_div').attr('aria-label', gettext("Steps of voting"));
+};
+
+// a ballot tracker or fingerprint in groups of four characters; the groups are
+// separate elements without spaces, so copying still gives the exact value
+BOOTH.tracker_html = function(hash) {
+  var html = '';
+  hash = String(hash || '');
+  for (var i = 0; i < hash.length; i += 4)
+    html += '<span class="tracker-group">' + escape_html(hash.substring(i, i + 4)) + '</span>';
+  return html;
 };
 
 // opening tag of the link that selects the audit trail (audit template)
@@ -582,7 +593,8 @@ BOOTH.audit_ballot = function() {
 
 BOOTH.post_audited_ballot = function() {
   $.post(BOOTH.election_url + "/post-audited-ballot", {'audited_ballot': BOOTH.audit_trail}, function(result) {
-    alert(gettext('This audited ballot has been posted.\nRemember, this vote will only be used for auditing and will not be tallied.\nClick "back to voting" and cast a new ballot to make sure your vote counts.'));
+    // shown in the page (role=status) rather than in a popup
+    $('#audit_post_status').addClass('notice').html(escape_html(gettext('This audited ballot has been posted.\nRemember, this vote will only be used for auditing and will not be tallied.\nClick "back to voting" and cast a new ballot to make sure your vote counts.')).replace(/\n/g, '<br />'));
   });
 };
 
@@ -620,18 +632,16 @@ BOOTH.do_done = function() {
 
 </script>
 <div id="page">
-  <div id="progress_div" style="display:none">
-      <table role="presentation">
-          <tr>
-              <td id="progress_1">(1) Select</td>
-              <td id="progress_2">(2) Review</td>
-              <td id="progress_3">(3) Submit</td>
-          </tr>
-      </table>
-  </div>
+  <nav id="progress_div" style="display:none" aria-label="Steps">
+      <ol class="booth-progress">
+          <li id="progress_1">(1) Select</li>
+          <li id="progress_2">(2) Review</li>
+          <li id="progress_3">(3) Submit</li>
+      </ol>
+  </nav>
   <div id="election_div" class="panel">
     <h3 id="loading_title">Checking capabilities and loading election booth...</h3>
-    <div align="center"><img src="loading.gif" /><br /><span id="loading_note">This may take up to 10 seconds</span></div>
+    <div class="panel-centered" role="status"><img src="loading.gif" alt="" /><br /><span id="loading_note">This may take up to 10 seconds</span></div>
   </div>
 
   <div id="error_div" class="panel" style="display: none;">
@@ -651,11 +661,11 @@ BOOTH.do_done = function() {
       <h3 align="center" id="processing_title">Processing....</h3>
   </div>
 
-  <div id="encrypting_div" class="panel" style="display:none;">
-      <h3 align="center"><span id="encrypting_title">Helios is now encrypting your ballot</span><br />
-          <img src="encrypting.gif" /> <span style="font-size:0.7em; display:none;" id="percent_done_container">(<span id="percent_done">0</span>%)</span></h3>
+  <div id="encrypting_div" class="panel" style="display:none;" role="status">
+      <h3 class="panel-centered"><span id="encrypting_title">Helios is now encrypting your ballot</span><br />
+          <img src="encrypting.gif" alt="" /> <span style="display:none;" id="percent_done_container">(<span id="percent_done">0</span>%)</span></h3>
 
-      <p align="center"><b id="encrypting_note">This may take up to two minutes.</b>
+      <p class="panel-centered"><b id="encrypting_note">This may take up to two minutes.</b></p>
   </div>
 
   <div id="seal_div" class="panel">

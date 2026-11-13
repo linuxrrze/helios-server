@@ -239,21 +239,25 @@ msgstr "<b>Wie geht es weiter?</b> %(select_link_start)sMarkieren Sie die Prüfd
 msgid "Once you're satisfied, click the \"back to voting\" button to re-encrypt and cast your ballot."
 msgstr "Wenn Sie zufrieden sind, klicken Sie auf „Zurück zur Stimmabgabe“, um Ihren Stimmzettel erneut zu verschlüsseln und abzugeben."
 
-#: heliosbooth/templates/audit.html:23
+#: heliosbooth/templates/audit.html:19
+msgid "Your ballot audit info"
+msgstr "Ihre Prüfdaten zum Stimmzettel"
+
+#: heliosbooth/templates/audit.html:24
 msgid "Before going back to voting,<br />you can post this audited ballot to the Helios tracking center so that others might double-check the verification of this ballot."
 msgstr "Bevor Sie zur Stimmabgabe zurückkehren,<br />können Sie diesen geprüften Stimmzettel in der Helios-Stimmzettel-Übersicht veröffentlichen, damit andere die Überprüfung dieses Stimmzettels nachvollziehen können."
 
-#: heliosbooth/templates/audit.html:25
+#: heliosbooth/templates/audit.html:26
 msgid "Even if you post your audited ballot, you must go back to voting and choose \"cast\" if you want your vote to count."
 msgstr "Auch wenn Sie Ihren geprüften Stimmzettel veröffentlichen, müssen Sie zur Stimmabgabe zurückkehren und „abgeben“ wählen, damit Ihre Stimme zählt."
-
-#: heliosbooth/templates/audit.html:27
-msgid "back to voting"
-msgstr "Zurück zur Stimmabgabe"
 
 #: heliosbooth/templates/audit.html:29
 msgid "post audited ballot to tracking center"
 msgstr "Geprüften Stimmzettel in der Stimmzettel-Übersicht veröffentlichen"
+
+#: heliosbooth/templates/audit.html:30
+msgid "back to voting"
+msgstr "Zurück zur Stimmabgabe"
 
 #: heliosbooth/templates/election.html:4
 msgid "To vote, follow these steps:"
@@ -275,7 +279,12 @@ msgstr "<b>Senden</b> Sie Ihren verschlüsselten Stimmzettel ab und melden Sie s
 msgid "Start"
 msgstr "Starten"
 
-#: heliosbooth/templates/election.html:18
+#: heliosbooth/templates/election.html:17
+#, python-format
+msgid "The ballot has %(count)s question(s). Your choices are encrypted in this browser; your ballot is cast only in the last step, after you confirm who you are."
+msgstr "Der Stimmzettel hat %(count)s Frage(n). Ihre Auswahl wird in diesem Browser verschlüsselt; abgegeben wird Ihr Stimmzettel erst im letzten Schritt, nachdem Sie sich ausgewiesen haben."
+
+#: heliosbooth/templates/election.html:21
 #, python-format
 msgid "You can <a target=\"_new\" href=\"%(url)s\">email for help</a>."
 msgstr "Sie können <a target=\"_new\" href=\"%(url)s\">per E-Mail um Hilfe bitten</a>."
@@ -342,45 +351,50 @@ msgstr "Stimmzettel überprüfen"
 msgid "Question #%(num)s: %(name)s"
 msgstr "Frage #%(num)s: %(name)s"
 
-#: heliosbooth/templates/seal.html:8
+#: heliosbooth/templates/seal.html:9
 msgid "No choice selected"
 msgstr "Keine Auswahl getroffen"
 
-#: heliosbooth/templates/seal.html:14
+#: heliosbooth/templates/seal.html:16
 #, python-format
 msgid "%(count)s selections out of possible %(min)s-%(max)s"
 msgstr "%(count)s ausgewählt von möglichen %(min)s-%(max)s"
 
-#: heliosbooth/templates/seal.html:16
+#: heliosbooth/templates/seal.html:18
+#, python-format
+msgid "answers to question #%(num)s"
+msgstr "Antworten auf Frage Nr. %(num)s"
+
+#: heliosbooth/templates/seal.html:18
 msgid "change"
 msgstr "ändern"
 
-#: heliosbooth/templates/seal.html:21
+#: heliosbooth/templates/seal.html:23
 #, python-format
 msgid "Your ballot tracker is %(tracker)s."
 msgstr "Ihr Stimmzettel-Tracker lautet %(tracker)s."
 
-#: heliosbooth/templates/seal.html:23
+#: heliosbooth/templates/seal.html:25
 msgid "Your ballot is now encrypted, but it has not been cast yet. In the next step you confirm who you are and cast it."
 msgstr "Ihr Stimmzettel ist jetzt verschlüsselt, aber noch nicht abgegeben. Im nächsten Schritt bestätigen Sie, wer Sie sind, und geben ihn ab."
 
-#: heliosbooth/templates/seal.html:26
+#: heliosbooth/templates/seal.html:28
 msgid "Proceed to Login"
 msgstr "Weiter zur Anmeldung"
 
-#: heliosbooth/templates/seal.html:40 heliosbooth/templates/seal.html:47
+#: heliosbooth/templates/seal.html:42 heliosbooth/templates/seal.html:49
 msgid "Spoil & Audit"
 msgstr "Verwerfen & prüfen"
 
-#: heliosbooth/templates/seal.html:40
+#: heliosbooth/templates/seal.html:42
 msgid "optional"
 msgstr "optional"
 
-#: heliosbooth/templates/seal.html:42
+#: heliosbooth/templates/seal.html:44
 msgid "If you choose, you can spoil this ballot and reveal how your choices were encrypted. This is an optional auditing process."
 msgstr "Wenn Sie möchten, können Sie diesen Stimmzettel verwerfen und offenlegen, wie Ihre Auswahl verschlüsselt wurde. Diese Prüfung ist optional."
 
-#: heliosbooth/templates/seal.html:45
+#: heliosbooth/templates/seal.html:47
 msgid "You will then be guided to re-encrypt your choices for final casting."
 msgstr "Anschließend werden Sie angeleitet, Ihre Auswahl für die endgültige Abgabe erneut zu verschlüsseln."
 
@@ -463,7 +477,7 @@ msgstr "Browserfunktionen werden geprüft und die Wahlkabine wird geladen..."
 msgid "This may take up to 10 seconds"
 msgstr "Dies kann bis zu 10 Sekunden dauern"
 
-#: heliosbooth/vote.html:75 heliosbooth/vote.html:413 heliosbooth/templates/seal.html:26
+#: heliosbooth/vote.html:75 heliosbooth/vote.html:424 heliosbooth/templates/seal.html:28
 msgid "Processing..."
 msgstr "Wird verarbeitet..."
 
@@ -475,29 +489,33 @@ msgstr "Helios verschlüsselt jetzt Ihren Stimmzettel"
 msgid "This may take up to two minutes."
 msgstr "Dies kann bis zu zwei Minuten dauern."
 
-#: heliosbooth/vote.html:113
+#: heliosbooth/vote.html:81
+msgid "Steps of voting"
+msgstr "Schritte der Stimmabgabe"
+
+#: heliosbooth/vote.html:124
 msgid "If you leave this page with an in-progress ballot, your ballot will be lost."
 msgstr "Wenn Sie diese Seite mit einem nicht abgegebenen Stimmzettel verlassen, geht Ihr Stimmzettel verloren."
 
-#: heliosbooth/vote.html:123
+#: heliosbooth/vote.html:134
 msgid "Are you sure you want to exit the booth and lose all information about your current ballot?"
 msgstr "Möchten Sie die Wahlkabine wirklich verlassen? Alle Angaben zu Ihrem aktuellen Stimmzettel gehen dabei verloren."
 
-#: heliosbooth/vote.html:284
+#: heliosbooth/vote.html:295
 #, python-format
 msgid "You need to select at least %(min)s answer(s)."
 msgstr "Sie müssen mindestens %(min)s Antwort(en) auswählen."
 
-#: heliosbooth/vote.html:398
+#: heliosbooth/vote.html:409
 msgid "Maximum number of options selected.<br />To change your selection, please de-select a current selection first."
 msgstr "Die maximale Anzahl an Antworten ist ausgewählt.<br />Um Ihre Auswahl zu ändern, heben Sie bitte zuerst eine bestehende Auswahl auf."
 
-#: heliosbooth/vote.html:407
+#: heliosbooth/vote.html:418
 #, python-format
 msgid "You may select up to %(max)s choices total."
 msgstr "Sie können insgesamt bis zu %(max)s Antworten auswählen."
 
-#: heliosbooth/vote.html:543
+#: heliosbooth/vote.html:554
 #, python-format
 msgid ""
 "there appears to be a problem with the encryption process.\n"
@@ -506,7 +524,7 @@ msgstr ""
 "Bei der Verschlüsselung ist offenbar ein Problem aufgetreten.\n"
 "Bitte schreiben Sie eine E-Mail an %(email)s und geben Sie an, dass die Verschlüsselung bei %(percent)s stehen geblieben ist."
 
-#: heliosbooth/vote.html:585
+#: heliosbooth/vote.html:597
 msgid ""
 "This audited ballot has been posted.\n"
 "Remember, this vote will only be used for auditing and will not be tallied.\n"
@@ -516,7 +534,7 @@ msgstr ""
 "Denken Sie daran: Diese Stimme dient nur der Prüfung und wird nicht ausgezählt.\n"
 "Klicken Sie auf „Zurück zur Stimmabgabe“ und geben Sie einen neuen Stimmzettel ab, damit Ihre Stimme zählt."
 
-#: heliosbooth/vote.html:614
+#: heliosbooth/vote.html:626
 #, python-format
 msgid "Your ballot tracker for %(name)s: %(tracker)s"
 msgstr "Ihr Stimmzettel-Tracker für %(name)s: %(tracker)s"

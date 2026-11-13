@@ -1,24 +1,26 @@
 <h2 id="review_heading" tabindex="-1">{gettext("Review your Ballot")}</h2>
 
-<div class="review-box">
+<ol class="review-list">
 {#foreach $T.questions as question}
-
-{BOOTH.fmt(gettext("Question #%(num)s: %(name)s"), 'num', $T.question$index + 1, 'name', $T.question.short_name)}<br>
+<li class="review-question">
+<p class="review-question-title">{BOOTH.fmt(gettext("Question #%(num)s: %(name)s"), 'num', $T.question$index + 1, 'name', $T.question.short_name)}</p>
+<ul class="review-choices">
 {#if $T.choices[$T.question$index].length == 0}
-<div class="review-choice review-none">&#x2610; <b><i>{gettext("No choice selected")}</i></b></div>
+<li class="review-choice review-none"><span aria-hidden="true">&#x2610;</span> <i>{gettext("No choice selected")}</i></li>
 {#/if}
 {#foreach $T.choices[$T.question$index] as choice}
-<div class="review-choice">&#x2713; <b>{$T.choice}</b></div>
+<li class="review-choice"><span aria-hidden="true">&#x2713;</span> <b>{$T.choice}</b></li>
 {#/for}
+</ul>
 {#if $T.choices[$T.question$index].length < $T.question.max}
-[{BOOTH.fmt(gettext("%(count)s selections out of possible %(min)s-%(max)s"), 'count', $T.choices[$T.question$index].length, 'min', $T.question.min, 'max', $T.question.max)}]<br />
+<p class="review-count">{BOOTH.fmt(gettext("%(count)s selections out of possible %(min)s-%(max)s"), 'count', $T.choices[$T.question$index].length, 'min', $T.question.min, 'max', $T.question.max)}</p>
 {#/if}
-<button type="button" class="link" onclick="BOOTH.show_question({$T.question$index});">{gettext("change")}</button>
-{#if !$T.question$last}<br><br>{#/if}
+<button type="button" class="link" onclick="BOOTH.show_question({$T.question$index});">{gettext("change")}<span class="screen-reader-text"> {BOOTH.fmt(gettext("answers to question #%(num)s"), 'num', $T.question$index + 1)}</span></button>
+</li>
 {#/for}
-</div>
+</ol>
 
-<p>{BOOTH.fmt(gettext("Your ballot tracker is %(tracker)s."), 'tracker', '<tt class="tracker">' + $T.encrypted_vote_hash + '</tt>')}</p>
+<p>{BOOTH.fmt(gettext("Your ballot tracker is %(tracker)s."), 'tracker', '<tt class="tracker" translate="no">' + BOOTH.tracker_html($T.encrypted_vote_hash) + '</tt>')}</p>
 
 <p class="not-cast-yet">{gettext("Your ballot is now encrypted, but it has not been cast yet. In the next step you confirm who you are and cast it.")}</p>
 
