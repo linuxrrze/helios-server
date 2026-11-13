@@ -8,6 +8,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.http import HttpResponseRedirect
 from django.urls import re_path
+from django.utils.translation import gettext as _, gettext_lazy
 
 from helios_auth import url_names
 from helios_auth.utils import format_recipient, same_site_path
@@ -34,8 +35,8 @@ def create_user(username, password, name = None):
   user.save()
 
 class LoginForm(forms.Form):
-  username = forms.CharField(max_length=50)
-  password = forms.CharField(widget=forms.PasswordInput(), max_length=100)
+  username = forms.CharField(max_length=50, label=gettext_lazy('Username'))
+  password = forms.CharField(widget=forms.PasswordInput(), max_length=100, label=gettext_lazy('Password'))
 
 def password_check(user, password):
   return (user and user.info['password'] == password)
@@ -72,7 +73,7 @@ def password_login_view(request):
           return HttpResponseRedirect(reverse(url_names.AUTH_AFTER))
       except User.DoesNotExist:
         pass
-      error = 'Bad Username or Password'
+      error = _('Bad Username or Password')
   
   return render_template(request, 'password/login', {'form': form, 'error': error})
     
@@ -96,21 +97,21 @@ def password_forgotten_view(request):
     try:
       user = User.get_by_type_and_id('password', username)
     except User.DoesNotExist:
-      return render_template(request, 'password/forgot', {'return_url': request.GET.get('return_url', ''), 'error': 'no such username'})
+      return render_template(request, 'password/forgot', {'return_url': request.GET.get('return_url', ''), 'error': _('no such username')})
     
-    body = """
+    body = _("""
 
 This is a password reminder:
 
-Your username: %s
-Your password: %s
+Your username: %(username)s
+Your password: %(password)s
 
 --
-%s
-""" % (user.user_id, user.info['password'], settings.SITE_TITLE)
+%(site_title)s
+""") % {'username': user.user_id, 'password': user.info['password'], 'site_title': settings.SITE_TITLE}
 
     # FIXME: make this a task
-    send_mail('password reminder', body, settings.SERVER_EMAIL, [format_recipient(user.info['name'], user.info['email'])], fail_silently=False)
+    send_mail(_('password reminder'), body, settings.SERVER_EMAIL, [format_recipient(user.info['name'], user.info['email'])], fail_silently=False)
     
     return HttpResponseRedirect(return_url)
   

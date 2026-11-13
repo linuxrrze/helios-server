@@ -8,3 +8,6 @@ venv*
 env.sh
 .cache
 .idea/
+# real configuration with secrets (deploy/docker-compose.yml)
+.env
+deploy/.env

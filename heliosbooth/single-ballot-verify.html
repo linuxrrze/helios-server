@@ -5,6 +5,12 @@
   <meta charset="UTF-8">
 
   <title>Helios Voting System</title>
+  <!-- translations (gettext, ngettext, interpolate); must come before all other scripts -->
+  <script language="javascript" src="/jsi18n/"></script>
+  <script language="javascript">
+    // language of the served translation catalog
+    document.documentElement.lang = pgettext("HTML lang attribute, the language code of this translation", "en");
+  </script>
   <link rel="stylesheet" type="text/css" href="css/booth.css" />
   <link rel="stylesheet" type="text/css" href="css/forms.css" />
   <script language="javascript" src="js/jscrypto/jsbn.js"></script>
@@ -32,7 +38,26 @@
 </head>
 <body>
 <script language="javascript">
+// translate the static text of this page
+function translate_page() {
+  document.title = gettext("Helios Voting System");
+  var texts = {
+    'verifier_title': gettext("Helios Single-Ballot Verifier"),
+    'verifier_loading': gettext("Loading verifier..."),
+    'dummy_bigint': gettext("Your browser does not have the Java plugin installed.") + "<br /><br />" +
+                    gettext("At this time, the Java plugin is required for browser-based ballot auditing, although it is not required for ballot preparation."),
+    'verifier_intro': gettext("This single-ballot verifier lets you enter an audited ballot<br />and verify that it was prepared correctly."),
+    'election_url_label': gettext("Enter the Election URL:"),
+    'ballot_label': gettext("Your Ballot:")
+  };
+  for (var id in texts)
+    $('#' + id).html(texts[id]);
+  $('#verify_button').val(gettext("Verify"));
+}
+
 $(document).ready(function() {
+    translate_page();
+
     BigInt.setup(function() {
        $('#verifier_loading').hide();
 
@@ -56,11 +81,11 @@ function result_append(str) {
 function verify_single_ballot(election_url, audit_trail) {
   var encrypted_vote_json = jQuery.secureEvalJSON(audit_trail);
   
-  result_append("loading election...");
+  result_append(gettext("loading election..."));
 
   // quick and dirty detection of cast ballot
   if (encrypted_vote_json['cast_at']) {
-    result_append("\n\nIt looks like you are trying to verify a cast ballot. That can't be done, only audited ballots can be verified.");
+    result_append("\n\n" + gettext("It looks like you are trying to verify a cast ballot. That can't be done, only audited ballots can be verified."));
     return;
   }
   
@@ -72,9 +97,9 @@ function verify_single_ballot(election_url, audit_trail) {
     $('#loading').hide();
     
     if (overall_result) {
-       result_append('SUCCESSFUL VERIFICATION, DONE!');
+       result_append(gettext('SUCCESSFUL VERIFICATION, DONE!'));
     } else {
-       result_append('PROBLEM - THIS BALLOT DOES NOT VERIFY.');        
+       result_append(gettext('PROBLEM - THIS BALLOT DOES NOT VERIFY.'));
     }
   };
 
@@ -99,11 +124,11 @@ function verify_single_ballot(election_url, audit_trail) {
       after_computation(overall_result);
     }
   }, error: function() {
-      result_append('PROBLEM LOADING election. Are you sure you have the right election URL?<br />');
+      result_append(gettext('PROBLEM LOADING election. Are you sure you have the right election URL?') + '<br />');
 
       $('#loading').hide();
       
-      result_append('PROBLEM - THIS BALLOT DOES NOT VERIFY.');        
+      result_append(gettext('PROBLEM - THIS BALLOT DOES NOT VERIFY.'));
   }
   });
 }
@@ -112,7 +137,7 @@ function verify_single_ballot(election_url, audit_trail) {
 </head>
 <body>
 <div id="wrapper">
-<h2 style="padding-left: 10px;">Helios Single-Ballot Verifier</h2>
+<h2 style="padding-left: 10px;" id="verifier_title">Helios Single-Ballot Verifier</h2>
 <div id="content">
 
 <div id="verifier_loading">
@@ -125,21 +150,21 @@ At this time, the Java plugin is required for browser-based ballot auditing, alt
 </div>
 
 <div id="verifier" style="display:none;">
-<p style="font-size: 16pt;">
+<p style="font-size: 16pt;" id="verifier_intro">
     This single-ballot verifier lets you enter an audited ballot<br />and verify that it was prepared correctly.
 </p>
 
 <form onsubmit="try {verify_single_ballot(this.election_url.value, this.audit_trail.value);} catch (e) {E = e;} return false;">
-Enter the Election URL:
+<span id="election_url_label">Enter the Election URL:</span>
     <input type="text" size="50" name="election_url" id="election_url" /><br />
 
-<p>
+<p id="ballot_label">
 Your Ballot:
 </p>
 
 <textarea name="audit_trail" cols="80" rows="7">
 </textarea><br /><br />
-<input type="submit" class="pretty" value="Verify" />
+<input type="submit" class="pretty" value="Verify" id="verify_button" />
 </form>
 
 <br /><br />

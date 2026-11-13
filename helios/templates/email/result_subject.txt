@@ -1,1 +1,1 @@
-Tally Released - {{custom_subject|safe}}
+{% load i18n %}{% blocktranslate trimmed with subject=custom_subject|safe %}Tally Released - {{ subject }}{% endblocktranslate %}

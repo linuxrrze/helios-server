@@ -1,5 +1,6 @@
 {% extends 'server_ui/templates/base.html' %}
-{% block title %}Confirm Vote{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Confirm Vote" %}{% endblock %}
 
 {% block content %}
 <script language="javascript">
@@ -12,38 +13,43 @@ function show_waiting() {
   $('#waiting_div').show();
 }
 </script>
-<h1>Confirm your Vote</h1>
+
+<h1>{% translate "Confirm your vote" %}</h1>
 
 {% if error %}
-<p style="color: red;">{{error}}</p>
+<div class="alert alert-warning">
+    {{error}}
+</div>
 {% endif %}
 
-<h3>Your Ballot</h3>
 
-<p style="font-size:1.6em;">
-    <tt>{{vote_fingerprint}}</tt>
+<h2>{% translate "Your vote" %}</h2>
+
+<p>
+    <em>{{vote_fingerprint}}</em>
 </p>
 
 <div id="cast_div">
-<h3>Cast Your Ballot with your Credentials</h3>
+<p>{% translate "Please confirm your vote with your security token" %}</p>
 
 <form method="post" onsubmit="show_waiting();" action="">
     <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
 
 <table>
 {{form.as_table}}
-</table><br />
+</table>
 
-    <input type="submit" value="cast this ballot" /><br /><br />
+    <input type="submit" value="{% translate "Vote now" %}" /><br /><br />
 </form>
-
+<!--
 <p>
     Forgot your password? <a href="{% url "auth@password@forgotten" %}?return_url={% url "election@cast-confirm" %}">Have it emailed to you</a>.<br />(don't worry, we won't forget your vote).
 </p>
+-->
 </div>
 
 <div id="waiting_div" align="center">
-  Verifying and Casting your ballot<br />
+  {% translate "Your voting token is being verified" %}<br />
   <img src="/static/helios/loading.gif" />
 </div>
 

@@ -1,0 +1,8 @@
+{% load i18n %}{% get_current_language as CURRENT_LANGUAGE %}{% get_available_languages as AVAILABLE_LANGUAGES %}
+<form class="language-switcher" action="{% url "set_language" %}" method="post">
+  {# changing the language is harmless; the token only keeps every POST form uniform (test_csrf_smoke) #}
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+  {% for code, name in AVAILABLE_LANGUAGES %}{% if code != CURRENT_LANGUAGE %}
+  {% get_language_info for code as language %}<button type="submit" name="language" value="{{ code }}" lang="{{ code }}">{{ language.name_local }}</button>
+  {% endif %}{% endfor %}
+</form>

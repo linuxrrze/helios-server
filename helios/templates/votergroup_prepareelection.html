@@ -1,0 +1,37 @@
+{% extends TEMPLATE_BASE %}
+{% load i18n %}
+{% block title %}{{group.short_name}} &mdash; {% translate "new election" %}{% endblock %}
+{% block content %}
+<h2 class="title">{% blocktranslate trimmed with name=group.short_name %}Create a new election for {{name}}{% endblocktranslate %}</h2>
+
+{% if error %}<p class="error" style="color: red;">{{error}}</p>{% endif %}
+{% if form.non_form_errors %}<div class="error" style="color: red;">{{form.non_form_errors}}</div>{% endif %}
+
+<form class="prettyform" action="" method="POST" id="create_election_form">
+  {{ form.management_form }}
+  <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
+
+  <h3>{% translate "Voters" %}</h3>
+  <p>{% translate "One row per vote. A vote can be delegated to another member of the group; the delegated vote is then issued to that member." %}</p>
+  <table class="pretty">
+    <tr><th>{% translate "First name" %}</th><th>{% translate "Last name" %}</th><th>{% translate "Email" %}</th><th>{% translate "Login ID" %}</th><th>{% translate "Delegate to" %}</th></tr>
+    {% for seat in form %}
+    <tr>
+      <td>{{ seat.first_name }}{{ seat.first_name.errors }}</td>
+      <td>{{ seat.last_name }}{{ seat.last_name.errors }}</td>
+      <td>{{ seat.email }}{{ seat.email.errors }}</td>
+      <td>{{ seat.login_id }}{{ seat.login_id.errors }}</td>
+      <td>{{ seat.delegate_to }}{{ seat.delegate_to.errors }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  <h3>{% translate "Election settings" %}</h3>
+  <table class="pretty">
+    {{electionform.as_table}}
+  </table>
+  <div><label for="">&nbsp;</label><input type="submit" value="{% translate "Create election &gt;&gt;" %}" id="next_button" /></div>
+</form>
+
+<a href="{% url "votergroup@view" group.uuid %}">{% translate "Back to group" %}</a>
+{% endblock %}

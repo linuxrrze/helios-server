@@ -1,6 +1,7 @@
 {% extends TEMPLATE_BASE %}
+{% load i18n %}
 
-{% block title %}Contact Voters for {{election.name}}{% endblock %}
+{% block title %}{% blocktranslate trimmed with name=election.name %}Contact Voters for {{name}}{% endblocktranslate %}{% endblock %}
 {% block content %}
 <script>
 var voter_id = null;
@@ -9,16 +10,16 @@ voter_id = '{{voter.voter_id}}';
 {% endif %}
 </script>
 
-  <h2 class="title">{{election.name}} &mdash; Contact Voters <span style="font-size:0.7em;">[<a href="{% url "election@view" election.uuid %}">back to election</a>]</span></h2>
+  <h2 class="title">{{election.name}} &mdash; {% translate "Contact Voters" %} <span style="font-size:0.7em;">[<a href="{% url "election@view" election.uuid %}">{% translate "back to election" %}</a>]</span></h2>
 
 {% if voter %}  
   <p>
-    You are sending this email to a specific user: <b>{{voter.name}} ({{voter.voter_id}})</b>
+    {% blocktranslate trimmed with name=voter.name voter_id=voter.voter_id %}You are sending this email to a specific user: <b>{{name}} ({{voter_id}})</b>{% endblocktranslate %}
   </p>
 {% endif %}
 
 <p>
-<b>Templates</b>:
+<b>{% translate "Templates" %}</b>:
 
 {% for template_option in templates %}
 {% if template_option.0 == template %}
@@ -30,17 +31,17 @@ voter_id = '{{voter.voter_id}}';
 {% endfor %}
 
 <p>
-<b>Preview</b>: each voter receives this email, with the fields in angle brackets filled in for them.
+{% translate "<b>Preview</b>: each voter receives this email, with the fields in angle brackets filled in for them." %}
 </p>
 
 <pre style="margin:10px; border: 1px solid #888; padding:20px">
-Subject: {{default_subject|force_escape}}
+{% translate "Subject:" %} {{default_subject|force_escape}}
 
 {{default_body|force_escape}}
 </pre>
 
 <p>
-You may tweak the subject and add a custom message using the form below. Your message appears where <tt>&lt;BODY&gt;</tt> is shown above. Don't paste the preview into it.
+{% translate "You may tweak the subject and add a custom message using the form below. Your message appears where <tt>&lt;BODY&gt;</tt> is shown above. Don't paste the preview into it." %}
 </p>
 
   <form class="prettyform" action="" method="POST" id="email_form">
@@ -51,7 +52,7 @@ You may tweak the subject and add a custom message using the form below. Your me
      {{email_form.as_table}}
      </table>
   <div>
-  <label for="">&nbsp;</label><input type="submit" value="Send" id="send_button" class="button" />
+  <label for="">&nbsp;</label><input type="submit" value="{% translate "Send" %}" id="send_button" class="button" />
   </div>
   </form>
   
@@ -59,11 +60,11 @@ You may tweak the subject and add a custom message using the form below. Your me
   </div>
   
   <div id="done" style="display:none;">
-    Done, go <a href="{% url "election@view" election.uuid %}">back to election</a>.
+    {% url "election@view" election.uuid as election_view_url %}{% blocktranslate trimmed with url=election_view_url %}Done, go <a href="{{url}}">back to election</a>.{% endblocktranslate %}
   </div>
 
   <div id="error" style="display:none;">
-    Error emailing participants. Check server settings, make sure there's an SMTP server.
+    {% translate "Error emailing participants. Check server settings, make sure there's an SMTP server." %}
   </div>
 
 {% endblock %}

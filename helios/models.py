@@ -15,6 +15,8 @@ import nh3
 from django.conf import settings
 from django.db import models, transaction
 from django.utils.html import format_html, format_html_join
+from django.utils import translation
+from django.utils.translation import gettext as _, gettext_lazy, ngettext
 from validate_email import validate_email
 
 from helios import datatypes
@@ -74,8 +76,8 @@ class Election(HeliosModel):
   name = models.CharField(max_length=250)
 
   ELECTION_TYPES = (
-    ('election', 'Election'),
-    ('referendum', 'Referendum')
+    ('election', gettext_lazy('Election')),
+    ('referendum', gettext_lazy('Referendum'))
     )
 
   election_type = models.CharField(max_length=250, null=False, default='election', choices = ELECTION_TYPES)
@@ -394,7 +396,7 @@ class Election(HeliosModel):
   @property
   def pretty_eligibility(self):
     if not self.eligibility:
-      return "Anyone can vote."
+      return _("Anyone can vote.")
     else:
       items = []
 
@@ -403,7 +405,7 @@ class Election(HeliosModel):
           for one_constraint in constraint['constraint']:
             items.append((AUTH_SYSTEMS[constraint['auth_system']].pretty_eligibility(one_constraint),))
         else:
-          items.append((" any %s user" % constraint['auth_system'],))
+          items.append((" " + _("any %(auth_system)s user") % {'auth_system': constraint['auth_system']},))
 
       return format_html("<ul>{}</ul>", format_html_join("", "<li>{}</li>", items))
 
@@ -443,27 +445,27 @@ class Election(HeliosModel):
     if self.questions is None or len(self.questions) == 0:
       issues.append(
         {'type': 'questions',
-         'action': "add questions to the ballot"}
+         'action': _("add questions to the ballot")}
         )
 
     trustees = Trustee.get_by_election(self)
     if len(trustees) == 0:
       issues.append({
           'type': 'trustees',
-          'action': "add at least one trustee"
+          'action': _("add at least one trustee")
           })
 
     for t in trustees:
       if t.public_key is None:
         issues.append({
             'type': 'trustee keypairs',
-            'action': 'have trustee %s generate a keypair' % t.name
+            'action': _('have trustee %(name)s generate a keypair') % {'name': t.name}
             })
 
     if self.voter_set.count() == 0 and not self.openreg:
       issues.append({
           "type" : "voters",
-          "action" : 'enter your voter list (or open registration to the public)'
+          "action" : _('enter your voter list (or open registration to the public)')
           })
 
     return issues
@@ -481,7 +483,8 @@ class Election(HeliosModel):
       cutoff_date = datetime.datetime.utcnow() - datetime.timedelta(weeks=settings.HELIOS_VOTER_EMAIL_CUTOFF_WEEKS)
       if self.tallying_finished_at < cutoff_date:
         weeks = settings.HELIOS_VOTER_EMAIL_CUTOFF_WEEKS
-        return (False, f"Election was tallied more than {weeks} week{'s' if weeks != 1 else ''} ago")
+        return (False, ngettext("Election was tallied more than %(weeks)s week ago",
+                                  "Election was tallied more than %(weeks)s weeks ago", weeks) % {'weeks': weeks})
 
     # Add more reasons here in the future
 
@@ -496,10 +499,10 @@ class Election(HeliosModel):
     as changing voters after vote counting would compromise election integrity.
     """
     if self.encrypted_tally:
-      return (False, "Election has been tallied")
+      return (False, _("Election has been tallied"))
 
     if self.tallying_started_at:
-      return (False, "Tallying has started")
+      return (False, _("Tallying has started"))
 
     return (True, None)
 
@@ -576,14 +579,6 @@ class Election(HeliosModel):
       voters_json = utils.to_json([v.toJSONDict() for v in voters])
       self.voters_hash = hash_b64(voters_json)
 
-  def increment_voters(self):
-    ## FIXME
-    return 0
-
-  def increment_cast_votes(self):
-    ## FIXME
-    return 0
-
   def voter_auth_systems(self):
     """
     The auth systems this election's voters can log in with, in AUTH_ENABLED_SYSTEMS
@@ -657,7 +652,6 @@ class Election(HeliosModel):
     thus a helios-based trustee
     :type params: Cryptosystem
     """
-    # FIXME: generate the keypair
     keypair = params.generate_keypair()
 
     # create the trustee
@@ -850,7 +844,8 @@ class VoterFile(models.Model):
       voter_id = voter_fields[1].strip()
 
       if not voter_type in AUTH_SYSTEMS:
-        raise Exception("invalid voter type '%s' for voter id '%s', available voter types are %s" % (voter_type, voter_id, ",".join(AUTH_SYSTEMS.keys())))
+        raise Exception(_("invalid voter type '%(voter_type)s' for voter id '%(voter_id)s', available voter types are %(voter_types)s") % {
+          'voter_type': voter_type, 'voter_id': voter_id, 'voter_types': ",".join(AUTH_SYSTEMS.keys())})
 
       # default to having email be the same as voter_id
       voter_email = voter_id
@@ -858,7 +853,7 @@ class VoterFile(models.Model):
         # but if it's supplied, it will be the 3rd field.
         voter_email = voter_fields[2].strip()
       if voter_type == "password" and not validate_email(voter_email):
-        raise Exception("invalid voter email '%s' for voter id '%s'" % (voter_email, voter_id))
+        raise Exception(_("invalid voter email '%(voter_email)s' for voter id '%(voter_id)s'") % {'voter_email': voter_email, 'voter_id': voter_id})
 
       # same thing for voter display name.
       voter_name = voter_email
@@ -932,7 +927,7 @@ class VoterFile(models.Model):
     # Notify admin if there were opted-out voters
     if opted_out_voters:
         from . import tasks
-        tasks.notify_admin_opted_out_voters.enqueue(self.election.id, opted_out_voters)
+        tasks.notify_admin_opted_out_voters.enqueue(self.election.id, opted_out_voters, language=translation.get_language())
 
     # report the voters actually added: rows for voters already on the list, or
     # who opted out of Helios emails, are skipped and shouldn't be counted as loaded
@@ -945,12 +940,6 @@ class VoterFile(models.Model):
 
 class Voter(HeliosModel):
   election = models.ForeignKey(Election, on_delete=models.CASCADE)
-
-  # let's link directly to the user now
-  # FIXME: delete this as soon as migrations are set up
-  #name = models.CharField(max_length = 200, null=True)
-  #voter_type = models.CharField(max_length = 100)
-  #voter_id = models.CharField(max_length = 100)
 
   uuid = models.CharField(max_length=50, db_index=True)
 
@@ -1441,3 +1430,47 @@ class SiteAnnouncement(models.Model):
   @classmethod
   def set_text(cls, text):
     cls.objects.update_or_create(pk=1, defaults={'text': text})
+
+
+##
+## Voter groups
+##
+## A voter group is a reusable list of people with a number of votes each
+## (e.g. a council where some members hold several mandates). From a group,
+## an administrator can create an election with one password voter per vote.
+##
+
+class VoterGroup(HeliosModel):
+  admin = models.ForeignKey(User, on_delete=models.CASCADE)
+  uuid = models.CharField(max_length=50, unique=True)
+  short_name = models.CharField(max_length=100)
+  created_at = models.DateTimeField(auto_now_add=True)
+
+  class Meta:
+    app_label = 'helios'
+    constraints = [
+      models.UniqueConstraint(fields=['admin', 'short_name'], name='votergroup_unique_short_name_per_admin'),
+    ]
+
+  @classmethod
+  def get_by_user_as_admin(cls, user):
+    return cls.objects.filter(admin=user).order_by('-created_at')
+
+  def get_members(self):
+    return self.votergroupmember_set.order_by('last_name', 'first_name', 'id')
+
+
+class VoterGroupMember(HeliosModel):
+  group = models.ForeignKey(VoterGroup, on_delete=models.CASCADE)
+  uuid = models.CharField(max_length=50, unique=True)
+  first_name = models.CharField(max_length=100)
+  last_name = models.CharField(max_length=100)
+  email = models.EmailField(max_length=100)
+  votes = models.IntegerField(default=1)
+
+  class Meta:
+    app_label = 'helios'
+
+  @property
+  def full_name(self):
+    return "%s %s" % (self.first_name, self.last_name)

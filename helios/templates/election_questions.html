@@ -1,9 +1,12 @@
 {% extends "helios/templates/cryptobase.html" %}
+{% load i18n %}
 
-{% block title %}Questions for {{election.name}}{% endblock %}
+{% block title %}{% blocktranslate trimmed with name=election.name %}Questions for {{name}}{% endblocktranslate %}{% endblock %}
 {% block content %}
-  <h3 class="title">{{election.name}} &mdash; Questions <span style="font-size:0.7em;">[<a href="{% url "election@view" election.uuid %}">back to election</a>]</span></h3>
+  <h3 class="title">{{election.name}} &mdash; {% translate "Questions" %} <span style="font-size:0.7em;">[<a href="{% url "election@view" election.uuid %}">{% translate "back to election" %}</a>]</span></h3>
 
+  {# translations for the question editor (static_templates/question.html) #}
+  <script src="{% url "javascript-catalog" %}"></script>
   <script language="javascript">
 {% if election.questions %}
   QUESTIONS = JSON.parse("{{questions_json|escapejs}}");
@@ -33,15 +36,15 @@
     answer_url = answer_url || '';
     
     var required_attr = answer_num === 1 ? 'required' : '';
-    var placeholder = answer_num === 1 ? 'Enter answer option' : 'Enter answer option (optional)';
+    var placeholder = answer_num === 1 ? '{% filter escapejs %}{% translate "Enter answer option" %}{% endfilter %}' : '{% filter escapejs %}{% translate "Enter answer option (optional)" %}{% endfilter %}';
     var escaped_answer = escapeAttr(answer_text);
     var escaped_url = escapeAttr(answer_url);
     var has_url = answer_url.length > 0;
     var url_display = has_url ? 'flex' : 'none';
-    var toggle_text = has_url ? '- Hide link' : '+ Add link';
+    var toggle_text = has_url ? '{% filter escapejs %}{% translate "- Hide link" %}{% endfilter %}' : '{% filter escapejs %}{% translate "+ Add link" %}{% endfilter %}';
     
     return '<div class="answer-row">' +
-      '<div class="answer-number">Answer #' + answer_num + 
+      '<div class="answer-number">' + '{% filter escapejs %}{% blocktranslate with num="__NUM__" %}Answer #{{num}}{% endblocktranslate %}{% endfilter %}'.replace('__NUM__', answer_num) + 
         '<span class="url-toggle" onclick="toggle_url(this, ' + answer_num + ')">' +
           '<span>' + toggle_text + '</span>' +
         '</span>' +
@@ -64,7 +67,7 @@
   function save_questions(callback) {
       $.post('./save_questions', {'questions_json' : $.toJSON(QUESTIONS), 'csrf_token': CSRF_TOKEN}, function(result) {
           if (result == "FAILURE") {
-            alert("The questions could not be saved. Please check that the URLs you entered are either http:// or https://");
+            alert("{% filter escapejs %}{% translate "The questions could not be saved. Please check that the URLs you entered are either http:// or https://" %}{% endfilter %}");
           } else {
             callback();
           }
@@ -100,7 +103,7 @@
       // Check for gaps in answers (empty answers before the last valid one)
       for (var k = 0; k <= last_valid_index; k++) {
           if (all_answers[k] === '') {
-              alert('Please fill in all answer fields up to answer #' + (last_valid_index + 1) + '. You cannot skip answer #' + (k + 1) + '.');
+              alert('{% filter escapejs %}{% blocktranslate with last="__LAST__" skipped="__SKIPPED__" %}Please fill in all answer fields up to answer #{{last}}. You cannot skip answer #{{skipped}}.{% endblocktranslate %}{% endfilter %}'.replace('__LAST__', last_valid_index + 1).replace('__SKIPPED__', k + 1));
               return null;
           }
       }
@@ -112,7 +115,7 @@
       }
       
       if (new_q.answers.length == 0) {
-        alert('Please enter at least one answer option.');
+        alert('{% filter escapejs %}{% translate "Please enter at least one answer option." %}{% endfilter %}');
         return null;
       }
       
@@ -187,10 +190,10 @@
     var wrapper = $('#url_wrapper_' + num);
     if (wrapper.is(':visible')) {
       wrapper.hide();
-      $(element).find('span').text('+ Add link');
+      $(element).find('span').text('{% filter escapejs %}{% translate "+ Add link" %}{% endfilter %}');
     } else {
       wrapper.show();
-      $(element).find('span').text('- Hide link');
+      $(element).find('span').text('{% filter escapejs %}{% translate "- Hide link" %}{% endfilter %}');
     }
   }
 

@@ -4,6 +4,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta charset="UTF-8">
   <title>Helios Voting Booth</title>
+  <!-- translations (gettext, ngettext, interpolate); must come before all other scripts -->
+  <script language="javascript" src="/jsi18n/"></script>
   <link rel="stylesheet" type="text/css" href="css/booth.css" />
   <link rel="stylesheet" type="text/css" href="css/forms.css" />
 
@@ -26,13 +28,17 @@
   <script language="javascript" src="js/jscrypto/helios.js"></script>-->
   
   <script language="javascript" src="js/20160507-helios-booth-compressed.js"></script>
+  <script language="javascript">
+    // language of the served translation catalog
+    document.documentElement.lang = pgettext("HTML lang attribute, the language code of this translation", "en");
+  </script>
 </head>
 
 <body>
 <div id="wrapper">
 <div id="banner" class="edge">
-  <div style="text-align:center; width: 100%;">Helios Voting Booth
-      <div style="float: right; margin-right: 10px; font-size: 0.8em;"><span><a href="javascript:BOOTH.exit();">exit</a></span></div>
+  <div style="text-align:center; width: 100%;"><span id="banner_title">Helios Voting Booth</span>
+      <div style="float: right; margin-right: 10px; font-size: 0.8em;"><span><a id="exit_link" href="javascript:BOOTH.exit();">exit</a></span></div>
   </div>
 </div>
 <div id="content">
@@ -43,6 +49,38 @@
 <script language="javascript">
 // utils
 BOOTH = {};
+
+// interpolate() with named placeholders, usable inside jTemplates expressions
+// (which cannot contain curly braces):
+//   BOOTH.fmt(translated_message, "num", 1, "total", 2)
+BOOTH.fmt = function(str) {
+  var values = {};
+  for (var i = 1; i + 1 < arguments.length; i += 2)
+    values[arguments[i]] = arguments[i + 1];
+  return interpolate(str, values, true);
+};
+
+// translate the static text of this page
+BOOTH.translate_page = function() {
+  document.title = gettext("Helios Voting Booth");
+  var texts = {
+    'banner_title': gettext("Helios Voting Booth"),
+    'exit_link': gettext("exit"),
+    'progress_1': "(1) " + gettext("Select"),
+    'progress_2': "(2) " + gettext("Review"),
+    'progress_3': "(3) " + gettext("Submit"),
+    'loading_title': gettext("Checking capabilities and loading election booth..."),
+    'loading_note': gettext("This may take up to 10 seconds"),
+    'processing_title': gettext("Processing..."),
+    'encrypting_title': gettext("Helios is now encrypting your ballot"),
+    'encrypting_note': gettext("This may take up to two minutes.")
+  };
+  for (var id in texts)
+    $('#' + id).text(texts[id]);
+};
+
+// opening tag of the link that selects the audit trail (audit template)
+BOOTH.select_audit_trail_link = '<a onclick="$(\'#audit_trail\').select(); return false;" href="#">';
 
 BOOTH.setup_templates = function() {
     if (BOOTH.templates_setup_p)
@@ -71,7 +109,7 @@ window.onbeforeunload = function(evt) {
     evt = window.event;
   }
 
-  var message = "If you leave this page with an in-progress ballot, your ballot will be lost.";
+  var message = gettext("If you leave this page with an in-progress ballot, your ballot will be lost.");
 
   if (evt) {
     evt.returnValue = message;
@@ -81,7 +119,7 @@ window.onbeforeunload = function(evt) {
 };
 
 BOOTH.exit = function() {
-    if (confirm("Are you sure you want to exit the booth and lose all information about your current ballot?")) {
+    if (confirm(gettext("Are you sure you want to exit the booth and lose all information about your current ballot?"))) {
         BOOTH.started_p = false;
         window.location = BOOTH.election.cast_url;
     }
@@ -178,7 +216,8 @@ BOOTH.setup_election = function(raw_json, election_metadata) {
     BOOTH.election[field] = escape_html(BOOTH.election[field]);
   });
 
-  // TODO: escape question and answers
+  // questions and answers need no escaping here: the templates insert them with
+  // jTemplates, which HTML-escapes all template data by default (filter_data)
 
   // whether the election wants candidate order randomization or not
   // we set up an ordering array so that the rest of the code is
@@ -229,7 +268,7 @@ BOOTH.launch_async_encryption_answer = function(question_num) {
 BOOTH.validate_question = function(question_num) {
     // check if enough answers are checked
     if (BOOTH.ballot.answers[question_num].length < BOOTH.election.questions[question_num].min) {
-        alert('You need to select at least ' + BOOTH.election.questions[question_num].min + ' answer(s).');
+        alert(BOOTH.fmt(gettext("You need to select at least %(min)s answer(s)."), 'min', BOOTH.election.questions[question_num].min));
         return false;
     }
 
@@ -342,7 +381,7 @@ BOOTH.click_checkbox = function(question_num, answer_num, checked_p) {
 
      // do the warning only if the question allows more than one option, otherwise it's confusing
      if (BOOTH.election.questions[question_num].max > 1) {
-        $('#warning_box').html("Maximum number of options selected.<br />To change your selection, please de-select a current selection first.");
+        $('#warning_box').html(gettext("Maximum number of options selected.<br />To change your selection, please de-select a current selection first."));
      }
   } else {
      // enable the other checkboxes
@@ -351,13 +390,13 @@ BOOTH.click_checkbox = function(question_num, answer_num, checked_p) {
      });
      $('#warning_box').html("");
      if (BOOTH.election.questions[question_num].max != null && (BOOTH.ballot.answers[question_num].length < BOOTH.election.questions[question_num].max)) {
-        $('#warning_box').html("You may select up to " + BOOTH.election.questions[question_num].max + " choices total.");
+        $('#warning_box').html(BOOTH.fmt(gettext("You may select up to %(max)s choices total."), 'max', BOOTH.election.questions[question_num].max));
      }
   }
 };
 
 BOOTH.show_processing_before = function(str_to_execute) {
-    $('#processing_div').html("<h3 align='center'>Processing...</h3>");
+    $('#processing_div').html("<h3 align='center'>" + gettext("Processing...") + "</h3>");
     BOOTH.show($('#processing_div'));
 
     // add a timeout so browsers like Safari actually display the processing message
@@ -430,6 +469,8 @@ BOOTH.nojava = function() {
 BOOTH.ready_p = false;
 
 $(document).ready(function() {
+    BOOTH.translate_page();
+
     if (USE_SJCL) {
       sjcl.random.startCollectors();
     }
@@ -485,7 +526,7 @@ BOOTH.wait_for_ciphertexts = function() {
     var percentage_done = Math.round((100 * answers_done.length) / BOOTH.encrypted_answers.length);
 
     if (BOOTH.total_cycles_waited > 250) {
-      alert('there appears to be a problem with the encryption process.\nPlease email help@heliosvoting.org and indicate that your encryption process froze at ' + percentage_done + '%');
+      alert(BOOTH.fmt(gettext("there appears to be a problem with the encryption process.\nPlease email %(email)s and indicate that your encryption process froze at %(percent)s"), 'email', 'help@heliosvoting.org', 'percent', percentage_done + '%'));
       return;
     }
 
@@ -527,7 +568,7 @@ BOOTH.audit_ballot = function() {
 
 BOOTH.post_audited_ballot = function() {
   $.post(BOOTH.election_url + "/post-audited-ballot", {'audited_ballot': BOOTH.audit_trail}, function(result) {
-    alert('This audited ballot has been posted.\nRemember, this vote will only be used for auditing and will not be tallied.\nClick "back to voting" and cast a new ballot to make sure your vote counts.');
+    alert(gettext('This audited ballot has been posted.\nRemember, this vote will only be used for auditing and will not be tallied.\nClick "back to voting" and cast a new ballot to make sure your vote counts.'));
   });
 };
 
@@ -556,7 +597,7 @@ BOOTH.cast_ballot = function() {
 };
 
 BOOTH.show_receipt = function() {
-    UTILS.open_window_with_content("Your ballot tracker for " + BOOTH.election.name + ": " + BOOTH.encrypted_ballot_hash);
+    UTILS.open_window_with_content(BOOTH.fmt(gettext("Your ballot tracker for %(name)s: %(tracker)s"), 'name', BOOTH.election.name, 'tracker', BOOTH.encrypted_ballot_hash));
 };
 
 BOOTH.do_done = function() {
@@ -575,8 +616,8 @@ BOOTH.do_done = function() {
       </table>
   </div>
   <div id="election_div" class="panel">
-    <h3>Checking capabilities and loading election booth...</h3>
-    <div align="center"><img src="loading.gif" /><br />This may take up to 10 seconds</div>
+    <h3 id="loading_title">Checking capabilities and loading election booth...</h3>
+    <div align="center"><img src="loading.gif" /><br /><span id="loading_note">This may take up to 10 seconds</span></div>
   </div>
 
   <div id="error_div" class="panel" style="display: none;">
@@ -593,14 +634,14 @@ BOOTH.do_done = function() {
   </div>
 
   <div id="processing_div" class="panel" style="display:none;">
-      <h3 align="center">Processing....</h3>
+      <h3 align="center" id="processing_title">Processing....</h3>
   </div>
 
   <div id="encrypting_div" class="panel" style="display:none;">
-      <h3 align="center">Helios is now encrypting your ballot<br />
+      <h3 align="center"><span id="encrypting_title">Helios is now encrypting your ballot</span><br />
           <img src="encrypting.gif" /> <span style="font-size:0.7em; display:none;" id="percent_done_container">(<span id="percent_done">0</span>%)</span></h3>
 
-      <p align="center"><b>This may take up to two minutes.</b>
+      <p align="center"><b id="encrypting_note">This may take up to two minutes.</b>
   </div>
 
   <div id="seal_div" class="panel">

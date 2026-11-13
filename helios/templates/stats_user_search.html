@@ -1,83 +1,84 @@
 {% extends TEMPLATE_BASE %}
-{% block title %}User Search{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "User Search" %}{% endblock %}
 
 {% block content %}
-<h1>User Search</h1>
+<h1>{% translate "User Search" %}</h1>
 
 <p>
 <form method="get" action="{% url "stats@user-search" %}">
-<b>Search for user</b>: <input type="text" name="q" value="{{q}}" placeholder="Name or user ID"/>
-<input class="small button" type="submit" value="search" /> <a class="small button" href="?">clear search</a>
+<b>{% translate "Search for user" %}</b>: <input type="text" name="q" value="{{q}}" placeholder="{% translate "Name or user ID" %}"/>
+<input class="small button" type="submit" value="{% translate "search" %}" /> <a class="small button" href="?">{% translate "clear search" %}</a>
 </form>
 </p>
 
 {% if q %}
   {% if users_with_elections %}
-    <p><b>Found {{users_with_elections|length}} user(s)</b></p>
+    <p><b>{% blocktranslate trimmed with n=users_with_elections|length %}Found {{n}} user(s){% endblocktranslate %}</b></p>
 
     {% for item in users_with_elections %}
     <div style="margin-bottom: 2em; padding: 1em; border: 1px solid #ccc;">
       <h2>{{item.user.pretty_name}}</h2>
       <p>
-        <b>User ID:</b> {{item.user.user_id}}<br/>
-        <b>User Type:</b> {{item.user.user_type}}<br/>
-        <b>Site Admin:</b> {% if item.user.admin_p %}Yes{% else %}No{% endif %}
+        <b>{% translate "User ID:" %}</b> {{item.user.user_id}}<br/>
+        <b>{% translate "User Type:" %}</b> {{item.user.user_type}}<br/>
+        <b>{% translate "Site Admin:" %}</b> {% if item.user.admin_p %}{% translate "Yes" %}{% else %}{% translate "No" %}{% endif %}
       </p>
 
-      <h3>Elections as Administrator ({{item.elections_as_admin|length}})</h3>
+      <h3>{% blocktranslate trimmed with n=item.elections_as_admin|length %}Elections as Administrator ({{n}}){% endblocktranslate %}</h3>
       {% if item.elections_as_admin %}
         <ul>
         {% for election in item.elections_as_admin %}
           <li>
             <a href="{% url "election@view" election.uuid %}">{{election.name}}</a>
-            ({{election.num_voters}} voters / {{election.num_cast_votes}} cast votes)
-            {% if election.frozen_at %}[frozen]{% endif %}
-            {% if election.archived_at %}[archived]{% endif %}
+            ({% blocktranslate trimmed with num_voters=election.num_voters num_cast_votes=election.num_cast_votes %}{{num_voters}} voters / {{num_cast_votes}} cast votes{% endblocktranslate %})
+            {% if election.frozen_at %}[{% translate "frozen" %}]{% endif %}
+            {% if election.archived_at %}[{% translate "archived" %}]{% endif %}
           </li>
         {% endfor %}
         </ul>
       {% else %}
-        <p><i>None</i></p>
+        <p><i>{% translate "None" %}</i></p>
       {% endif %}
 
-      <h3>Elections as Voter ({{item.elections_as_voter|length}})</h3>
+      <h3>{% blocktranslate trimmed with n=item.elections_as_voter|length %}Elections as Voter ({{n}}){% endblocktranslate %}</h3>
       {% if item.elections_as_voter %}
         <ul>
         {% for election in item.elections_as_voter %}
           <li>
             <a href="{% url "election@view" election.uuid %}">{{election.name}}</a>
-            ({{election.num_voters}} voters / {{election.num_cast_votes}} cast votes)
-            {% if election.frozen_at %}[frozen]{% endif %}
-            {% if election.archived_at %}[archived]{% endif %}
+            ({% blocktranslate trimmed with num_voters=election.num_voters num_cast_votes=election.num_cast_votes %}{{num_voters}} voters / {{num_cast_votes}} cast votes{% endblocktranslate %})
+            {% if election.frozen_at %}[{% translate "frozen" %}]{% endif %}
+            {% if election.archived_at %}[{% translate "archived" %}]{% endif %}
           </li>
         {% endfor %}
         </ul>
       {% else %}
-        <p><i>None</i></p>
+        <p><i>{% translate "None" %}</i></p>
       {% endif %}
 
-      <h3>Elections as Trustee ({{item.elections_as_trustee|length}})</h3>
+      <h3>{% blocktranslate trimmed with n=item.elections_as_trustee|length %}Elections as Trustee ({{n}}){% endblocktranslate %}</h3>
       {% if item.elections_as_trustee %}
         <ul>
         {% for election in item.elections_as_trustee %}
           <li>
             <a href="{% url "election@view" election.uuid %}">{{election.name}}</a>
-            ({{election.num_voters}} voters / {{election.num_cast_votes}} cast votes)
-            {% if election.frozen_at %}[frozen]{% endif %}
-            {% if election.archived_at %}[archived]{% endif %}
+            ({% blocktranslate trimmed with num_voters=election.num_voters num_cast_votes=election.num_cast_votes %}{{num_voters}} voters / {{num_cast_votes}} cast votes{% endblocktranslate %})
+            {% if election.frozen_at %}[{% translate "frozen" %}]{% endif %}
+            {% if election.archived_at %}[{% translate "archived" %}]{% endif %}
           </li>
         {% endfor %}
         </ul>
       {% else %}
-        <p><i>None</i></p>
+        <p><i>{% translate "None" %}</i></p>
       {% endif %}
     </div>
     {% endfor %}
   {% else %}
-    <p><i>No users found matching "{{q}}"</i></p>
+    <p><i>{% blocktranslate trimmed %}No users found matching "{{q}}"{% endblocktranslate %}</i></p>
   {% endif %}
 {% else %}
-  <p><i>Enter a search term to find users</i></p>
+  <p><i>{% translate "Enter a search term to find users" %}</i></p>
 {% endif %}
 
 {% endblock %}

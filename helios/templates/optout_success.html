@@ -1,4 +1,5 @@
 {% extends TEMPLATE_BASE %}
+{% load i18n %}
 
 {% block title %}{{ title }}{% endblock %}
 
@@ -16,12 +17,12 @@
   </div>
   
   <div style="margin-top: 30px; padding: 15px; background: #f9f9f9; border: 1px solid #ddd;">
-    <p><strong>Next Steps:</strong></p>
-    <p>Please check your email and click the confirmation link to complete your request.</p>
-    <p>If you don't see the email, please check your spam folder.</p>
+    <p><strong>{% translate "Next Steps:" %}</strong></p>
+    <p>{% translate "Please check your email and click the confirmation link to complete your request." %}</p>
+    <p>{% translate "If you don't see the email, please check your spam folder." %}</p>
   </div>
   
   <div style="margin-top: 30px; text-align: center;">
-    <a href="/">← Return to Helios</a>
+    <a href="/">← {% translate "Return to Helios" %}</a>
   </div>
 {% endblock %}

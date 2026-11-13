@@ -1,16 +1,17 @@
 {% extends TEMPLATE_BASE %}
+{% load i18n %}
 
-{% block title %}Remove Administrator - {{election.name}}{% endblock %}
+{% block title %}{% translate "Remove Administrator" %} - {{election.name}}{% endblock %}
 
 {% block content %}
-  <h3 class="title">{{election.name}} &mdash; Remove Administrator <span style="font-size:0.7em;">[<a href="{% url "election@admins" election.uuid %}">cancel</a>]</span></h3>
+  <h3 class="title">{{election.name}} &mdash; {% translate "Remove Administrator" %} <span style="font-size:0.7em;">[<a href="{% url "election@admins" election.uuid %}">{% translate "cancel" %}</a>]</span></h3>
 
 <p>
-    Are you sure you want to remove <strong>{{admin_to_remove.display_html_small|safe}}</strong> ({{admin_to_remove.user_id}}) as an administrator of this election?
+    {% blocktranslate trimmed with admin_html=admin_to_remove.display_html_small|safe admin_id=admin_to_remove.user_id %}Are you sure you want to remove <strong>{{admin_html}}</strong> ({{admin_id}}) as an administrator of this election?{% endblocktranslate %}
 </p>
 
 <p>
-    They will no longer be able to manage this election.
+    {% translate "They will no longer be able to manage this election." %}
 </p>
 
 <form method="post" action="">
@@ -18,9 +19,9 @@
 <input type="hidden" name="email" value="{{admin_to_remove.user_id}}" />
 <input type="hidden" name="user_type" value="{{admin_to_remove.user_type}}" />
 
-<input class="button" type="submit" value="Remove Administrator" />
+<input class="button" type="submit" value="{% translate "Remove Administrator" %}" />
 &nbsp;&nbsp;
-<a href="{% url "election@admins" election.uuid %}">Cancel</a>
+<a href="{% url "election@admins" election.uuid %}">{% translate "Cancel" %}</a>
 </form>
 
 {% endblock %}

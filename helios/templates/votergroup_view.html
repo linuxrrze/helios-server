@@ -1,0 +1,36 @@
+{% extends TEMPLATE_BASE %}
+{% load i18n %}
+{% block title %}{{group.short_name}}{% endblock %}
+{% block content %}
+<h2 class="title">{{ group.short_name }}</h2>
+<p><em>{% blocktranslate trimmed with admin=group.admin.display_html_small|safe %}created by {{admin}}{% endblocktranslate %}</em></p>
+
+<h3>{% translate "Members" %}</h3>
+<table class="pretty" style="width: auto;">
+  <tr>
+    <th>{% translate "First name" %}</th><th>{% translate "Last name" %}</th><th>{% translate "Email" %}</th><th>{% translate "# of votes" %}</th><th></th>
+  </tr>
+  {% for member in members %}
+  <tr>
+    <td>{{member.first_name}}</td>
+    <td>{{member.last_name}}</td>
+    <td>{{member.email}}</td>
+    <td align="right">{{member.votes}}</td>
+    <td>
+      <form method="POST" action="{% url "votergroup@memberdelete" member.uuid %}" style="display:inline; margin:0;">
+        <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
+        <input type="submit" value="{% translate "Delete" %}" />
+      </form>
+    </td>
+  </tr>
+  {% empty %}
+  <tr><td colspan="5"><em>{% translate "no members yet" %}</em></td></tr>
+  {% endfor %}
+</table>
+
+<p>
+  <a href="{% url "votergroup@memberadd" group.uuid %}">{% translate "Add a new member" %}</a>
+  {% if members %} &mdash; <a href="{% url "votergroup@prepareelection" group.uuid %}">{% translate "Start election" %}</a>{% endif %}
+  &mdash; <a href="{% url "votergroup@administered" %}">{% translate "All voter groups" %}</a>
+</p>
+{% endblock %}

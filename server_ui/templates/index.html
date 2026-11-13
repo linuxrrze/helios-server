@@ -1,104 +1,100 @@
 {% extends 'server_ui/templates/base.html' %}
-{% block title %}{{ settings.SITE_TITLE }}{% endblock %}
+{% load i18n localized_settings %}
+{% block title %}{% localized_setting "SITE_TITLE" %}{% endblock %}
 
 {% block header %}
-<h2>{{ settings.SITE_TITLE }}</h2>
+<h2>{% localized_setting "SITE_TITLE" %}</h2>
 {% endblock %}
 
 {% block content %}
 
-<div class="row"><div class="large-5 columns large-centered"><a href="/"><img border="0" src="{{ settings.MAIN_LOGO_URL }}" /></a></div></div>
-<div class="row">&nbsp;</div>
-<div class="large-9 columns">
-  {% if settings.MASTER_HELIOS %}
-<p>Helios offers <b>verifiable online elections</b>.</p>
+    
+    <p>{% localized_setting "WELCOME_MESSAGE" as welcome_message %}{{ welcome_message|safe }}</p>
 
-<p>We believe democracy is important, whether it’s your book club, parent-teacher association, student government, workers’ union, or state. So we’ve made truly verifiable elections as easy as everything else on the Web.</p>
 
-<p>
-Helios elections are:
-<ul class="disc">
-<li><b>private</b>: no one knows how you voted.</li>
-<li><b>verifiable</b>: each voter gets a tracking number.</li>
-<li><b>proven</b>: Helios is open-source, vetted by top-tier experts, and in use by major organizations.</li>
-</ul>
-
-<p>
-More than <b>2,000,000 votes</b> have been cast using Helios.
-</p>
-
-{% if create_p %}
-<a class="button" href="{% url "elections@new" %}">create an election</a>
-{% endif %}
-
-  {% else %}
-  <p style="font-size: 1.4em;">
-    {{settings.WELCOME_MESSAGE|safe}}
-  </p>
   
-  {% if elections|length %}
-  <p>
-    {% for election in elections %}
-    <div class="panel">
-      <a style="font-size: 1.4em;" href="{% url "shortcut@election" election.short_name %}">{{election.name}}</a>{% if settings.SHOW_USER_INFO %}<br /> by {{election.admin.display_html_small|safe}}{% endif %}
+    {% if elections|length %}
+    <ul class="featured-elections">
+      {% for election in elections %}
+      <li>
+	<a href="{% url "shortcut@election" election.short_name %}">{{election.name}}</a>{% if settings.SHOW_USER_INFO %} (&mdash; {{election.admin.display_html_small|safe}}){% endif %}
+      </li>
+      <br />
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="alert alert-info">
+	{% translate "There are currently no elections available." %}
     </div>
-    <br />
-    {% endfor %}
-  </p>
-  {% else %}
-  <h4>no featured elections at the moment</h4>
-  {% endif %}
-{% endif %}
+    {% endif %}
+
   
-</div>
-
-<div class="large-3 columns" id="mystuff">
-<div class="row">&nbsp;</div>
-<div class="panel row">
 {% if user %}
-<!--<div class="row right">{{user.display_html_big|safe}}</div>-->
-{% if create_p %}
-<a class="small button" href="{% url "elections@new" %}">create election</a>
-<h5 class="subheader">Administration</h5>
-{% if elections_administered %}
-<ul>
-{% for election in elections_administered %}
-<li> <a href="{% url "election@view" election.uuid %}">{{election.name}}</a></li>
-{% endfor %}
-</ul>
-{% else %}
-<em>none yet</em>
-{% endif %}
-<div class="row right">
-<a class="tiny button" href="{% url "elections@administered" %}">see all</a>
-</div>
-<div class="row"></div>
-{% endif %}
+    <!--<div class="row right">{{user.display_html_big|safe}}</div>-->
+    {% if create_p %}
+	    <p>
+		<a class="standard-btn" href="{% url "elections@new" %}">{% translate "Create election" %}</a>
+	    </p>
+    
+    <h2>{% translate "Committee administration" %}</h2>
 
-<h5 class="subheader">Recent Votes</h5>
-{% if elections_voted %}
-<ul>
-{% for election in elections_voted %}
-<li><a href="{% url "election@view" election.uuid %}">{{election.name}}</a></li>
-{% endfor %}
-</ul>
+    <a class="standard-btn" href="{% url "votergroup@administered" %}">{% translate "See all groups" %}</a>
+
+	<h2>{% translate "Administration" %}</h2>
+	  
+	    {% if elections_administered %}
+	    <ul>
+	    {% for election in elections_administered %}
+	    <li> <a href="{% url "election@view" election.uuid %}">{{election.name}}</a></li>
+	    {% endfor %}
+	    </ul>
+	    {% endif %}
+	   
+	    <p>
+	<a class="standard-btn" href="{% url "elections@administered" %}">{% translate "See all elections" %}</a>
+	    </p>
+    {% endif %}
+
+     <h2>{% translate "Recent votes" %}</h2>
+    {% if elections_voted %}
+   
+    <ul>
+    {% for election in elections_voted %}
+    <li><a href="{% url "election@view" election.uuid %}">{{election.name}}</a></li>
+    {% endfor %}
+    </ul>
+    <p>
+      <a class="standard-btn" href="{% url "elections@voted" %}">{% translate "See all votes" %}</a>
+   </p>
+   {% else %}
+      <div class="alert alert-info">
+	{% translate "None yet." %}
+    </div>
+    {% endif %}
+   
+  
+   
 {% else %}
-<em>none yet</em>
+    {% if settings.SHOW_LOGIN_OPTIONS %}
+   
+     <div class="buttonlist">	    
+	
+
+		<p>
+		    <a href="{{settings.SECURE_URL_HOST}}{% url "auth@index" %}?return_url={{CURRENT_URL}}" class="button"><span>{% translate "Log in" %}</span></a>
+		</p>
+	 </div>	    
+           
+    {% else %}
+	<p>
+	    {% translate "Select an election to start voting. You will be asked for your voting credentials after you complete a ballot." %}
+	</p>
+	
+    {% endif %}
+    
+    <p class="made-with">{% translate "Made with" %} <a target="_blank" href="http://heliosvoting.org/"  rel="noopener noreferrer">Helios</a></p>
+    
 {% endif %}
-<div class="row right"><a class="tiny button" href="{% url "elections@voted" %}">see all</a></div>
-<div class="row"></div>
-{% else %}
-{% if settings.SHOW_LOGIN_OPTIONS %}
-<h5>Log In to Start Voting</h5>
-{{login_box|safe}}
-{% else %}
-<p>
-Select an election to start voting. You will be asked for your voting credentials after you complete a ballot.
-</p>
-{% endif %}
-{% endif %}
-</div>
-</div>
 
 
 {% endblock %}

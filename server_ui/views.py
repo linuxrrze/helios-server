@@ -5,6 +5,9 @@ server_ui specific views
 import copy
 
 from django.conf import settings
+from django.http import Http404
+from django.template import TemplateDoesNotExist
+from django.template.loader import get_template
 
 import helios_auth.views as auth_views
 from helios.models import Election
@@ -61,3 +64,18 @@ def faq(request):
 def privacy(request):
   return render_template(request, "privacy")
     
+
+def _site_page(request, name):
+  # imprint and accessibility statement are site-specific: the installation
+  # provides them in SITE_TEMPLATES_DIR (or links external pages instead)
+  try:
+    get_template('server_ui/templates/%s.html' % name)
+  except TemplateDoesNotExist:
+    raise Http404
+  return render_template(request, name)
+
+def imprint(request):
+  return _site_page(request, "imprint")
+
+def accessibility(request):
+  return _site_page(request, "accessibility")

@@ -1,1 +1,1 @@
-Tally computed for {{voter.election.name}}: {{election_url}}
+{% load i18n %}{% blocktranslate trimmed with name=voter.election.name %}Tally computed for {{ name }}:{% endblocktranslate %} {{election_url}}

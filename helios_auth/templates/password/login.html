@@ -1,7 +1,8 @@
 {% extends TEMPLATE_BASE %}
+{% load i18n localized_settings %}
 
 {% block header %}
-<h2>{{ settings.SITE_TITLE }} &mdash; Login</h2>
+<h2>{% localized_setting "SITE_TITLE" %} &mdash; {% translate "Login" %}</h2>
 {% endblock %}
 
 
@@ -20,7 +21,7 @@
     {{form.as_table}}
 </table>
 <div>
-<label for="">&nbsp;</label><input class="button" type="submit" value="Login" />
+<label for="">&nbsp;</label><input class="button" type="submit" value="{% translate "Login" %}" />
 </div>
 </form>
 </p>

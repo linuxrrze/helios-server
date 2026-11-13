@@ -1,7 +1,7 @@
-<!DOCTYPE html>
+{% load i18n %}<!DOCTYPE html>
 <html>
 <head>
-    <title>Dev Login</title>
+    <title>{% translate "Dev Login" %}</title>
     <meta charset="utf-8">
     <style>
         body { font-family: system-ui, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #fafafa; }
@@ -14,11 +14,11 @@
 </head>
 <body>
     <div class="container">
-        <h1>Dev Login</h1>
+        <h1>{% translate "Dev Login" %}</h1>
         <p class="email">user@example.com</p>
         <form method="post">
             {% csrf_token %}
-            <button type="submit">Log in</button>
+            <button type="submit">{% translate "Log in" %}</button>
         </form>
     </div>
 </body>

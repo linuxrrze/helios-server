@@ -26,3 +26,11 @@ ELECTIONS_VERIFIER_SINGLE_BALLOT="elections@verifier@single-ballot"
 ELECTIONS_NEW="elections@new"
 ELECTIONS_ADMINISTERED="elections@administered"
 ELECTIONS_VOTED="elections@voted"
+
+# voter groups
+VOTERGROUP_ADMINISTERED="votergroup@administered"
+VOTERGROUP_NEW="votergroup@new"
+VOTERGROUP_VIEW="votergroup@view"
+VOTERGROUP_MEMBERADD="votergroup@memberadd"
+VOTERGROUP_MEMBERDELETE="votergroup@memberdelete"
+VOTERGROUP_PREPAREELECTION="votergroup@prepareelection"

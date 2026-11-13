@@ -6,7 +6,10 @@ Some basic utils
 """
 
 import json
+import os
 
+from django.conf import settings
+from django.utils import translation
 from django.utils.http import url_has_allowed_host_and_scheme
 
 
@@ -66,3 +69,26 @@ def format_recipient(name, email):
     """
     truncated_name = name[:70] if name else email
     return "\"%s\" <%s>" % (truncated_name, email)
+
+
+def localized_setting(name, default=None):
+  """
+  A display text from settings in the active language: the <NAME>_<LANG>
+  variant (e.g. WELCOME_MESSAGE_DE) if configured, else <NAME>, else default.
+  """
+  language = (translation.get_language() or settings.LANGUAGE_CODE).split('-')[0]
+  value = getattr(settings, 'LOCALIZED_SETTINGS', {}).get(name, {}).get(language)
+  return value or getattr(settings, name, None) or default
+
+
+def login_icon_url(auth_system_name):
+  """
+  URL of the icon shown next to users of an auth system. An installation can add
+  icons for its own auth system names (e.g. "campus") as
+  SITE_STATIC_DIR/login-icons/<name>.png; otherwise the built-in icon is used.
+  """
+  name = os.path.basename(str(auth_system_name))
+  site_dir = getattr(settings, 'SITE_STATIC_DIR', '')
+  if site_dir and os.path.isfile(os.path.join(site_dir, 'login-icons', name + '.png')):
+    return '/static/site/login-icons/%s.png' % name
+  return '/static/auth/login-icons/%s.png' % name

@@ -1,4 +1,4 @@
-Dear {{voter.name}},
+{% load i18n %}{% blocktranslate trimmed with name=voter.name %}Dear {{ name }},{% endblocktranslate %}
 
 {{custom_message|safe}}
 
@@ -6,6 +6,6 @@ Dear {{voter.name}},
 Helios
 
 {% if unsubscribe_url %}
-To stop receiving all emails from Helios, click here:
+{% translate "To stop receiving all emails from Helios, click here:" %}
 {{ unsubscribe_url }}
 {% endif %}

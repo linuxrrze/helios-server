@@ -1,30 +1,45 @@
 """
-Glue some events together 
+Glue some events together
 """
+
+import logging
+
+from django.utils.translation import gettext as _
 
 import helios.signals
 import helios.views
+from helios.tasks import voter_opted_out, voter_unsubscribe_vars
 from helios.view_utils import render_text_template
+
+logger = logging.getLogger(__name__)
 
 
 def vote_cast_send_message(user, voter, election, cast_vote, **kwargs):
-    ## FIXME: this doesn't work for voters that are not also users
-    # prepare the message
-    subject_template = 'email/cast_vote_subject.txt'
-    body_template = 'email/cast_vote_body.txt'
+    """
+    Confirmation email after a ballot is stored. Runs inside the cast-vote task,
+    which already renders in the voter's language. Voters without a user account
+    get a stub password user from Voter.get_user(), which mails voter_email.
+    """
+    if voter_opted_out(voter):
+        logger.info("Skipping vote-cast email to opted-out voter %s", voter.uuid)
+        return
 
     extra_vars = {
         'election': election,
         'voter': voter,
         'cast_vote': cast_vote,
         'cast_vote_url': helios.views.get_castvote_url(cast_vote),
-        'custom_subject': "%s - vote cast" % election.name
+        'custom_subject': _("%(election_name)s - vote cast") % {'election_name': election.name},
     }
-    subject = render_text_template(subject_template, extra_vars)
-    body = render_text_template(body_template, extra_vars)
+    extra_vars.update(voter_unsubscribe_vars(voter))
+    subject = render_text_template('email/cast_vote_subject.txt', extra_vars)
+    body = render_text_template('email/cast_vote_body.txt', extra_vars)
 
-    # send it via the notification system associated with the auth system
-    user.send_message(subject, body)
+    # The ballot is already stored: a mail failure must not fail the cast-vote task.
+    try:
+        user.send_message(subject, body)
+    except Exception:
+        logger.exception("Could not send vote-cast email for voter %s", voter.uuid)
 
 
 def election_tallied(election, **kwargs):

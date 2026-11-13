@@ -1,14 +1,19 @@
 {% extends 'server_ui/templates/base.html' %}
+{% load i18n %}
 
 {% block content %}
 
-  <h2 class="title">Election {{election.name}} Already Tallied</h2>
+<h1>{% blocktranslate trimmed with name=election.name %}Election {{ name }} has ended{% endblocktranslate %}</h1>
 
   <p>
-      This election has already been tallied (or at least the tally has begun), so you can no longer cast a vote.
-  </p>
+      {% blocktranslate trimmed %}
+      This election has already been tallied (or the tally has started).
+      Therefore, voting is no longer possible.
+      {% endblocktranslate %}
+        </p>
   
   <p>
-      <a href="{% url "election@view" election.uuid %}">view the election</a>
+      <a  class="standard-btn" href="{% url "election@view" election.uuid %}">{% translate "Back" %}</a>
   </p>
-{% endblock %}
+
+  {% endblock %}

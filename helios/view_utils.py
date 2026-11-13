@@ -19,10 +19,14 @@ from helios_auth.security import get_user
 ## BASICS
 ##
 
-SUCCESS = HttpResponse("SUCCESS")
+# A fresh response per request: a shared module-level HttpResponse would carry
+# cookies and headers set by middleware for one request into the next one.
+# FAILURE stays HTTP 200 because the admin and trustee pages check the body text.
+def success():
+  return HttpResponse("SUCCESS")
 
-# FIXME: error code
-FAILURE = HttpResponse("FAILURE")
+def failure():
+  return HttpResponse("FAILURE")
 
 ##
 ## template abstraction

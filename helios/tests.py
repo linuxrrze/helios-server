@@ -18,6 +18,7 @@ from django.core import mail
 from django.core.files import File
 from django.core.management import call_command
 from django.test import TestCase
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import escape as html_escape
 from django_tasks import TaskResultStatus
@@ -34,6 +35,19 @@ from helios.crypto import elgamal as crypto_elgamal
 from helios.crypto import utils as crypto_utils
 from helios.workflows import homomorphic
 from helios_auth import models as auth_models
+
+
+def page_form(response):
+    """
+    The page's own form, for a WebTest response. response.form fails because
+    every page also has the language switcher form in the header.
+    """
+    set_language_url = reverse('set_language')
+    forms = [f for f in response.forms.values() if f.action != set_language_url]
+    # response.forms lists each form under its index and, if it has one, its id
+    forms = list({id(f): f for f in forms}.values())
+    assert len(forms) == 1, "expected one form besides the language switcher, found %d" % len(forms)
+    return forms[0]
 
 
 def run_queued_tasks():
@@ -1539,7 +1553,7 @@ class ElectionBlackboxTests(WebTest):
                 self.assertContains(cast_confirm_page, "requires election-specific credentials")
 
             # set the form
-            login_form = cast_confirm_page.form
+            login_form = page_form(cast_confirm_page)
             login_form['voter_id'] = username
             login_form['password'] = password
 
@@ -1550,7 +1564,7 @@ class ElectionBlackboxTests(WebTest):
             self.assertContains(cast_confirm_page, "CAST this ballot")
 
             # confirm the vote, now with the actual form
-            cast_form = cast_confirm_page.form
+            cast_form = page_form(cast_confirm_page)
         
             if 'status_update' in list(cast_form.fields.keys()):
                 cast_form['status_update'] = False
@@ -1575,7 +1589,7 @@ class ElectionBlackboxTests(WebTest):
 
             # if we redirected, that's because we can see the page, I think
             if login_page.status_int != 302:
-                login_form = login_page.form
+                login_form = page_form(login_page)
                 
                 # try with extra spaces
                 login_form['voter_id'] = '  ' + username + '   '
@@ -1664,7 +1678,7 @@ class ElectionBlackboxTests(WebTest):
         # ensure it redirects
         self.assertRedirects(response, "/helios/elections/%s/password_voter_login?%s" % (election_id, urlencode({"return_url": "/helios/elections/%s/view" % election_id})))
 
-        login_form = response.follow().form
+        login_form = page_form(response.follow())
 
         login_form['voter_id'] = username
         login_form['password'] = password
@@ -1783,12 +1797,6 @@ class ElectionBlackboxTests(WebTest):
             self.assertGreaterEqual(alias_num, 5,
                 f"Voter {voter_id} should have alias >= V5, got {voter.alias}")
 
-    def test_do_complete_election_with_trustees(self):
-        """
-        FIXME: do the this test
-        """
-        pass
-
     def test_voters_clear(self):
         """Test clearing all voters from an unfrozen election"""
         self.setup_login(from_scratch=True)
@@ -1857,6 +1865,38 @@ class ElectionBlackboxTests(WebTest):
         )
         # Should get permission denied (403) since not authenticated
         self.assertStatusCode(response, 403)
+
+    def test_success_and_failure_responses_are_not_shared(self):
+        """
+        SUCCESS/FAILURE answers are a new response per request: a shared response
+        object would keep cookies that middleware set for an earlier request.
+        """
+        from helios.view_utils import success, failure
+        self.assertIsNot(success(), success())
+        self.assertIsNot(failure(), failure())
+
+        self.setup_login(from_scratch=True)
+        response = self.client.post("/helios/elections/new", {
+            "short_name": "test-fresh-success",
+            "name": "Test Fresh Success",
+            "description": "",
+            "election_type": "referendum",
+            "use_voter_aliases": "0",
+            "use_advanced_audit_features": "1",
+            "private_p": "True",
+            "csrf_token": self.client.session["csrf_token"]
+        })
+        election_id = re.search('/elections/([^/]+)/', str(response['location'])).group(1)
+
+        questions_json = '[{"answer_urls":[null,null],"answers":["Yes","No"],"choice_type":"approval","max":1,"min":0,"question":"Test?","result_type":"absolute","short_name":"test","tally_type":"homomorphic"}]'
+        responses = [self.client.post("/helios/elections/%s/save_questions" % election_id, {
+            "questions_json": questions_json,
+            "csrf_token": self.client.session["csrf_token"]
+        }) for _ in range(2)]
+        for r in responses:
+            self.assertEqual(r.status_code, 200)
+            self.assertEqual(r.content, b"SUCCESS")
+        self.assertIsNot(responses[0], responses[1])
 
     def test_voters_clear_blocked_when_frozen(self):
         """Test that clearing voters is blocked when election is frozen"""
@@ -3067,10 +3107,11 @@ class PrivateElectionLoginTests(WebTest):
             self.assertContains(response, '/auth/start/google?return_url=')
             self.assertNotContains(response, '/auth/start/facebook')
 
-            # the site-wide login box still uses the default
-            home = self.client.get('/')
-            self.assertContains(home, '/auth/start/facebook?return_url=/')
-            self.assertNotContains(home, '/auth/start/google')
+            # the site-wide login still uses the default (the home page links
+            # to this login page instead of embedding the login box)
+            login = self.client.get('/auth/?return_url=/')
+            self.assertContains(login, '/auth/start/facebook?return_url=/')
+            self.assertNotContains(login, '/auth/start/google')
 
     def test_login_link_keeps_return_url_query(self):
         self.election.freeze()

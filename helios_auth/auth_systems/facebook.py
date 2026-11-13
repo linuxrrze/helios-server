@@ -93,8 +93,7 @@ def check_constraint(constraint, user):
   # check if one of them is the group in the constraint
   try:
     return constraint['group']['id'] in groups
-  except:
-    # FIXME: be more specific about exception catching
+  except (KeyError, TypeError):
     return False
 
 def generate_constraint(category_id, user):

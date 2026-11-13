@@ -64,13 +64,23 @@ DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 # although not all choices may be available on all operating systems.
 # If running in a Windows environment this must be set to the same as your
 # system time zone.
-TIME_ZONE = 'America/Los_Angeles'
+#
+# USE_TZ is False. Helios itself works in UTC (election start/end, cast times
+# and so on use utcnow()); this only affects Django's automatic timestamps
+# such as Election.created_at and the server process' local time.
+TIME_ZONE = get_from_env('TIME_ZONE', 'America/Los_Angeles')
 
 USE_TZ = False
 
-# Language code for this installation. All choices can be found here:
-# http://www.i18nguy.com/unicode/language-identifiers.html
-LANGUAGE_CODE = 'en-us'
+# Interface languages. Each request uses the language the visitor chose with
+# the language switcher (cookie), else the browser's preferred language, else
+# LANGUAGE_CODE. Emails use the language of the person whose action sends them.
+LANGUAGES = [
+    ('en', 'English'),
+    ('de', 'Deutsch'),
+]
+LANGUAGE_CODE = get_from_env('LANGUAGE_CODE', 'en')
+LOCALE_PATHS = [os.path.join(os.path.dirname(__file__), 'locale')]
 
 SITE_ID = 1
 
@@ -97,6 +107,16 @@ SECRET_KEY = get_from_env('SECRET_KEY', 'replaceme')
 
 # Secret key for HMAC confirmation codes (separate from Django SECRET_KEY)
 EMAIL_OPTOUT_SECRET = get_from_env('EMAIL_OPTOUT_SECRET', 'replace-with-secure-random-key')
+
+# Refuse to run in production with placeholder secrets: Django's signing
+# (and anything added later that relies on it) assumes SECRET_KEY is secret,
+# and a known EMAIL_OPTOUT_SECRET lets anyone opt voters out of election mail.
+if not DEBUG and not TESTING:
+  from django.core.exceptions import ImproperlyConfigured
+  if SECRET_KEY == 'replaceme' or len(SECRET_KEY) < 32:
+    raise ImproperlyConfigured("Set the SECRET_KEY environment variable to a long random value.")
+  if EMAIL_OPTOUT_SECRET == 'replace-with-secure-random-key':
+    raise ImproperlyConfigured("Set the EMAIL_OPTOUT_SECRET environment variable to a long random value.")
 
 # If debug is set to false and ALLOWED_HOSTS is not declared, django raises  "CommandError: You must set settings.ALLOWED_HOSTS if DEBUG is False."
 # If in production, you got a bad request (400) error
@@ -174,6 +194,7 @@ MIDDLEWARE = [
 
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
 ]
 
@@ -181,11 +202,18 @@ ROOT_URLCONF = 'urls'
 
 ROOT_PATH = os.path.dirname(__file__)
 
+# Site-specific overrides, searched before the built-in files:
+# - SITE_TEMPLATES_DIR mirrors the repository layout, e.g.
+#   <dir>/server_ui/templates/imprint.html replaces or adds that template;
+# - SITE_STATIC_DIR is served under /static/site/ (logos, stylesheets, images).
+SITE_TEMPLATES_DIR = get_from_env('SITE_TEMPLATES_DIR', '')
+SITE_STATIC_DIR = get_from_env('SITE_STATIC_DIR', '')
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'APP_DIRS': True,
-        'DIRS': [
+        'DIRS': ([SITE_TEMPLATES_DIR] if SITE_TEMPLATES_DIR else []) + [
             ROOT_PATH,
             os.path.join(ROOT_PATH, 'templates'),
             # os.path.join(ROOT_PATH, 'helios/templates'),  # covered by APP_DIRS:True
@@ -258,9 +286,26 @@ SITE_TITLE = get_from_env('SITE_TITLE', 'Helios Voting')
 MAIN_LOGO_URL = get_from_env('MAIN_LOGO_URL', '/static/logo.png')
 ALLOW_ELECTION_INFO_URL = (get_from_env('ALLOW_ELECTION_INFO_URL', '0') == '1')
 
-# FOOTER links
+# Layout and branding of the operating organization. Everything below is optional;
+# without it the site shows only the Helios logo and the built-in pages.
+# Organization shown in the header and footer (logo links to ORGANIZATION_URL).
+ORGANIZATION_NAME = get_from_env('ORGANIZATION_NAME', '')
+ORGANIZATION_URL = get_from_env('ORGANIZATION_URL', '')
+# small logo in the header bar, and a larger one (for a dark background) in the footer
+ORGANIZATION_LOGO_URL = get_from_env('ORGANIZATION_LOGO_URL', '')
+FOOTER_LOGO_URL = get_from_env('FOOTER_LOGO_URL', '')
+# extra stylesheet loaded after the default layout, e.g. to set colors and a login
+# background image (CSS variables, see server_ui/media/layout.css)
+SITE_CSS_URL = get_from_env('SITE_CSS_URL', '')
+# Legal pages linked in the footer; a link is shown only when its URL is set. They can
+# point to external pages, or to /imprint, /privacy and /accessibility, which render
+# server_ui/templates/<page>.html (provide imprint.html and accessibility.html in
+# SITE_TEMPLATES_DIR; privacy.html has a generic default).
+IMPRINT_URL = get_from_env('IMPRINT_URL', '')
+PRIVACY_URL = get_from_env('PRIVACY_URL', '/privacy')
+ACCESSIBILITY_URL = get_from_env('ACCESSIBILITY_URL', '')
+# further footer links, JSON: [{"url": "https://...", "text": "..."}]
 FOOTER_LINKS = json.loads(get_from_env('FOOTER_LINKS', '[]'))
-FOOTER_LOGO_URL = get_from_env('FOOTER_LOGO_URL', None)
 
 WELCOME_MESSAGE = get_from_env('WELCOME_MESSAGE', "This is the default message")
 
@@ -317,12 +362,50 @@ GH_CLIENT_SECRET = get_from_env('GH_CLIENT_SECRET', '')
 GITLAB_CLIENT_ID = get_from_env('GITLAB_CLIENT_ID', "")
 GITLAB_CLIENT_SECRET = get_from_env('GITLAB_CLIENT_SECRET', "")
 
+# Generic OpenID Connect (see helios_auth/auth_systems/oidc.py).
+# Enabled when OIDC_DISCOVERY_URL is set; add its name to AUTH_ENABLED_SYSTEMS.
+OIDC_AUTH_SYSTEM_NAME = get_from_env('OIDC_AUTH_SYSTEM_NAME', 'oidc')
+OIDC_DISCOVERY_URL = get_from_env('OIDC_DISCOVERY_URL', '')
+OIDC_CLIENT_ID = get_from_env('OIDC_CLIENT_ID', '')
+OIDC_CLIENT_SECRET = get_from_env('OIDC_CLIENT_SECRET', '')
+OIDC_SCOPES = get_from_env('OIDC_SCOPES', 'openid email profile')
+OIDC_USER_ID_CLAIM = get_from_env('OIDC_USER_ID_CLAIM', 'sub')
+OIDC_TRUST_UNVERIFIED_EMAIL = (get_from_env('OIDC_TRUST_UNVERIFIED_EMAIL', '0') == '1')
+# also end the session at the identity provider on logout (register <URL_HOST>/auth/logout/done there)
+OIDC_LOGOUT_AT_PROVIDER = (get_from_env('OIDC_LOGOUT_AT_PROVIDER', '0') == '1')
+OIDC_LOGIN_MESSAGE = get_from_env('OIDC_LOGIN_MESSAGE', '')  # empty: translated default
+
+# Generic SAML 2.0 (see helios_auth/auth_systems/saml.py; needs `uv sync --extra saml`).
+# Enabled when SAML_IDP_METADATA_URL or SAML_IDP_METADATA_FILE is set.
+SAML_AUTH_SYSTEM_NAME = get_from_env('SAML_AUTH_SYSTEM_NAME', 'saml')
+SAML_IDP_METADATA_URL = get_from_env('SAML_IDP_METADATA_URL', '')
+SAML_IDP_METADATA_FILE = get_from_env('SAML_IDP_METADATA_FILE', '')
+SAML_IDP_ENTITY_ID = get_from_env('SAML_IDP_ENTITY_ID', '')
+SAML_IDP_X509_CERT = get_from_env('SAML_IDP_X509_CERT', '')
+SAML_SP_ENTITY_ID = get_from_env('SAML_SP_ENTITY_ID', '')
+SAML_SP_ACS_URL = get_from_env('SAML_SP_ACS_URL', '')
+SAML_SP_X509_CERT = get_from_env('SAML_SP_X509_CERT', '')
+SAML_SP_PRIVATE_KEY = get_from_env('SAML_SP_PRIVATE_KEY', '')
+SAML_ATTRIBUTE_USER_ID = get_from_env('SAML_ATTRIBUTE_USER_ID', 'nameid')
+SAML_ATTRIBUTE_EMAIL = get_from_env('SAML_ATTRIBUTE_EMAIL', '')
+SAML_ATTRIBUTE_NAME = get_from_env('SAML_ATTRIBUTE_NAME', '')
+SAML_ATTRIBUTE_GIVEN_NAME = get_from_env('SAML_ATTRIBUTE_GIVEN_NAME', '')
+SAML_ATTRIBUTE_SURNAME = get_from_env('SAML_ATTRIBUTE_SURNAME', '')
+SAML_LOGIN_MESSAGE = get_from_env('SAML_LOGIN_MESSAGE', '')  # empty: translated default
+
 # email server
 EMAIL_HOST = get_from_env('EMAIL_HOST', 'localhost')
 EMAIL_PORT = int(get_from_env('EMAIL_PORT', "2525"))
 EMAIL_HOST_USER = get_from_env('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = get_from_env('EMAIL_HOST_PASSWORD', '')
+# STARTTLS (usually port 587) or implicit TLS (usually port 465), not both
 EMAIL_USE_TLS = (get_from_env('EMAIL_USE_TLS', '0') == '1')
+EMAIL_USE_SSL = (get_from_env('EMAIL_USE_SSL', '0') == '1')
+if EMAIL_USE_TLS and EMAIL_USE_SSL:
+    from django.core.exceptions import ImproperlyConfigured
+    raise ImproperlyConfigured("Set only one of EMAIL_USE_TLS (STARTTLS) and EMAIL_USE_SSL (implicit TLS).")
+# seconds; without a timeout a hanging mail server blocks the task worker
+EMAIL_TIMEOUT = int(get_from_env('EMAIL_TIMEOUT', '60'))
 
 # to use AWS Simple Email Service
 # in which case environment should contain
@@ -370,3 +453,13 @@ AUTH_LDAP_USER_ATTR_MAP = {
 AUTH_LDAP_BIND_AS_AUTHENTICATING_USER = True
 
 AUTH_LDAP_ALWAYS_UPDATE_USER = False
+
+
+# Per-language variants of display texts set above: e.g. WELCOME_MESSAGE_DE is
+# shown instead of WELCOME_MESSAGE when the page is in German. Read with
+# helios_auth.utils.localized_setting().
+LOCALIZED_SETTING_NAMES = ('SITE_TITLE', 'WELCOME_MESSAGE', 'ORGANIZATION_NAME', 'OIDC_LOGIN_MESSAGE', 'SAML_LOGIN_MESSAGE')
+LOCALIZED_SETTINGS = {
+    name: {code: get_from_env('%s_%s' % (name, code.upper().replace('-', '_')), None) for code, _name in LANGUAGES}
+    for name in LOCALIZED_SETTING_NAMES
+}

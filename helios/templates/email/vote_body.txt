@@ -1,39 +1,45 @@
-Dear {{voter.name}},
+{% load i18n %}{% blocktranslate trimmed with name=voter.name %}Dear {{ name }},{% endblocktranslate %}
 
 {{custom_message|safe}}
 
-Election URL (click to begin voting):
+{% translate "Election URL (click to begin voting):" %}
 {{election_vote_url}}
 
 {% if voter.voter_type == "password" %}
-Your voter ID: {{voter.voter_login_id}}
-Your password: {{voter.voter_password}}
+{% translate "Your voter ID:" %} {{voter.voter_login_id}}
+{% translate "Your password:" %} {{voter.voter_password}}
 {% else %}
-Log in with your {{voter.voter_type}} account.
+{% blocktranslate trimmed with voter_type=voter.voter_type %}Log in with your {{ voter_type }} account.{% endblocktranslate %}
 {% endif %}{% if voter.vote_hash %}
-We have recorded your vote with ballot tracker:
+{% translate "We have recorded your vote with ballot tracker:" %}
 
   {{voter.vote_hash}}
 
-You may re-vote if you wish: only your last vote counts.
+{% translate "You may re-vote if you wish: only your last vote counts." %}
 {% endif %}{% if election.use_voter_aliases %}
+{% blocktranslate trimmed %}
 In order to protect your privacy, this election is configured
 to never display your voter login ID, name, or email address to the public.
 Instead, the ballot tracking center will only display your alias.
+{% endblocktranslate %}
 
-Your voter alias is {{voter.alias}}.
+{% blocktranslate trimmed with alias=voter.alias %}Your voter alias is {{ alias }}.{% endblocktranslate %}
 
+{% blocktranslate trimmed %}
 IMPORTANTLY, when you are prompted to log in to vote,
 please use your *voter ID*, not your alias.
+{% endblocktranslate %}
 {% endif %}
 
+{% blocktranslate trimmed with hash=voter.election.hash %}
 You may wish to verify the election fingerprint at the bottom of
-the screen when you vote:  {{voter.election.hash}}
+the screen when you vote: {{ hash }}
+{% endblocktranslate %}
 
 --
 Helios
 
 {% if unsubscribe_url %}
-To stop receiving all emails from Helios, click here:
+{% translate "To stop receiving all emails from Helios, click here:" %}
 {{ unsubscribe_url }}
 {% endif %}

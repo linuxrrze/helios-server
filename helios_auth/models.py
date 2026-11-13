@@ -13,6 +13,7 @@ from django.utils.html import format_html
 
 from .auth_systems import can_check_constraint, uses_case_insensitive_user_id, AUTH_SYSTEMS
 from .jsonfield import JSONField
+from .utils import login_icon_url
 
 
 # an exception to catch when a user is no longer authenticated
@@ -189,8 +190,8 @@ class User(models.Model):
     else:
       name_display = self.pretty_name
 
-    return format_html('<img class="{}-logo" src="/static/auth/login-icons/{}.png" alt="{}" /> {}',
-      size, self.user_type, self.user_type, name_display)
+    return format_html('<img class="{}-logo" src="{}" alt="{}" /> {}',
+      size, login_icon_url(self.user_type), self.user_type, name_display)
 
   @property
   def display_html_small(self):

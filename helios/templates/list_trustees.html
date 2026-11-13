@@ -1,33 +1,34 @@
 {% extends "helios/templates/cryptobase.html" %}
+{% load i18n %}
 
-{% block title %}Trustees for {{election.name}}{% endblock %}
+{% block title %}{% blocktranslate trimmed with name=election.name %}Trustees for {{name}}{% endblocktranslate %}{% endblock %}
 
 {% block content %}
-  <h3 class="title">{{election.name}} &mdash; Trustees <span style="font-size:0.7em;">[<a href="{% url "election@view" election.uuid %}">back to election</a>]</span></h3>
+  <h3 class="title">{{election.name}} &mdash; {% translate "Trustees" %} <span style="font-size:0.7em;">[<a href="{% url "election@view" election.uuid %}">{% translate "back to election" %}</a>]</span></h3>
 
 <p>
-    Trustees are responsible for decrypting the election result.<br />
-    Each trustee generates a keypair and submits the public portion to Helios.<br />
-    When it's time to decrypt, each trustee needs to provide their secret key.
+    {% translate "Trustees are responsible for decrypting the election result." %}<br />
+    {% translate "Each trustee generates a keypair and submits the public portion to Helios." %}<br />
+    {% translate "When it's time to decrypt, each trustee needs to provide their secret key." %}
 </p>
 
 {% if not election.frozen_at %}
 
 <p>
-  Helios is automatically your first trustee and will handle its keypair generation and decryption automatically.<br />
-  You may add additional trustees if you want, and you can even remove the Helios trustee.<br />
-  However, we recommend you do this only if you have a solid understanding of the trustee's role.
+  {% translate "Helios is automatically your first trustee and will handle its keypair generation and decryption automatically." %}<br />
+  {% translate "You may add additional trustees if you want, and you can even remove the Helios trustee." %}<br />
+  {% translate "However, we recommend you do this only if you have a solid understanding of the trustee's role." %}
 </p>
 
 {% if admin_p %}
 <p>
-    [ <a onclick="return(confirm('Adding your own trustee requires a good bit more work to tally the election.\nYou will need to have trustees generate keypairs and safeguard their secret key.\n\nIf you are not sure what that means, we strongly recommend\nclicking Cancel and letting Helios tally the election for you.'));" href="{% url "election@trustees@new" election.uuid %}">add a trustee</a> ]
+    [ <a onclick="return(confirm('{% filter escapejs %}{% translate "Adding your own trustee requires a good bit more work to tally the election." %}{% endfilter %}\n{% filter escapejs %}{% translate "You will need to have trustees generate keypairs and safeguard their secret key." %}{% endfilter %}\n\n{% filter escapejs %}{% translate "If you are not sure what that means, we strongly recommend clicking Cancel and letting Helios tally the election for you." %}{% endfilter %}'));" href="{% url "election@trustees@new" election.uuid %}">{% translate "add a trustee" %}</a> ]
 </p>
 {% if not election.has_helios_trustee %}
 <div style="margin: 1em 0;">
     <form class="inline-action" method="post" action="{% url "election@trustees@add-helios" election.uuid %}">
     <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
-    <button type="submit" class="link-button">add Helios as a trustee</button>
+    <button type="submit" class="link-button">{% translate "add Helios as a trustee" %}</button>
     </form>
 </div>
 {% endif %}
@@ -42,31 +43,31 @@
 <!-- the action forms sit alongside the heading rather than inside it: a <form> is flow
      content, which an <h5> is not allowed to contain. -->
 <div class="trustee-heading">
-<h5>Trustee #{{forloop.counter}}: {{t.name}}</h5>
+<h5>{% blocktranslate trimmed with num=forloop.counter name=t.name %}Trustee #{{num}}: {{name}}{% endblocktranslate %}</h5>
 {% if admin_p %}
 {% if t.secret_key %}
-{% if not election.frozen_at %}[<form class="inline-action" method="post" action="{% url "election@trustees@delete" election.uuid %}" onsubmit="return confirm('Are you sure you want to remove Helios as a trustee?');"><input type="hidden" name="csrf_token" value="{{csrf_token}}" /><input type="hidden" name="uuid" value="{{t.uuid}}" /><button type="submit" class="link-button">x</button></form>]{% endif %}
+{% if not election.frozen_at %}[<form class="inline-action" method="post" action="{% url "election@trustees@delete" election.uuid %}" onsubmit="return confirm('{% filter escapejs %}{% translate "Are you sure you want to remove Helios as a trustee?" %}{% endfilter %}');"><input type="hidden" name="csrf_token" value="{{csrf_token}}" /><input type="hidden" name="uuid" value="{{t.uuid}}" /><button type="submit" class="link-button">x</button></form>]{% endif %}
 {% else %}
 ({{t.email}})
-{% if not election.frozen_at %}[<form class="inline-action" method="post" action="{% url "election@trustees@delete" election.uuid %}" onsubmit="return confirm('Are you sure you want to remove this Trustee?');"><input type="hidden" name="csrf_token" value="{{csrf_token}}" /><input type="hidden" name="uuid" value="{{t.uuid}}" /><button type="submit" class="link-button">x</button></form>]{% endif %}
-[<form class="inline-action" method="post" action="{% url "election@trustee@send-url" election.uuid t.uuid %}" onsubmit="return confirm('Are you sure you want to send this trustee his/her admin URL?');"><input type="hidden" name="csrf_token" value="{{csrf_token}}" /><button type="submit" class="link-button">send login</button></form>]
+{% if not election.frozen_at %}[<form class="inline-action" method="post" action="{% url "election@trustees@delete" election.uuid %}" onsubmit="return confirm('{% filter escapejs %}{% translate "Are you sure you want to remove this Trustee?" %}{% endfilter %}');"><input type="hidden" name="csrf_token" value="{{csrf_token}}" /><input type="hidden" name="uuid" value="{{t.uuid}}" /><button type="submit" class="link-button">x</button></form>]{% endif %}
+[<form class="inline-action" method="post" action="{% url "election@trustee@send-url" election.uuid t.uuid %}" onsubmit="return confirm('{% filter escapejs %}{% translate "Are you sure you want to send this trustee his/her admin URL?" %}{% endfilter %}');"><input type="hidden" name="csrf_token" value="{{csrf_token}}" /><button type="submit" class="link-button">{% translate "send login" %}</button></form>]
 {% endif %}
 {% endif %}
 </div>
 
 <p>
 {% if t.public_key_hash %}
-  Public Key Fingerprint: <tt style="font-size:1.5em;">{{t.public_key_hash}}</tt>
+  {% translate "Public Key Fingerprint:" %} <tt style="font-size:1.5em;">{{t.public_key_hash}}</tt>
 {% else %}
-No public key uploaded yet.
+{% translate "No public key uploaded yet." %}
 {% endif %}
 </p>
 
 {% if election.encrypted_tally %}
 {% if t.decryption_factors %}
-<b>tally recorded for this trustee.</b>
+<b>{% translate "tally recorded for this trustee." %}</b>
 {% else %}
-<em>waiting for this trustee's tally</em>
+<em>{% translate "waiting for this trustee's tally" %}</em>
 {% endif %}
 {% endif %}
 </li>

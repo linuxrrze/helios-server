@@ -350,7 +350,8 @@ class UserBlackboxTests(TestCase):
     def test_logout(self):
         response = self.client.post(reverse("auth@logout"), follow=True)
 
-        self.assertContains(response, "not logged in")
+        # logged-out pages offer the login link (wording depends on the site layout)
+        self.assertContains(response, reverse("auth@index") + "?return_url=")
         self.assertNotContains(response, "Foobar User")
 
     def test_email(self):
@@ -406,8 +407,7 @@ class LDAPAuthTests(TestCase):
     def test_logout(self):
         """ test if logs out using the auth system logout view """
         response = self.client.post(reverse(views.logout), follow=True)
-        print(response.content)
-        self.assertContains(response, "not logged in")
+        self.assertContains(response, reverse("auth@index") + "?return_url=")
         self.assertNotContains(response, "euclid")
 
 
@@ -619,3 +619,40 @@ class ReturnUrlTests(TestCase):
             'return_url': 'https://example.com/elsewhere'})
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(response['Location'], '/')
+
+
+class LoginRequiredTests(TestCase):
+    """login_required only lets logged-in users through: there is no API client
+    login (the old OAuth 1 API, which could never work, is gone)."""
+
+    def test_anonymous_request_redirects_to_login(self):
+        response = self.client.get('/helios/elections/administered')
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('return_url=/helios/elections/administered', response['Location'])
+
+    def test_oauth1_parameters_redirect_to_login(self):
+        # used to raise NameError (APIClient was never defined) and give a 500
+        response = self.client.get('/helios/elections/administered', {
+            'oauth_consumer_key': 'x', 'oauth_token': 'y', 'oauth_signature_method': 'HMAC-SHA1',
+            'oauth_signature': 'z', 'oauth_timestamp': '1', 'oauth_nonce': 'n', 'oauth_version': '1.0'})
+        self.assertEqual(response.status_code, 302)
+
+
+class LoginIconTests(TestCase):
+    """Installations add icons for their own auth system names in SITE_STATIC_DIR."""
+
+    def test_builtin_icon_by_default(self):
+        from helios_auth.utils import login_icon_url
+        self.assertEqual(login_icon_url('google'), '/static/auth/login-icons/google.png')
+
+    def test_site_icon_takes_precedence(self):
+        import os, tempfile
+        from helios_auth.utils import login_icon_url
+        with tempfile.TemporaryDirectory() as site_dir:
+            os.makedirs(os.path.join(site_dir, 'login-icons'))
+            open(os.path.join(site_dir, 'login-icons', 'campus.png'), 'wb').close()
+            with self.settings(SITE_STATIC_DIR=site_dir):
+                self.assertEqual(login_icon_url('campus'), '/static/site/login-icons/campus.png')
+                self.assertEqual(login_icon_url('google'), '/static/auth/login-icons/google.png')
+                # names never leave the icon directory
+                self.assertEqual(login_icon_url('../campus'), '/static/site/login-icons/campus.png')

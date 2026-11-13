@@ -1,4 +1,5 @@
 {% extends "helios/templates/cryptobase.html" %}
+{% load i18n %}
 
 {% block content %}
 <script language="javascript">
@@ -7,7 +8,7 @@ var SECRET_KEY;
 
 function before_create() {
 {% if election_type == "one" %}
-    return confirm('Have you made sure to copy the private key to a safe place?\n\nOnce you click OK, Helios will not be able to recover the secret key without your help!');
+    return confirm('{% filter escapejs %}{% translate "Have you made sure to copy the private key to a safe place?" %}{% endfilter %}\n\n{% filter escapejs %}{% translate "Once you click OK, Helios will not be able to recover the secret key without your help!" %}{% endfilter %}');
 {% else %}
     return true;
 {% endif %}
@@ -46,14 +47,14 @@ $(document).ready(function() {
 });
 </script>
 
-  <h2 class="title">Create a New Election: {{name}}</h2>
+  <h2 class="title">{% blocktranslate trimmed %}Create a New Election: {{name}}{% endblocktranslate %}</h2>
 {% if election_type == "helios" %}
-  <b>An election managed by Helios</b>.
+  <b>{% translate "An election managed by Helios" %}</b>.
 {% else %}
 {% if election_type == "one" %}
-  <b>An election managed by you, the single administrator</b>.
+  <b>{% translate "An election managed by you, the single administrator" %}</b>.
 {% else %}
-<b>An election managed by multiple trustees</b>.
+<b>{% translate "An election managed by multiple trustees" %}</b>.
 {% endif %}
 {% endif %}
   <form class="prettyform" action="{% url "helios.views.election_new_3" %}" method="POST" id="create_election_form" onsubmit="return before_create();">
@@ -63,10 +64,10 @@ $(document).ready(function() {
       <input type="hidden" name="private_key" id="sk" value="" /><br />
 
 {% if election_type != "multiple" %}
-  <label for="generate_key">&nbsp;</label><button class="button" onclick="generate_keypair(); return false;" id="generate_button">Generate Election Keys</button>
+  <label for="generate_key">&nbsp;</label><button class="button" onclick="generate_keypair(); return false;" id="generate_button">{% translate "Generate Election Keys" %}</button>
 {% else %}
 <div id="trustees">
-<h3>Trustees (up to 5)</h3>
+<h3>{% translate "Trustees (up to 5)" %}</h3>
 <label for="">&nbsp;</label> <input type="text" name="trustee" /><br />
 <label for="">&nbsp;</label> <input type="text" name="trustee" /><br />
 <label for="">&nbsp;</label> <input type="text" name="trustee" /><br />
@@ -75,18 +76,17 @@ $(document).ready(function() {
 </div>
 {% endif %}
 <br /><br />
-<label for="">&nbsp;</label>  <input class="button" type="submit" value="create" id="submit" />
+<label for="">&nbsp;</label>  <input class="button" type="submit" value="{% translate "create" %}" id="submit" />
   </form>
   <br /><br />
 {% if election_type == "one" %}
   <form style="padding-left: 200px;" id="sk_form" onsubmit="return false;">
       <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
-      Your Election's Secret Key:<br />
+      {% translate "Your Election's Secret Key:" %}<br />
       <label for="">&nbsp;</label>
       <textarea id="sk_textarea" cols="60" rows="5">
       </textarea><br />
-      (You need to copy and paste this key and keep it safe,<br />
-      otherwise you won't be able to tally your election.)
+      {% translate "(You need to copy and paste this key and keep it safe,<br />otherwise you won't be able to tally your election.)" %}
   </form>
 {% endif %}
 {% endblock %}

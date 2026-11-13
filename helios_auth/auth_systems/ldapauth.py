@@ -23,8 +23,8 @@ LDAP_LOGIN_URL_NAME = "auth@ldap@login"
 LOGIN_MESSAGE = _("Log in with my LDAP Account")
 
 class LoginForm(forms.Form):
-    username = forms.CharField(max_length=250)
-    password = forms.CharField(widget=forms.PasswordInput(), max_length=100)
+    username = forms.CharField(max_length=250, label=_('Username'))
+    password = forms.CharField(widget=forms.PasswordInput(), max_length=100, label=_('Password'))
 
 
 def ldap_login_view(request):
@@ -62,7 +62,7 @@ def ldap_login_view(request):
                 }
                 return HttpResponseRedirect(reverse(after))
             else:
-                error = 'Bad Username or Password'
+                error = str(_('Bad Username or Password'))
 
     return render_template(request, 'ldapauth/login', {
             'form': form,

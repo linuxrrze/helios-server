@@ -1,17 +1,22 @@
-Dear {{voter.name}},
+{% load i18n %}{% blocktranslate trimmed with name=voter.name %}Dear {{ name }},{% endblocktranslate %}
 
-You have successfully cast a vote in {{election.name}}.
+{% blocktranslate trimmed with name=election.name %}You have successfully cast a vote in {{ name }}.{% endblocktranslate %}
 
-Your ballot tracker is:
+{% translate "Your ballot tracker is:" %}
 {{cast_vote.vote_hash}}
 
-And your full encrypted ballot is archived at:
+{% translate "And your full encrypted ballot is archived at:" %}
 {{cast_vote_url}}
 
 {% if election.use_voter_aliases %}
-This election uses voter aliases to protect your privacy.
-Your voter alias is: {{voter.alias}}.
+{% translate "This election uses voter aliases to protect your privacy." %}
+{% blocktranslate trimmed with alias=voter.alias %}Your voter alias is: {{ alias }}.{% endblocktranslate %}
 {% endif %}
 
 --
 Helios
+
+{% if unsubscribe_url %}
+{% translate "To stop receiving all emails from Helios, click here:" %}
+{{ unsubscribe_url }}
+{% endif %}

@@ -8,13 +8,14 @@ from django.conf import settings
 from django.http import HttpResponseRedirect, Http404
 from django.urls import reverse, re_path
 from django.shortcuts import render
+from django.utils.translation import gettext_lazy as _
 
 from helios_auth import url_names
 
 import logging
 
 # Login message shown in the auth selection box
-LOGIN_MESSAGE = "Dev Login"
+LOGIN_MESSAGE = _("Dev Login")
 STATUS_UPDATES = False
 
 def get_auth_url(request, redirect_url=None):

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.urls import include, path
 
-from . import views, url_names as names
+from . import views, votergroup_views, url_names as names
 
 urlpatterns = [
   path('autologin', views.admin_autologin),
@@ -33,4 +33,12 @@ urlpatterns = [
   path('elections/voted', views.elections_voted, name=names.ELECTIONS_VOTED),
   
   path('elections/<str:election_uuid>', include('helios.election_urls')),
+
+  # voter groups
+  path('votergroup/administered', votergroup_views.votergroup_administered, name=names.VOTERGROUP_ADMINISTERED),
+  path('votergroup/new', votergroup_views.votergroup_new, name=names.VOTERGROUP_NEW),
+  path('votergroup/view/<str:votergroup_uuid>', votergroup_views.votergroup_view, name=names.VOTERGROUP_VIEW),
+  path('votergroup/memberadd/<str:votergroup_uuid>', votergroup_views.votergroup_memberadd, name=names.VOTERGROUP_MEMBERADD),
+  path('votergroup/memberdelete/<str:member_uuid>', votergroup_views.votergroup_memberdelete, name=names.VOTERGROUP_MEMBERDELETE),
+  path('votergroup/prepareelection/<str:votergroup_uuid>', votergroup_views.votergroup_prepareelection, name=names.VOTERGROUP_PREPAREELECTION),
 ]

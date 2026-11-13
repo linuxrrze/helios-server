@@ -1,0 +1,168 @@
+import os
+from django.test import TestCase
+
+
+class StaticPagesTests(TestCase):
+    """The built-in pages linked from the layout must render."""
+
+    def test_static_pages_render(self):
+        for path in ['/about', '/docs', '/faq', '/privacy']:
+            with self.subTest(path=path):
+                response = self.client.get(path)
+                self.assertEqual(response.status_code, 200)
+
+    def test_site_pages_missing_by_default(self):
+        # imprint and accessibility statement exist only if the installation provides them
+        for path in ['/imprint', '/accessibility']:
+            with self.subTest(path=path):
+                self.assertEqual(self.client.get(path).status_code, 404)
+
+
+class SiteCustomizationTests(TestCase):
+    """Branding and legal pages come from settings and SITE_TEMPLATES_DIR, not from code."""
+
+    def test_neutral_defaults(self):
+        content = self.client.get('/').content.decode()
+        self.assertIn('href="/static/layout.css"', content)
+        self.assertIn('href="/privacy"', content)
+        self.assertNotIn('Imprint', content)
+        self.assertNotIn('Accessibility', content)
+        self.assertNotIn('class="orghome"', content)
+
+    def test_branding_and_footer_links_from_settings(self):
+        with self.settings(ORGANIZATION_NAME='Example University', ORGANIZATION_URL='https://www.example.org',
+                           ORGANIZATION_LOGO_URL='/static/site/org.svg', FOOTER_LOGO_URL='/static/site/org-white.svg',
+                           SITE_CSS_URL='/static/site/site.css', IMPRINT_URL='https://www.example.org/imprint',
+                           PRIVACY_URL='', ACCESSIBILITY_URL='/accessibility',
+                           FOOTER_LINKS=[{'url': 'https://help.example.org', 'text': 'Help desk'}]):
+            content = self.client.get('/').content.decode()
+        self.assertIn('<link rel="stylesheet" href="/static/site/site.css">', content)
+        self.assertIn('<a href="https://www.example.org"><img src="/static/site/org.svg" height="16" alt="Example University"></a>', content)
+        self.assertIn('<img src="/static/site/org-white.svg" alt="Example University">', content)
+        self.assertIn('<a href="https://www.example.org/imprint">Imprint</a>', content)
+        self.assertIn('<a href="/accessibility">Accessibility</a>', content)
+        self.assertIn('<a href="https://help.example.org">Help desk</a>', content)
+        self.assertNotIn('href="/privacy"', content)
+
+    def test_organization_name_is_localized(self):
+        with self.settings(ORGANIZATION_NAME='Example University', ORGANIZATION_URL='https://www.example.org',
+                           LOCALIZED_SETTINGS={'ORGANIZATION_NAME': {'de': 'Beispiel-Universität'}}):
+            content = self.client.get('/', HTTP_ACCEPT_LANGUAGE='de').content.decode()
+        self.assertIn('>Beispiel-Universität</a>', content)
+
+    def test_site_templates_dir_adds_and_overrides_templates(self):
+        import tempfile
+        from django.conf import settings as django_settings
+        with tempfile.TemporaryDirectory() as site_dir:
+            pages = os.path.join(site_dir, 'server_ui', 'templates')
+            os.makedirs(pages)
+            for name, text in [('imprint', 'Site imprint'), ('privacy', 'Site privacy policy')]:
+                with open(os.path.join(pages, name + '.html'), 'w') as f:
+                    f.write("{%% extends 'server_ui/templates/base.html' %%}{%% block content %%}%s{%% endblock %%}" % text)
+            templates = [dict(django_settings.TEMPLATES[0], DIRS=[site_dir] + django_settings.TEMPLATES[0]['DIRS'])]
+            with self.settings(TEMPLATES=templates):
+                self.assertContains(self.client.get('/imprint'), 'Site imprint')
+                self.assertContains(self.client.get('/privacy'), 'Site privacy policy')
+                self.assertEqual(self.client.get('/accessibility').status_code, 404)
+
+
+class LandingPageTests(TestCase):
+
+    def test_single_login_button_when_logged_out(self):
+        # the layout has its own login button; upstream's login box
+        # used to be rendered as well, giving two buttons that did the same
+        response = self.client.get('/')
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertEqual(content.count('class="button"><span>Log in</span>'), 1)
+        self.assertNotIn('/auth/start/', content)  # login-box links
+
+
+class VoteCastEmailTests(TestCase):
+    """The confirmation email sent by server_ui.glue after a ballot is stored."""
+    fixtures = ['users.json']
+
+    def setUp(self):
+        import uuid
+        from helios import models
+        from helios_auth.models import User
+        admin = User.objects.get(user_id='ben@adida.net', user_type='google')
+        self.election, _ = models.Election.get_or_create(
+            short_name='cast-mail', name='Dekanswahl', description='', admin=admin)
+        # a voter from a voter file, without a user account
+        self.voter = models.Voter.objects.create(
+            uuid=str(uuid.uuid4()), election=self.election,
+            voter_email='voter@example.com', voter_name='Erika Muster')
+        self.cast_vote = models.CastVote(voter=self.voter, vote_hash='HASH123', vote_tinyhash='tiny123')
+
+    def _send(self):
+        from server_ui.glue import vote_cast_send_message
+        vote_cast_send_message(user=self.voter.get_user(), voter=self.voter,
+                               election=self.election, cast_vote=self.cast_vote)
+
+    def test_voter_without_account_gets_mail(self):
+        from django.core import mail
+        self._send()
+        self.assertEqual(len(mail.outbox), 1)
+        message = mail.outbox[0]
+        self.assertIn('voter@example.com', message.to[0])
+        self.assertEqual(message.subject, 'Dekanswahl - vote cast')
+        self.assertIn('HASH123', message.body)
+        self.assertIn('/optout/', message.body)
+
+    def test_subject_in_german(self):
+        from django.core import mail
+        from django.utils import translation
+        with translation.override('de'):
+            self._send()
+        self.assertEqual(mail.outbox[0].subject, 'Dekanswahl – Stimme abgegeben')
+
+    def test_opted_out_voter_gets_no_mail(self):
+        from django.core import mail
+        from helios.models import EmailOptOut
+        EmailOptOut.add_opt_out('voter@example.com')
+        self._send()
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_mail_failure_does_not_raise(self):
+        from unittest import mock
+        with mock.patch('helios_auth.auth_systems.password.send_mail', side_effect=OSError('SMTP down')):
+            with self.assertLogs('server_ui.glue', level='ERROR'):
+                self._send()
+
+
+class EmailSettingsFromEnvironmentTests(TestCase):
+    """
+    settings.py ignores the environment while tests run, so load it in a
+    separate interpreter with the variables set.
+    """
+
+    def _settings(self, **env):
+        import json
+        import os
+        import subprocess
+        import sys
+        environ = {k: v for k, v in os.environ.items() if k not in ('EMAIL_USE_TLS', 'EMAIL_USE_SSL', 'EMAIL_TIMEOUT')}
+        environ.update(env)
+        code = ("import json, settings; print(json.dumps({k: getattr(settings, k) for k in "
+                "('EMAIL_HOST_USER', 'EMAIL_USE_TLS', 'EMAIL_USE_SSL', 'EMAIL_TIMEOUT')}))")
+        result = subprocess.run([sys.executable, '-c', code], env=environ, capture_output=True, text=True,
+                                cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        return result, (json.loads(result.stdout.strip().splitlines()[-1]) if result.returncode == 0 else None)
+
+    def test_defaults(self):
+        result, values = self._settings()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(values['EMAIL_USE_SSL'], False)
+        self.assertEqual(values['EMAIL_TIMEOUT'], 60)
+
+    def test_authenticated_relay_with_implicit_tls(self):
+        result, values = self._settings(EMAIL_HOST_USER='helios', EMAIL_USE_SSL='1', EMAIL_TIMEOUT='20')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(values, {'EMAIL_HOST_USER': 'helios', 'EMAIL_USE_TLS': False,
+                                  'EMAIL_USE_SSL': True, 'EMAIL_TIMEOUT': 20})
+
+    def test_starttls_and_implicit_tls_together_refused(self):
+        result, _ = self._settings(EMAIL_USE_TLS='1', EMAIL_USE_SSL='1')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('EMAIL_USE_TLS', result.stderr)

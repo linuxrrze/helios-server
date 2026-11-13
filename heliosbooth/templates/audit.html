@@ -1,18 +1,18 @@
 
-<h3>Your audited ballot</h3>
+<h3>{gettext("Your audited ballot")}</h3>
 
 <p>
-<b><u>IMPORTANT</u></b>: this ballot, now that it has been audited, <em>will not be tallied</em>.<br />
-To cast a ballot, you must click the "Back to Voting" button below, re-encrypt it, and choose "cast" instead of "audit."
+{gettext("<b><u>IMPORTANT</u></b>: this ballot, now that it has been audited, <em>will not be tallied</em>.")}<br />
+{gettext('To cast a ballot, you must click the "Back to Voting" button below, re-encrypt it, and choose "cast" instead of "audit."')}
 </p>
 
 <p>
-<b>Why?</b> Helios prevents you from auditing and casting the same ballot to provide you with some protection against coercion.
+{gettext("<b>Why?</b> Helios prevents you from auditing and casting the same ballot to provide you with some protection against coercion.")}
 </p>
 
 <p>
-<b>Now what?</b> <a onclick="$('#audit_trail').select(); return false;" href="#">Select your ballot audit info</a>, copy it to your clipboard, then use the <a target="_blank" href="single-ballot-verify.html?election_url={$T.election_url}">ballot verifier</a> to verify it.<br />
-Once you're satisfied, click the "back to voting" button to re-encrypt and cast your ballot.
+{BOOTH.fmt(gettext("<b>Now what?</b> %(select_link_start)sSelect your ballot audit info%(link_end)s, copy it to your clipboard, then use the %(verifier_link_start)sballot verifier%(link_end)s to verify it."), 'select_link_start', BOOTH.select_audit_trail_link, 'verifier_link_start', '<a target="_blank" href="single-ballot-verify.html?election_url=' + $T.election_url + '">', 'link_end', '</a>')}<br />
+{gettext("Once you're satisfied, click the \"back to voting\" button to re-encrypt and cast your ballot.")}
 </p>
 
 <form action="#">
@@ -20,14 +20,13 @@ Once you're satisfied, click the "back to voting" button to re-encrypt and cast 
 {$T.audit_trail}
 </textarea>
 <br /><br />
-Before going back to voting,<br />
-you can post this audited ballot to the Helios tracking center so that others might double-check the verification of this ballot.
+{gettext("Before going back to voting,<br />you can post this audited ballot to the Helios tracking center so that others might double-check the verification of this ballot.")}
 <br /><br />
-<b>Even if you post your audited ballot, you must go back to voting and choose "cast" if you want your vote to count.</b>
+<b>{gettext('Even if you post your audited ballot, you must go back to voting and choose "cast" if you want your vote to count.')}</b>
 <br /><br />
-<button onclick="BOOTH.reset_ciphertexts();BOOTH.seal_ballot(); return false;" class="pretty">back to voting</button>
+<button onclick="BOOTH.reset_ciphertexts();BOOTH.seal_ballot(); return false;" class="pretty">{gettext("back to voting")}</button>
 &nbsp; &nbsp;&nbsp;
-<button onclick="$(this).attr('disabled', 'disabled');BOOTH.post_audited_ballot(); return false;" id="post_audited_ballot_button" class="pretty" style="font-size:0.8em;">post audited ballot to tracking center</button>
+<button onclick="$(this).attr('disabled', 'disabled');BOOTH.post_audited_ballot(); return false;" id="post_audited_ballot_button" class="pretty" style="font-size:0.8em;">{gettext("post audited ballot to tracking center")}</button>
 
 </form>
 

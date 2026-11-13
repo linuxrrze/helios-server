@@ -1,8 +1,6 @@
 """
 Crypto Algorithms for the Helios Voting System
 
-FIXME: improve random number generation.
-
 Ben Adida
 ben@adida.net
 """

@@ -17,6 +17,25 @@ AUTH_SYSTEMS['github'] = github
 AUTH_SYSTEMS['ldap'] = ldapauth
 AUTH_SYSTEMS['gitlab'] = gitlab
 
+# Generic single sign-on. Each can be registered under a custom name, e.g.
+# "campus", so that switching protocol (SAML -> OIDC) keeps existing user
+# identities: users are stored by (auth system name, user id).
+if getattr(settings, 'OIDC_DISCOVERY_URL', None):
+    from .oidc import OIDCAuthSystem
+    _oidc_name = getattr(settings, 'OIDC_AUTH_SYSTEM_NAME', None) or 'oidc'
+    AUTH_SYSTEMS[_oidc_name] = OIDCAuthSystem(_oidc_name)
+
+if getattr(settings, 'SAML_IDP_METADATA_URL', None) or getattr(settings, 'SAML_IDP_METADATA_FILE', None):
+    from .saml import SAMLAuthSystem
+    _saml_name = getattr(settings, 'SAML_AUTH_SYSTEM_NAME', None) or 'saml'
+    if _saml_name in AUTH_SYSTEMS:
+        # e.g. both configured as "campus" while switching protocol: SAML would
+        # silently replace OIDC. Configure only one of them under that name.
+        from django.core.exceptions import ImproperlyConfigured
+        raise ImproperlyConfigured("SAML and OIDC are both configured as auth system %r; "
+                                   "remove the SAML_IDP_* or the OIDC_DISCOVERY_URL setting" % _saml_name)
+    AUTH_SYSTEMS[_saml_name] = SAMLAuthSystem(_saml_name)
+
 # Add devlogin only in debug mode
 if settings.DEBUG:
     AUTH_SYSTEMS['devlogin'] = devlogin

@@ -3,6 +3,8 @@
  */
 
 // import needed resources
+// translations (gettext, interpolate) for the status messages of verifier.js
+importScripts("/jsi18n/");
 importScripts("js/underscore-min.js");
 
 importScripts("js/jscrypto/jsbn.js",

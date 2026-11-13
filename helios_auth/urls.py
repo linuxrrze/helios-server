@@ -14,6 +14,7 @@ urlpatterns = [
     # basic static stuff
     path('', views.index, name=url_names.AUTH_INDEX),
     path('logout', views.logout, name=url_names.AUTH_LOGOUT),
+    path('logout/done', views.logout_done, name=url_names.AUTH_LOGOUT_DONE),
     re_path(r'^start/(?P<system_name>.*)$', views.start, name=url_names.AUTH_START),
     # weird facebook constraint for trailing slash
     path('after/', views.after, name=url_names.AUTH_AFTER),
@@ -35,3 +36,12 @@ if 'ldap' in AUTH_ENABLED_SYSTEMS:
 if 'devlogin' in AUTH_ENABLED_SYSTEMS:
     from .auth_systems.devlogin import urlpatterns as devlogin_patterns
     urlpatterns.extend(devlogin_patterns)
+
+# SAML: assertion consumer service and SP metadata
+from .auth_systems import AUTH_SYSTEMS as _AUTH_SYSTEMS
+if any(type(s).__name__ == 'SAMLAuthSystem' for s in _AUTH_SYSTEMS.values()):
+    from .auth_systems import saml
+    urlpatterns += [
+        path('saml/acs', saml.acs, name=url_names.AUTH_SAML_ACS),
+        path('saml/metadata', saml.metadata, name=url_names.AUTH_SAML_METADATA),
+    ]

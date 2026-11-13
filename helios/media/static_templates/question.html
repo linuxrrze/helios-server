@@ -5,8 +5,8 @@
       {#if $T.admin_p}
       <span class="question-actions">
         {#if $T.question$index > 0}[<a href="javascript:question_move_up({$T.question$index});">↑</a>]{#/if}
-        [<a href="javascript:question_edit({$T.question$index})">edit</a>]
-        [<a href="javascript:question_remove({$T.question$index})" onclick="return confirm('Are you sure you want to remove this question?');">×</a>]
+        [<a href="javascript:question_edit({$T.question$index})">{gettext("edit")}</a>]
+        [<a href="javascript:question_remove({$T.question$index})" onclick="return confirm(gettext('Are you sure you want to remove this question?'));">×</a>]
       </span>
       {#/if}
       <span class="question-number">{$T.question$index + 1}.</span> {$T.question.question}
@@ -15,14 +15,14 @@
   
   <div class="question-meta">
     <span class="meta-item">
-      <span class="meta-label">Selection:</span> {$T.question.min} to {#if $T.question.max != null}{$T.question.max}{#else}unlimited{#/if}
+      <span class="meta-label">{gettext("Selection:")}</span> {$T.question.min} {gettext("to")} {#if $T.question.max != null}{$T.question.max}{#else}{gettext("unlimited")}{#/if}
     </span>
     <span class="meta-item">
-      <span class="meta-label">Result type:</span> {$T.question.result_type}
+      <span class="meta-label">{gettext("Result type:")}</span> {#if $T.question.result_type == "relative"}{gettext("relative")}{#else}{gettext("absolute")}{#/if}
     </span>
     {#if $T.question.randomize_answer_order}
     <span class="meta-item">
-      <span class="meta-label">Order:</span> randomized
+      <span class="meta-label">{gettext("Order:")}</span> {gettext("randomized")}
     </span>
     {#/if}
   </div>
@@ -32,7 +32,7 @@
     <li class="answer-item">
       <span class="answer-text">{$T.answer}</span>
       {#if $T.question.answer_urls[$T.answer$index]}
-        <a class="answer-link" target="_blank" href="{$T.question.answer_urls[$T.answer$index]}" title="More information">
+        <a class="answer-link" target="_blank" href="{$T.question.answer_urls[$T.answer$index]}" title="{gettext("More information")}">
           <span class="link-icon">🔗</span>
         </a>
       {#/if}
@@ -44,25 +44,25 @@
 <div id="q_edit_{$T.question$index}" class="question-edit-card" style="display:none;">
   <form id="question_edit_{$T.question$index}_form" onsubmit="question_update({$T.question$index}, this); return false;" action="#">
     <div class="form-header">
-      <h4 class="edit-title">Edit Question {$T.question$index + 1}</h4>
+      <h4 class="edit-title">{gettext("Edit Question")} {$T.question$index + 1}</h4>
     </div>
     
     <input type="hidden" name="choice_type" value="approval" />
     
     <div class="form-group">
-      <label class="form-label">Question Text</label>
-      <input type="text" name="question" class="form-control question-input" placeholder="Enter your question here" />
+      <label class="form-label">{gettext("Question Text")}</label>
+      <input type="text" name="question" class="form-control question-input" placeholder="{gettext("Enter your question here")}" />
     </div>
     
     <div class="form-row-compact">
-      <span class="form-label-inline">Select between</span>
+      <span class="form-label-inline">{gettext("Select between")}</span>
       <select name="min" class="form-control-inline">
         <option selected>0</option>
         {#for option_index = 1 to 20}
         <option>{$T.option_index}</option>
         {#/for}
       </select>
-      <span class="form-label-inline">and</span>
+      <span class="form-label-inline">{gettext("and")}</span>
       <select name="max" class="form-control-inline">
         <option>0</option>
         <option selected>1</option>
@@ -71,61 +71,61 @@
         {#/for}
         <option value="">∞</option>
       </select>
-      <span class="form-label-inline">answers.</span>
-      <span class="form-label-inline" style="margin-left: 15px;">Result type:</span>
+      <span class="form-label-inline">{gettext("answers.")}</span>
+      <span class="form-label-inline" style="margin-left: 15px;">{gettext("Result type:")}</span>
       <select name="result_type" class="form-control-inline">
-        <option selected>absolute</option>
-        <option>relative</option>
+        <option value="absolute" selected>{gettext("absolute")}</option>
+        <option value="relative">{gettext("relative")}</option>
       </select>
-      <span class="form-label-inline" style="margin-left: 15px;">Random order:</span>
+      <span class="form-label-inline" style="margin-left: 15px;">{gettext("Random order:")}</span>
       <select name="randomize_answer_order" class="form-control-inline">
-        <option selected value="0">No</option>
-        <option value="1">Yes</option>
+        <option selected value="0">{gettext("No")}</option>
+        <option value="1">{gettext("Yes")}</option>
       </select>
     </div>
     
     <div class="answers-section">
-      <h5 class="section-title">Answer Options</h5>
+      <h5 class="section-title">{gettext("Answer Options")}</h5>
       <div id="answer_table_{$T.question$index}" class="answers-container">
         <!-- Answers will be dynamically added here -->
       </div>
       <button type="button" class="btn-secondary" onclick="add_answers($('#answer_table_{$T.question$index}'), 5)">
-        + Add 5 More Answers
+        + {gettext("Add 5 More Answers")}
       </button>
     </div>
     
     <div class="form-actions">
-      <button type="submit" class="btn-primary">Update Question</button>
-      <button type="button" class="btn-secondary" onclick="question_edit_cancel({$T.question$index});">Cancel</button>
+      <button type="submit" class="btn-primary">{gettext("Update Question")}</button>
+      <button type="button" class="btn-secondary" onclick="question_edit_cancel({$T.question$index});">{gettext("Cancel")}</button>
     </div>
   </form>
 </div>
 {#else}
 <div class="no-questions">
-  <p>No questions have been added yet.</p>
+  <p>{gettext("No questions have been added yet.")}</p>
 </div>
 {#/for}
 
 {#if $T.admin_p}
 <div class="add-question-section">
-  <h4 class="section-header">Add a New Question</h4>
+  <h4 class="section-header">{gettext("Add a New Question")}</h4>
   <form id="question_form" class="question-form" onsubmit="question_add(this); return false;" action="#">
     <input type="hidden" name="choice_type" value="approval" />
     
     <div class="form-group">
-      <label class="form-label">Question Text</label>
-      <input type="text" name="question" class="form-control question-input" placeholder="Enter your question here" required />
+      <label class="form-label">{gettext("Question Text")}</label>
+      <input type="text" name="question" class="form-control question-input" placeholder="{gettext("Enter your question here")}" required />
     </div>
     
     <div class="form-row-compact">
-      <span class="form-label-inline">Select between</span>
+      <span class="form-label-inline">{gettext("Select between")}</span>
       <select name="min" class="form-control-inline">
         <option selected>0</option>
         {#for option_index = 1 to 20}
         <option>{$T.option_index}</option>
         {#/for}
       </select>
-      <span class="form-label-inline">and</span>
+      <span class="form-label-inline">{gettext("and")}</span>
       <select name="max" class="form-control-inline">
         <option>0</option>
         <option selected>1</option>
@@ -134,31 +134,31 @@
         {#/for}
         <option value="">∞</option>
       </select>
-      <span class="form-label-inline">answers.</span>
-      <span class="form-label-inline" style="margin-left: 15px;">Result type:</span>
+      <span class="form-label-inline">{gettext("answers.")}</span>
+      <span class="form-label-inline" style="margin-left: 15px;">{gettext("Result type:")}</span>
       <select name="result_type" class="form-control-inline">
-        <option selected>absolute</option>
-        <option>relative</option>
+        <option value="absolute" selected>{gettext("absolute")}</option>
+        <option value="relative">{gettext("relative")}</option>
       </select>
-      <span class="form-label-inline" style="margin-left: 15px;">Random order:</span>
+      <span class="form-label-inline" style="margin-left: 15px;">{gettext("Random order:")}</span>
       <select name="randomize_answer_order" class="form-control-inline">
-        <option selected value="0">No</option>
-        <option value="1">Yes</option>
+        <option selected value="0">{gettext("No")}</option>
+        <option value="1">{gettext("Yes")}</option>
       </select>
     </div>
     
     <div class="answers-section">
-      <h5 class="section-title">Answer Options</h5>
+      <h5 class="section-title">{gettext("Answer Options")}</h5>
       <div id="answer_table" class="answers-container">
         <!-- Answers will be dynamically added here -->
       </div>
       <button type="button" class="btn-secondary" onclick="add_answers($('#answer_table'), 5)">
-        + Add 5 More Answers
+        + {gettext("Add 5 More Answers")}
       </button>
     </div>
     
     <div class="form-actions">
-      <button type="submit" class="btn-primary">Add Question</button>
+      <button type="submit" class="btn-primary">{gettext("Add Question")}</button>
     </div>
   </form>
 </div>

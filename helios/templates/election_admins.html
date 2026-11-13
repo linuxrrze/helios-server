@@ -1,41 +1,42 @@
 {% extends TEMPLATE_BASE %}
+{% load i18n %}
 
-{% block title %}Administrators for {{election.name}}{% endblock %}
+{% block title %}{% blocktranslate trimmed with name=election.name %}Administrators for {{name}}{% endblocktranslate %}{% endblock %}
 
 {% block content %}
-  <h3 class="title">{{election.name}} &mdash; Administrators <span style="font-size:0.7em;">[<a href="{% url "election@view" election.uuid %}">back to election</a>]</span></h3>
+  <h3 class="title">{{election.name}} &mdash; {% translate "Administrators" %} <span style="font-size:0.7em;">[<a href="{% url "election@view" election.uuid %}">{% translate "back to election" %}</a>]</span></h3>
 
 <p>
-    Administrators have full control over this election, including managing voters, questions, trustees, and settings.
+    {% translate "Administrators have full control over this election, including managing voters, questions, trustees, and settings." %}
 </p>
 
 <p>
-    [ <a href="{% url "election@admins@add" election.uuid %}">add an administrator</a> ]
+    [ <a href="{% url "election@admins@add" election.uuid %}">{% translate "add an administrator" %}</a> ]
 </p>
 
-<h4>Election Creator</h4>
+<h4>{% translate "Election Creator" %}</h4>
 <p>
   <strong>{{admin.display_html_small|safe}}</strong> ({{admin.user_id}})<br />
-  <em>The election creator cannot be removed.</em>
+  <em>{% translate "The election creator cannot be removed." %}</em>
 </p>
 
 {% if additional_admins %}
-<h4>Additional Administrators</h4>
+<h4>{% translate "Additional Administrators" %}</h4>
 <ul>
 {% for a in additional_admins %}
 <li>
   {{a.display_html_small|safe}} ({{a.user_id}})
   {% if a.pk != current_user.pk %}
-  [<a href="{% url "election@admins@remove" election.uuid %}?email={{a.user_id}}&user_type={{a.user_type}}">remove</a>]
+  [<a href="{% url "election@admins@remove" election.uuid %}?email={{a.user_id}}&user_type={{a.user_type}}">{% translate "remove" %}</a>]
   {% else %}
-  <em>(you)</em>
+  <em>{% translate "(you)" %}</em>
   {% endif %}
 </li>
 {% endfor %}
 </ul>
 {% else %}
 <p>
-  <em>No additional administrators have been added.</em>
+  <em>{% translate "No additional administrators have been added." %}</em>
 </p>
 {% endif %}
 

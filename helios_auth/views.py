@@ -10,6 +10,7 @@ from urllib.parse import urlencode
 
 from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
+from django.utils.translation import gettext as _
 
 import settings
 from helios_auth import DEFAULT_AUTH_SYSTEM, ENABLED_AUTH_SYSTEMS
@@ -111,15 +112,19 @@ def do_local_logout(request):
   request.session['user_for_remote_logout'] = user
 
 def do_remote_logout(request, user, return_url="/"):
-  # FIXME: do something with return_url
-  auth_system = AUTH_SYSTEMS[user['type']]
-  
+  # the session may belong to an auth system that is no longer configured,
+  # e.g. after switching from SAML to OIDC under another name
+  auth_system = AUTH_SYSTEMS.get(user['type'])
+
   # does the auth system have a special logout procedure?
   user_for_remote_logout = request.session.get('user_for_remote_logout', None)
   del request.session['user_for_remote_logout']
-  if hasattr(auth_system, 'do_logout'):
-    response = auth_system.do_logout(user_for_remote_logout)
-    return response
+  if auth_system is None or not hasattr(auth_system, 'do_logout'):
+    return None
+  # systems that log out at the provider bring the user back to return_url
+  if getattr(auth_system, 'LOGOUT_TAKES_RETURN_URL', False):
+    return auth_system.do_logout(user_for_remote_logout, return_url=return_url)
+  return auth_system.do_logout(user_for_remote_logout)
 
 def do_complete_logout(request, return_url="/"):
   do_local_logout(request)
@@ -141,6 +146,13 @@ def logout(request):
   
   return HttpResponseRedirect(return_url)
 
+def logout_done(request):
+  """
+  Where an identity provider sends the user back after logging out there
+  (OIDC post_logout_redirect_uri). The page to return to comes back in state.
+  """
+  return HttpResponseRedirect(same_site_path(request.GET.get('state')))
+
 def _do_auth(request):
   # the session has the system name
   system_name = request.session['auth_system_name']
@@ -150,12 +162,17 @@ def _do_auth(request):
   
   # where to send the user to?
   redirect_url = settings.SECURE_URL_HOST + reverse(AUTH_AFTER)
-  auth_url = system.get_auth_url(request, redirect_url=redirect_url)
-  
+  try:
+    auth_url = system.get_auth_url(request, redirect_url=redirect_url)
+  except Exception:
+    # e.g. the identity provider's discovery document can't be fetched
+    logger.warning("could not start login with auth system %s", system_name, exc_info=True)
+    return _login_failed(request, error_message=_("The sign-in service cannot be reached right now. Please try again in a few minutes."))
+
   if auth_url:
     return HttpResponseRedirect(auth_url)
   else:
-    return HttpResponse("an error occurred trying to contact " + system_name +", try again later")
+    return HttpResponse(_("an error occurred trying to contact %(system_name)s, try again later") % {'system_name': system_name})
   
 def start(request, system_name):
   if not (system_name in ENABLED_AUTH_SYSTEMS):
@@ -211,7 +228,10 @@ def after(request):
   if user:
     # get the user and store any new data about him
     user_obj = User.update_or_create(user['type'], user['user_id'], user['name'], user['info'], user['token'])
-    
+
+    # new session key on login (session fixation); the session data, e.g. a
+    # ballot waiting to be cast, is kept
+    request.session.cycle_key()
     request.session['user'] = user
   else:
     return HttpResponseRedirect("%s?%s" % (reverse(AUTH_WHY), urlencode({'system_name' : request.session['auth_system_name']})))

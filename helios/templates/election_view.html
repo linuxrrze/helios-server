@@ -1,57 +1,58 @@
 {% extends TEMPLATE_BASE %}
-{% load timezone_tags %}
+{% load timezone_tags i18n %}
 {% block title %}{{election.name}}{% endblock %}
 {% block content %}
+{% if election.election_type == "referendum" %}{% translate "referendum" context "election type" as election_type_label %}{% else %}{% translate "election" context "election type" as election_type_label %}{% endif %}
 <div style="float: left; margin-right: 50px;">
   <h3 class="title">{{ election.name }}
 {% if admin_p %}
 {% if not election.frozen_at %}
-<small><a class="small button" href="{% url "election@edit" election.uuid %}">edit</a></small>
+<small><a class="small button" href="{% url "election@edit" election.uuid %}">{% translate "edit" %}</a></small>
 {% endif %}
 {% endif %}</h3>
 <!-- a div rather than a p: this block holds inline <form>s (the admin actions have to
      be POSTs so they can carry a CSRF token), and the parser would auto-close a <p> at
      the first one. -->
 <div style="padding-top:0px; margin-top:0px; margin-bottom:1em">
-<em>{% if election.private_p %}private{%else%}public{% endif %}</em> {{ election.election_type }}{% if settings.SHOW_USER_INFO %} created by <u><b>{{election.admin.display_html_small|safe}}</b></u>{% endif %}
+{% if election.private_p %}{% blocktranslate trimmed with type=election_type_label %}<em>private</em> {{ type }}{% endblocktranslate %}{%else%}{% blocktranslate trimmed with type=election_type_label %}<em>public</em> {{ type }}{% endblocktranslate %}{% endif %}{% if settings.SHOW_USER_INFO %} {% blocktranslate trimmed with admin=election.admin.display_html_small|safe %}created by <u><b>{{ admin }}</b></u>{% endblocktranslate %}{% endif %}
 {% if election.is_archived %}
-[archived]
+[{% translate "archived" %}]
 {% endif %}
 {% if admin_p %}
 &nbsp;<form class="inline-action" method="post" action="{% url "election@archive" election_uuid=election.uuid %}">
 <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
 {% if election.is_archived %}
 <input type="hidden" name="archive_p" value="0" />
-<button type="submit" class="small button">unarchive it</button>
+<button type="submit" class="small button">{% translate "unarchive it" %}</button>
 {% else %}
 <input type="hidden" name="archive_p" value="1" />
-<button type="submit" class="small button">archive it</button>
+<button type="submit" class="small button">{% translate "archive it" %}</button>
 {% endif %}
 </form>
 {% if election.is_archived %}
-<form method="post" action="{% url "election@delete" election_uuid=election.uuid %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this election? Once deleted, only site administrators can restore it.');">
+<form method="post" action="{% url "election@delete" election_uuid=election.uuid %}" style="display:inline;" onsubmit="return confirm('{% filter escapejs %}{% translate "Are you sure you want to delete this election? Once deleted, only site administrators can restore it." %}{% endfilter %}');">
 <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
 <input type="hidden" name="delete_p" value="1" />
-<button type="submit" class="small button">delete it</button>
+<button type="submit" class="small button">{% translate "delete it" %}</button>
 </form>
 {% endif %}
-<form class="inline-action" method="post" action="{% url "election@copy" election_uuid=election.uuid %}" onsubmit="return window.confirm('Are you sure you want to copy this election?');">
+<form class="inline-action" method="post" action="{% url "election@copy" election_uuid=election.uuid %}" onsubmit="return window.confirm('{% filter escapejs %}{% translate "Are you sure you want to copy this election?" %}{% endfilter %}');">
 <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
-<button type="submit" class="small button">copy</button>
+<button type="submit" class="small button">{% translate "copy" %}</button>
 </form>
 {% endif %}
 <br />
 {% if admin_p %}
 {% if not election.private_p %}
 {% if election.featured_p %}
-this {{election.election_type}} is featured on the front page.
+{% blocktranslate trimmed with type=election_type_label %}this {{ type }} is featured on the front page.{% endblocktranslate %}
 {% if can_feature_p %}
-[<form class="inline-action" method="post" action="{% url "election@set-featured" election.uuid %}"><input type="hidden" name="csrf_token" value="{{csrf_token}}" /><input type="hidden" name="featured_p" value="0" /><button type="submit" class="link-button">unfeature it</button></form>]
+[<form class="inline-action" method="post" action="{% url "election@set-featured" election.uuid %}"><input type="hidden" name="csrf_token" value="{{csrf_token}}" /><input type="hidden" name="featured_p" value="0" /><button type="submit" class="link-button">{% translate "unfeature it" %}</button></form>]
 {% endif %}
 {% else %}
-this {{election.election_type}} is <u>not</u> featured on the front page.
+{% blocktranslate trimmed with type=election_type_label %}this {{ type }} is <u>not</u> featured on the front page.{% endblocktranslate %}
 {% if can_feature_p %}
-[<form class="inline-action" method="post" action="{% url "election@set-featured" election.uuid %}"><input type="hidden" name="csrf_token" value="{{csrf_token}}" /><input type="hidden" name="featured_p" value="1" /><button type="submit" class="link-button">feature it</button></form>]
+[<form class="inline-action" method="post" action="{% url "election@set-featured" election.uuid %}"><input type="hidden" name="csrf_token" value="{{csrf_token}}" /><input type="hidden" name="featured_p" value="1" /><button type="submit" class="link-button">{% translate "feature it" %}</button></form>]
 {% endif %}
 {% endif %}
 {% endif %}
@@ -70,37 +71,37 @@ this {{election.election_type}} is <u>not</u> featured on the front page.
 </div>
 
 <p>
-{% if election.help_email and admin_p%}Help Email Address: {{election.help_email}}<br />{% endif %}
-{% if election.voting_start_at %}Voting start at {{election.voting_start_at|utc_time}}<br />{% endif %}
-{% if election.voting_end_at %}Voting end at {{election.voting_end_at|utc_time}}<br />{% endif %}
+{% if election.help_email and admin_p%}{% translate "Help Email Address:" %} {{election.help_email}}<br />{% endif %}
+{% if election.voting_start_at %}{% blocktranslate trimmed with start=election.voting_start_at|utc_time %}Voting start at {{ start }}{% endblocktranslate %}<br />{% endif %}
+{% if election.voting_end_at %}{% blocktranslate trimmed with end=election.voting_end_at|utc_time %}Voting end at {{ end }}{% endblocktranslate %}<br />{% endif %}
 </p>
 
 {% if election.election_info_url %}
-<p style="font-size:1.5em;">[<a target="_blank" href="{{election.election_info_url}}" rel="noopener noreferrer">download candidate bios &amp; statements</a>]</p>
+<p style="font-size:1.5em;">[<a target="_blank" href="{{election.election_info_url}}" rel="noopener noreferrer">{% translate "download candidate bios &amp; statements" %}</a>]</p>
 {% endif %}
 
 <p align="center" style="font-size: 1.5em;">
-<a href="{% url "election@questions" election.uuid %}">questions ({% if election.questions %}{{election.questions|length}}{% else %}0{% endif %})</a>
+<a href="{% url "election@questions" election.uuid %}">{% blocktranslate trimmed with count=election.questions|length %}questions ({{ count }}){% endblocktranslate %}</a>
 &nbsp;&nbsp;|&nbsp;&nbsp;
-<a href="{% url "election@voters@list-pretty" election.uuid %}">voters &amp; ballots</a>
+<a href="{% url "election@voters@list-pretty" election.uuid %}">{% translate "voters &amp; ballots" %}</a>
 &nbsp;&nbsp;|&nbsp;&nbsp;
-<a href="{% url "election@trustees@view" election.uuid %}">trustees ({{trustees|length}})</a>
+<a href="{% url "election@trustees@view" election.uuid %}">{% blocktranslate trimmed with count=trustees|length %}trustees ({{ count }}){% endblocktranslate %}</a>
 {% if admin_p %}
 &nbsp;&nbsp;|&nbsp;&nbsp;
-<a href="{% url "election@admins" election.uuid %}">administrators</a>
+<a href="{% url "election@admins" election.uuid %}">{% translate "administrators" %}</a>
 {% endif %}
 </p>
 
 {% if admin_p %}
 {% if election.frozen_p %}
 <div style="background: lightyellow; padding:5px; padding-left: 10px; margin-top: 15px; border: 1px solid #aaa; max-width: 720px;" class="round">
-<a href="#" onclick="$('#badgebody').slideToggle(250);">Embed an Election Badge</a>
+<a href="#" onclick="$('#badgebody').slideToggle(250);">{% translate "Embed an Election Badge" %}</a>
 <div id="badgebody" style="display:none;">
 <br />
 <form action="#">
 <textarea cols="90" rows="4" wrap="soft">&lt;iframe src="{{election_badge_url}}" frameborder="0" style="border: 1px solid black" height="75" width="200"&gt;
 &lt;/iframe&gt;</textarea><br />
-<p style="font-size:0.8em;">adding this HTML to your site displays a thin banner with direct links to voting.</p>
+<p style="font-size:0.8em;">{% translate "adding this HTML to your site displays a thin banner with direct links to voting." %}</p>
 </form>
 </div>
 </div>
@@ -112,21 +113,21 @@ this {{election.election_type}} is <u>not</u> featured on the front page.
 <!-- election complete, no next step -->
 
 {% else %}
-<b>Next Step:</b>
+<b>{% translate "Next Step:" %}</b>
 <span style="font-size: 1.3em;">
 {% if not election.frozen_at %}
 {% if election.issues_before_freeze %}
 {% for issue in election.issues_before_freeze %}
-{{issue.action}}{% if forloop.last %}{% else %}, and{% endif %}<br />
+{{issue.action}}{% if forloop.last %}{% else %}{% translate ", and" %}{% endif %}<br />
 {% endfor %}
 {% else %}
-<a href="{% url "election@freeze" election.uuid %}">freeze ballot and open election.</a>
+<a href="{% url "election@freeze" election.uuid %}">{% translate "freeze ballot and open election." %}</a>
 <br />
 {% if election.voting_starts_at %}
-once you do this, the election will be ready for voting and will open automatically<br />
-at {{election.voting_starts_at|utc_time}}, as per your settings.
+{% blocktranslate trimmed with start=election.voting_starts_at|utc_time %}once you do this, the election will be ready for voting and will open automatically<br />
+at {{ start }}, as per your settings.{% endblocktranslate %}
 {% else %}
-once you do this, the election will be immediately open for voting.
+{% translate "once you do this, the election will be immediately open for voting." %}
 {% endif %}
 {% endif %}
 
@@ -134,37 +135,37 @@ once you do this, the election will be immediately open for voting.
 
 {% if not election.encrypted_tally %}
 {% if election.tallying_started_at %}
-Tally computation is under way.<br />
-Reload this page in a couple of minutes.
+{% translate "Tally computation is under way." %}<br />
+{% translate "Reload this page in a couple of minutes." %}
 {% else %}
-<a href="{% url "election@compute-tally" election.uuid %}">compute encrypted tally</a><br />
-The encrypted votes will be combined into an encrypted tally. Once this is done,<br />
-trustees will be asked to provide their share of the decryption.
+<a href="{% url "election@compute-tally" election.uuid %}">{% translate "compute encrypted tally" %}</a><br />
+{% blocktranslate trimmed %}The encrypted votes will be combined into an encrypted tally. Once this is done,<br />
+trustees will be asked to provide their share of the decryption.{% endblocktranslate %}
 {% endif %}
 {% else %}
 
 {% if election.has_complete_result %}
-<a href="{% url "election@release-result" election.uuid %}">release result</a><br />
-The result displayed below is visible only to you.<br />
-Once you release the result, it will be visible to everyone.
+<a href="{% url "election@release-result" election.uuid %}">{% translate "release result" %}</a><br />
+{% translate "The result displayed below is visible only to you." %}<br />
+{% translate "Once you release the result, it will be visible to everyone." %}
 {% else %}
 
 {% if election.ready_for_decryption_combination %}
 <a href="{% url "election@combine-decryptions" election.uuid %}">
 {% if election.num_trustees == 1 %}
-compute results
+{% translate "compute results" %}
 {% else %}
-combine trustee decryptions and compute results
+{% translate "combine trustee decryptions and compute results" %}
 {% endif %}
 </a><br />
 {% if election.num_trustees == 1 %}
-The result will be computed and shown to you, the administrator, only.
+{% translate "The result will be computed and shown to you, the administrator, only." %}
 {% else %}
-The decryption shares from the trustees will be combined and the tally computed.<br />
-Once you do this, the tally will visible to you, the administrator, only.
+{% translate "The decryption shares from the trustees will be combined and the tally computed." %}<br />
+{% translate "Once you do this, the tally will visible to you, the administrator, only." %}
 {% endif %}
 {% else %}
-<a href="{% url "election@trustees@view" election.uuid %}">trustees (for decryption)</a>
+<a href="{% url "election@trustees@view" election.uuid %}">{% translate "trustees (for decryption)" %}</a>
 {% endif %}
 
 {% endif %}
@@ -185,72 +186,72 @@ Once you do this, the tally will visible to you, the administrator, only.
 {% if show_result %}
 {% if election.result_released_at %}
 <span class="highlight-box round">
-    This election is complete.
+    {% translate "This election is complete." %}
 </span><br /><br /><br />
 {% endif %}
 
-<h3 class="highlight-box">Tally</h3>
+<h3 class="highlight-box">{% translate "Tally" %}</h3>
 {% for question in election.pretty_result %}
-<b><span style="font-size:0.8em;">Question #{{forloop.counter}}</span><br />{{question.question}}</b><br />
+<b><span style="font-size:0.8em;">{% blocktranslate trimmed with num=forloop.counter %}Question #{{ num }}{% endblocktranslate %}</span><br />{{question.question}}</b><br />
 <table class="pretty" style="width: auto;">
 {% for answer in question.answers %}
-<tr><td style="padding-right:80px;{% if answer.winner %}font-weight:bold;{% endif %}">{{answer.answer}}{% if answer.tied %} <em>(tied)</em>{% endif %}</td><td align="right" style="{% if answer.winner %}font-weight:bold;{% endif %}">{{answer.count}}</td></tr>
+<tr><td style="padding-right:80px;{% if answer.winner %}font-weight:bold;{% endif %}">{{answer.answer}}{% if answer.tied %} <em>{% translate "(tied)" %}</em>{% endif %}</td><td align="right" style="{% if answer.winner %}font-weight:bold;{% endif %}">{{answer.count}}</td></tr>
 {% endfor %}
 </table>
 {% if question.unfilled_seats %}
-<p><em>Tie: the answers marked (tied) received the same number of votes, so {{question.unfilled_seats}} seat{{question.unfilled_seats|pluralize}} {{question.unfilled_seats|pluralize:"is,are"}} left unfilled.</em></p>
+<p><em>{% blocktranslate trimmed count counter=question.unfilled_seats %}Tie: the answers marked (tied) received the same number of votes, so {{ counter }} seat is left unfilled.{% plural %}Tie: the answers marked (tied) received the same number of votes, so {{ counter }} seats are left unfilled.{% endblocktranslate %}</em></p>
 {% endif %}
 {% empty %}
-<p><em>The tally could not be decrypted, so there is no result to show.</em></p>
+<p><em>{% translate "The tally could not be decrypted, so there is no result to show." %}</em></p>
 {% endfor %}
 
 {% else %}
 
 {% if election.voting_has_stopped %}
 <span class="highlight-box round">
-    Election closed. Results will be released soon.
+    {% translate "Election closed. Results will be released soon." %}
 </span><br /><br />
 {% else %}
 
 {% if election.voting_has_started %}
-<a class="button" href="{{test_cookie_url}}">Vote in this {{election.election_type}} </a>
+<a class="button" href="{{test_cookie_url}}">{% blocktranslate trimmed with type=election_type_label %}Vote in this {{ type }}{% endblocktranslate %} </a>
 <br />
 <br />
 {% if election.voting_extended_until %}
-This {{election.election_type}} was initially scheduled to end at {{election.voting_ends_at|utc_time}},<br />
-but has been extended until {{election.voting_extended_until|utc_time}}.
+{% blocktranslate trimmed with type=election_type_label end=election.voting_ends_at|utc_time extended=election.voting_extended_until|utc_time %}This {{ type }} was initially scheduled to end at {{ end }},<br />
+but has been extended until {{ extended }}.{% endblocktranslate %}
 {% else %}
 {% if election.voting_ends_at %}
 <br />
-This {{election.election_type}} is scheduled to end at {{election.voting_ends_at|utc_time}}.
+{% blocktranslate trimmed with type=election_type_label end=election.voting_ends_at|utc_time %}This {{ type }} is scheduled to end at {{ end }}.{% endblocktranslate %}
 {% else %}
-This {{election.election_type}} ends at the administrator's discretion.
+{% blocktranslate trimmed with type=election_type_label %}This {{ type }} ends at the administrator's discretion.{% endblocktranslate %}
 {% endif %}
 <br />
 {% endif %}
 
 {% if election.private_p and voter %}
 <br />
-This election is <em>private</em>. You are signed in as eligible voter <em>{{voter.name}}</em>.
+{% blocktranslate trimmed with name=voter.name %}This election is <em>private</em>. You are signed in as eligible voter <em>{{ name }}</em>.{% endblocktranslate %}
 {% endif %}
 
 <div class="highlight-box round" style="font-size: 1.2em; margin-right: 400px; display:none;" id="nojava_message">
-  You do not have Java installed in your browser.<br />At this time, Helios requires Java.<br />
-  Visit <a target="_new" href="http://java.sun.com">java.sun.com</a> to install it.
+  {% translate "You do not have Java installed in your browser." %}<br />{% translate "At this time, Helios requires Java." %}<br />
+  {% blocktranslate trimmed with java_url="http://java.sun.com" %}Visit <a target="_new" href="{{ java_url }}">java.sun.com</a> to install it.{% endblocktranslate %}
 </div>
 <br />
 {% else %}
 <span class="highlight-box round">
-  voting is not yet open
+  {% translate "voting is not yet open" %}
 </span> <br /><br />
 {% endif %}
 
 {% if user %}
 {% if voter %}
 <p style="padding-top:1px;">
-  You are registered to vote in this {{election.election_type}}.
+  {% blocktranslate trimmed with type=election_type_label %}You are registered to vote in this {{ type }}.{% endblocktranslate %}
 {% if election.use_voter_aliases %}
-Your voter alias is {{voter.alias}}.
+{% blocktranslate trimmed with alias=voter.alias %}Your voter alias is {{ alias }}.{% endblocktranslate %}
 {% endif %}
 </p>
 
@@ -259,12 +260,12 @@ Your voter alias is {{voter.alias}}.
 {% else %}
 {% if election.openreg %}
 {% if eligible_p %}
-You are eligible to vote in this election.
+{% translate "You are eligible to vote in this election." %}
 {% else %}
-You are <em>not eligible</em> to vote in this {{election.election_type}}.
+{% blocktranslate trimmed with type=election_type_label %}You are <em>not eligible</em> to vote in this {{ type }}.{% endblocktranslate %}
 {% endif %}
 {% else %}
-You are <em>not eligible</em> to vote in this {{election.election_type}}.
+{% blocktranslate trimmed with type=election_type_label %}You are <em>not eligible</em> to vote in this {{ type }}.{% endblocktranslate %}
 <br />
 {% endif %}
 {% endif %}
@@ -273,10 +274,10 @@ You are <em>not eligible</em> to vote in this {{election.election_type}}.
 
 {% if election.openreg %}
 {% if election.eligibility %}
-This election is open to: {{election.pretty_eligibility|safe}}
-<a href="{{settings.SECURE_URL_HOST}}{% url "auth@index" %}?return_url={{CURRENT_URL}}">Log in</a> to check your eligibility.
+{% blocktranslate trimmed with eligibility=election.pretty_eligibility|safe %}This election is open to: {{ eligibility }}{% endblocktranslate %}
+<a href="{{settings.SECURE_URL_HOST}}{% url "auth@index" %}?return_url={{CURRENT_URL}}">{% translate "Log in" %}</a> {% translate "to check your eligibility." context "follows a 'Log in' link" %}
 {% else %}
-Anyone can vote in this election.
+{% translate "Anyone can vote in this election." %}
 {% endif %}
 {% endif %}
 
@@ -287,32 +288,32 @@ Anyone can vote in this election.
 {% endif %}
 
 {% if admin_p and election.voting_ends_at and not election.tallying_started_at %}
-<br /><a href="{% url "election@extend" election.uuid %}">extend voting</a><br />
+<br /><a href="{% url "election@extend" election.uuid %}">{% translate "extend voting" %}</a><br />
 {% endif %}
 
 <div style="background: lightyellow; padding:5px; padding-left: 10px; margin-top: 15px; border: 1px solid #aaa;" class="round">
-<a href="#" onclick="$('#auditbody').slideToggle(250);">Audit Info</a>
+<a href="#" onclick="$('#auditbody').slideToggle(250);">{% translate "Audit Info" %}</a>
 <div id="auditbody" style="display:none; word-wrap: break-word;">
-<br />Election URL:<br />
+<br />{% translate "Election URL:" %}<br />
 <a href="{{election.url}}">{{election.url}}</a>
 
 {% if election.frozen_at %}
 <br />
-<br />Election Fingerprint:<br />
+<br />{% translate "Election Fingerprint:" %}<br />
 <tt style="font-size: 1.3em; font-weight: bold;">{{election.hash}}</tt>
 
 
 {% if votes %}
-<p>Your ballot tracker:<br />
+<p>{% translate "Your ballot tracker:" %}<br />
 <tt style="font-size:14pt; font-weight: bold;">{{votes.0.vote_hash}}</tt>
 </p>
 {% endif %}
 
 <p style="font-size: 1.3em;">
-<a href="{% url "election@voters@list-pretty" election.uuid %}">Ballot Tracking Center</a> &nbsp;| &nbsp;
-<a href="{% url "election@audited-ballots" election.uuid %}">Audited Ballots</a>
+<a href="{% url "election@voters@list-pretty" election.uuid %}">{% translate "Ballot Tracking Center" %}</a> &nbsp;| &nbsp;
+<a href="{% url "election@audited-ballots" election.uuid %}">{% translate "Audited Ballots" %}</a>
 {% if admin_p %}&nbsp;| &nbsp;
-<a href="{% url "election@log@download-csv" election.uuid %}">Download Election Log (CSV)</a>
+<a href="{% url "election@log@download-csv" election.uuid %}">{% translate "Download Election Log (CSV)" %}</a>
 {% endif %}
 </p>
 
@@ -321,17 +322,18 @@ Anyone can vote in this election.
 {% if not election.voting_has_started %}
 <p style="font-size: 1.2em;">
   <br>
-  <a href="{{SECURE_URL_HOST}}/booth/vote.html?election_url={% url "election@home" election.uuid %}">preview booth</a>
+  <a href="{{SECURE_URL_HOST}}/booth/vote.html?election_url={% url "election@home" election.uuid %}">{% translate "preview booth" %}</a>
 </p>
-{% endif %}  
+{% endif %}
 
 {% if election.voting_has_stopped %}
 <p style="font-size: 1.2em;">
 {% if election.result %}
-verify <a target="_blank" href="/verifier/verify.html?election_url={% url "election@home" election.uuid %}">election tally</a>.
+{% url "election@home" election.uuid as election_home_url %}
+{% blocktranslate trimmed with verifier_url="/verifier/verify.html?election_url=" %}verify <a target="_blank" href="{{ verifier_url }}{{ election_home_url }}">election tally</a>.{% endblocktranslate %}
 {% endif %}
 
-review the <a href="{{vote_url}}">voting booth</a>.
+{% blocktranslate trimmed %}review the <a href="{{ vote_url }}">voting booth</a>.{% endblocktranslate %}
 </p>
 
 {% endif %}

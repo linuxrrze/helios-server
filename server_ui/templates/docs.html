@@ -1,44 +1,32 @@
 {% extends 'server_ui/templates/base.html' %}
-{% block title %}{{ settings.SITE_TITLE }}{% endblock %}
+{% load i18n localized_settings %}
+{% block title %}{% localized_setting "SITE_TITLE" %}{% endblock %}
 
 {% block header %}
 {% endblock %}
 
 {% block content %}
-
-<div class="large-12-columns">
-
-<div class="row"><h2>Documentation</h2></div>
-
-<div class="row">
+<div>
+<h1>{% translate "Documentation" %}</h1>
 
 <p>
+{% blocktranslate trimmed %}
 The Helios Voting technology is based on advanced peer-reviewed
 cryptographic techniques that enable your vote to remain secret while
 providing an intelligent ballot tracker to let you verify that your
 ballot was received and counted properly:
+{% endblocktranslate %}
 </p>
 
 <ul>
-<li> <a href="https://github.com/benadida/helios-server/blob/master/docs/user-manual.md">user manual</a>, for election administrators and voters</li>
-<li> <a href="https://github.com/benadida/helios-server/blob/master/docs/how-helios-works.md">how Helios works</a></li>
-<li> <a href="https://github.com/benadida/helios-server/blob/master/docs/architecture.md">architecture</a>, for developers</li>
-<li> <a href="http://www.usenix.org/events/sec08/tech/full_papers/adida/adida.pdf">original peer-reviewed (Usenix Security 2008)</a></li>
-<li> <a href="https://github.com/google/pyrios">Pyrios</a>, a Go library by <a href="http://1.37e2.net/">Tom Roeder</a> that verifies Helios elections.
-<li> <a href="http://www.uclouvain.be/crypto/electionmonitor/default/about">Helios Election Monitor</a>, produced by the Universite catholique de Louvain.</li>
+<li> {% blocktranslate trimmed with url="https://github.com/benadida/helios-server/blob/master/docs/user-manual.md" %}<a href="{{ url }}">user manual</a>, for election administrators and voters{% endblocktranslate %}</li>
+<li> <a href="https://github.com/benadida/helios-server/blob/master/docs/how-helios-works.md">{% translate "how Helios works" %}</a></li>
+<li> {% blocktranslate trimmed with url="https://github.com/benadida/helios-server/blob/master/docs/architecture.md" %}<a href="{{ url }}">architecture</a>, for developers{% endblocktranslate %}</li>
+<li> <a href="http://www.usenix.org/events/sec08/tech/full_papers/adida/adida.pdf">{% translate "original peer-reviewed (Usenix Security 2008)" %}</a></li>
+<li> {% blocktranslate trimmed with pyrios_url="https://github.com/google/pyrios" url="http://1.37e2.net/" %}<a href="{{ pyrios_url }}">Pyrios</a>, a Go library by <a href="{{ url }}">Tom Roeder</a> that verifies Helios elections.{% endblocktranslate %}
+<li> {% blocktranslate trimmed with url="http://www.uclouvain.be/crypto/electionmonitor/default/about" %}<a href="{{ url }}">Helios Election Monitor</a>, produced by the Universite catholique de Louvain.{% endblocktranslate %}</li>
 </ul>
 
-<p>
-Helios has been covered in the press:
-</p>
-
-<ul>
-<li> <a href="http://www.kcbs.com/bayareanews/Tracking-Votes-During-Elections/7161136">KCBS News Interview, May 2010</a></li>
-<li> <a href="http://harvardmagazine.com/2010/05/secret-ballots-verifiable-votes">Harvard Magazine, April 2010</a></li>
-<li> <a href="http://www.ynet.co.il/articles/0,7340,L-3720204,00.html">Ynet, Israeli Press, June 2009</a></li>
-
-
-</div>
 
 </div>
 

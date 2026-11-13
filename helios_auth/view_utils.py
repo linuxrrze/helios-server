@@ -5,7 +5,6 @@ Ben Adida (12-30-2008)
 """
 
 from django.conf import settings
-from django.http import HttpResponse
 from django.shortcuts import render
 from django.template import loader
 
@@ -15,8 +14,6 @@ from helios_auth.security import get_user
 ##
 ## BASICS
 ##
-
-SUCCESS = HttpResponse("SUCCESS")
 
 ##
 ## template abstraction

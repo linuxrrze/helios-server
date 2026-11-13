@@ -1,0 +1,650 @@
+# Helios translations (de).
+# This file is distributed under the same license as Helios.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Helios\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: helios/media/static_templates/question.html:8
+msgid "edit"
+msgstr "bearbeiten"
+
+#: helios/media/static_templates/question.html:9
+msgid "Are you sure you want to remove this question?"
+msgstr "Möchten Sie diese Frage wirklich entfernen?"
+
+#: helios/media/static_templates/question.html:18
+msgid "Selection:"
+msgstr "Auswahl:"
+
+#: helios/media/static_templates/question.html:18
+msgid "to"
+msgstr "bis"
+
+#: helios/media/static_templates/question.html:18
+msgid "unlimited"
+msgstr "unbegrenzt"
+
+#: helios/media/static_templates/question.html:21 helios/media/static_templates/question.html:75 helios/media/static_templates/question.html:138
+msgid "Result type:"
+msgstr "Ergebnisart:"
+
+#: helios/media/static_templates/question.html:21 helios/media/static_templates/question.html:77 helios/media/static_templates/question.html:140
+msgid "absolute"
+msgstr "absolut"
+
+#: helios/media/static_templates/question.html:21 helios/media/static_templates/question.html:78 helios/media/static_templates/question.html:141
+msgid "relative"
+msgstr "relativ"
+
+#: helios/media/static_templates/question.html:25
+msgid "Order:"
+msgstr "Reihenfolge:"
+
+#: helios/media/static_templates/question.html:25
+msgid "randomized"
+msgstr "zufällig"
+
+#: helios/media/static_templates/question.html:35
+msgid "More information"
+msgstr "Weitere Informationen"
+
+#: helios/media/static_templates/question.html:47
+msgid "Edit Question"
+msgstr "Frage bearbeiten"
+
+#: helios/media/static_templates/question.html:53 helios/media/static_templates/question.html:116
+msgid "Question Text"
+msgstr "Fragetext"
+
+#: helios/media/static_templates/question.html:54 helios/media/static_templates/question.html:117
+msgid "Enter your question here"
+msgstr "Geben Sie hier Ihre Frage ein"
+
+#: helios/media/static_templates/question.html:58 helios/media/static_templates/question.html:121
+msgid "Select between"
+msgstr "Auswahl zwischen"
+
+#: helios/media/static_templates/question.html:65 helios/media/static_templates/question.html:128
+msgid "and"
+msgstr "und"
+
+#: helios/media/static_templates/question.html:74 helios/media/static_templates/question.html:137
+msgid "answers."
+msgstr "Antworten."
+
+#: helios/media/static_templates/question.html:80 helios/media/static_templates/question.html:143
+msgid "Random order:"
+msgstr "Zufällige Reihenfolge:"
+
+#: helios/media/static_templates/question.html:82 helios/media/static_templates/question.html:145
+msgid "No"
+msgstr "Nein"
+
+#: helios/media/static_templates/question.html:83 helios/media/static_templates/question.html:146
+msgid "Yes"
+msgstr "Ja"
+
+#: helios/media/static_templates/question.html:88 helios/media/static_templates/question.html:151
+msgid "Answer Options"
+msgstr "Antwortmöglichkeiten"
+
+#: helios/media/static_templates/question.html:93 helios/media/static_templates/question.html:156
+msgid "Add 5 More Answers"
+msgstr "5 weitere Antworten hinzufügen"
+
+#: helios/media/static_templates/question.html:98
+msgid "Update Question"
+msgstr "Frage aktualisieren"
+
+#: helios/media/static_templates/question.html:99
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#: helios/media/static_templates/question.html:105
+msgid "No questions have been added yet."
+msgstr "Es wurden noch keine Fragen hinzugefügt."
+
+#: helios/media/static_templates/question.html:111
+msgid "Add a New Question"
+msgstr "Neue Frage hinzufügen"
+
+#: helios/media/static_templates/question.html:161
+msgid "Add Question"
+msgstr "Frage hinzufügen"
+
+#: heliosbooth/single-ballot-verify.html:12 heliosbooth/vote.html:33 heliosverifier/verify.html:10
+msgctxt "HTML lang attribute, the language code of this translation"
+msgid "en"
+msgstr "de"
+
+#: heliosbooth/single-ballot-verify.html:43
+msgid "Helios Voting System"
+msgstr "Helios-Wahlsystem"
+
+#: heliosbooth/single-ballot-verify.html:45
+msgid "Helios Single-Ballot Verifier"
+msgstr "Helios-Prüfprogramm für einzelne Stimmzettel"
+
+#: heliosbooth/single-ballot-verify.html:46
+msgid "Loading verifier..."
+msgstr "Prüfprogramm wird geladen..."
+
+#: heliosbooth/single-ballot-verify.html:47
+msgid "Your browser does not have the Java plugin installed."
+msgstr "In Ihrem Browser ist das Java-Plugin nicht installiert."
+
+#: heliosbooth/single-ballot-verify.html:48
+msgid "At this time, the Java plugin is required for browser-based ballot auditing, although it is not required for ballot preparation."
+msgstr "Derzeit wird das Java-Plugin für die Prüfung von Stimmzetteln im Browser benötigt, nicht jedoch für das Ausfüllen des Stimmzettels."
+
+#: heliosbooth/single-ballot-verify.html:49
+msgid "This single-ballot verifier lets you enter an audited ballot<br />and verify that it was prepared correctly."
+msgstr "Mit diesem Prüfprogramm können Sie einen geprüften Stimmzettel eingeben<br />und überprüfen, ob er korrekt erstellt wurde."
+
+#: heliosbooth/single-ballot-verify.html:50 heliosverifier/verify.html:42
+msgid "Enter the Election URL:"
+msgstr "URL der Wahl eingeben:"
+
+#: heliosbooth/single-ballot-verify.html:51
+msgid "Your Ballot:"
+msgstr "Ihr Stimmzettel:"
+
+#: heliosbooth/single-ballot-verify.html:55
+msgid "Verify"
+msgstr "Überprüfen"
+
+#: heliosbooth/single-ballot-verify.html:84 heliosverifier/verify.html:111
+msgid "loading election..."
+msgstr "Wahl wird geladen..."
+
+#: heliosbooth/single-ballot-verify.html:88
+msgid "It looks like you are trying to verify a cast ballot. That can't be done, only audited ballots can be verified."
+msgstr "Offenbar versuchen Sie, einen abgegebenen Stimmzettel zu überprüfen. Das ist nicht möglich, nur geprüfte Stimmzettel können überprüft werden."
+
+#: heliosbooth/single-ballot-verify.html:100
+msgid "SUCCESSFUL VERIFICATION, DONE!"
+msgstr "ÜBERPRÜFUNG ERFOLGREICH, FERTIG!"
+
+#: heliosbooth/single-ballot-verify.html:102 heliosbooth/single-ballot-verify.html:131
+msgid "PROBLEM - THIS BALLOT DOES NOT VERIFY."
+msgstr "PROBLEM - DIE ÜBERPRÜFUNG DIESES STIMMZETTELS IST FEHLGESCHLAGEN."
+
+#: heliosbooth/single-ballot-verify.html:127
+msgid "PROBLEM LOADING election. Are you sure you have the right election URL?"
+msgstr "PROBLEM beim Laden der Wahl. Haben Sie die richtige URL der Wahl angegeben?"
+
+#: heliosbooth/templates/audit.html:2
+msgid "Your audited ballot"
+msgstr "Ihr geprüfter Stimmzettel"
+
+#: heliosbooth/templates/audit.html:5
+msgid "<b><u>IMPORTANT</u></b>: this ballot, now that it has been audited, <em>will not be tallied</em>."
+msgstr "<b><u>WICHTIG</u></b>: Dieser Stimmzettel wird, da er nun geprüft wurde, <em>nicht ausgezählt</em>."
+
+#: heliosbooth/templates/audit.html:6
+msgid "To cast a ballot, you must click the \"Back to Voting\" button below, re-encrypt it, and choose \"cast\" instead of \"audit.\""
+msgstr "Um einen Stimmzettel abzugeben, klicken Sie unten auf „Zurück zur Stimmabgabe“, verschlüsseln Sie ihn erneut und wählen Sie „abgeben“ statt „prüfen“."
+
+#: heliosbooth/templates/audit.html:10
+msgid "<b>Why?</b> Helios prevents you from auditing and casting the same ballot to provide you with some protection against coercion."
+msgstr "<b>Warum?</b> Helios verhindert, dass Sie denselben Stimmzettel prüfen und abgeben, um Sie in gewissem Maß vor Nötigung zu schützen."
+
+#: heliosbooth/templates/audit.html:14
+#, python-format
+msgid "<b>Now what?</b> %(select_link_start)sSelect your ballot audit info%(link_end)s, copy it to your clipboard, then use the %(verifier_link_start)sballot verifier%(link_end)s to verify it."
+msgstr "<b>Wie geht es weiter?</b> %(select_link_start)sMarkieren Sie die Prüfdaten Ihres Stimmzettels%(link_end)s, kopieren Sie sie in die Zwischenablage und überprüfen Sie sie anschließend mit dem %(verifier_link_start)sStimmzettel-Prüfprogramm%(link_end)s."
+
+#: heliosbooth/templates/audit.html:15
+msgid "Once you're satisfied, click the \"back to voting\" button to re-encrypt and cast your ballot."
+msgstr "Wenn Sie zufrieden sind, klicken Sie auf „Zurück zur Stimmabgabe“, um Ihren Stimmzettel erneut zu verschlüsseln und abzugeben."
+
+#: heliosbooth/templates/audit.html:23
+msgid "Before going back to voting,<br />you can post this audited ballot to the Helios tracking center so that others might double-check the verification of this ballot."
+msgstr "Bevor Sie zur Stimmabgabe zurückkehren,<br />können Sie diesen geprüften Stimmzettel in der Helios-Stimmzettel-Übersicht veröffentlichen, damit andere die Überprüfung dieses Stimmzettels nachvollziehen können."
+
+#: heliosbooth/templates/audit.html:25
+msgid "Even if you post your audited ballot, you must go back to voting and choose \"cast\" if you want your vote to count."
+msgstr "Auch wenn Sie Ihren geprüften Stimmzettel veröffentlichen, müssen Sie zur Stimmabgabe zurückkehren und „abgeben“ wählen, damit Ihre Stimme zählt."
+
+#: heliosbooth/templates/audit.html:27
+msgid "back to voting"
+msgstr "Zurück zur Stimmabgabe"
+
+#: heliosbooth/templates/audit.html:29
+msgid "post audited ballot to tracking center"
+msgstr "Geprüften Stimmzettel in der Stimmzettel-Übersicht veröffentlichen"
+
+#: heliosbooth/templates/election.html:4
+msgid "To vote, follow these steps:"
+msgstr "Gehen Sie zur Stimmabgabe wie folgt vor:"
+
+#: heliosbooth/templates/election.html:8
+msgid "<b>Select</b> your preferred options."
+msgstr "<b>Wählen</b> Sie die gewünschten Antworten aus."
+
+#: heliosbooth/templates/election.html:11
+msgid "<b>Review</b> your choices, which are then encrypted."
+msgstr "<b>Überprüfen</b> Sie Ihre Auswahl, die anschließend verschlüsselt wird."
+
+#: heliosbooth/templates/election.html:14
+msgid "<b>Submit</b> your encrypted ballot and authenticate to verify your eligibility."
+msgstr "<b>Senden</b> Sie Ihren verschlüsselten Stimmzettel ab und melden Sie sich an, um Ihre Wahlberechtigung nachzuweisen."
+
+#: heliosbooth/templates/election.html:18
+msgid "Start"
+msgstr "Starten"
+
+#: heliosbooth/templates/election.html:22
+#, python-format
+msgid "You can <a target=\"_new\" href=\"%(url)s\">email for help</a>."
+msgstr "Sie können <a target=\"_new\" href=\"%(url)s\">per E-Mail um Hilfe bitten</a>."
+
+#: heliosbooth/templates/footer.html:5
+msgid "The public key for this election is not yet ready. This election is in preview mode only."
+msgstr "Der öffentliche Schlüssel für diese Wahl ist noch nicht bereit. Diese Wahl befindet sich nur im Vorschaumodus."
+
+#: heliosbooth/templates/footer.html:7
+msgid "Election Fingerprint:"
+msgstr "Fingerabdruck der Wahl:"
+
+#: heliosbooth/templates/question.html:9
+#, python-format
+msgid "#%(num)s of %(total)s"
+msgstr "#%(num)s von %(total)s"
+
+#: heliosbooth/templates/question.html:12
+#, python-format
+msgid "vote for %(min)s to %(max)s"
+msgstr "wählen Sie %(min)s bis %(max)s"
+
+#: heliosbooth/templates/question.html:14
+#, python-format
+msgid "vote for at least %(min)s"
+msgstr "wählen Sie mindestens %(min)s"
+
+#: heliosbooth/templates/question.html:19
+#, python-format
+msgid "vote for up to %(max)s"
+msgstr "wählen Sie bis zu %(max)s"
+
+#: heliosbooth/templates/question.html:21
+#, python-format
+msgid "vote for %(max)s"
+msgstr "wählen Sie %(max)s"
+
+#: heliosbooth/templates/question.html:24
+msgid "vote for as many as you approve of"
+msgstr "wählen Sie so viele, wie Sie befürworten"
+
+#: heliosbooth/templates/question.html:40
+msgid "more info"
+msgstr "weitere Informationen"
+
+#: heliosbooth/templates/question.html:53
+msgid "Proceed"
+msgstr "Fortfahren"
+
+#: heliosbooth/templates/question.html:58
+msgid "Previous"
+msgstr "Zurück"
+
+#: heliosbooth/templates/question.html:63
+msgid "Next"
+msgstr "Weiter"
+
+#: heliosbooth/templates/seal.html:1
+msgid "Review your Ballot"
+msgstr "Stimmzettel überprüfen"
+
+#: heliosbooth/templates/seal.html:6 heliosverifier/verify.html:217
+#, python-format
+msgid "Question #%(num)s: %(name)s"
+msgstr "Frage #%(num)s: %(name)s"
+
+#: heliosbooth/templates/seal.html:8
+msgid "No choice selected"
+msgstr "Keine Auswahl getroffen"
+
+#: heliosbooth/templates/seal.html:14
+#, python-format
+msgid "%(count)s selections out of possible %(min)s-%(max)s"
+msgstr "%(count)s ausgewählt von möglichen %(min)s-%(max)s"
+
+#: heliosbooth/templates/seal.html:16
+msgid "change"
+msgstr "ändern"
+
+#: heliosbooth/templates/seal.html:21
+#, python-format
+msgid "Your ballot tracker is %(tracker)s."
+msgstr "Ihr Stimmzettel-Tracker lautet %(tracker)s."
+
+#: heliosbooth/templates/seal.html:24
+msgid "Proceed to Login"
+msgstr "Weiter zur Anmeldung"
+
+#: heliosbooth/templates/seal.html:38 heliosbooth/templates/seal.html:46
+msgid "Spoil & Audit"
+msgstr "Verwerfen & prüfen"
+
+#: heliosbooth/templates/seal.html:38
+msgid "optional"
+msgstr "optional"
+
+#: heliosbooth/templates/seal.html:41
+msgid "If you choose, you can spoil this ballot and reveal how your choices were encrypted. This is an optional auditing process."
+msgstr "Wenn Sie möchten, können Sie diesen Stimmzettel verwerfen und offenlegen, wie Ihre Auswahl verschlüsselt wurde. Diese Prüfung ist optional."
+
+#: heliosbooth/templates/seal.html:44
+msgid "You will then be guided to re-encrypt your choices for final casting."
+msgstr "Anschließend werden Sie angeleitet, Ihre Auswahl für die endgültige Abgabe erneut zu verschlüsseln."
+
+#: heliosbooth/verifier.js:10
+#, python-format
+msgid "election fingerprint is %(hash)s"
+msgstr "Fingerabdruck der Wahl ist %(hash)s"
+
+#: heliosbooth/verifier.js:14
+#, python-format
+msgid "ballot tracker is %(hash)s"
+msgstr "Stimmzettel-Tracker ist %(hash)s"
+
+#: heliosbooth/verifier.js:18
+msgid "election fingerprint matches ballot"
+msgstr "Fingerabdruck der Wahl stimmt mit dem Stimmzettel überein"
+
+#: heliosbooth/verifier.js:21
+msgid "PROBLEM = election fingerprint does not match"
+msgstr "PROBLEM = Fingerabdruck der Wahl stimmt nicht überein"
+
+#: heliosbooth/verifier.js:25
+msgid "Ballot Contents:"
+msgstr "Inhalt des Stimmzettels:"
+
+#: heliosbooth/verifier.js:28
+msgid "WARNING: the tally type for this question is not homomorphic. Verification may fail because this verifier is only set up to handle homomorphic ballots."
+msgstr "WARNUNG: Die Auszählungsart dieser Frage ist nicht homomorph. Die Überprüfung kann fehlschlagen, da dieses Prüfprogramm nur homomorphe Stimmzettel unterstützt."
+
+#: heliosbooth/verifier.js:34
+#, python-format
+msgid "Question #%(num)s - %(name)s : %(answers)s"
+msgstr "Frage #%(num)s - %(name)s : %(answers)s"
+
+#: heliosbooth/verifier.js:39
+msgid "Encryption Verified"
+msgstr "Verschlüsselung überprüft"
+
+#: heliosbooth/verifier.js:42
+msgid "PROBLEM = Encryption doesn't match."
+msgstr "PROBLEM = Verschlüsselung stimmt nicht überein."
+
+#: heliosbooth/verifier.js:48
+msgid "Proofs ok."
+msgstr "Beweise in Ordnung."
+
+#: heliosbooth/verifier.js:51
+msgid "PROBLEM = Proofs don't work."
+msgstr "PROBLEM = Beweise sind ungültig."
+
+#: heliosbooth/verifier.js:54
+msgid "problem parsing election or ballot data structures, malformed inputs:"
+msgstr "Problem beim Verarbeiten der Wahl- oder Stimmzetteldaten, fehlerhafte Eingaben:"
+
+#: heliosbooth/vote.html:65 heliosbooth/vote.html:67
+msgid "Helios Voting Booth"
+msgstr "Helios-Wahlkabine"
+
+#: heliosbooth/vote.html:68
+msgid "exit"
+msgstr "verlassen"
+
+#: heliosbooth/vote.html:69
+msgid "Select"
+msgstr "Auswählen"
+
+#: heliosbooth/vote.html:70
+msgid "Review"
+msgstr "Überprüfen"
+
+#: heliosbooth/vote.html:71
+msgid "Submit"
+msgstr "Absenden"
+
+#: heliosbooth/vote.html:72
+msgid "Checking capabilities and loading election booth..."
+msgstr "Browserfunktionen werden geprüft und die Wahlkabine wird geladen..."
+
+#: heliosbooth/vote.html:73
+msgid "This may take up to 10 seconds"
+msgstr "Dies kann bis zu 10 Sekunden dauern"
+
+#: heliosbooth/vote.html:74 heliosbooth/vote.html:399
+msgid "Processing..."
+msgstr "Wird verarbeitet..."
+
+#: heliosbooth/vote.html:75
+msgid "Helios is now encrypting your ballot"
+msgstr "Helios verschlüsselt jetzt Ihren Stimmzettel"
+
+#: heliosbooth/vote.html:76
+msgid "This may take up to two minutes."
+msgstr "Dies kann bis zu zwei Minuten dauern."
+
+#: heliosbooth/vote.html:112
+msgid "If you leave this page with an in-progress ballot, your ballot will be lost."
+msgstr "Wenn Sie diese Seite mit einem nicht abgegebenen Stimmzettel verlassen, geht Ihr Stimmzettel verloren."
+
+#: heliosbooth/vote.html:122
+msgid "Are you sure you want to exit the booth and lose all information about your current ballot?"
+msgstr "Möchten Sie die Wahlkabine wirklich verlassen? Alle Angaben zu Ihrem aktuellen Stimmzettel gehen dabei verloren."
+
+#: heliosbooth/vote.html:271
+#, python-format
+msgid "You need to select at least %(min)s answer(s)."
+msgstr "Sie müssen mindestens %(min)s Antwort(en) auswählen."
+
+#: heliosbooth/vote.html:384
+msgid "Maximum number of options selected.<br />To change your selection, please de-select a current selection first."
+msgstr "Die maximale Anzahl an Antworten ist ausgewählt.<br />Um Ihre Auswahl zu ändern, heben Sie bitte zuerst eine bestehende Auswahl auf."
+
+#: heliosbooth/vote.html:393
+#, python-format
+msgid "You may select up to %(max)s choices total."
+msgstr "Sie können insgesamt bis zu %(max)s Antworten auswählen."
+
+#: heliosbooth/vote.html:529
+#, python-format
+msgid ""
+"there appears to be a problem with the encryption process.\n"
+"Please email %(email)s and indicate that your encryption process froze at %(percent)s"
+msgstr ""
+"Bei der Verschlüsselung ist offenbar ein Problem aufgetreten.\n"
+"Bitte schreiben Sie eine E-Mail an %(email)s und geben Sie an, dass die Verschlüsselung bei %(percent)s stehen geblieben ist."
+
+#: heliosbooth/vote.html:571
+msgid ""
+"This audited ballot has been posted.\n"
+"Remember, this vote will only be used for auditing and will not be tallied.\n"
+"Click \"back to voting\" and cast a new ballot to make sure your vote counts."
+msgstr ""
+"Dieser geprüfte Stimmzettel wurde veröffentlicht.\n"
+"Denken Sie daran: Diese Stimme dient nur der Prüfung und wird nicht ausgezählt.\n"
+"Klicken Sie auf „Zurück zur Stimmabgabe“ und geben Sie einen neuen Stimmzettel ab, damit Ihre Stimme zählt."
+
+#: heliosbooth/vote.html:600
+#, python-format
+msgid "Your ballot tracker for %(name)s: %(tracker)s"
+msgstr "Ihr Stimmzettel-Tracker für %(name)s: %(tracker)s"
+
+#: heliosverifier/verify.html:39
+msgid "Helios Voting System -- Verifier"
+msgstr "Helios-Wahlsystem -- Prüfprogramm"
+
+#: heliosverifier/verify.html:40
+msgid "Helios Election Verifier"
+msgstr "Helios-Prüfprogramm für Wahlen"
+
+#: heliosverifier/verify.html:41
+msgid "loading verifier ..."
+msgstr "Prüfprogramm wird geladen ..."
+
+#: heliosverifier/verify.html:43
+msgid "start verification"
+msgstr "Überprüfung starten"
+
+#: heliosverifier/verify.html:53
+msgid "sorry, in-browser verification requires Java Support at this time."
+msgstr "Die Überprüfung im Browser erfordert derzeit leider Java-Unterstützung."
+
+#: heliosverifier/verify.html:61
+msgid "FAIL"
+msgstr "FEHLGESCHLAGEN"
+
+#: heliosverifier/verify.html:61
+msgid "VERIFIED"
+msgstr "ÜBERPRÜFT"
+
+#: heliosverifier/verify.html:72
+#, python-format
+msgid "loading ballot for voter #%(num)s"
+msgstr "Stimmzettel von wahlberechtigter Person #%(num)s wird geladen"
+
+#: heliosverifier/verify.html:79
+#, python-format
+msgid "no ballot for this voter #%(num)s"
+msgstr "kein Stimmzettel von wahlberechtigter Person #%(num)s"
+
+#: heliosverifier/verify.html:81
+#, python-format
+msgid "FOUND a ballot for voter #%(num)s"
+msgstr "Stimmzettel von wahlberechtigter Person #%(num)s GEFUNDEN"
+
+#: heliosverifier/verify.html:110
+msgid "Election"
+msgstr "Wahl"
+
+#: heliosverifier/verify.html:119
+#, python-format
+msgid "loaded election: %(name)s"
+msgstr "Wahl geladen: %(name)s"
+
+#: heliosverifier/verify.html:120
+#, python-format
+msgid "election fingerprint: %(hash)s"
+msgstr "Fingerabdruck der Wahl: %(hash)s"
+
+#: heliosverifier/verify.html:126
+msgid "PROBLEM: this election is not a straight-forward homomorphic-tally election. As a result, Helios cannot currently verify it."
+msgstr "PROBLEM: Diese Wahl ist keine einfache Wahl mit homomorpher Auszählung. Daher kann Helios sie derzeit nicht überprüfen."
+
+#: heliosverifier/verify.html:135
+msgid "loading list of voters..."
+msgstr "Wählerverzeichnis wird geladen..."
+
+#: heliosverifier/verify.html:139
+msgid "loaded voter list, now loading ballots for each.."
+msgstr "Wählerverzeichnis geladen, Stimmzettel werden geladen.."
+
+#: heliosverifier/verify.html:144
+msgid "Ballots"
+msgstr "Stimmzettel"
+
+#: heliosverifier/verify.html:152
+#, python-format
+msgid "Voter #%(num)s"
+msgstr "Wahlberechtigte Person #%(num)s"
+
+#: heliosverifier/verify.html:154
+#, python-format
+msgid "Ballot Tracking Number: %(hash)s"
+msgstr "Stimmzettel-Tracker: %(hash)s"
+
+#: heliosverifier/verify.html:162
+#, python-format
+msgid "Question #%(question)s, Option #%(option)s -- %(result)s"
+msgstr "Frage #%(question)s, Option #%(option)s -- %(result)s"
+
+#: heliosverifier/verify.html:164
+#, python-format
+msgid "Question #%(question)s OVERALL -- %(result)s"
+msgstr "Frage #%(question)s INSGESAMT -- %(result)s"
+
+#: heliosverifier/verify.html:185
+msgid "Trustees"
+msgstr "Treuhänder*innen"
+
+#: heliosverifier/verify.html:188
+#, python-format
+msgid "Trustee #%(num)s: %(email)s"
+msgstr "Treuhänder*in #%(num)s: %(email)s"
+
+#: heliosverifier/verify.html:195
+#, python-format
+msgid "-- PK %(hash)s -- VERIFIED."
+msgstr "-- Öffentlicher Schlüssel %(hash)s -- ÜBERPRÜFT."
+
+#: heliosverifier/verify.html:197
+#, python-format
+msgid "==== ERROR for PK of trustee %(email)s"
+msgstr "==== FEHLER beim öffentlichen Schlüssel von Treuhänder*in %(email)s"
+
+#: heliosverifier/verify.html:208
+msgid "election public key CORRECTLY FORMED"
+msgstr "öffentlicher Schlüssel der Wahl KORREKT GEBILDET"
+
+#: heliosverifier/verify.html:210
+msgid "==== ERROR, election public key doesn't match"
+msgstr "==== FEHLER, öffentlicher Schlüssel der Wahl stimmt nicht überein"
+
+#: heliosverifier/verify.html:214
+msgid "Tally"
+msgstr "Auszählung"
+
+#: heliosverifier/verify.html:222
+#, python-format
+msgid "Answer #%(num)s: %(answer)s - COUNT = %(count)s"
+msgstr "Antwort #%(num)s: %(answer)s - ANZAHL = %(count)s"
+
+#: heliosverifier/verify.html:230
+#, python-format
+msgid "-- Trustee %(email)s: decryption factor verifies"
+msgstr "-- Treuhänder*in %(email)s: Entschlüsselungsfaktor gültig"
+
+#: heliosverifier/verify.html:232
+#, python-format
+msgid "==== ERROR with Trustee %(email)s: decryption factor does not verify"
+msgstr "==== FEHLER bei Treuhänder*in %(email)s: Entschlüsselungsfaktor ungültig"
+
+#: heliosverifier/verify.html:254
+msgid "FINAL RESULT"
+msgstr "ENDERGEBNIS"
+
+#: heliosverifier/verify.html:257
+msgid "ELECTION FULLY VERIFIED -- SUCCESS!"
+msgstr "WAHL VOLLSTÄNDIG ÜBERPRÜFT -- ERFOLG!"
+
+#: heliosverifier/verify.html:259
+msgid "VERIFICATION FAILED"
+msgstr "ÜBERPRÜFUNG FEHLGESCHLAGEN"
+
+#: heliosverifier/verify.html:267
+msgid "It appears that you are trying to verify a private election."
+msgstr "Offenbar versuchen Sie, eine nicht öffentliche Wahl zu überprüfen."
+
+#: heliosverifier/verify.html:268
+msgid "You can log in as a valid voter or log in as the election admin."
+msgstr "Sie können sich als wahlberechtigte Person oder als Wahlleitung anmelden."
+
+#: heliosverifier/verify.html:269
+msgid "Log in as a valid voter"
+msgstr "Als wahlberechtigte Person anmelden"
+
+#: heliosverifier/verify.html:270
+msgid "Log in as the election admin"
+msgstr "Als Wahlleitung anmelden"

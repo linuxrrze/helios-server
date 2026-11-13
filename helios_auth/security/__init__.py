@@ -11,64 +11,14 @@ from django.http import HttpResponseRedirect
 # nicely update the wrapper function
 from functools import update_wrapper
 
-from . import oauth
 from helios_auth.models import User
 
 FIELDS_TO_SAVE = 'FIELDS_TO_SAVE'
 
-## FIXME: oauth is NOT working right now
-
-##
-## OAuth and API clients
-##
-
-class OAuthDataStore(oauth.OAuthDataStore):
-  def __init__(self):
-    pass
-      
-  def lookup_consumer(self, key):
-    c = APIClient.objects.get(consumer_key = key)
-    return oauth.OAuthConsumer(c.consumer_key, c.consumer_secret)
-
-  def lookup_token(self, oauth_consumer, token_type, token):
-    if token_type != 'access':
-      raise NotImplementedError
-
-    c = APIClient.objects.get(consumer_key = oauth_consumer.key)
-    return oauth.OAuthToken(c.consumer_key, c.consumer_secret)
-
-  def lookup_nonce(self, oauth_consumer, oauth_token, nonce):
-    """
-    FIXME this to actually check for nonces
-    """
-    return None
-
-# create the oauth server
-OAUTH_SERVER = oauth.OAuthServer(OAuthDataStore())
-OAUTH_SERVER.add_signature_method(oauth.OAuthSignatureMethod_HMAC_SHA1())
-    
-def get_api_client(request):
-  parameters = request.POST.copy()
-  parameters.update(request.GET)
-  
-  full_url = request.get_full_path()
-    
-  oauth_request = oauth.OAuthRequest.from_request(request.method, full_url, headers= request.META,
-                                                  parameters=parameters, query_string=None)
-                                                  
-  if not oauth_request:
-    return None
-    
-  try:
-    consumer, token, params = OAUTH_SERVER.verify_request(oauth_request)
-    return APIClient.objects.get(consumer_key = consumer.key)
-  except oauth.OAuthError:
-    return None
-  
 # decorator for login required
 def login_required(func):
   def login_required_wrapper(request, *args, **kw):
-    if not (get_user(request) or get_api_client(request)):
+    if not get_user(request):
       return HttpResponseRedirect(settings.LOGIN_URL + "?return_url=" + request.get_full_path())
   
     return func(request, *args, **kw)

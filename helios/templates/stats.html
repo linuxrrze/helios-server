@@ -1,29 +1,30 @@
 {% extends TEMPLATE_BASE %}
-{% block title %}Statistics{% endblock %}
+{% load i18n %}
+{% block title %}{% translate "Statistics" %}{% endblock %}
 
 {% block content %}
-<h1>Admin</h1>
+<h1>{% translate "Admin" %}</h1>
 
 <ul>
-<li> <a href="{% url "stats@elections" %}">elections</a></li>
-<li> <a href="{% url "stats@deleted-elections" %}">deleted elections</a></li>
-<li> <a href="{% url "stats@user-search" %}">user search</a></li>
-<li> <a href="{% url "stats@recent-votes" %}">recent votes</a></li>
-<li> <a href="{% url "stats@elections-problems" %}">recent problem elections</a></li>
+<li> <a href="{% url "stats@elections" %}">{% translate "elections" %}</a></li>
+<li> <a href="{% url "stats@deleted-elections" %}">{% translate "deleted elections" %}</a></li>
+<li> <a href="{% url "stats@user-search" %}">{% translate "user search" %}</a></li>
+<li> <a href="{% url "stats@recent-votes" %}">{% translate "recent votes" %}</a></li>
+<li> <a href="{% url "stats@elections-problems" %}">{% translate "recent problem elections" %}</a></li>
 </ul>
 
-<div><b>{{num_votes_in_queue}}</b> votes in queue. {% if num_votes_in_queue %}[<form class="inline-action" method="post" action="{% url "stats@force-queue" %}"><input type="hidden" name="csrf_token" value="{{csrf_token}}" /><button type="submit" class="link-button">force it</button></form>]{% endif %}</div>
+<div>{% blocktranslate trimmed with num=num_votes_in_queue %}<b>{{num}}</b> votes in queue.{% endblocktranslate %} {% if num_votes_in_queue %}[<form class="inline-action" method="post" action="{% url "stats@force-queue" %}"><input type="hidden" name="csrf_token" value="{{csrf_token}}" /><button type="submit" class="link-button">{% translate "force it" %}</button></form>]{% endif %}</div>
 
-<div>Background tasks: <b>{{task_counts.ready}}</b> waiting, <b>{{task_counts.running}}</b> running
-({{task_counts.stuck}} for over {{stuck_after_minutes}} minutes, see <tt>manage.py requeue_stuck_tasks</tt>),
-<b>{{task_counts.failed_last_day}}</b> failed in the last day.</div>
+<div>{% blocktranslate trimmed with ready=task_counts.ready running=task_counts.running stuck=task_counts.stuck minutes=stuck_after_minutes cmd="manage.py requeue_stuck_tasks" failed=task_counts.failed_last_day %}Background tasks: <b>{{ready}}</b> waiting, <b>{{running}}</b> running
+({{stuck}} for over {{minutes}} minutes, see <tt>{{cmd}}</tt>),
+<b>{{failed}}</b> failed in the last day.{% endblocktranslate %}</div>
 
 <form method="post" action="{% url "stats@set-announcement" %}">
   <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
-  <label>Announcement banner shown on every page (leave empty for none):
+  <label>{% translate "Announcement banner shown on every page (leave empty for none):" %}
     <input type="text" name="text" value="{{announcement}}" />
   </label>
-  <button type="submit" class="tiny button">Save</button>
+  <button type="submit" class="tiny button">{% translate "Save" %}</button>
 </form>
 
 {% endblock %}
