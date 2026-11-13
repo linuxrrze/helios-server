@@ -387,6 +387,10 @@ const r = {};
         self.assertIn('data-no-preserve', f.read(), name)
     with open(root + 'election_keygenerator.html') as f:
       self.assertIn('HeliosFormState.markUnsaved()', f.read())
+    with open(root + 'election_questions.html') as f:
+      text = f.read()
+    self.assertIn('<div id="questions" data-preserve-custom>', text)
+    self.assertIn("HeliosFormState.register('questions'", text)
 
   def test_booth_has_no_switcher(self):
     # the voting booth is a static page without the switcher: switching the language

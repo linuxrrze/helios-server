@@ -297,6 +297,77 @@
     save_questions(refresh);
   }
 
+  // Switching the language reloads the page: keep the question being added and
+  // any question being edited, with all answer rows (server_ui/media/language-switch.js).
+  function question_form_state(form) {
+    var answers = [];
+    $(form).find('.answer-row').each(function() {
+      var row = $(this);
+      answers.push({text: row.find('input.answer').val(), url: row.find('input.url-input').val(),
+                    show_url: row.find('.url-input-wrapper').css('display') != 'none'});
+    });
+    return {question: form.question.value, min: form.min.value, max: form.max.value,
+            result_type: form.result_type.value, randomize_answer_order: form.randomize_answer_order.value,
+            answers: answers};
+  }
+
+  function question_form_restore(form, state) {
+    form.question.value = state.question;
+    form.min.value = state.min;
+    form.max.value = state.max;
+    form.result_type.value = state.result_type;
+    form.randomize_answer_order.value = state.randomize_answer_order;
+    var container = $(form).find('.answers-container');
+    container.empty();
+    $(state.answers).each(function(i, a) {
+      container.append(createAnswerRowHTML(a.text, a.url));
+      if (a.show_url && !a.url) {
+        var row = container.find('.answer-row').last();
+        row.find('.url-input-wrapper').show();
+        row.find('.url-toggle').attr('aria-expanded', 'true').find('span').text(TEXTS.hide_link);
+      }
+    });
+    if (!state.answers.length)
+      container.append(createAnswerRowHTML());
+    renumber_answers(container);
+  }
+
+  function question_fingerprint(q) {
+    return $.toJSON([q.question, q.answers]);
+  }
+
+  if (window.HeliosFormState) HeliosFormState.register('questions', {
+    save: function() {
+      var state = {edits: []};
+      var form = document.getElementById('question_form');
+      if (form) {
+        var added = question_form_state(form);
+        var empty = !added.question && added.min == '0' && added.max == '1' && added.result_type == 'absolute' &&
+          added.randomize_answer_order == '0' &&
+          !$.grep(added.answers, function(a) { return a.text || a.url || a.show_url; }).length && added.answers.length <= 1;
+        if (!empty) state.added = added;
+      }
+      $(QUESTIONS).each(function(i, q) {
+        if ($('#q_edit_' + i).css('display') == 'none')
+          return;
+        // only put back if the question is still the same after the reload
+        state.edits.push({index: i, original: question_fingerprint(q), form: question_form_state(document.getElementById('question_edit_' + i + '_form'))});
+      });
+      return (state.added || state.edits.length) ? state : null;
+    },
+    restore: function(state) {
+      var form = document.getElementById('question_form');
+      if (form && state.added)
+        question_form_restore(form, state.added);
+      $(state.edits || []).each(function(i, edit) {
+        if (!QUESTIONS[edit.index] || question_fingerprint(QUESTIONS[edit.index]) != edit.original)
+          return;
+        question_edit(edit.index);
+        question_form_restore(document.getElementById('question_edit_' + edit.index + '_form'), edit.form);
+      });
+    }
+  });
+
   $(document).ready(function() {
       $('#questions').setTemplateURL("/static/helios/static_templates/question.html");
 
@@ -306,7 +377,8 @@
 
   </script>
 
-  <div id="questions">
+  {# the forms in here are kept by the "questions" hook when the language is switched #}
+  <div id="questions" data-preserve-custom>
   </div>
   <div id="question_editor_status" class="screen-reader-text" role="status" aria-live="polite"></div>
 					
