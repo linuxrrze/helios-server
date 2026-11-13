@@ -324,6 +324,13 @@ FOOTER_LOGO_URL = get_from_env('FOOTER_LOGO_URL', '')
 # extra stylesheet loaded after the default layout, e.g. to set colors and a login
 # background image (CSS variables, see server_ui/media/layout.css)
 SITE_CSS_URL = get_from_env('SITE_CSS_URL', '')
+# Dark mode: 'auto' follows the visitor's system setting (prefers-color-scheme),
+# 'off' always shows the light colors. The default is 'auto' without a site
+# stylesheet and 'off' with one, because a site stylesheet usually sets light
+# colors only; set 'auto' after giving it dark colors too (see layout.css).
+DARK_MODE = get_from_env('DARK_MODE', 'off' if SITE_CSS_URL else 'auto')
+if DARK_MODE not in ('auto', 'off'):
+    DARK_MODE = 'off'
 # Legal pages linked in the footer; a link is shown only when its URL is set. They can
 # point to external pages, or to /imprint, /privacy and /accessibility, which render
 # server_ui/templates/<page>.html (provide imprint.html and accessibility.html in

@@ -1,11 +1,12 @@
 {% load announcement_tags i18n localized_settings navigation_tags %}<!DOCTYPE html>
-{% get_current_language as LANGUAGE_CODE %}<html lang="{{ LANGUAGE_CODE }}" class="no-js">
+{% get_current_language as LANGUAGE_CODE %}{% color_scheme_class as color_scheme %}<html lang="{{ LANGUAGE_CODE }}" class="no-js {{ color_scheme }}">
     <head>
     <title>{% block title %}{% endblock %}</title>  
     <meta http-equiv="X-UA-Compatible" content="IE=edge,Chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="description" content="{% localized_setting "SITE_TITLE" %}">
+    {% if color_scheme %}<meta name="color-scheme" content="light dark">{% endif %}
     <link rel="stylesheet" href="/static/layout.css">
     <link rel="stylesheet" href="/static/navigation.css">
     {% if settings.SITE_CSS_URL %}<link rel="stylesheet" href="{{ settings.SITE_CSS_URL }}">{% endif %}

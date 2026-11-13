@@ -1948,7 +1948,7 @@ msgid "This election is open to: %(eligibility)s"
 msgstr "Diese Wahl steht offen für: %(eligibility)s"
 
 #: helios/templates/election_view.html:281 helios_auth/templates/login_box.html:3 helios_auth/templates/auth/devlogin.html:21
-#: server_ui/templates/base.html:51 server_ui/templates/index.html:91
+#: server_ui/templates/base.html:52 server_ui/templates/index.html:91
 msgid "Log in"
 msgstr "Anmelden"
 
@@ -3977,49 +3977,49 @@ msgstr "Olivier Pereira ist Forschungsmitarbeiter der belgischen Wissenschaftsst
 msgid "Dan Wallach is an associate professor in the Department of Computer Science at Rice University in Houston, Texas and is the director of NSF’s ACCURATE (A Center for Correct, Usable, Reliable, Auditable and Transparent Elections). His research involves computer security and the issues of building secure and robust software systems for the Internet. He has testified about voting security issues before government bodies in the U.S., Mexico, and the European Union, has served as an expert witness in a number of voting technology lawsuits, and participated in California’s “top-to-bottom” audit of its voting systems."
 msgstr "Dan Wallach ist außerordentlicher Professor am Department of Computer Science der Rice University in Houston, Texas, und Direktor von ACCURATE (A Center for Correct, Usable, Reliable, Auditable and Transparent Elections) der NSF. Seine Forschung befasst sich mit Computersicherheit und dem Bau sicherer und robuster Softwaresysteme für das Internet. Er hat vor Regierungsstellen in den USA, in Mexiko und in der Europäischen Union zu Sicherheitsfragen bei Wahlen ausgesagt, war Sachverständiger in mehreren Gerichtsverfahren zu Wahltechnik und nahm am „Top-to-Bottom“-Audit der Wahlsysteme Kaliforniens teil."
 
-#: server_ui/templates/base.html:22
+#: server_ui/templates/base.html:23
 msgid "Skip to main content"
 msgstr "Zum Hauptinhalt springen"
 
-#: server_ui/templates/base.html:28
+#: server_ui/templates/base.html:29
 msgid "Meta navigation"
 msgstr "Meta-Navigation"
 
-#: server_ui/templates/base.html:38
+#: server_ui/templates/base.html:39
 #, python-format
 msgid "Logged in as <strong>%(name)s</strong>"
 msgstr "Angemeldet als <strong>%(name)s</strong>"
 
-#: server_ui/templates/base.html:43 server_ui/templates/base.html:48
+#: server_ui/templates/base.html:44 server_ui/templates/base.html:49
 msgid "Log out"
 msgstr "Abmelden"
 
-#: server_ui/templates/base.html:47 server_ui/templates/base.html:47
+#: server_ui/templates/base.html:48 server_ui/templates/base.html:48
 #, python-format
 msgid "Logged in as <strong>%(name)s</strong> for the election <em>%(election)s</em>."
 msgstr "Angemeldet als <strong>%(name)s</strong> für die Wahl <em>%(election)s</em>."
 
-#: server_ui/templates/base.html:89
+#: server_ui/templates/base.html:90
 msgid "Contact, imprint and further information"
 msgstr "Kontakt, Impressum und Zusatzinformationen"
 
-#: server_ui/templates/base.html:91
+#: server_ui/templates/base.html:92
 msgid "About Helios"
 msgstr "Über Helios"
 
-#: server_ui/templates/base.html:92
+#: server_ui/templates/base.html:93
 msgid "Imprint"
 msgstr "Impressum"
 
-#: server_ui/templates/base.html:93
+#: server_ui/templates/base.html:94
 msgid "Privacy"
 msgstr "Datenschutz"
 
-#: server_ui/templates/base.html:94
+#: server_ui/templates/base.html:95
 msgid "Accessibility"
 msgstr "Barrierefreiheit"
 
-#: server_ui/templates/base.html:96
+#: server_ui/templates/base.html:97
 msgid "Contact"
 msgstr "Kontakt"
 
@@ -4305,6 +4305,6 @@ msgstr "Bitte versuchen Sie es in einigen Minuten erneut. Wenn Sie gerade einen 
 msgid "There was an error while handling your request."
 msgstr "Bei der Bearbeitung Ihrer Anfrage ist ein Fehler aufgetreten."
 
-#: templates/_error_page.html:19
+#: templates/_error_page.html:20
 msgid "Go to the start page"
 msgstr "Zur Startseite"

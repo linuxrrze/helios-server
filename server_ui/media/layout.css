@@ -69,7 +69,17 @@ h1{line-height:1.2}
   --muted-color: #52606d;          /* 6.6:1 on white */
   --border-color: #c7d0d9;
   --surface-color: #f4f6f8;        /* cards, table headers */
-  --link-color: var(--primary-color);
+  --accent-color: var(--primary-color);   /* links and outlined buttons; lighter in dark mode */
+  --accent-hover: var(--primary-color-dark);
+  --link-color: var(--accent-color);
+  --card-bg: #fff;                 /* cards, inputs, tables, outlined buttons */
+  --input-border: var(--input-border);
+  --table-stripe: var(--table-stripe);
+  --on-success: #fff;              /* text on success/danger fills */
+  --on-danger: #fff;
+  --danger-hover: #7d1013;
+  --warning-border: var(--warning-border);
+  --banner-border: var(--banner-border);
   --focus-color: #1a5fb4;
   --success-color: #1e6b34;
   --success-bg: #e6f4ea;
@@ -114,7 +124,7 @@ textarea:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
 
 /* skip link: first focusable element, visible only when focused */
 .skip-link { position: absolute; left: 8px; top: -60px; z-index: 100; padding: 8px 12px;
-  background: #fff; color: var(--link-color); border: 2px solid var(--focus-color); border-radius: var(--radius); }
+  background: var(--card-bg); color: var(--link-color); border: 2px solid var(--focus-color); border-radius: var(--radius); }
 .skip-link:focus { top: 8px; }
 
 /* --- buttons --------------------------------------------------------------
@@ -134,23 +144,23 @@ textarea:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
 }
 /* secondary: outlined */
 .content-body :where(.button.secondary, .btn-secondary, button.secondary:not(.link-button), input.secondary, input[type=button]:not(.button)) {
-  background: #fff; border-color: var(--primary-color); color: var(--primary-color);
+  background: var(--card-bg); border-color: var(--accent-color); color: var(--accent-color);
 }
 .content-body :where(.button.secondary, .btn-secondary, button.secondary:not(.link-button), input.secondary, input[type=button]:not(.button)):is(:hover, :focus) {
-  background: var(--surface-color); border-color: var(--primary-color-dark); color: var(--primary-color-dark);
+  background: var(--surface-color); border-color: var(--accent-hover); color: var(--accent-hover);
 }
 /* destructive */
 .content-body :where(.button.alert, .button.danger, button.danger:not(.link-button), input.danger) {
-  background: var(--danger-color); border-color: var(--danger-color); color: #fff;
+  background: var(--danger-color); border-color: var(--danger-color); color: var(--on-danger);
 }
 .content-body :where(.button.alert, .button.danger, button.danger:not(.link-button), input.danger):is(:hover, :focus) {
-  background: #7d1013; border-color: #7d1013; color: #fff;
+  background: var(--danger-hover); border-color: var(--danger-hover); color: var(--on-danger);
 }
 .content-body :where(.button.danger.secondary, button.danger.secondary:not(.link-button)) {
-  background: #fff; border-color: var(--danger-color); color: var(--danger-color);
+  background: var(--card-bg); border-color: var(--danger-color); color: var(--danger-color);
 }
 .content-body :where(.button.danger.secondary, button.danger.secondary:not(.link-button)):is(:hover, :focus) {
-  background: var(--danger-bg); color: #7d1013;
+  background: var(--danger-bg); color: var(--danger-hover);
 }
 .content-body :where(.button.tiny, .button.small, button.small:not(.link-button)) {
   min-height: 32px; padding: 4px 12px; font-size: .9rem;
@@ -161,8 +171,8 @@ textarea:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
 }
 /* links styled as buttons: the general link color rule is more specific than :where() */
 .content-body a.button, .content-body a.button:hover, .content-body a.button:focus { color: #fff; text-decoration: none; }
-.content-body a.button.secondary { color: var(--primary-color); }
-.content-body a.button.secondary:hover, .content-body a.button.secondary:focus { color: var(--primary-color-dark); }
+.content-body a.button.secondary { color: var(--accent-color); }
+.content-body a.button.secondary:hover, .content-body a.button.secondary:focus { color: var(--accent-hover); }
 .content-body a.button.danger.secondary { color: var(--danger-color); }
 /* the start page's login button is a full-width block */
 .content-body.login a.button { display: block; }
@@ -173,7 +183,7 @@ button.link-button {
   display: inline; margin: 0; padding: 0; min-height: 0; border: 0; background: none; box-shadow: none;
   font: inherit; color: var(--link-color); text-decoration: underline; text-underline-offset: 2px; cursor: pointer;
 }
-button.link-button:hover, button.link-button:focus { background: none; color: var(--primary-color-dark); text-decoration-thickness: 2px; }
+button.link-button:hover, button.link-button:focus { background: none; color: var(--accent-hover); text-decoration-thickness: 2px; }
 button.link-button.danger { color: var(--danger-color); }
 
 /* a row of actions: primary first, then secondary, then a cancel link */
@@ -186,7 +196,7 @@ button.link-button.danger { color: var(--danger-color); }
 .content-body input[type=datetime-local], .content-body input[type=date], .content-body input[type=time],
 .content-body input:not([type]), .content-body select, .content-body textarea {
   box-sizing: border-box; max-width: 100%; min-height: 40px; padding: 7px 10px;
-  border: 1px solid #8a96a3; border-radius: 4px; background: #fff; color: var(--text-color);
+  border: 1px solid var(--input-border); border-radius: 4px; background: var(--card-bg); color: var(--text-color);
   font: inherit; font-size: 1rem;
 }
 .content-body textarea { width: 100%; min-height: 8em; }
@@ -216,10 +226,10 @@ table.pretty th label { font-weight: 600; }
 table.pretty .helptext { margin-top: 4px; }
 
 /* --- tables ------------------------------------------------------------ */
-.content-body table { border-collapse: collapse; border: 1px solid var(--border-color); background: #fff; }
+.content-body table { border-collapse: collapse; border: 1px solid var(--border-color); background: var(--card-bg); }
 .content-body table th, .content-body table td { padding: 8px 12px; border-bottom: 1px solid var(--border-color); font-size: .95rem; color: var(--text-color); line-height: 1.4; vertical-align: top; }
 .content-body table th { background: var(--surface-color); font-weight: 600; }
-.content-body table tr:nth-of-type(even) { background: #fafbfc; }
+.content-body table tr:nth-of-type(even) { background: var(--table-stripe); }
 .table-scroll { max-width: 100%; overflow-x: auto; }
 
 /* --- boxes ------------------------------------------------------------- */
@@ -230,17 +240,17 @@ table.pretty .helptext { margin-top: 4px; }
 .callout > :last-child { margin-bottom: 0; }
 .callout-info { border-left-color: var(--info-color); background: var(--info-bg); }
 .callout-success { border-left-color: var(--success-color); background: var(--success-bg); }
-.callout-warning { border-left-color: #b7791f; background: var(--warning-bg); }
+.callout-warning { border-left-color: var(--warning-border); background: var(--warning-bg); }
 .callout-danger { border-left-color: var(--danger-color); background: var(--danger-bg); }
 .callout-title { display: block; margin: 0 0 .35em; font-size: 1.05rem; font-weight: 700; }
 .round { border-radius: var(--radius); }
-.card { margin: 0 0 1.25em; padding: 16px 20px; border: 1px solid var(--border-color); border-radius: var(--radius); background: #fff; }
+.card { margin: 0 0 1.25em; padding: 16px 20px; border: 1px solid var(--border-color); border-radius: var(--radius); background: var(--card-bg); }
 .card > :last-child { margin-bottom: 0; }
-.announcement-banner { padding: 10px 20px; border-bottom: 1px solid #e0c97a; background: var(--warning-bg); color: var(--text-color); text-align: center; }
+.announcement-banner { padding: 10px 20px; border-bottom: 1px solid var(--banner-border); background: var(--warning-bg); color: var(--text-color); text-align: center; }
 .error, p.error { color: var(--danger-color); font-weight: 600; }
 
 /* expandable sections (<details>) */
-.content-body details { margin: 1em 0; border: 1px solid var(--border-color); border-radius: var(--radius); background: #fff; }
+.content-body details { margin: 1em 0; border: 1px solid var(--border-color); border-radius: var(--radius); background: var(--card-bg); }
 .content-body details > summary { padding: 10px 16px; cursor: pointer; font-weight: 600; color: var(--link-color); }
 .content-body details[open] > summary { border-bottom: 1px solid var(--border-color); }
 .content-body details > .details-body { padding: 12px 16px; overflow-wrap: anywhere; }
@@ -259,7 +269,7 @@ table.pretty .helptext { margin-top: 4px; }
 .status-scheduled, .status-open { color: var(--success-color); background: var(--success-bg); }
 .status-closed, .status-tallying { color: var(--warning-color); background: var(--warning-bg); }
 .status-released { color: var(--info-color); background: var(--info-bg); }
-.status-archived { color: var(--muted-color); background: #fff; }
+.status-archived { color: var(--muted-color); background: var(--card-bg); }
 
 /* --- phones and tablets ------------------------------------------------- */
 @media only screen and (max-width: 64em) {
@@ -289,8 +299,8 @@ table.pretty .helptext { margin-top: 4px; }
 .facts dd { margin: 0; font-weight: 600; }
 .election-nav ul { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 1.5em; padding: 0; list-style: none; }
 .election-nav a { display: inline-block; padding: 8px 16px; border: 1px solid var(--border-color); border-radius: 999px;
-  background: #fff; text-decoration: none; font-weight: 600; }
-.election-nav a:hover { background: var(--surface-color); border-color: var(--primary-color); }
+  background: var(--card-bg); text-decoration: none; font-weight: 600; }
+.election-nav a:hover { background: var(--surface-color); border-color: var(--accent-color); }
 .admin-panel h2 { margin-top: 0; }
 .next-step .actions { margin-bottom: 0; }
 .issue-list { margin: 0 0 .5em; }
@@ -300,15 +310,15 @@ table.pretty .helptext { margin-top: 4px; }
 .step { position: relative; display: flex; gap: 14px; padding: 0 0 18px; }
 .step:not(:last-child)::before { content: ""; position: absolute; left: 15px; top: 34px; bottom: 2px; width: 2px; background: var(--border-color); }
 .step-marker { flex: none; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;
-  border: 2px solid var(--border-color); border-radius: 50%; background: #fff; color: var(--muted-color); font-weight: 700; }
+  border: 2px solid var(--border-color); border-radius: 50%; background: var(--card-bg); color: var(--muted-color); font-weight: 700; }
 .step-body { display: flex; flex-direction: column; padding-top: 4px; }
 .step-title { font-weight: 700; }
 .step-detail { font-size: .95rem; }
 .step-hint { color: var(--muted-color); font-size: .9rem; }
-.step-done .step-marker { border-color: var(--success-color); background: var(--success-color); color: #fff; }
+.step-done .step-marker { border-color: var(--success-color); background: var(--success-color); color: var(--on-success); }
 .step-done:not(:last-child)::before { background: var(--success-color); }
 .step-current .step-marker { border-color: var(--primary-color); background: var(--primary-color); color: #fff; }
-.step-current .step-title { color: var(--primary-color); }
+.step-current .step-title { color: var(--accent-color); }
 .step-todo .step-title, .step-todo .step-detail { color: var(--muted-color); }
 
 /* results */
@@ -369,8 +379,8 @@ table.pretty .helptext { margin-top: 4px; }
 .login-options { margin: 0 0 1em; padding: 0; list-style: none; }
 .login-options li { margin: 0 0 10px; }
 .content-body .login-option { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 8px 16px; border: 2px solid var(--border-color);
-  border-radius: var(--radius); background: #fff; color: var(--text-color); font-weight: 600; text-decoration: none; }
-.content-body .login-option:hover, .content-body .login-option:focus { border-color: var(--primary-color); }
+  border-radius: var(--radius); background: var(--card-bg); color: var(--text-color); font-weight: 600; text-decoration: none; }
+.content-body .login-option:hover, .content-body .login-option:focus { border-color: var(--accent-color); }
 .login-option img { width: 28px; height: 28px; object-fit: contain; }
 .result-table .share { min-width: 10rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .share-bar { display: inline-block; width: 8rem; height: .7rem; margin-right: 6px; border-radius: 999px; background: var(--surface-color);
@@ -386,7 +396,7 @@ table.pretty .helptext { margin-top: 4px; }
 .wizard-step { display: flex; align-items: center; gap: 8px; font-weight: 600; }
 .wizard-step-number { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 28px; height: 28px;
   border: 2px solid var(--border-color); border-radius: 50%; background: var(--main-bg-color); color: var(--muted-color); font-size: .9rem; }
-.wizard-step-done .wizard-step-number { border-color: var(--success-color); background: var(--success-color); color: #fff; }
+.wizard-step-done .wizard-step-number { border-color: var(--success-color); background: var(--success-color); color: var(--on-success); }
 .wizard-step-current .wizard-step-number { border-color: var(--primary-color); background: var(--primary-color); color: #fff; }
 .wizard-step-current > span:not(.wizard-step-number) { color: var(--text-color); }
 .wizard-step-todo { color: var(--muted-color); font-weight: 400; }
@@ -433,4 +443,86 @@ table.pretty .helptext { margin-top: 4px; }
   .result-table { min-width: 0; }
   .result-table .share { min-width: 0; }
   .share-bar { width: 3.5rem; }
+}
+
+/* ==========================================================================
+ * Dark mode
+ *
+ * Only when <html> has the class color-scheme-auto (settings.DARK_MODE='auto',
+ * the default without SITE_CSS_URL) and the visitor's system asks for dark
+ * colors. Everything goes through the variables above; the brand colors
+ * --primary-color/--primary-color-dark keep their value for filled buttons,
+ * the footer and the badges, links use the lighter --accent-color.
+ *
+ * A site stylesheet that sets light colors keeps working: with SITE_CSS_URL
+ * set, dark mode is off unless DARK_MODE=auto. To support it, a site
+ * stylesheet sets its dark values with the same selector:
+ *   @media (prefers-color-scheme: dark) { :root.color-scheme-auto { --accent-color: ...; } }
+ * ========================================================================== */
+@media (prefers-color-scheme: dark) {
+  :root.color-scheme-auto {
+    color-scheme: dark;
+    /* filled buttons a little lighter, so they stand out from the dark page
+       (3.6:1 on the page, white text 5:1); the footer keeps the brand color */
+    --primary-color: #3f71b0;
+    --primary-color-dark: #2f5a91;
+    --footer-bg-color: #1d3557;
+    --main-bg-color: #12171d;
+    --card-bg: #1b222b;
+    --surface-color: #232c37;
+    --text-color: #e6eaee;
+    --muted-color: #a9b5c1;          /* 7.6:1 on --card-bg */
+    --border-color: #3d4957;
+    --input-border: #7d8a98;
+    --table-stripe: #1f2731;
+    --accent-color: #9cc3ff;         /* 8.6:1 on --card-bg */
+    --accent-hover: #c6dcff;
+    --focus-color: #8ab4ff;
+    --success-color: #7fd69b;
+    --success-bg: #14301f;
+    --on-success: #0b1a10;
+    --warning-color: #f3c76f;
+    --warning-bg: #33280f;
+    --warning-border: #c9962e;
+    --banner-border: #6b5a22;
+    --danger-color: #ff9a92;
+    --danger-bg: #3b1717;
+    --danger-hover: #ffc0bb;
+    --on-danger: #2a0606;
+    --info-color: #93c9f2;
+    --info-bg: #142a3c;
+    --meta-bg-color: #1b222b;
+    --meta-link-color: var(--accent-color);
+    --nav-bg-color: var(--main-bg-color);
+    --nav-border-color: #3d4957;
+    --nav-link-color: var(--accent-color);
+    --nav-site-name-color: var(--text-color);
+  }
+  :root.color-scheme-auto body,
+  :root.color-scheme-auto .container { background: var(--main-bg-color); color: var(--text-color); }
+  /* the logo is usually dark on transparent: give it a light plate */
+  :root.color-scheme-auto .helios-logo { padding: 6px 10px; border-radius: var(--radius); background: #f4f6f8; }
+  :root.color-scheme-auto .content-body h1, :root.color-scheme-auto .content-body h2,
+  :root.color-scheme-auto .content-body h3 { color: var(--text-color); }
+  :root.color-scheme-auto .content-body.login h1, :root.color-scheme-auto .content-body.login h2,
+  :root.color-scheme-auto .content-body.login h3 { color: var(--accent-color); }
+  :root.color-scheme-auto .content-body.login p { color: var(--text-color); }
+  :root.color-scheme-auto .content-body.login a:not(.button) { color: var(--accent-color); }
+  @media (min-width: 480px) {
+    :root.color-scheme-auto .content-body.login .content { background: rgba(18, 23, 29, .88); }
+  }
+  :root.color-scheme-auto .skip-link { background: var(--card-bg); }
+  /* login-system icons are drawn for light backgrounds */
+  :root.color-scheme-auto .login-option img, :root.color-scheme-auto img.small-logo { padding: 2px; border-radius: 4px; background: #f4f6f8; }
+  :root.color-scheme-auto .breadcrumbs li + li::before { color: var(--muted-color); }
+  :root.color-scheme-auto .content-body table th, :root.color-scheme-auto .content-body table td { color: var(--text-color); }
+  :root.color-scheme-auto .content-body table th { background: var(--surface-color); }
+  :root.color-scheme-auto .content-body input[type=checkbox], :root.color-scheme-auto .content-body input[type=radio] { accent-color: var(--accent-color); }
+  :root.color-scheme-auto .share-bar > span { background: var(--accent-color); }
+  :root.color-scheme-auto .alert { background-color: var(--surface-color); color: var(--text-color); }
+  :root.color-scheme-auto .alert-success { color: var(--success-color); background-color: var(--success-bg); border-color: var(--success-color); }
+  :root.color-scheme-auto .alert-info { color: var(--info-color); background-color: var(--info-bg); border-color: var(--info-color); }
+  :root.color-scheme-auto .alert-warning { color: var(--warning-color); background-color: var(--warning-bg); border-color: var(--warning-border); }
+  :root.color-scheme-auto .alert-danger { color: var(--danger-color); background-color: var(--danger-bg); border-color: var(--danger-color); }
+  :root.color-scheme-auto .site-nav-menu > ul { box-shadow: 0 6px 12px rgba(0, 0, 0, .5); }
 }

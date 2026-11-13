@@ -265,3 +265,42 @@ class SecretSettingsFromEnvironmentTests(TestCase):
     def test_placeholder_optout_secret(self):
         result = self._load(SECRET_KEY=self.GOOD_SECRET, EMAIL_OPTOUT_SECRET='CHANGE-ME')
         self.assertRefused(result, 'EMAIL_OPTOUT_SECRET is still the placeholder')
+
+
+class DarkModeTests(TestCase):
+    """Dark colors only with DARK_MODE=auto (default without a site stylesheet)"""
+
+    def test_auto_marks_the_pages(self):
+        from django.test import override_settings
+        with override_settings(DARK_MODE='auto'):
+            html = self.client.get('/').content.decode()
+            self.assertIn('color-scheme-auto', html)
+            self.assertIn('<meta name="color-scheme" content="light dark">', html)
+            # the error pages too
+            html = self.client.get('/no/such/page').content.decode()
+            self.assertIn('class="color-scheme-auto"', html)
+
+    def test_off_keeps_light_colors(self):
+        from django.test import override_settings
+        with override_settings(DARK_MODE='off'):
+            html = self.client.get('/').content.decode()
+            self.assertNotIn('color-scheme-auto', html)
+            self.assertNotIn('name="color-scheme"', html)
+
+    def _dark_mode(self, **env):
+        import os
+        import subprocess
+        import sys
+        environ = {k: v for k, v in os.environ.items() if k not in ('DARK_MODE', 'SITE_CSS_URL')}
+        environ.update(env)
+        result = subprocess.run([sys.executable, '-c', 'import settings; print(settings.DARK_MODE)'], env=environ,
+                                capture_output=True, text=True, cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        return result.stdout.strip().splitlines()[-1]
+
+    def test_default_depends_on_site_stylesheet(self):
+        self.assertEqual(self._dark_mode(), 'auto')
+        self.assertEqual(self._dark_mode(SITE_CSS_URL='/static/site/site.css'), 'off')
+        self.assertEqual(self._dark_mode(SITE_CSS_URL='/static/site/site.css', DARK_MODE='auto'), 'auto')
+        self.assertEqual(self._dark_mode(DARK_MODE='off'), 'off')
+        self.assertEqual(self._dark_mode(DARK_MODE='nonsense'), 'off')

@@ -3,8 +3,8 @@
  * engine read the CSS braces as template expressions, so they never took effect. */
 /* Question Cards */
 .question-card {
-  background: #fff;
-  border: 1px solid #e0e0e0;
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--border-color, #e0e0e0);
   border-radius: 8px;
   padding: 20px;
   margin-bottom: 20px;
@@ -21,13 +21,13 @@
 .question-title {
   margin: 0;
   font-size: 1.25em;
-  color: #333;
+  color: var(--text-color, #333);
   flex: 1;
   white-space: pre-line;
 }
 
 .question-number {
-  color: #666;
+  color: var(--muted-color, #666);
   font-weight: normal;
 }
 
@@ -37,7 +37,7 @@
 }
 
 .question-actions a {
-  color: var(--primary-color, #1976d2);
+  color: var(--accent-color, var(--primary-color, #1976d2));
   text-decoration: none;
   padding: 0 3px;
 }
@@ -54,12 +54,12 @@
 }
 
 .meta-item {
-  color: #666;
+  color: var(--muted-color, #666);
 }
 
 .meta-label {
   font-weight: 500;
-  color: #444;
+  color: var(--text-color, #444);
 }
 
 .answers-list {
@@ -70,7 +70,7 @@
 
 .answer-item {
   padding: 8px 0;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border-color, #f0f0f0);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -85,7 +85,7 @@
 }
 
 .answer-link {
-  color: var(--primary-color, #1976d2);
+  color: var(--accent-color, var(--primary-color, #1976d2));
   text-decoration: none;
   font-size: 1.1em;
   padding: 4px 8px;
@@ -94,13 +94,13 @@
 }
 
 .answer-link:hover {
-  background: #e3f2fd;
+  background: var(--surface-color, #e3f2fd);
 }
 
 /* Edit Form */
 .question-edit-card {
-  background: #fff;
-  border: 2px solid var(--primary-color, #1976d2);
+  background: var(--card-bg, #fff);
+  border: 2px solid var(--accent-color, var(--primary-color, #1976d2));
   border-radius: 8px;
   padding: 24px;
   margin-bottom: 20px;
@@ -113,7 +113,7 @@
 
 .edit-title {
   margin: 0;
-  color: var(--primary-color, #1976d2);
+  color: var(--accent-color, var(--primary-color, #1976d2));
 }
 
 .form-group {
@@ -138,14 +138,14 @@
 
 .form-label-inline {
   font-weight: 500;
-  color: #444;
+  color: var(--text-color, #444);
   font-size: 0.85em;
   white-space: nowrap;
 }
 
 .form-control-inline {
   padding: 6px 8px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--input-border, #ddd);
   border-radius: 4px;
   font-size: 13px;
   transition: border-color 0.2s;
@@ -153,7 +153,7 @@
 
 .form-control-inline:focus {
   outline: none;
-  border-color: var(--primary-color, #1976d2);
+  border-color: var(--accent-color, var(--primary-color, #1976d2));
   box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.1);
 }
 
@@ -161,14 +161,14 @@
   display: block;
   margin-bottom: 6px;
   font-weight: 500;
-  color: #444;
+  color: var(--text-color, #444);
   font-size: 0.9em;
 }
 
 .form-control {
   width: 100%;
   padding: 8px 12px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--input-border, #ddd);
   border-radius: 4px;
   font-size: 14px;
   transition: border-color 0.2s;
@@ -176,7 +176,7 @@
 
 .form-control:focus {
   outline: none;
-  border-color: var(--primary-color, #1976d2);
+  border-color: var(--accent-color, var(--primary-color, #1976d2));
   box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.1);
 }
 
@@ -186,7 +186,7 @@
 
 /* Answers Section */
 .answers-section {
-  background: #f8f9fa;
+  background: var(--surface-color, #f8f9fa);
   padding: 20px;
   border-radius: 6px;
   margin-bottom: 20px;
@@ -195,7 +195,7 @@
 .section-title {
   margin: 0 0 15px 0;
   font-size: 1.1em;
-  color: #333;
+  color: var(--text-color, #333);
 }
 
 .answers-container {
@@ -209,14 +209,14 @@
   align-items: start;
   margin-bottom: 12px;
   padding: 12px;
-  background: white;
+  background: var(--card-bg, #fff);
   border-radius: 4px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--border-color, #e0e0e0);
 }
 
 .answer-number {
   font-weight: 500;
-  color: #666;
+  color: var(--muted-color, #666);
   padding-top: 8px;
 }
 
@@ -229,13 +229,13 @@
 .answer-input {
   width: 100%;
   padding: 8px 12px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--input-border, #ddd);
   border-radius: 4px;
   font-size: 14px;
 }
 
 .url-toggle {
-  color: var(--primary-color, #1976d2);
+  color: var(--accent-color, var(--primary-color, #1976d2));
   cursor: pointer;
   font-size: 0.85em;
   margin-left: 10px;
@@ -266,8 +266,8 @@
 
 /* Add Question Section */
 .add-question-section {
-  background: #f8f9fa;
-  border: 2px dashed #ddd;
+  background: var(--surface-color, #f8f9fa);
+  border: 2px dashed var(--input-border, #ddd);
   border-radius: 8px;
   padding: 24px;
   margin-top: 30px;
@@ -275,13 +275,13 @@
 
 .section-header {
   margin: 0 0 20px 0;
-  color: #333;
+  color: var(--text-color, #333);
 }
 
 .no-questions {
   text-align: center;
   padding: 40px;
-  color: #666;
+  color: var(--muted-color, #666);
 }
 
 /* the page's general heading and button rules are more specific than the ones above */
@@ -291,9 +291,9 @@
 .content-body .question-card .question-actions { display: flex; gap: 12px; align-items: center; margin: 0 0 0 16px; }
 .content-body .question-actions .link-button { font-size: 1rem; }
 .content-body .question-actions .link-button.danger { font-size: 1rem; }
-.content-body .form-row-compact { margin: 0 0 20px; padding: 12px 16px; border: 1px solid #e0e0e0; border-radius: 6px; line-height: 2.6; }
+.content-body .form-row-compact { margin: 0 0 20px; padding: 12px 16px; border: 1px solid var(--border-color, #e0e0e0); border-radius: 6px; line-height: 2.6; }
 .content-body .form-label-inline { font-size: .95rem; font-weight: 600; }
-.content-body .answers-section { border: 1px solid #e0e0e0; }
+.content-body .answers-section { border: 1px solid var(--border-color, #e0e0e0); }
 .content-body .answers-section legend { padding: 0 6px; }
 .content-body .url-toggle { margin-left: 6px; font-size: .9rem; }
 
@@ -310,7 +310,7 @@
 }
 
 /* rules of a question: four labelled selects */
-.content-body .question-rules { margin: 0 0 20px; padding: 12px 16px 4px; border: 1px solid var(--border-color, #e0e0e0); border-radius: 6px; }
+.content-body .question-rules { margin: 0 0 20px; padding: 12px 16px 4px; border: 1px solid var(--border-color, var(--border-color, #e0e0e0)); border-radius: 6px; }
 .rules-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 12px 20px; }
 .rule-field label { display: block; margin-bottom: 4px; font-size: .95rem; }
 .rule-field select { width: 100%; }
