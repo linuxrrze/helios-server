@@ -671,7 +671,7 @@ msgstr "Auszählung berechnen"
 #: helios/templates/combine_decryptions.html:6 helios/templates/election_admins.html:7 helios/templates/election_audited_ballots.html:7
 #: helios/templates/election_bboard.html:7 helios/templates/election_build.html:5 helios/templates/election_compute_tally.html:7
 #: helios/templates/election_compute_tally.html:21 helios/templates/election_compute_tally.html:50 helios/templates/election_edit.html:6
-#: helios/templates/election_extend.html:6 helios/templates/election_freeze.html:6 helios/templates/election_questions.html:6
+#: helios/templates/election_extend.html:6 helios/templates/election_freeze.html:6 helios/templates/election_questions.html:7
 #: helios/templates/list_trustees.html:7 helios/templates/release_result.html:6 helios/templates/voters_email.html:13
 #: helios/templates/voters_list.html:6 helios/templates/voters_manage.html:5 helios/templates/voters_search.html:5
 #: helios/templates/voters_upload.html:5 helios/templates/voters_upload_confirm.html:6
@@ -874,7 +874,7 @@ msgstr "Alias"
 msgid "Smart Ballot Tracker"
 msgstr "Stimmzettel-Tracker"
 
-#: helios/templates/election_build.html:5 helios/templates/election_questions.html:6
+#: helios/templates/election_build.html:5 helios/templates/election_questions.html:8
 msgid "Questions"
 msgstr "Fragen"
 
@@ -1248,42 +1248,59 @@ msgstr "Ende der Stimmabgabe: %(end)s"
 msgid "back to the election"
 msgstr "zurück zur Wahl"
 
-#: helios/templates/election_questions.html:4
+#: helios/templates/election_questions.html:5
 #, python-format
 msgid "Questions for %(name)s"
 msgstr "Fragen für %(name)s"
 
-#: helios/templates/election_questions.html:39
+#: helios/templates/election_questions.html:10
+msgid "Each question appears on its own page in the voting booth. Voters can choose between the minimum and maximum number of answers you set; choosing fewer than the maximum, or none if the minimum is 0, is allowed."
+msgstr "Jede Frage erscheint in der Wahlkabine auf einer eigenen Seite. Die Wahlberechtigten können zwischen der minimalen und der maximalen Anzahl von Antworten wählen, die Sie festlegen; weniger als das Maximum – oder keine, wenn das Minimum 0 ist – ist erlaubt."
+
+#: helios/templates/election_questions.html:12
+msgid "The ballot is frozen; the questions can no longer be changed."
+msgstr "Der Stimmzettel ist eingefroren; die Fragen können nicht mehr geändert werden."
+
+#: helios/templates/election_questions.html:14
+msgid "The question editor needs JavaScript."
+msgstr "Der Fragen-Editor benötigt JavaScript."
+
+#: helios/templates/election_questions.html:47
 msgid "Enter answer option"
 msgstr "Antwortmöglichkeit eingeben"
 
-#: helios/templates/election_questions.html:39
+#: helios/templates/election_questions.html:47
 msgid "Enter answer option (optional)"
 msgstr "Antwortmöglichkeit eingeben (optional)"
 
-#: helios/templates/election_questions.html:44 helios/templates/election_questions.html:193
+#: helios/templates/election_questions.html:52 helios/templates/election_questions.html:207
 msgid "+ Add link"
 msgstr "+ Link hinzufügen"
 
-#: helios/templates/election_questions.html:44 helios/templates/election_questions.html:196
+#: helios/templates/election_questions.html:52 helios/templates/election_questions.html:211
 msgid "- Hide link"
 msgstr "- Link ausblenden"
 
-#: helios/templates/election_questions.html:47
+#: helios/templates/election_questions.html:54
 #, python-format
 msgid "Answer #%(num)s"
 msgstr "Antwort Nr. %(num)s"
 
-#: helios/templates/election_questions.html:70
+#: helios/templates/election_questions.html:55
+#, python-format
+msgid "Link for answer #%(num)s"
+msgstr "Link zu Antwort Nr. %(num)s"
+
+#: helios/templates/election_questions.html:82
 msgid "The questions could not be saved. Please check that the URLs you entered are either http:// or https://"
 msgstr "Die Fragen konnten nicht gespeichert werden. Bitte prüfen Sie, dass die eingegebenen URLs mit http:// oder https:// beginnen."
 
-#: helios/templates/election_questions.html:106
+#: helios/templates/election_questions.html:118
 #, python-format
 msgid "Please fill in all answer fields up to answer #%(last)s. You cannot skip answer #%(skipped)s."
 msgstr "Bitte füllen Sie alle Antwortfelder bis Antwort Nr. %(last)s aus. Antwort Nr. %(skipped)s darf nicht übersprungen werden."
 
-#: helios/templates/election_questions.html:118
+#: helios/templates/election_questions.html:130
 msgid "Please enter at least one answer option."
 msgstr "Bitte geben Sie mindestens eine Antwortmöglichkeit ein."
 

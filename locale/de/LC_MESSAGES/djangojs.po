@@ -10,13 +10,21 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: helios/media/static_templates/question.html:8
+#: helios/media/static_templates/question.html:9 helios/media/static_templates/question.html:9
+msgid "Move question up"
+msgstr "Frage nach oben verschieben"
+
+#: helios/media/static_templates/question.html:10
 msgid "edit"
 msgstr "bearbeiten"
 
-#: helios/media/static_templates/question.html:9
+#: helios/media/static_templates/question.html:11
 msgid "Are you sure you want to remove this question?"
 msgstr "Möchten Sie diese Frage wirklich entfernen?"
+
+#: helios/media/static_templates/question.html:11 helios/media/static_templates/question.html:11
+msgid "Remove question"
+msgstr "Frage entfernen"
 
 #: helios/media/static_templates/question.html:18
 msgid "Selection:"
@@ -30,15 +38,15 @@ msgstr "bis"
 msgid "unlimited"
 msgstr "unbegrenzt"
 
-#: helios/media/static_templates/question.html:21 helios/media/static_templates/question.html:75 helios/media/static_templates/question.html:138
+#: helios/media/static_templates/question.html:21 helios/media/static_templates/question.html:76 helios/media/static_templates/question.html:141
 msgid "Result type:"
 msgstr "Ergebnisart:"
 
-#: helios/media/static_templates/question.html:21 helios/media/static_templates/question.html:77 helios/media/static_templates/question.html:140
+#: helios/media/static_templates/question.html:21 helios/media/static_templates/question.html:78 helios/media/static_templates/question.html:143
 msgid "absolute"
 msgstr "absolut"
 
-#: helios/media/static_templates/question.html:21 helios/media/static_templates/question.html:78 helios/media/static_templates/question.html:141
+#: helios/media/static_templates/question.html:21 helios/media/static_templates/question.html:79 helios/media/static_templates/question.html:144
 msgid "relative"
 msgstr "relativ"
 
@@ -50,7 +58,7 @@ msgstr "Reihenfolge:"
 msgid "randomized"
 msgstr "zufällig"
 
-#: helios/media/static_templates/question.html:35
+#: helios/media/static_templates/question.html:35 helios/media/static_templates/question.html:36
 msgid "More information"
 msgstr "Weitere Informationen"
 
@@ -58,63 +66,79 @@ msgstr "Weitere Informationen"
 msgid "Edit Question"
 msgstr "Frage bearbeiten"
 
-#: helios/media/static_templates/question.html:53 helios/media/static_templates/question.html:116
+#: helios/media/static_templates/question.html:53 helios/media/static_templates/question.html:118
 msgid "Question Text"
 msgstr "Fragetext"
 
-#: helios/media/static_templates/question.html:54 helios/media/static_templates/question.html:117
+#: helios/media/static_templates/question.html:54 helios/media/static_templates/question.html:119
 msgid "Enter your question here"
 msgstr "Geben Sie hier Ihre Frage ein"
 
-#: helios/media/static_templates/question.html:58 helios/media/static_templates/question.html:121
+#: helios/media/static_templates/question.html:58 helios/media/static_templates/question.html:123
+msgid "Rules for this question"
+msgstr "Regeln für diese Frage"
+
+#: helios/media/static_templates/question.html:59 helios/media/static_templates/question.html:124
 msgid "Select between"
 msgstr "Auswahl zwischen"
 
-#: helios/media/static_templates/question.html:65 helios/media/static_templates/question.html:128
+#: helios/media/static_templates/question.html:60 helios/media/static_templates/question.html:125
+msgid "Minimum number of answers"
+msgstr "Mindestanzahl an Antworten"
+
+#: helios/media/static_templates/question.html:66 helios/media/static_templates/question.html:131
 msgid "and"
 msgstr "und"
 
-#: helios/media/static_templates/question.html:74 helios/media/static_templates/question.html:137
+#: helios/media/static_templates/question.html:67 helios/media/static_templates/question.html:132
+msgid "Maximum number of answers"
+msgstr "Höchstanzahl an Antworten"
+
+#: helios/media/static_templates/question.html:75 helios/media/static_templates/question.html:140
 msgid "answers."
 msgstr "Antworten."
 
-#: helios/media/static_templates/question.html:80 helios/media/static_templates/question.html:143
+#: helios/media/static_templates/question.html:81 helios/media/static_templates/question.html:146
 msgid "Random order:"
 msgstr "Zufällige Reihenfolge:"
 
-#: helios/media/static_templates/question.html:82 helios/media/static_templates/question.html:145
+#: helios/media/static_templates/question.html:83 helios/media/static_templates/question.html:148
 msgid "No"
 msgstr "Nein"
 
-#: helios/media/static_templates/question.html:83 helios/media/static_templates/question.html:146
+#: helios/media/static_templates/question.html:84 helios/media/static_templates/question.html:149
 msgid "Yes"
 msgstr "Ja"
 
-#: helios/media/static_templates/question.html:88 helios/media/static_templates/question.html:151
+#: helios/media/static_templates/question.html:86 helios/media/static_templates/question.html:151
+msgid "Absolute: if only one answer can be chosen, it wins only with more than half of all ballots cast. Relative: the answers with the most votes win."
+msgstr "Absolut: Ist nur eine Antwort wählbar, gewinnt sie nur mit mehr als der Hälfte aller abgegebenen Stimmzettel. Relativ: Die Antworten mit den meisten Stimmen gewinnen."
+
+#: helios/media/static_templates/question.html:90 helios/media/static_templates/question.html:155
 msgid "Answer Options"
 msgstr "Antwortmöglichkeiten"
 
-#: helios/media/static_templates/question.html:93 helios/media/static_templates/question.html:156
+#: helios/media/static_templates/question.html:95 helios/media/static_templates/question.html:160
 msgid "Add 5 More Answers"
 msgstr "5 weitere Antworten hinzufügen"
 
-#: helios/media/static_templates/question.html:98
+#: helios/media/static_templates/question.html:100
 msgid "Update Question"
 msgstr "Frage aktualisieren"
 
-#: helios/media/static_templates/question.html:99
+#: helios/media/static_templates/question.html:101
 msgid "Cancel"
 msgstr "Abbrechen"
 
-#: helios/media/static_templates/question.html:105
+#: helios/media/static_templates/question.html:107
 msgid "No questions have been added yet."
 msgstr "Es wurden noch keine Fragen hinzugefügt."
 
-#: helios/media/static_templates/question.html:111
+#: helios/media/static_templates/question.html:113
 msgid "Add a New Question"
 msgstr "Neue Frage hinzufügen"
 
-#: helios/media/static_templates/question.html:161
+#: helios/media/static_templates/question.html:165
 msgid "Add Question"
 msgstr "Frage hinzufügen"
 

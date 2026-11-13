@@ -1,9 +1,17 @@
 {% extends "helios/templates/cryptobase.html" %}
 {% load i18n %}
 
+{% block extra-head %}<link rel="stylesheet" href="/static/helios/question-editor.css">{% endblock %}
 {% block title %}{% blocktranslate trimmed with name=election.name %}Questions for {{name}}{% endblocktranslate %}{% endblock %}
 {% block content %}
-  <h3 class="title">{{election.name}} &mdash; {% translate "Questions" %} <span style="font-size:0.7em;">[<a href="{% url "election@view" election.uuid %}">{% translate "back to election" %}</a>]</span></h3>
+  <a class="back-link" href="{% url "election@view" election.uuid %}">{% translate "back to election" %}</a>
+  <h1 class="title">{{election.name}} &mdash; {% translate "Questions" %}</h1>
+  {% if admin_p and not election.frozen_at %}
+  <p class="page-lead">{% translate "Each question appears on its own page in the voting booth. Voters can choose between the minimum and maximum number of answers you set; choosing fewer than the maximum, or none if the minimum is 0, is allowed." %}</p>
+  {% elif election.frozen_at %}
+  <p class="muted">{% translate "The ballot is frozen; the questions can no longer be changed." %}</p>
+  {% endif %}
+  <noscript><p class="callout callout-warning">{% translate "The question editor needs JavaScript." %}</p></noscript>
 
   {# translations for the question editor (static_templates/question.html) #}
   <script src="{% url "javascript-catalog" %}"></script>
@@ -43,16 +51,20 @@
     var url_display = has_url ? 'flex' : 'none';
     var toggle_text = has_url ? '{% filter escapejs %}{% translate "- Hide link" %}{% endfilter %}' : '{% filter escapejs %}{% translate "+ Add link" %}{% endfilter %}';
     
+    var label = '{% filter escapejs %}{% blocktranslate with num="__NUM__" %}Answer #{{num}}{% endblocktranslate %}{% endfilter %}'.replace('__NUM__', answer_num);
+    var url_label = '{% filter escapejs %}{% blocktranslate with num="__NUM__" %}Link for answer #{{num}}{% endblocktranslate %}{% endfilter %}'.replace('__NUM__', answer_num);
+    var wrapper_id = 'url_wrapper_' + answer_num + '_' + (++ANSWER_ROW_COUNTER);
+
     return '<div class="answer-row">' +
-      '<div class="answer-number">' + '{% filter escapejs %}{% blocktranslate with num="__NUM__" %}Answer #{{num}}{% endblocktranslate %}{% endfilter %}'.replace('__NUM__', answer_num) + 
-        '<span class="url-toggle" onclick="toggle_url(this, ' + answer_num + ')">' +
+      '<div class="answer-number">' + label +
+        ' <button type="button" class="link-button url-toggle" aria-expanded="' + (has_url ? 'true' : 'false') + '" aria-controls="' + wrapper_id + '" onclick="toggle_url(this)">' +
           '<span>' + toggle_text + '</span>' +
-        '</span>' +
+        '</button>' +
       '</div>' +
       '<div class="answer-inputs">' +
-        '<input type="text" class="form-control answer-input answer" name="answer_' + answer_num + '" value="' + escaped_answer + '" placeholder="' + placeholder + '" ' + required_attr + ' />' +
-        '<div class="url-input-wrapper" id="url_wrapper_' + answer_num + '" style="display:' + url_display + ';">' +
-          '<input type="url" class="form-control url-input" name="answer_url_' + answer_num + '" value="' + escaped_url + '" placeholder="https://example.com" />' +
+        '<input type="text" class="form-control answer-input answer" name="answer_' + answer_num + '" value="' + escaped_answer + '" placeholder="' + placeholder + '" aria-label="' + escapeAttr(label) + '" ' + required_attr + ' />' +
+        '<div class="url-input-wrapper" id="' + wrapper_id + '" style="display:' + url_display + ';">' +
+          '<input type="url" class="form-control url-input" name="answer_url_' + answer_num + '" value="' + escaped_url + '" placeholder="https://example.com" aria-label="' + escapeAttr(url_label) + '" />' +
         '</div>' +
       '</div>' +
     '</div>';
@@ -178,6 +190,7 @@
   }
 
   var DEFAULT_NUM_ANSWERS = 5;
+  var ANSWER_ROW_COUNTER = 0;
 
   function add_answer(el) {
     el = $(el);
@@ -186,14 +199,17 @@
     el.append(answer_html);
   }
 
-  function toggle_url(element, num) {
-    var wrapper = $('#url_wrapper_' + num);
+  function toggle_url(button) {
+    var wrapper = $('#' + $(button).attr('aria-controls'));
     if (wrapper.is(':visible')) {
       wrapper.hide();
-      $(element).find('span').text('{% filter escapejs %}{% translate "+ Add link" %}{% endfilter %}');
+      $(button).attr('aria-expanded', 'false');
+      $(button).find('span').text('{% filter escapejs %}{% translate "+ Add link" %}{% endfilter %}');
     } else {
       wrapper.show();
-      $(element).find('span').text('{% filter escapejs %}{% translate "- Hide link" %}{% endfilter %}');
+      $(button).attr('aria-expanded', 'true');
+      $(button).find('span').text('{% filter escapejs %}{% translate "- Hide link" %}{% endfilter %}');
+      wrapper.find('input').focus();
     }
   }
 

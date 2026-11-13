@@ -87,42 +87,42 @@ textarea:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
  * One hierarchy for all pages: .button (primary, filled), .button.secondary
  * (outlined), .button.alert/.danger (destructive), .link-button (text).
  * Old size classes (tiny, small, large) still work. */
-.content-body .button, .content-body .btn-primary, .content-body .btn-secondary,
-.content-body input[type=submit], .content-body input[type=button], .content-body button:not(.link-button) {
+.content-body :where(.button, .btn-primary, .btn-secondary, input[type=submit], input[type=button], button:not(.link-button)) {
   display: inline-block; box-sizing: border-box; min-height: 44px; margin: 4px 8px 4px 0; padding: 10px 18px;
   border: 2px solid var(--primary-color); border-radius: var(--radius); box-shadow: none;
   background: var(--primary-color); color: #fff; font: inherit; font-size: 1rem; font-weight: 600;
   line-height: 1.25; text-align: center; text-decoration: none; cursor: pointer; vertical-align: middle;
   transition: background-color .15s ease, border-color .15s ease;
 }
-.content-body .button:hover, .content-body .button:focus, .content-body .btn-primary:hover,
-.content-body input[type=submit]:hover, .content-body input[type=button]:hover, .content-body button:not(.link-button):hover {
+.content-body :where(.button, .btn-primary, input[type=submit], input[type=button], button:not(.link-button)):hover,
+.content-body :where(.button, .btn-primary, input[type=submit], input[type=button], button:not(.link-button)):focus {
   background: var(--primary-color-dark); border-color: var(--primary-color-dark); color: #fff;
 }
-.content-body .button.secondary, .content-body .btn-secondary, .content-body button.secondary,
-.content-body input.secondary, .content-body input[type=button]:not(.button) {
-  background: #fff; color: var(--primary-color);
+/* secondary: outlined */
+.content-body :where(.button.secondary, .btn-secondary, button.secondary:not(.link-button), input.secondary, input[type=button]:not(.button)) {
+  background: #fff; border-color: var(--primary-color); color: var(--primary-color);
 }
-.content-body .button.secondary:hover, .content-body .button.secondary:focus, .content-body .btn-secondary:hover,
-.content-body button.secondary:hover, .content-body input.secondary:hover, .content-body input[type=button]:not(.button):hover {
-  background: var(--surface-color); color: var(--primary-color-dark);
+.content-body :where(.button.secondary, .btn-secondary, button.secondary:not(.link-button), input.secondary, input[type=button]:not(.button)):is(:hover, :focus) {
+  background: var(--surface-color); border-color: var(--primary-color-dark); color: var(--primary-color-dark);
 }
-.content-body .button.alert, .content-body .button.danger, .content-body button.danger, .content-body input.danger {
+/* destructive */
+.content-body :where(.button.alert, .button.danger, button.danger:not(.link-button), input.danger) {
   background: var(--danger-color); border-color: var(--danger-color); color: #fff;
 }
-.content-body .button.alert:hover, .content-body .button.danger:hover, .content-body button.danger:hover, .content-body input.danger:hover {
-  background: #7d1013; border-color: #7d1013;
+.content-body :where(.button.alert, .button.danger, button.danger:not(.link-button), input.danger):is(:hover, :focus) {
+  background: #7d1013; border-color: #7d1013; color: #fff;
 }
-.content-body .button.danger.secondary, .content-body button.danger.secondary {
-  background: #fff; color: var(--danger-color); border-color: var(--danger-color);
+.content-body :where(.button.danger.secondary, button.danger.secondary:not(.link-button)) {
+  background: #fff; border-color: var(--danger-color); color: var(--danger-color);
 }
-.content-body .button.danger.secondary:hover, .content-body button.danger.secondary:hover { background: var(--danger-bg); color: #7d1013; }
-.content-body .button.tiny, .content-body .button.small, .content-body button.small {
+.content-body :where(.button.danger.secondary, button.danger.secondary:not(.link-button)):is(:hover, :focus) {
+  background: var(--danger-bg); color: #7d1013;
+}
+.content-body :where(.button.tiny, .button.small, button.small:not(.link-button)) {
   min-height: 32px; padding: 4px 12px; font-size: .9rem;
 }
-.content-body .button.large, .content-body button.large { padding: 14px 28px; font-size: 1.2rem; }
-.content-body .button[disabled], .content-body button[disabled], .content-body input[disabled],
-.content-body .button.disabled {
+.content-body :where(.button.large, button.large) { padding: 14px 28px; font-size: 1.2rem; }
+.content-body :where(.button[disabled], button[disabled], input[disabled], .button.disabled) {
   opacity: .55; cursor: not-allowed;
 }
 /* the start page's login button is a full-width block */
