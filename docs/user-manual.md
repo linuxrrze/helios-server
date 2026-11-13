@@ -20,8 +20,11 @@ Log in to your Helios server. Once you're logged in, the home page shows
 
 Click **create election** and fill in the form:
 
-- **Short name:** one word, no spaces. It becomes part of the election's web
-  address, for example `/helios/e/club-board-2026`.
+- **Address of the election** (optional): one word, no spaces. It becomes part
+  of the election's web address, for example `/helios/e/club-board-2026`, which
+  voters get in their invitation. Leave it empty to get an automatic address (a
+  long random code). On servers shared by several organizations, your
+  organization's prefix is put in front of it (shown in front of the box).
 - **Name** and **Description:** what voters will see.
 - **Type:** Election or Referendum.
 - **Use voter aliases:** shows voters as "V12" and so on in the public ballot

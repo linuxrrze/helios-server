@@ -169,6 +169,32 @@ plain variable is used.
 | `SHOW_USER_INFO` | `1` | `0`: don't show who created an election, e.g. in the list on the start page. |
 | `ALLOW_ELECTION_INFO_URL` | `0` | `1`: administrators can enter a link to further information for an election. |
 
+**Election addresses.** Each election can be reached at `<URL_HOST>/helios/e/<address>`; this link
+is in the voters' invitations and the trustees' login links. Administrators may choose the
+address when creating or editing an election (until the ballot is frozen); if they leave it
+empty, the election's UUID is used. When several organizations share one Helios server, give
+each a prefix, so that their chosen addresses can't collide: the address is then stored as
+`<prefix>-<chosen part>`, and the form shows the prefix in front of the box.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `ELECTION_SHORT_NAME_PREFIXES` | empty | JSON object mapping an email domain to a prefix (1&ndash;20 lowercase letters or digits). It applies to elections created by people whose email address is in that domain or one of its subdomains; with several matching entries, the most specific one wins. If a user has no email address, a login ID of the form `name@domain` (e.g. a scoped `eduPersonPrincipalName`) is used. Addresses starting with a configured prefix and a hyphen can't be chosen by anyone else. Invalid JSON or prefixes stop Helios from starting. |
+| `ELECTION_SHORT_NAME_PREFIX` | empty | Prefix for everyone who matches no entry of `ELECTION_SHORT_NAME_PREFIXES`, e.g. on a server used by a single organization that wants to keep the namespace for later. |
+
+Example for two universities and a medical faculty with its own prefix:
+
+```
+ELECTION_SHORT_NAME_PREFIXES='{"uni-a.example.org": "unia", "uni-b.example.org": "unib", "med.uni-a.example.org": "unimed"}'
+```
+
+`jdoe@uni-a.example.org` and `jdoe@cs.uni-a.example.org` then get `unia-`, so the address
+`board-2026` becomes `https://helios.example.org/helios/e/unia-board-2026`; `jdoe@med.uni-a.example.org`
+gets `unimed-`. The prefix only separates names: it grants no permissions (who may create
+elections is decided by the login system). It belongs to the election's creator, also when
+another administrator edits the election. Prefixes apply to new and changed addresses only:
+existing addresses, and the links already sent with them, stay valid. Elections without a
+chosen address use their UUID, without a prefix (it is unique anyway).
+
 **Organization and layout.** All optional: without them the site shows only the Helios logo
 and the built-in pages. See [section 10](#10-customizing-the-site) for a worked example.
 

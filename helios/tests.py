@@ -5052,7 +5052,8 @@ class ElectionWizardTests(WebTest):
     def test_full_flow(self):
         response = self.post({'step': 'basics', 'name': 'Board Election 2027', 'short_name': '', 'description': 'Who leads the board.'})
         self.assertRedirects(response, self.URL + '?step=schedule')
-        self.assertEqual(self.client.session['election_wizard']['short_name'], 'board-election-2027')
+        # no address chosen: the election gets its UUID
+        self.assertEqual(self.client.session['election_wizard']['short_name'], '')
 
         response = self.post({'step': 'schedule', 'voting_starts_at': '2027-01-10T09:00', 'voting_ends_at': '2027-01-17T18:00'})
         self.assertRedirects(response, self.URL + '?step=options')
@@ -5064,11 +5065,13 @@ class ElectionWizardTests(WebTest):
 
         response = self.client.get(self.URL + '?step=review')
         self.assertContains(response, 'Board Election 2027')
+        self.assertContains(response, 'Created automatically')
         self.assertContains(response, '09:00 CET')
         self.assertContains(response, '?step=schedule')
 
         response = self.post({'step': 'review'})
-        election = models.Election.objects.get(short_name='board-election-2027')
+        election = models.Election.objects.get(name='Board Election 2027')
+        self.assertEqual(election.short_name, election.uuid)
         self.assertRedirects(response, f'/helios/elections/{election.uuid}/questions')
         self.assertEqual(election.admin, self.user)
         self.assertEqual(election.voting_starts_at, datetime.datetime(2027, 1, 10, 8, 0))
@@ -5084,15 +5087,32 @@ class ElectionWizardTests(WebTest):
         self.assertContains(response, 'Election setup')
         self.assertContains(response, f'/helios/elections/{election.uuid}/voters/list')
 
-    def test_derived_short_name_is_unique(self):
-        self.post({'step': 'basics', 'name': 'Test', 'short_name': ''})
-        # the fixture election already uses "test"
-        self.assertEqual(self.client.session['election_wizard']['short_name'], 'test-2')
+    def test_chosen_short_name(self):
+        self.post({'step': 'basics', 'name': 'Board', 'short_name': 'board-2027'})
+        self.post({'step': 'schedule', 'voting_starts_at': '', 'voting_ends_at': ''})
+        self.post({'step': 'options', 'election_type': 'election'})
+        response = self.client.get(self.URL + '?step=review')
+        self.assertContains(response, 'http://localhost:8000/helios/e/board-2027')
+        self.post({'step': 'review'})
+        self.assertTrue(models.Election.objects.filter(short_name='board-2027', name='Board').exists())
 
     def test_taken_short_name(self):
+        # the fixture election uses "test"
         response = self.post({'step': 'basics', 'name': 'Another', 'short_name': 'test'})
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'already exists')
+        self.assertContains(response, 'This address is already taken')
+
+    def test_short_name_taken_before_creation(self):
+        self.post({'step': 'basics', 'name': 'Board', 'short_name': 'board-2027'})
+        self.post({'step': 'schedule', 'voting_starts_at': '', 'voting_ends_at': ''})
+        self.post({'step': 'options', 'election_type': 'election'})
+        models.Election.objects.create(admin=self.user, uuid='other', short_name='board-2027', name='Other')
+        response = self.client.get(self.URL + '?step=review')
+        self.assertRedirects(response, self.URL + '?step=basics')
+        # the step shows why
+        response = self.client.get(self.URL + '?step=basics')
+        self.assertContains(response, 'This address is already taken')
+        self.assertContains(response, 'value="board-2027"')
 
     def test_missing_name(self):
         response = self.post({'step': 'basics', 'name': '', 'short_name': ''})

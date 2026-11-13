@@ -1,0 +1,15 @@
+{% load i18n %}{% comment %}
+The chosen part of an election's address (helios.forms.ElectionAddressInput): the fixed
+part of the link in front of the box, and a preview of the whole link that
+helios/media/election-address.js keeps up to date (without JavaScript it stays hidden).
+{% endcomment %}<div class="address-input">
+  <span class="address-input-base" id="{{ widget.attrs.id }}_base">{{ widget.address_base }}{% if widget.address_prefix %}<strong>{{ widget.address_prefix }}-</strong>{% endif %}</span>
+  {% include "django/forms/widgets/input.html" %}
+</div>
+{% if widget.current_url %}<p class="address-current">{% translate "Current address:" %} <span class="address-url">{{ widget.current_url }}</span></p>{% endif %}
+<p class="address-preview" id="{{ widget.attrs.id }}_preview" hidden
+   data-for="{{ widget.attrs.id }}" data-base="{{ widget.address_base }}" data-prefix="{{ widget.address_prefix }}"
+   data-keep="{{ widget.keep_value }}" data-keep-url="{{ widget.current_url }}"
+   data-automatic-url="{{ widget.automatic_url }}"
+   data-automatic-text="{% translate "created automatically when the election is created" %}">{% translate "Link to the election:" %} <span class="address-url"></span></p>
+<script src="/static/helios/election-address.js" defer></script>

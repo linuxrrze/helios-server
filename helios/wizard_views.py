@@ -10,13 +10,11 @@ pages show where they are (templates/_setup_nav.html).
 from django.conf import settings
 from django.http import HttpResponseForbidden, HttpResponseRedirect
 from django.urls import reverse
-from django.utils.text import slugify
 from django.utils.translation import gettext as _, gettext_lazy
 
 from helios import url_names
 from helios_auth.security import check_csrf, get_user, login_required
-from . import forms
-from .models import Election
+from . import forms, short_names
 from .security import can_create_election
 from .view_utils import render_template
 from .views import create_election
@@ -40,25 +38,12 @@ def _wizard_url(step=None):
   return url + ('?step=%s' % step if step else '')
 
 
-def unique_short_name(name):
-  """a short name derived from the election's name that no election uses yet"""
-  base = slugify(name)[:34].strip('-') or 'election'
-  candidate, n = base, 1
-  while Election.objects.filter(short_name=candidate).exists():
-    n += 1
-    candidate = '%s-%d' % (base, n)
-  return candidate
-
-
-def step_form(step, data):
-  """ElectionForm restricted to the fields of one step"""
+def step_form(step, data, prefix):
+  """ElectionForm restricted to the fields of one step; prefix: of the election's address"""
   fields = STEPS_BY_KEY[step][2]
-  form = forms.ElectionForm(data)
-  # in the order of the step, e.g. the name before the short name derived from it
+  form = forms.ElectionForm(data, short_name_prefix=prefix)
+  # in the order of the step
   form.fields = {name: form.fields[name] for name in fields if name in form.fields}
-  if 'short_name' in form.fields:
-    form.fields['short_name'].required = False
-    form.fields['short_name'].help_text = _('Letters, digits and hyphens, no spaces. It becomes part of the election\'s web address. Leave empty to derive it from the name.')
   return form
 
 
@@ -71,6 +56,7 @@ def _initial_draft(user):
 def summary(form):
   """(step key, label, value) for the review page, from a validated ElectionForm"""
   from .templatetags.timezone_tags import utc_time
+  from .short_names import base_url
   data = form.cleaned_data
   rows = []
   for key, _title, fields in STEPS:
@@ -90,6 +76,8 @@ def summary(form):
         shown = _('Yes') if value else _('No')
       elif name == 'election_type':
         shown = dict(field.choices).get(value, value)
+      elif name == 'short_name':
+        shown = base_url() + value if value else _('Created automatically')
       else:
         shown = value or _('(not set)')
       rows.append({'step': key, 'name': name, 'label': field.label, 'value': shown})
@@ -101,6 +89,7 @@ def election_new_guided(request):
   if not can_create_election(request):
     return HttpResponseForbidden(_('only an administrator can create an election'))
   user = get_user(request)
+  prefix = short_names.prefix_for_user(user)
 
   if request.GET.get('restart'):
     request.session.pop(SESSION_KEY, None)
@@ -116,11 +105,12 @@ def election_new_guided(request):
   rows = None
 
   if step == 'review':
-    full_form = forms.ElectionForm(draft)
+    full_form = forms.ElectionForm(draft, short_name_prefix=prefix)
     if not draft.get('name') or not full_form.is_valid():
-      # something is missing (e.g. a step skipped by URL): go to the first step with a problem
+      # something is missing (e.g. a step skipped by URL) or the address has been
+      # taken in the meantime: go to the first step with a problem
       for key, _title, fields in STEPS[:-1]:
-        if not step_form(key, draft).is_valid():
+        if not step_form(key, draft, prefix).is_valid():
           return HttpResponseRedirect(_wizard_url(key))
     rows = summary(full_form) if full_form.is_valid() else []
     if request.method == 'POST' and full_form.is_valid():
@@ -135,20 +125,18 @@ def election_new_guided(request):
     for name in STEPS_BY_KEY[step][2]:
       # unchecked checkboxes are not submitted
       data[name] = request.POST.get(name, '')
-    form = step_form(step, data)
+    form = step_form(step, data, prefix)
     if form.is_valid():
-      if step == 'basics':
-        short_name = form.cleaned_data.get('short_name')
-        if not short_name:
-          data['short_name'] = unique_short_name(form.cleaned_data['name'])
-        elif Election.objects.filter(short_name=short_name).exists():
-          form.add_error('short_name', _("An election with short name %(short_name)s already exists") % {'short_name': short_name})
-      if form.is_valid():
-        request.session[SESSION_KEY] = data
-        return HttpResponseRedirect(_wizard_url(STEP_KEYS[index + 1]))
+      # the address as entered (without the prefix); empty: the UUID, assigned on creation
+      request.session[SESSION_KEY] = data
+      return HttpResponseRedirect(_wizard_url(STEP_KEYS[index + 1]))
+  elif any(name in draft and name not in _initial_draft(user) for name in STEPS_BY_KEY[step][2]):
+    # a step filled in before: checked again, e.g. an address that has been taken since
+    form = step_form(step, draft, prefix)
+    form.is_valid()
   else:
     # unbound, so that a step not filled in yet shows no errors
-    form = step_form(step, None)
+    form = step_form(step, None, prefix)
     form.initial = {name: draft.get(name) for name in form.fields}
 
   steps = [{'key': key, 'title': title, 'number': i + 1,

@@ -32,6 +32,7 @@ from helios_auth.utils import same_site_path
 from . import datatypes
 from . import election_progress
 from . import forms
+from . import short_names
 from . import tasks
 from .crypto import algs, electionalgs, elgamal
 from .crypto import utils as cryptoutils
@@ -200,12 +201,14 @@ def election_new(request):
   
   user = get_user(request)
 
+  prefix = short_names.prefix_for_user(user)
   if request.method == "GET":
     election_form = forms.ElectionForm(initial={'private_p': settings.HELIOS_PRIVATE_DEFAULT,
-                                                'help_email': user.info.get("email", '')})
+                                                'help_email': user.info.get("email", '')},
+                                       short_name_prefix=prefix)
   else:
     check_csrf(request)
-    election_form = forms.ElectionForm(request.POST)
+    election_form = forms.ElectionForm(request.POST, short_name_prefix=prefix)
     
     if election_form.is_valid():
       election, error = create_election(user, election_form.cleaned_data)
@@ -222,20 +225,20 @@ def create_election(user, cleaned_data):
   """
   election_params = dict(cleaned_data)
 
-  # is the short name valid
-  if utils.urlencode(election_params['short_name']) != election_params['short_name']:
-    return None, _("No special characters allowed in the short name.")
-
   election_params['uuid'] = str(uuid.uuid4())
+  # without a chosen address, the election is reached by its UUID
+  election_params['short_name'] = election_params.get('short_name') or election_params['uuid']
   election_params['cast_url'] = settings.SECURE_URL_HOST + reverse(one_election_cast, args=[election_params['uuid']])
 
   # registration starts closed
   election_params['openreg'] = False
   election_params['admin'] = user
   try:
-    election = Election.objects.create(**election_params)
+    with transaction.atomic():
+      election = Election.objects.create(**election_params)
   except IntegrityError:
-    return None, _("An election with short name %(short_name)s already exists") % {'short_name': election_params['short_name']}
+    # taken in the meantime (the form checks it, too)
+    return None, _("This address is already taken. Please choose a different one.")
   election.generate_trustee(ELGAMAL_PARAMS)
   return election, None
   
@@ -249,24 +252,32 @@ def one_election_edit(request, election):
   if settings.ALLOW_ELECTION_INFO_URL:
     RELEVANT_FIELDS += ['election_info_url']
   
+  # the address belongs to the organization of the election's creator, also when
+  # another administrator edits it
+  prefix = short_names.prefix_for_user(election.admin)
   if request.method == "GET":
     values = {}
     for attr_name in RELEVANT_FIELDS:
       values[attr_name] = getattr(election, attr_name)
-    election_form = forms.ElectionForm(values)
+    values['short_name'] = forms.ElectionForm.shown_short_name(election, prefix)
+    election_form = forms.ElectionForm(values, short_name_prefix=prefix, election=election)
   else:
     check_csrf(request)
-    election_form = forms.ElectionForm(request.POST)
+    election_form = forms.ElectionForm(request.POST, short_name_prefix=prefix, election=election)
     
     if election_form.is_valid():
       clean_data = election_form.cleaned_data
       for attr_name in RELEVANT_FIELDS:
         setattr(election, attr_name, clean_data[attr_name])
+      # emptied: back to the UUID
+      election.short_name = election.short_name or election.uuid
       try:
-        election.save()
+        with transaction.atomic():
+          election.save()
         return HttpResponseRedirect(settings.SECURE_URL_HOST + reverse(url_names.election.ELECTION_VIEW, args=[election.uuid]))
       except IntegrityError:
-        error = _("An election with short name %(short_name)s already exists") % {'short_name': clean_data['short_name']}
+        election.refresh_from_db()
+        error = _("This address is already taken. Please choose a different one.")
 
   return render_template(request, "election_edit", {'election_form' : election_form, 'election' : election, 'error': error})
 

@@ -6,7 +6,7 @@ from django import forms
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
-from . import timezones
+from . import short_names, timezones
 from .fields import LocalDateTimeField
 from .models import Election
 
@@ -27,8 +27,47 @@ class LocalTimesMixin:
         field.help_text = '%s %s' % (zone_hint, field.help_text) if field.help_text else zone_hint
 
 
+class ElectionAddressInput(forms.TextInput):
+  """
+  Text box for the chosen part of an election's address, with the fixed part
+  (https://<host>/helios/e/ and the organization's prefix, if any) shown in front
+  of it, and a preview of the whole link (helios/media/election-address.js).
+  """
+  template_name = 'helios/widgets/election_address.html'
+
+  def __init__(self, attrs=None):
+    super().__init__(attrs={'autocapitalize': 'none', 'autocomplete': 'off', 'spellcheck': 'false', **(attrs or {})})
+    self.address_prefix = ''
+    self.election = None
+
+  def get_context(self, name, value, attrs):
+    context = super().get_context(name, value, attrs)
+    widget_attrs = context['widget']['attrs']
+    if widget_attrs.get('id'):
+      # screen readers read the fixed part in front of the box with the hint
+      widget_attrs['aria-describedby'] = ' '.join(
+        [widget_attrs['id'] + '_base'] + widget_attrs.get('aria-describedby', '').split())
+    base = short_names.base_url()
+    election = self.election
+    context['widget'].update({
+      'address_base': base,
+      'address_prefix': self.address_prefix,
+      # what an empty box stands for: the UUID, known only for an existing election
+      'automatic_url': base + election.uuid if election else '',
+      'current_url': base + election.short_name if election else '',
+      # unchanged, an existing address is kept as it is (also one without the prefix)
+      'keep_value': ElectionForm.shown_short_name(election, self.address_prefix) if election else '',
+    })
+    return context
+
+
 class ElectionForm(LocalTimesMixin, forms.Form):
-  short_name = forms.SlugField(max_length=40, label=_('Short name'), help_text=_('Letters, digits and hyphens, no spaces. It becomes part of the election\'s web address, e.g. board-2026.'))
+  short_name = forms.SlugField(
+    max_length=40, required=False, widget=ElectionAddressInput,
+    label=_('Address of the election'),
+    help_text=_('The link to the election that voters get in their invitation and that you can pass on. '
+                'Letters, digits, hyphens and underscores, no spaces, e.g. board-2026. '
+                'Leave empty to have one created automatically (a long random code).'))
   name = forms.CharField(max_length=100, widget=forms.TextInput(attrs={'size':60}), label=_('Name'), help_text=_('The name voters see, e.g. Board Election 2026.'))
   description = forms.CharField(max_length=4000, widget=forms.Textarea(attrs={'cols': 70, 'wrap': 'soft'}), required=False, label=_('Description'), help_text=_('Shown on the election page. Explain what is being decided and by whom.'))
   election_type = forms.ChoiceField(label=_("Type"), choices = Election.ELECTION_TYPES)
@@ -46,6 +85,55 @@ class ElectionForm(LocalTimesMixin, forms.Form):
                                    required=False)
   voting_ends_at = LocalDateTimeField(label=_('Voting ends at'), help_text = _('Leave empty to end voting yourself, by computing the tally.'),
                                    required=False)
+
+  def __init__(self, *args, short_name_prefix='', election=None, **kwargs):
+    """
+    short_name_prefix: the organization's prefix put in front of the chosen
+    address (short_names.prefix_for_user); election: the election being edited.
+    """
+    super().__init__(*args, **kwargs)
+    self.short_name_prefix = short_name_prefix
+    self.election = election
+    if 'short_name' in self.fields:
+      widget = self.fields['short_name'].widget
+      widget.address_prefix = short_name_prefix
+      widget.election = election
+      if election and election.short_name != election.uuid:
+        self.fields['short_name'].help_text = '%s %s' % (
+          self.fields['short_name'].help_text,
+          _('Links that have already been sent, e.g. to trustees, stop working if you change it.'))
+
+  @staticmethod
+  def shown_short_name(election, prefix):
+    """the value of the address box for an existing election"""
+    if election.short_name == election.uuid:
+      return ''
+    if prefix and election.short_name.startswith(prefix + '-'):
+      return election.short_name[len(prefix) + 1:]
+    # chosen before the prefix was configured (or by another organization's administrator)
+    return election.short_name
+
+  def clean_short_name(self):
+    """
+    The short name to store: the chosen name with the prefix, or '' for the
+    election's UUID. An unchanged existing name is kept as it is.
+    """
+    name = self.cleaned_data.get('short_name') or ''
+    if not name:
+      return ''
+    election = self.election
+    if election and name == self.shown_short_name(election, self.short_name_prefix):
+      return election.short_name
+    if self.short_name_prefix:
+      short_name = short_names.with_prefix(self.short_name_prefix, name)
+    else:
+      reserved = short_names.reserved_prefix(name)
+      if reserved:
+        raise forms.ValidationError(_('Addresses starting with "%(prefix)s-" are reserved for another organization. Please choose a different one.') % {'prefix': reserved})
+      short_name = name
+    if short_names.is_taken(short_name, election):
+      raise forms.ValidationError(_('This address is already taken. Please choose a different one.'))
+    return short_name
 
 class ElectionTimeExtensionForm(LocalTimesMixin, forms.Form):
   voting_extended_until = LocalDateTimeField(label=_('Voting extended until'), required=False)

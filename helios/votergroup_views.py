@@ -16,7 +16,7 @@ from django.views.decorators.http import require_http_methods, require_POST
 
 from helios_auth.security import check_csrf, get_user, login_required
 from . import forms as election_forms
-from . import url_names, utils
+from . import short_names, url_names
 from . import votergroup as vg
 from .models import Election, Voter, VoterGroup, VoterGroupMember
 from .security import can_create_election
@@ -123,28 +123,29 @@ def votergroup_prepareelection(request, votergroup_uuid):
   members = list(group.get_members())
   choices = vg.delegate_choices(members)
   error = None
+  prefix = short_names.prefix_for_user(user)
 
   if request.method == "GET":
     seat_formset = vg.SeatFormSet(initial=vg.initial_seats(members), form_kwargs={'delegate_choices': choices})
     election_form = election_forms.ElectionForm(initial={
       'description': _("Election for voter group %(short_name)s") % {'short_name': group.short_name},
       'private_p': True,
-      'help_email': user.info.get("email", '')})
+      'help_email': user.info.get("email", '')}, short_name_prefix=prefix)
   else:
     check_csrf(request)
     seat_formset = vg.SeatFormSet(request.POST, form_kwargs={'delegate_choices': choices})
-    election_form = election_forms.ElectionForm(request.POST)
+    election_form = election_forms.ElectionForm(request.POST, short_name_prefix=prefix)
 
     if seat_formset.is_valid() and election_form.is_valid():
       seats = vg.apply_delegations(seat_formset.cleaned_data, {m.uuid: m for m in members})
       election_params = dict(election_form.cleaned_data)
 
-      if utils.urlencode(election_params['short_name']) != election_params['short_name']:
-        error = _("No special characters allowed in the short name.")
-      elif not seats:
+      if not seats:
         error = _("The voter group has no members.")
       else:
         election_params['uuid'] = str(uuid.uuid4())
+        # without a chosen address, the election is reached by its UUID
+        election_params['short_name'] = election_params.get('short_name') or election_params['uuid']
         election_params['cast_url'] = settings.SECURE_URL_HOST + reverse(one_election_cast, args=[election_params['uuid']])
         election_params['openreg'] = False
         election_params['admin'] = user
@@ -165,7 +166,8 @@ def votergroup_prepareelection(request, votergroup_uuid):
               voter.save()
           return _redirect(url_names.election.ELECTION_VIEW, election.uuid)
         except IntegrityError:
-          error = _("An election with short name %(short_name)s already exists") % {'short_name': election_params['short_name']}
+          # taken in the meantime (the form checks it, too)
+          error = _("This address is already taken. Please choose a different one.")
 
   return render_template(request, "votergroup_prepareelection", {
     'electionform': election_form, 'form': seat_formset, 'group': group, 'error': error})

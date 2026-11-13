@@ -221,6 +221,14 @@ ul.errorlist { margin: 4px 0 6px; padding: 0; list-style: none; color: var(--dan
 ul.errorlist li { font-size: .95rem; }
 .form-narrow { max-width: 42rem; }
 
+/* election address: fixed part of the link in front of the box, wrapping above it on phones */
+.address-input { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
+.address-input-base { color: var(--muted-color); overflow-wrap: anywhere; }
+.address-input-base strong { color: var(--text-color); }
+.content-body .address-input input { flex: 1 1 12rem; min-width: 0; width: auto; }
+.address-current, .address-preview { margin: 6px 0 0; font-size: .9rem; color: var(--muted-color); }
+.address-url { color: var(--text-color); overflow-wrap: anywhere; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
 /* Django's as_table forms (election, email and other forms) */
 table.pretty th label { font-weight: 600; }
 table.pretty .helptext { margin-top: 4px; }

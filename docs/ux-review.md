@@ -122,7 +122,7 @@ tests where there is logic, and a Playwright check (EN/DE, 1280 px and
 2. **Guided setup** (`helios/wizard_views.py`, `/helios/elections/new/guided`):
    name and description, voting period, options, then a "check your
    answers" summary with change links; nothing is created before the last
-   step, the short name is derived from the name if left empty. The
+   step, an empty address gives the election's UUID (as in every form). The
    single form stays at `/helios/elections/new` (linked both ways). After
    creation the setup pages (questions, voters, trustees, freeze) show
    "Election setup - step n of 5" and Next/Back links until the ballot is

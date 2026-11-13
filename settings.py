@@ -315,6 +315,43 @@ SITE_TITLE = get_from_env('SITE_TITLE', 'Helios Voting')
 MAIN_LOGO_URL = get_from_env('MAIN_LOGO_URL', '/static/logo.png')
 ALLOW_ELECTION_INFO_URL = (get_from_env('ALLOW_ELECTION_INFO_URL', '0') == '1')
 
+# Election addresses (<URL_HOST>/helios/e/<short name>). On a server shared by several
+# organizations, each can get its own prefix, so that their chosen addresses don't
+# collide: ELECTION_SHORT_NAME_PREFIXES maps the email domain of the person creating
+# the election (subdomains included) to a prefix, ELECTION_SHORT_NAME_PREFIX applies to
+# everyone else. The prefix only separates the names; it grants no permissions.
+def parse_short_name_prefixes(mapping_json, default_prefix):
+  """(domain -> prefix, default prefix) from the two variables; ImproperlyConfigured if invalid"""
+  import re
+  from django.core.exceptions import ImproperlyConfigured
+  prefix_re = re.compile(r'^[a-z0-9]{1,20}$')
+  rule = "1 to 20 lowercase letters or digits"
+
+  default_prefix = (default_prefix or '').strip()
+  if default_prefix and not prefix_re.match(default_prefix):
+    raise ImproperlyConfigured("ELECTION_SHORT_NAME_PREFIX %r is not a valid prefix: use %s." % (default_prefix, rule))
+  try:
+    raw = json.loads(mapping_json or '{}')
+  except ValueError as e:
+    raise ImproperlyConfigured("ELECTION_SHORT_NAME_PREFIXES is not valid JSON (%s). Expected an object such as "
+                               "{\"uni-a.example.org\": \"unia\"}." % e)
+  if not isinstance(raw, dict):
+    raise ImproperlyConfigured("ELECTION_SHORT_NAME_PREFIXES must be a JSON object mapping email domains to "
+                               "prefixes, such as {\"uni-a.example.org\": \"unia\"}.")
+  mapping = {}
+  for domain, prefix in raw.items():
+    key = domain.strip().lstrip('@').rstrip('.').lower()
+    if not key or '@' in key or ' ' in key:
+      raise ImproperlyConfigured("ELECTION_SHORT_NAME_PREFIXES: %r is not an email domain." % domain)
+    if not isinstance(prefix, str) or not prefix_re.match(prefix):
+      raise ImproperlyConfigured("ELECTION_SHORT_NAME_PREFIXES: the prefix %r for %r is not valid: use %s."
+                                 % (prefix, domain, rule))
+    mapping[key] = prefix
+  return mapping, default_prefix
+
+ELECTION_SHORT_NAME_PREFIXES, ELECTION_SHORT_NAME_PREFIX = parse_short_name_prefixes(
+  get_from_env('ELECTION_SHORT_NAME_PREFIXES', ''), get_from_env('ELECTION_SHORT_NAME_PREFIX', ''))
+
 # Layout and branding of the operating organization. Everything below is optional;
 # without it the site shows only the Helios logo and the built-in pages.
 # Organization shown in the header and footer (logo links to ORGANIZATION_URL).
