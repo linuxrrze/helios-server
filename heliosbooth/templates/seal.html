@@ -1,28 +1,30 @@
-<h3>{gettext("Review your Ballot")}</h3>
+<h2 id="review_heading" tabindex="-1">{gettext("Review your Ballot")}</h2>
 
-<div style="padding: 10px; margin-bottom: 10px; background-color: #eee; border: 1px #ddd solid;">
+<div class="review-box">
 {#foreach $T.questions as question}
 
 {BOOTH.fmt(gettext("Question #%(num)s: %(name)s"), 'num', $T.question$index + 1, 'name', $T.question.short_name)}<br>
 {#if $T.choices[$T.question$index].length == 0}
-<div style="margin-left: 15px;">&#x2610; <b><i>{gettext("No choice selected")}</i></b></div>
+<div class="review-choice review-none">&#x2610; <b><i>{gettext("No choice selected")}</i></b></div>
 {#/if}
 {#foreach $T.choices[$T.question$index] as choice}
-<div style="margin-left: 15px;">&#x2713; <b>{$T.choice}</b></div>
+<div class="review-choice">&#x2713; <b>{$T.choice}</b></div>
 {#/for}
 {#if $T.choices[$T.question$index].length < $T.question.max}
 [{BOOTH.fmt(gettext("%(count)s selections out of possible %(min)s-%(max)s"), 'count', $T.choices[$T.question$index].length, 'min', $T.question.min, 'max', $T.question.max)}]<br />
 {#/if}
-[<a onclick="BOOTH.show_question({$T.question$index}); return false;" href="#">{gettext("change")}</a>]
+<button type="button" class="link" onclick="BOOTH.show_question({$T.question$index});">{gettext("change")}</button>
 {#if !$T.question$last}<br><br>{#/if}
 {#/for}
 </div>
 
-<p>{BOOTH.fmt(gettext("Your ballot tracker is %(tracker)s."), 'tracker', '<b><tt style="font-size: 1.5em; word-break: break-all;">' + $T.encrypted_vote_hash + '</tt></b>')}
+<p>{BOOTH.fmt(gettext("Your ballot tracker is %(tracker)s."), 'tracker', '<tt class="tracker">' + $T.encrypted_vote_hash + '</tt>')}</p>
 
-<p>  
-  <button id="proceed_button" onclick="BOOTH.cast_ballot();">{gettext("Proceed to Login")}</button><span id="loading_div"><img src="loading.gif" id="proceed_loading_img" /></span><br />
-</p>
+<p class="not-cast-yet">{gettext("Your ballot is now encrypted, but it has not been cast yet. In the next step you confirm who you are and cast it.")}</p>
+
+<div class="booth-actions">
+  <button type="button" class="primary" id="proceed_button" onclick="BOOTH.cast_ballot();">{gettext("Proceed to Login")}</button><span id="loading_div" role="status"><img src="loading.gif" id="proceed_loading_img" alt="{gettext("Processing...")}" /></span>
+</div>
 
 
 <form method="POST" action="{$T.cast_url}" id="send_ballot_form" class="prettyform">
@@ -34,19 +36,16 @@
 </form>
 
 {#if $T.election_metadata.use_advanced_audit_features}
-<div style="background: lightyellow; padding: 10px; border: 1px solid #ddd; max-width: 340px;">
-<h4 style="padding: 0px; margin:0px;"><a onclick="$('#auditbody').slideToggle(250);" href="#">{gettext("Spoil & Audit")}</a> <span style="font-size: 0.8em; color: #444">[{gettext("optional")}]</span></h4>
-<div id="auditbody" style="display:none;">
+<details class="audit-box">
+<summary>{gettext("Spoil & Audit")} <span class="optional">[{gettext("optional")}]</span></summary>
 <p>
 {gettext("If you choose, you can spoil this ballot and reveal how your choices were encrypted. This is an optional auditing process.")}
 </p>
 <p>
 {gettext("You will then be guided to re-encrypt your choices for final casting.")}
 </p>
-<button onclick="BOOTH.audit_ballot();" class="pretty">{gettext("Spoil & Audit")}</button>
-</p>
-</div>
-</div>
+<button type="button" onclick="BOOTH.audit_ballot();" class="secondary">{gettext("Spoil & Audit")}</button>
+</details>
 {#/if}
 
 <br />

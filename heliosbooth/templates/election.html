@@ -2,20 +2,16 @@
 <div id="questions_div">
 <p>
     {gettext("To vote, follow these steps:")}
-<p>
+</p>
     
-<ol>
+<ol class="booth-steps">
     <li> {gettext("<b>Select</b> your preferred options.")}</li>
-<br />
-
     <li> {gettext("<b>Review</b> your choices, which are then encrypted.")}</li>
-<br />
-
     <li> {gettext("<b>Submit</b> your encrypted ballot and authenticate to verify your eligibility.")}</li>
 
 </ol>
 
-<div align="center"><button onclick="BOOTH.show_question(0);">{gettext("Start")}</button></div>
+<div class="booth-actions booth-start"><button type="button" class="primary" onclick="BOOTH.show_question(0);">{gettext("Start")}</button></div>
 </div>
 
 <p>

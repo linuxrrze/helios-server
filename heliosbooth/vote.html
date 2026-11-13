@@ -8,6 +8,7 @@
   <script language="javascript" src="/jsi18n/"></script>
   <link rel="stylesheet" type="text/css" href="css/booth.css" />
   <link rel="stylesheet" type="text/css" href="css/forms.css" />
+  <link rel="stylesheet" type="text/css" href="css/booth-ui.css" />
 
 <!--
   <script language="javascript" src="js/jscrypto/class.js"></script>
@@ -38,7 +39,7 @@
 <div id="wrapper">
 <div id="banner" class="edge">
   <div style="text-align:center; width: 100%;"><span id="banner_title">Helios Voting Booth</span>
-      <div style="float: right; margin-right: 10px; font-size: 0.8em;"><span><a id="exit_link" href="javascript:BOOTH.exit();">exit</a></span></div>
+      <div class="exit"><a id="exit_link" href="javascript:BOOTH.exit();">exit</a></div>
   </div>
 </div>
 <div id="content">
@@ -245,6 +246,16 @@ BOOTH.setup_election = function(raw_json, election_metadata) {
 BOOTH.show = function(el) {
   $('.panel').hide();
   el.show();
+  // after the panel's template is filled in, move keyboard and screen reader
+  // focus to its heading, so that the new step is announced and Tab starts there
+  setTimeout(function() {
+    var heading = el.find('h2, h3').eq(0);
+    if (heading.length) {
+      if (!heading.attr('tabindex'))
+        heading.attr('tabindex', '-1');
+      heading[0].focus();
+    }
+  }, 0);
   return el;
 };
 
@@ -268,7 +279,9 @@ BOOTH.launch_async_encryption_answer = function(question_num) {
 BOOTH.validate_question = function(question_num) {
     // check if enough answers are checked
     if (BOOTH.ballot.answers[question_num].length < BOOTH.election.questions[question_num].min) {
-        alert(BOOTH.fmt(gettext("You need to select at least %(min)s answer(s)."), 'min', BOOTH.election.questions[question_num].min));
+        // shown next to the answers rather than in a popup
+        $('#warning_box').attr('role', 'alert').addClass('error')
+          .text(BOOTH.fmt(gettext("You need to select at least %(min)s answer(s)."), 'min', BOOTH.election.questions[question_num].min));
         return false;
     }
 
@@ -360,6 +373,7 @@ BOOTH.click_checkbox_script = function(question_num, answer_num) {
 BOOTH.click_checkbox = function(question_num, answer_num, checked_p) {
   // keep track of dirty answers that need encrypting
   BOOTH.dirty[question_num] = true;
+  $('#warning_box').attr('role', 'status').removeClass('error');
 
   if (checked_p) {
      // multiple click events shouldn't screw this up
@@ -439,9 +453,9 @@ BOOTH.show_progress = function(step_num) {
     $('#progress_div').show();
     $(['1','2','3','4']).each(function(n, step) {
         if (step == step_num)
-            $('#progress_' + step).attr('class', 'selected');
+            $('#progress_' + step).attr('class', 'selected').attr('aria-current', 'step');
         else
-            $('#progress_' + step).attr('class', 'unselected');
+            $('#progress_' + step).attr('class', 'unselected').removeAttr('aria-current');
     });
 };
 
@@ -607,7 +621,7 @@ BOOTH.do_done = function() {
 </script>
 <div id="page">
   <div id="progress_div" style="display:none">
-      <table>
+      <table role="presentation">
           <tr>
               <td id="progress_1">(1) Select</td>
               <td id="progress_2">(2) Review</td>
