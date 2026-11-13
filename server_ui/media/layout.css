@@ -315,3 +315,10 @@ table.pretty .helptext { margin-top: 4px; }
 .content-body .trustee-heading h2 { margin: 0; font-size: 1.15rem; }
 .trustee-actions { display: inline-flex; flex-wrap: wrap; gap: 12px; }
 .trustee-card .tracker { margin-top: 4px; }
+
+/* --- casting a ballot --------------------------------------------------- */
+.content-body .callout-heading { margin: 0 0 .35em; font-size: 1.5rem; }
+.step-indicator { margin: 0; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; font-size: .85rem; }
+.ballot-tracker-card .tracker { margin: 6px 8px 6px 0; font-size: 1.15rem; }
+.voter-login-form { max-width: 32rem; }
+.content-body blockquote { margin: .5em 0; padding-left: 12px; border-left: 3px solid var(--border-color); }

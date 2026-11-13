@@ -56,9 +56,11 @@ class TallyNotificationEmailForm(forms.Form):
   send_to = forms.ChoiceField(label=_("Send To"), choices= [('all', _('all voters')), ('voted', _('only voters who cast a ballot')), ('none', _('no one -- are you sure about this?'))])
 
 class VoterPasswordForm(forms.Form):
-  voter_id = forms.CharField(max_length=50, label=_("Voter ID"))
-  password = forms.CharField(widget=forms.PasswordInput(), max_length=100, label=_('Password'))
+  voter_id = forms.CharField(max_length=50, label=_("Voter ID"),
+                             widget=forms.TextInput(attrs={'autocomplete': 'username', 'autocapitalize': 'none', 'spellcheck': 'false'}))
+  password = forms.CharField(widget=forms.PasswordInput(attrs={'autocomplete': 'current-password'}), max_length=100, label=_('Password'))
 
 class VoterPasswordResendForm(forms.Form):
-  voter_id = forms.CharField(max_length=50, label=_("Voter ID"), help_text=_("Enter the voter ID you were assigned for this election"))
+  voter_id = forms.CharField(max_length=50, label=_("Voter ID"), help_text=_("Enter the voter ID you were assigned for this election"),
+                             widget=forms.TextInput(attrs={'autocomplete': 'username', 'autocapitalize': 'none', 'spellcheck': 'false'}))
 

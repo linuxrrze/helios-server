@@ -312,16 +312,16 @@ msgstr "niemanden – sind Sie sicher?"
 msgid "only voters who cast a ballot"
 msgstr "nur Wahlberechtigte, die ihre Stimme abgegeben haben"
 
-#: helios/forms.py:59 helios/forms.py:63
+#: helios/forms.py:59 helios/forms.py:64
 msgid "Voter ID"
 msgstr "Wähler-ID"
 
-#: helios/forms.py:60 helios_auth/auth_systems/ldapauth.py:27 helios_auth/auth_systems/password.py:39
+#: helios/forms.py:61 helios_auth/auth_systems/ldapauth.py:27 helios_auth/auth_systems/password.py:39
 #: helios_auth/templates/ldapauth/login.html:17 helios_auth/templates/ldapauth/login.html:18
 msgid "Password"
 msgstr "Passwort"
 
-#: helios/forms.py:63
+#: helios/forms.py:64
 msgid "Enter the voter ID you were assigned for this election"
 msgstr "Geben Sie die Wähler-ID ein, die Ihnen für diese Wahl zugewiesen wurde"
 
@@ -531,7 +531,7 @@ msgstr ""
 "--\n"
 "Helios\n"
 
-#: helios/templates/_castconfirm_docast.html:19
+#: helios/templates/_castconfirm_docast.html:18
 #, python-format
 msgid "You are logged in as <u>%(voter_name)s</u>"
 msgstr "Sie sind angemeldet als <u>%(voter_name)s</u>"
@@ -540,67 +540,67 @@ msgstr "Sie sind angemeldet als <u>%(voter_name)s</u>"
 msgid "CAST this ballot"
 msgstr "Diesen Stimmzettel ABGEBEN"
 
-#: helios/templates/_castconfirm_docast.html:22
+#: helios/templates/_castconfirm_docast.html:23
 msgid "Only the last one counts."
 msgstr "Nur der letzte zählt."
 
-#: helios/templates/_castconfirm_docast.html:22
+#: helios/templates/_castconfirm_docast.html:23
 msgid "You can cast as many ballots as you want."
 msgstr "Sie können beliebig oft einen Stimmzettel abgeben."
 
-#: helios/templates/_castconfirm_docast.html:26
+#: helios/templates/_castconfirm_docast.html:27
 msgid "Are you sure you want to clear this ballot and NOT cast it?"
 msgstr "Möchten Sie diesen Stimmzettel wirklich verwerfen und NICHT abgeben?"
 
-#: helios/templates/_castconfirm_docast.html:26 helios/templates/combine_decryptions.html:27 helios/templates/election_admin_add.html:7
+#: helios/templates/_castconfirm_docast.html:27 helios/templates/combine_decryptions.html:27 helios/templates/election_admin_add.html:7
 #: helios/templates/election_admin_remove.html:7 helios/templates/election_edit.html:18 helios/templates/election_extend.html:17
 #: helios/templates/election_new.html:19 helios/templates/new_trustee.html:29 helios/templates/release_result.html:23
 #: helios/templates/voters_email.html:56 helios/templates/voters_upload.html:39
 msgid "cancel"
 msgstr "abbrechen"
 
-#: helios/templates/_castconfirm_docast.html:27
+#: helios/templates/_castconfirm_docast.html:28
 msgid "If you cancel now, your ballot will <em>NOT</em> be recorded."
 msgstr "Wenn Sie jetzt abbrechen, wird Ihr Stimmzettel <em>NICHT</em> erfasst."
 
-#: helios/templates/_castconfirm_docast.html:28
+#: helios/templates/_castconfirm_docast.html:29
 msgid "You can start the voting process over again, of course."
 msgstr "Sie können die Stimmabgabe natürlich erneut beginnen."
 
-#: helios/templates/_castconfirm_docast.html:37
+#: helios/templates/_castconfirm_docast.html:38
 msgid "voting has stopped, sorry."
 msgstr "Die Stimmabgabe ist leider beendet."
 
-#: helios/templates/_castconfirm_docast.html:42
+#: helios/templates/_castconfirm_docast.html:43
 msgid "voting has not yet begun, sorry."
 msgstr "Die Stimmabgabe hat leider noch nicht begonnen."
 
-#: helios/templates/_castconfirm_password.html:10
+#: helios/templates/_castconfirm_password.html:8
 msgid "bad voter ID or password, please try again."
 msgstr "Wähler-ID oder Passwort falsch, bitte versuchen Sie es erneut."
 
-#: helios/templates/_castconfirm_password.html:14
-msgid "authenticate &amp; cast ballot"
-msgstr "Anmelden &amp; Stimmzettel abgeben"
-
-#: helios/templates/_castconfirm_password.html:16
+#: helios/templates/_castconfirm_password.html:11
 msgid "Your voter ID and password can be found in the email you received."
 msgstr "Ihre Wähler-ID und Ihr Passwort finden Sie in der E-Mail, die Sie erhalten haben."
 
-#: helios/templates/_castconfirm_password.html:17
+#: helios/templates/_castconfirm_password.html:15
+msgid "authenticate &amp; cast ballot"
+msgstr "Anmelden &amp; Stimmzettel abgeben"
+
+#: helios/templates/_castconfirm_password.html:18 helios/templates/_castconfirm_password.html:28
 msgid "Forgot your password? Click here to resend it."
 msgstr "Passwort vergessen? Klicken Sie hier, um es erneut zu senden."
 
-#: helios/templates/_castconfirm_password.html:18
+#: helios/templates/_castconfirm_password.html:19
 #, python-format
 msgid "If you still cannot find your login information, contact your election administrator at <tt>%(help_email)s</tt>."
 msgstr "Falls Sie Ihre Anmeldedaten weiterhin nicht finden, wenden Sie sich an die Wahlleitung unter <tt>%(help_email)s</tt>."
 
-#: helios/templates/_castconfirm_password.html:21
+#: helios/templates/_castconfirm_password.html:22
 msgid "Cast as many ballots as you wish: only the last one counts."
 msgstr "Sie können beliebig oft einen Stimmzettel abgeben: Nur der letzte zählt."
 
-#: helios/templates/_castconfirm_password.html:24
+#: helios/templates/_castconfirm_password.html:26
 msgid "log in"
 msgstr "Anmelden"
 
@@ -617,28 +617,44 @@ msgstr "optional"
 msgid "Confirm Vote"
 msgstr "Stimmabgabe bestätigen"
 
-#: helios/templates/cast_done.html:6
+#: helios/templates/cast_done.html:7
 msgid "Vote Successfully Cast!"
 msgstr "Stimme erfolgreich abgegeben!"
 
-#: helios/templates/cast_done.html:10 helios/templates/election_cast_confirm.html:58 server_ui/templates/email/cast_vote_body.txt:5
+#: helios/templates/cast_done.html:8
+msgid "Your ballot has been recorded. Only your last ballot counts if you vote again."
+msgstr "Ihr Stimmzettel wurde gespeichert. Wenn Sie erneut abstimmen, zählt nur Ihr letzter Stimmzettel."
+
+#: helios/templates/cast_done.html:14 helios/templates/election_cast_confirm.html:59 server_ui/templates/email/cast_vote_body.txt:5
 msgid "Your ballot tracker is:"
 msgstr "Ihr Stimmzettel-Tracker lautet:"
 
-#: helios/templates/cast_done.html:14
+#: helios/templates/cast_done.html:16
+msgid "Copy"
+msgstr "Kopieren"
+
+#: helios/templates/cast_done.html:20
 msgid "This ballot tracker mathematically ensures that your ballot is counted."
 msgstr "Dieser Stimmzettel-Tracker stellt mathematisch sicher, dass Ihr Stimmzettel gezählt wird."
 
-#: helios/templates/cast_done.html:14
+#: helios/templates/cast_done.html:20
 #, python-format
 msgid "You can check all ballot trackers by viewing the <a href=\"%(voters_url)s\">voter list</a>, where your ballot tracker should appear within a few minutes."
 msgstr "Alle Stimmzettel-Tracker können Sie im <a href=\"%(voters_url)s\">Wählerverzeichnis</a> überprüfen, wo Ihr Stimmzettel-Tracker innerhalb weniger Minuten erscheinen sollte."
 
-#: helios/templates/cast_done.html:19
+#: helios/templates/cast_done.html:22
+msgid "You will also receive a confirmation email with your ballot tracker, unless you have opted out of emails."
+msgstr "Sie erhalten außerdem eine Bestätigung mit Ihrem Stimmzettel-Tracker per E-Mail, sofern Sie E-Mails nicht abbestellt haben."
+
+#: helios/templates/cast_done.html:33
+msgid "Copied."
+msgstr "Kopiert."
+
+#: helios/templates/cast_done.html:41
 msgid "For your safety, we have logged you out."
 msgstr "Zu Ihrer Sicherheit wurden Sie abgemeldet."
 
-#: helios/templates/cast_done.html:25
+#: helios/templates/cast_done.html:47
 msgid "return to election info"
 msgstr "zurück zu den Informationen zur Wahl"
 
@@ -884,42 +900,50 @@ msgid "You have not yet cast your ballot! Make sure to complete the voting proce
 msgstr "Sie haben Ihren Stimmzettel noch nicht abgegeben! Schließen Sie die Stimmabgabe ab, damit Ihre Stimme zählt."
 
 #: helios/templates/election_cast_confirm.html:50
+msgid "Last step: cast your ballot"
+msgstr "Letzter Schritt: Stimmzettel abgeben"
+
+#: helios/templates/election_cast_confirm.html:51
 msgid "Don't go yet!"
 msgstr "Bitte noch nicht gehen!"
 
-#: helios/templates/election_cast_confirm.html:50
+#: helios/templates/election_cast_confirm.html:51
 msgid "Your ballot has not yet been cast."
 msgstr "Ihr Stimmzettel wurde noch nicht abgegeben."
 
-#: helios/templates/election_cast_confirm.html:53
+#: helios/templates/election_cast_confirm.html:54
 msgid "Verifying and Casting your ballot"
 msgstr "Ihr Stimmzettel wird überprüft und abgegeben"
 
-#: helios/templates/election_cast_confirm.html:80
+#: helios/templates/election_cast_confirm.html:61
+msgid "Your ballot is encrypted; the tracker is a fingerprint of it. After casting, you can check that it is listed in the ballot tracking center."
+msgstr "Ihr Stimmzettel ist verschlüsselt; der Tracker ist sein Fingerabdruck. Nach der Abgabe können Sie prüfen, ob er in der Stimmzettel-Übersicht aufgeführt ist."
+
+#: helios/templates/election_cast_confirm.html:82
 msgid "Sorry!"
 msgstr "Entschuldigung!"
 
-#: helios/templates/election_cast_confirm.html:82
+#: helios/templates/election_cast_confirm.html:84
 msgid "Sorry, you are <em><u>not eligible</u></em> for this election."
 msgstr "Leider sind Sie für diese Wahl <em><u>nicht wahlberechtigt</u></em>."
 
-#: helios/templates/election_cast_confirm.html:84
+#: helios/templates/election_cast_confirm.html:86
 msgid "Sorry, you are <em>not registered</em> for this election, and registration is closed."
 msgstr "Leider sind Sie für diese Wahl <em>nicht registriert</em>, und die Registrierung ist geschlossen."
 
-#: helios/templates/election_cast_confirm.html:88
+#: helios/templates/election_cast_confirm.html:90
 msgid "return to the main election page"
 msgstr "zurück zur Hauptseite der Wahl"
 
-#: helios/templates/election_cast_confirm.html:97
+#: helios/templates/election_cast_confirm.html:98
 msgid "This election is open to <em>anyone</em>, so log in with your preferred account."
 msgstr "Diese Wahl steht <em>allen</em> offen. Melden Sie sich daher mit einem Konto Ihrer Wahl an."
 
-#: helios/templates/election_cast_confirm.html:101
+#: helios/templates/election_cast_confirm.html:102
 msgid "Or, if you were invited to vote with an account, log in with it."
 msgstr "Oder, falls Sie mit einem Konto zur Wahl eingeladen wurden, melden Sie sich damit an."
 
-#: helios/templates/election_cast_confirm.html:101
+#: helios/templates/election_cast_confirm.html:102
 msgid "This election is only open to <em>registered voters</em>, so log in with the same account you registered with."
 msgstr "Diese Wahl steht nur <em>registrierten Wahlberechtigten</em> offen. Melden Sie sich daher mit dem Konto an, mit dem Sie sich registriert haben."
 
@@ -2180,23 +2204,23 @@ msgstr "Zugangsdaten zur Wahl erneut senden"
 msgid "Election:"
 msgstr "Wahl:"
 
-#: helios/templates/password_voter_resend.html:21
+#: helios/templates/password_voter_resend.html:19
 msgid "If a voter with that ID exists in this election, an email with your voting credentials has been sent."
 msgstr "Falls in dieser Wahl eine wahlberechtigte Person mit dieser ID existiert, wurde eine E-Mail mit Ihren Zugangsdaten gesendet."
 
-#: helios/templates/password_voter_resend.html:24
+#: helios/templates/password_voter_resend.html:22
 msgid "Please check your email inbox (and spam folder) for your voter ID and password."
 msgstr "Bitte suchen Sie in Ihrem E-Mail-Posteingang (und im Spam-Ordner) nach Ihrer Wähler-ID und Ihrem Passwort."
 
-#: helios/templates/password_voter_resend.html:27
+#: helios/templates/password_voter_resend.html:25
 msgid "You can now close this window and return to the voting booth."
 msgstr "Sie können dieses Fenster jetzt schließen und zur Wahlkabine zurückkehren."
 
-#: helios/templates/password_voter_resend.html:31
+#: helios/templates/password_voter_resend.html:29
 msgid "Forgot your password? Enter your voter ID below and we'll email your voting credentials to you."
 msgstr "Passwort vergessen? Geben Sie unten Ihre Wähler-ID ein, und wir senden Ihnen Ihre Zugangsdaten per E-Mail."
 
-#: helios/templates/password_voter_resend.html:39
+#: helios/templates/password_voter_resend.html:37
 msgid "Resend Credentials"
 msgstr "Zugangsdaten erneut senden"
 

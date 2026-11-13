@@ -3,7 +3,7 @@
 
 {% block content %}
 
-  <h2 class="title">{% blocktranslate trimmed with election_name=election.name %}Election {{ election_name }} Not Yet Open{% endblocktranslate %}</h2>
+  <h1 class="title">{% blocktranslate trimmed with election_name=election.name %}Election {{ election_name }} Not Yet Open{% endblocktranslate %}</h1>
 
   <p>
       {% translate "This election is not yet open." %}
@@ -15,6 +15,6 @@
   </p>
   
   <p>
-      <a href="{% url "election@view" election.uuid %}">{% translate "back to the election" %}</a>
+      <a class="button secondary" href="{% url "election@view" election.uuid %}">{% translate "back to the election" %}</a>
   </p>
 {% endblock %}

@@ -47,17 +47,18 @@ window.onbeforeunload = function(evt) {
 };
 
 </script>
+<p class="step-indicator muted">{% translate "Last step: cast your ballot" %}</p>
 <h1>{% translate "Don't go yet!" %}<br />{% translate "Your ballot has not yet been cast." %}</h1>
 
-<div id="waiting_div">
-    {% translate "Verifying and Casting your ballot" %}<br />
-    <img src="/static/helios/loading.gif" />
+<div id="waiting_div" role="status" aria-live="polite">
+    <p class="callout callout-info">{% translate "Verifying and Casting your ballot" %}<br />
+    <img src="/static/helios/loading.gif" alt="" /></p>
 </div>
 
-<div style="word-wrap: break-word; width: 90vw;">
-{% translate "Your ballot tracker is:" %}<br>
-<b>{{vote_fingerprint}}</b>
-<br><br>
+<div class="card ballot-tracker-card">
+<p>{% translate "Your ballot tracker is:" %}<br>
+<span class="tracker">{{vote_fingerprint}}</span></p>
+<p class="muted">{% translate "Your ballot is encrypted; the tracker is a fingerprint of it. After casting, you can check that it is listed in the ballot tracking center." %}</p>
 </div>
 
 <div id="all_forms">
@@ -77,16 +78,16 @@ window.onbeforeunload = function(evt) {
 {% if not password_only %}
 {% if user %}
 {% if not show_password %}
-<h1>{% translate "Sorry!" %}<h1>
-<b>{% if election.openreg %}
+<div class="callout callout-danger" role="alert">
+<span class="callout-title">{% translate "Sorry!" %}</span>
+<p>{% if election.openreg %}
     {% translate "Sorry, you are <em><u>not eligible</u></em> for this election." %}
   {% else %}
     {% translate "Sorry, you are <em>not registered</em> for this election, and registration is closed." %}
   {% endif %}
-  </b><br /></p>
-<p>
-    [<a href="{% url "election@view" election.uuid %}">{% translate "return to the main election page" %}</a>]
 </p>
+</div>
+<p><a class="button secondary" href="{% url "election@view" election.uuid %}">{% translate "return to the main election page" %}</a></p>
 {% endif %}
 {% else %}
 <p>
@@ -105,8 +106,7 @@ window.onbeforeunload = function(evt) {
 
 {{login_box|safe}}
 
-<br />
-{% translate "Don't worry, we'll remember your ballot while you log in." %}
+<p class="muted">{% translate "Don't worry, we'll remember your ballot while you log in." %}</p>
 {% endif %}
 {% endif %}
 
