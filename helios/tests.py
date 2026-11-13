@@ -5106,6 +5106,15 @@ class ElectionTimeZoneBerlinNaiveTests(WebTest):
         self.assertEqual(values['ELECTION_TIME_ZONE'], 'Europe/Berlin')
         self.assertFalse(values['USE_TZ'])
 
+    def test_default_time_zone_is_utc(self):
+        import os, runpy
+        env = {k: v for k, v in os.environ.items() if k not in ('TIME_ZONE', 'ELECTION_TIME_ZONE')}
+        env.update(DEBUG='1')
+        with mock.patch.dict(os.environ, env, clear=True), mock.patch('sys.argv', ['manage.py', 'runserver']):
+            values = runpy.run_path(os.path.join(settings.ROOT_PATH, 'settings.py'))
+        self.assertEqual(values['TIME_ZONE'], 'UTC')
+        self.assertEqual(values['ELECTION_TIME_ZONE'], 'UTC')
+
     def save_dates(self, start, end):
         response = self.client.post(f'/helios/elections/{self.election.uuid}/edit', {
             'short_name': self.election.short_name, 'name': self.election.name,

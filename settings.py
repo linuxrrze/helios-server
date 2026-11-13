@@ -74,7 +74,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 # USE_TZ is False. Helios itself works in UTC (election start/end, cast times
 # and so on use utcnow()); this only affects Django's automatic timestamps
 # such as Election.created_at and the server process' local time.
-TIME_ZONE = get_from_env('TIME_ZONE', 'America/Los_Angeles')
+# Default UTC (Helios upstream used America/Los_Angeles): set TIME_ZONE, or ELECTION_TIME_ZONE,
+# to the zone your administrators think in, e.g. Europe/Berlin.
+TIME_ZONE = get_from_env('TIME_ZONE', 'UTC')
 
 # Time zone in which administrators enter election dates (voting start, end,
 # extension) and in which the pages show them, always with the zone's name.
