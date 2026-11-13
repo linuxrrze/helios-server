@@ -1,0 +1,32 @@
+# /etc/systemd/system/helios-web.service
+[Unit]
+Description=Helios web (gunicorn)
+After=network.target postgresql.service
+Requires=postgresql.service
+
+[Service]
+Type=notify
+User=helios
+Group=helios
+WorkingDirectory=/opt/helios/helios-server
+EnvironmentFile=/etc/helios/helios.env
+RuntimeDirectory=helios
+RuntimeDirectoryMode=0750
+ExecStart=/opt/helios/helios-server/.venv/bin/gunicorn wsgi:application \
+    --bind unix:/run/helios/gunicorn.sock --umask 0007 \
+    --workers 8 --timeout 60 --access-logfile - --forwarded-allow-ips='*'
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=always
+KillMode=mixed
+
+# hardening
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+
+[Install]
+WantedBy=multi-user.target

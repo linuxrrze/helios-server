@@ -1,0 +1,26 @@
+# /etc/systemd/system/helios-worker.service
+# Background tasks (voter emails, voter file processing, tallying).
+# Replaces Celery + RabbitMQ: tasks are queued in the database.
+[Unit]
+Description=Helios background task worker
+After=network.target postgresql.service
+Requires=postgresql.service
+
+[Service]
+User=helios
+Group=helios
+WorkingDirectory=/opt/helios/helios-server
+EnvironmentFile=/etc/helios/helios.env
+ExecStart=/opt/helios/helios-server/.venv/bin/python manage.py db_worker
+Restart=always
+RestartSec=10
+# db_worker finishes the task it is running on SIGTERM
+TimeoutStopSec=300
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+
+[Install]
+WantedBy=multi-user.target

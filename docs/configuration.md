@@ -4,6 +4,23 @@ Helios reads its configuration from environment variables: with Docker Compose f
 (see [deploy/.env.example](../deploy/.env.example), which lists every variable), otherwise
 from the environment of the web and worker processes (e.g. a systemd `EnvironmentFile`, Fly.io
 secrets or Heroku config vars). This is the complete list.
+
+**Which file?** You need exactly one, depending on how Helios runs. Both templates contain the
+same Helios settings; they differ only where the setup differs.
+
+| | Docker Compose | systemd + nginx |
+|---|---|---|
+| File | `deploy/.env` (template [deploy/.env.example](../deploy/.env.example)) | `/etc/helios/helios.env` (template [deploy/systemd/helios.env.example](../deploy/systemd/helios.env.example)) |
+| Read by | Compose, for `${...}` in `docker-compose.yml` and as the containers' environment | `helios-web.service` and `helios-worker.service` (`EnvironmentFile`), and by `sh` for `manage.py` commands |
+| Only here | `HELIOS_IMAGE`, `POSTGRES_PASSWORD` (Compose itself, not Helios) | `DATABASE_URL`, e.g. `postgres://helios@/helios` over the local socket |
+| Database | `DATABASE_URL` is set by `docker-compose.yml` (overrides the file) | in the file |
+| Local mail server | `EMAIL_HOST=host.docker.internal` (`localhost` is the container itself) | `EMAIL_HOST=localhost` |
+| Paths (`SITE_TEMPLATES_DIR`, `SITE_STATIC_DIR`, `SAML_IDP_METADATA_FILE`) | inside the container, e.g. `/site/static` (mounted volume) | on the host, e.g. `/opt/helios/site/static` |
+| Literal `$` in a value | write `$$` (Compose expands `${...}`) | use single quotes (`sh` expands `$` in double quotes) |
+| Multi-line values (PEM) | `"\n"` inside double quotes | base64 content on one line, without BEGIN/END lines |
+| Apply changes | `docker compose up -d` | `systemctl restart helios-web helios-worker` |
+
+On Fly.io and Heroku there is no file: set the same variables as secrets / config vars.
 Single sign-on is described in more detail in [sso.md](sso.md).
 
 **Rules that apply to all variables**

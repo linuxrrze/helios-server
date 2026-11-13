@@ -110,6 +110,12 @@ Older versions of Helios used Celery with RabbitMQ. To upgrade:
   see [deploy/docker-compose.yml](deploy/docker-compose.yml) and copy
   [deploy/.env.example](deploy/.env.example) to `deploy/.env`.
 
+* **systemd and nginx** (own server, without containers): see
+  [deploy/systemd/README.md](deploy/systemd/README.md), with unit files, nginx configuration
+  and [deploy/systemd/helios.env.example](deploy/systemd/helios.env.example) for
+  `/etc/helios/helios.env`. Which configuration file is for which setup:
+  [docs/configuration.md](docs/configuration.md).
+
 * Either way, set `DEBUG=0` in production: it defaults to on, which enables the
   `devlogin` auth system.
 
