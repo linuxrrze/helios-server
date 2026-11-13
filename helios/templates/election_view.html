@@ -87,7 +87,7 @@
   {% if not election.voting_has_stopped %}<strong>{% translate "Computing the tally ends voting." %}</strong>{% endif %}
   </p>
   <p class="actions">
-    {% if not election.voting_has_stopped and settings.HELIOS_VOTERS_EMAIL %}<a class="button" href="{% url "election@voters@email" election.uuid %}">{% translate "email voters" %}</a>{% endif %}
+    {% if not election.voting_has_stopped and settings.HELIOS_VOTERS_EMAIL %}{% if can_send_emails %}<a class="button" href="{% url "election@voters@email" election.uuid %}">{% translate "email voters" %}</a>{% else %}<button type="button" class="button" disabled title="{{email_disabled_reason}}">{% blocktranslate trimmed with reason=email_disabled_reason %}email voters (disabled: {{ reason }}){% endblocktranslate %}</button>{% endif %}{% endif %}
     <a class="button{% if not election.voting_has_stopped %} secondary{% endif %}" href="{% url "election@compute-tally" election.uuid %}">{% translate "compute encrypted tally" %}</a>
     {% if election.voting_ends_at and not election.tallying_started_at %}<a href="{% url "election@extend" election.uuid %}">{% translate "extend voting" %}</a>{% endif %}
   </p>

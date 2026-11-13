@@ -434,6 +434,11 @@ EMAIL_TIMEOUT = int(get_from_env('EMAIL_TIMEOUT', '60'))
 if get_from_env('EMAIL_USE_AWS', '0') == '1':
     EMAIL_BACKEND = 'django_ses.SESBackend'
 
+# Every email goes through helios.mail_backend, which logs one line per email
+# (recipient masked) and passes it on to the backend selected above.
+HELIOS_EMAIL_BACKEND = globals().get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_BACKEND = 'helios.mail_backend.LoggingEmailBackend'
+
 # set up logging
 import logging
 

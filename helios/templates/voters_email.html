@@ -17,7 +17,21 @@ voter_id = '{{voter.voter_id}}';
   <p>
     {% blocktranslate trimmed with name=voter.name voter_id=voter.voter_id %}You are sending this email to a specific user: <b>{{name}} ({{voter_id}})</b>{% endblocktranslate %}
   </p>
+{% elif not num_voters %}
+<div class="callout callout-info empty-state" id="no-voters">
+  {% if election.openreg %}
+  <p>{% translate "This election has open registration: people are only added to the voter list when they log in to cast a ballot. Nobody has done so yet, so there is no one to email." %}</p>
+  <p>{% translate "To invite voters, share the link to the election with them yourself:" %}<br /><tt class="tracker-plain">{{election_vote_url}}</tt></p>
+  {% else %}
+  <p>{% translate "This election has no voters yet, so there is no one to email." %}</p>
+  {% endif %}
+</div>
+<p class="actions"><a class="button" href="{% url "election@voters@list-pretty" election.uuid %}">{% translate "back to the voter list" %}</a></p>
+{% elif election.openreg %}
+<p class="callout callout-info">{% translate "This election has open registration: only people who have already logged in to cast a ballot are on the voter list, so only they receive this email." %}</p>
 {% endif %}
+
+{% if voter or num_voters %}
 
 <nav class="template-choice" aria-label="{% translate "Templates" %}">
 <span class="label">{% translate "Templates" %}:</span>
@@ -67,5 +81,6 @@ voter_id = '{{voter.voter_id}}';
   <div id="error" style="display:none;">
     {% translate "Error emailing participants. Check server settings, make sure there's an SMTP server." %}
   </div>
+{% endif %}
 
 {% endblock %}
