@@ -12,7 +12,8 @@ import os
 import uuid
 from urllib.parse import urlencode
 
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.validators import validate_email as django_validate_email
 from django.core.paginator import Paginator
 from django.db import transaction, IntegrityError
 from django.http import HttpResponse, Http404, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest
@@ -452,12 +453,41 @@ def new_trustee(request, election):
     return render_template(request, 'new_trustee', {'election' : election})
   else:
     check_csrf(request)
-    # get the public key and the hash, and add it
-    name = request.POST['name']
-    email = request.POST['email']
-    
+    name = request.POST.get('name', '').strip()
+    email = request.POST.get('email', '').strip()
+
+    # show problems on the form instead of failing on the database constraint
+    # (one trustee per email address and election)
+    errors = {}
+    if not name:
+      errors['name'] = _("Please enter a name.")
+    if not email:
+      errors['email'] = _("Please enter an email address.")
+    else:
+      try:
+        django_validate_email(email)
+      except ValidationError:
+        errors['email'] = _("Please enter a valid email address.")
+      else:
+        if election.trustee_set.filter(email__iexact=email).exists():
+          errors['email'] = _("This election already has a trustee with this email address.")
+    if errors:
+      response = render_template(request, 'new_trustee', {'election': election, 'errors': errors,
+                                                          'name': name, 'email': email})
+      response.status_code = 400
+      return response
+
     trustee = Trustee(uuid = str(uuid.uuid4()), election = election, name=name, email=email)
-    trustee.save()
+    try:
+      with transaction.atomic():
+        trustee.save()
+    except IntegrityError:
+      # added at the same moment by a second request
+      response = render_template(request, 'new_trustee', {
+        'election': election, 'name': name, 'email': email,
+        'errors': {'email': _("This election already has a trustee with this email address.")}})
+      response.status_code = 400
+      return response
     return HttpResponseRedirect(settings.SECURE_URL_HOST + reverse(url_names.election.ELECTION_TRUSTEES_VIEW, args=[election.uuid]))
 
 @election_admin(frozen=False)

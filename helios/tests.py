@@ -4695,6 +4695,57 @@ class UndecryptableTallyTests(WebTest):
         self.assertEqual(models.Election.objects.get(uuid=self.election.uuid).result, [[1, 0]])
 
 
+class NewTrusteeTests(WebTest):
+    """Adding a trustee shows problems on the form instead of a server error."""
+    fixtures = ['users.json']
+    allow_database_queries = True
+
+    def setUp(self):
+        self.admin = auth_models.User.objects.get(user_id='ben@adida.net', user_type='google')
+        self.election, _ = models.Election.get_or_create(
+            short_name='test-new-trustee', name='Test New Trustee', description='x', admin=self.admin)
+        self.election.uuid = str(uuid.uuid4())
+        self.election.save()
+        self.url = "/helios/elections/%s/trustees/new" % self.election.uuid
+        self.client.get("/")
+        session = self.client.session
+        session['user'] = {'type': self.admin.user_type, 'user_id': self.admin.user_id}
+        session.save()
+        self.csrf_token = self.client.session['csrf_token']
+
+    def add(self, name, email):
+        return self.client.post(self.url, {'name': name, 'email': email, 'csrf_token': self.csrf_token})
+
+    def test_add_trustee(self):
+        response = self.add('Alice', 'alice@example.com')
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(self.election.trustee_set.filter(email='alice@example.com').count(), 1)
+
+    def test_duplicate_email_shows_error(self):
+        self.add('Alice', 'alice@example.com')
+        response = self.add('Alice again', 'Alice@Example.com')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('already has a trustee with this email address', response.content.decode())
+        self.assertIn('value="Alice again"', response.content.decode())
+        self.assertEqual(self.election.trustee_set.count(), 1)
+
+    def test_invalid_and_missing_input(self):
+        response = self.add('', 'not-an-address')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Please enter a name.', response.content.decode())
+        self.assertIn('Please enter a valid email address.', response.content.decode())
+        self.assertEqual(self.election.trustee_set.count(), 0)
+
+    def test_concurrent_duplicate_is_caught(self):
+        models.Trustee(uuid=str(uuid.uuid4()), election=self.election, name='Bob', email='bob@example.com').save()
+        # the existence check passes (it looks at a different address), the database refuses
+        from django.db import IntegrityError
+        with mock.patch('helios.views.Trustee.save', side_effect=IntegrityError('duplicate')):
+            response = self.add('Bob', 'bob2@example.com')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('already has a trustee', response.content.decode())
+
+
 class TrusteeUploadPkTests(WebTest):
     """A trustee can replace their key until the election is frozen, but not after."""
     fixtures = ['users.json']

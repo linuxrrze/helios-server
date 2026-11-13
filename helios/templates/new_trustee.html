@@ -12,16 +12,27 @@
   <p>{% translate "If you are not sure what that means, keep Helios as the only trustee: it tallies the election for you." %}</p>
 </div>
 
+{% if errors %}
+<div class="callout callout-danger error-summary" role="alert">
+  <span class="callout-title">{% translate "Please correct the following:" %}</span>
+  <ul>
+  {% if errors.name %}<li><a href="#trustee_name">{% translate "Name" %}</a>: {{ errors.name }}</li>{% endif %}
+  {% if errors.email %}<li><a href="#trustee_email">{% translate "Email" %}</a>: {{ errors.email }}</li>{% endif %}
+  </ul>
+</div>
+{% endif %}
 <form class="form-narrow" method="post" action="">
 <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
-<div class="field">
+<div class="field{% if errors.name %} has-error{% endif %}">
   <label for="trustee_name">{% translate "Name" %}</label>
-  <input type="text" id="trustee_name" name="name" size="60" required autocomplete="off" />
+  {% if errors.name %}<ul class="errorlist" id="trustee_name_error"><li>{{ errors.name }}</li></ul>{% endif %}
+  <input type="text" id="trustee_name" name="name" size="60" required autocomplete="off" value="{{ name|default:'' }}"{% if errors.name %} aria-invalid="true" aria-describedby="trustee_name_error"{% endif %} />
 </div>
-<div class="field">
+<div class="field{% if errors.email %} has-error{% endif %}">
   <label for="trustee_email">{% translate "Email" %}</label>
   <span class="field-hint" id="trustee_email_hint">{% translate "The trustee receives a personal link to this address to set up their key and, later, to decrypt the tally." %}</span>
-  <input type="email" id="trustee_email" name="email" size="60" required aria-describedby="trustee_email_hint" />
+  {% if errors.email %}<ul class="errorlist" id="trustee_email_error"><li>{{ errors.email }}</li></ul>{% endif %}
+  <input type="email" id="trustee_email" name="email" size="60" required value="{{ email|default:'' }}" aria-describedby="trustee_email_hint{% if errors.email %} trustee_email_error{% endif %}"{% if errors.email %} aria-invalid="true"{% endif %} />
 </div>
 <div class="actions">
   <button class="button" type="submit">{% translate "Add Trustee" %}</button>
