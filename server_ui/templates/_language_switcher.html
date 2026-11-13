@@ -6,3 +6,29 @@
   {% get_language_info for code as language %}<button type="submit" name="language" value="{{ code }}" lang="{{ code }}">{{ language.name_local }}</button>
   {% endif %}{% endfor %}
 </form>
+<script>
+// Switching the language reloads the page. Ask first if the visitor has typed or
+// changed something on this page that is not saved yet.
+(function () {
+  var dirty = false;
+  function inSwitcher(el) {
+    for (; el; el = el.parentNode) {
+      if (el.className && typeof el.className === 'string' && el.className.indexOf('language-switcher') !== -1) return true;
+    }
+    return false;
+  }
+  function markDirty(evt) { if (!inSwitcher(evt.target)) dirty = true; }
+  document.addEventListener('input', markDirty, true);
+  document.addEventListener('change', markDirty, true);
+  // submitting a page form saves the input; the next page starts clean
+  document.addEventListener('submit', function (evt) { if (!inSwitcher(evt.target)) dirty = false; }, true);
+  var forms = document.querySelectorAll('form.language-switcher');
+  for (var i = 0; i < forms.length; i++) {
+    forms[i].addEventListener('submit', function (evt) {
+      if (dirty && !window.confirm("{% filter escapejs %}{% translate "Unsaved input on this page will be lost. Switch the language anyway?" %}{% endfilter %}")) {
+        evt.preventDefault();
+      }
+    });
+  }
+})();
+</script>

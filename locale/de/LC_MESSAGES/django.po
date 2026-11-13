@@ -3149,6 +3149,10 @@ msgstr "bei der Verbindung zu %(system_name)s ist ein Fehler aufgetreten, bitte 
 msgid "%(election_name)s - vote cast"
 msgstr "%(election_name)s – Stimme abgegeben"
 
+#: server_ui/templates/_language_switcher.html:28
+msgid "Unsaved input on this page will be lost. Switch the language anyway?"
+msgstr "Ungespeicherte Eingaben auf dieser Seite gehen verloren. Sprache trotzdem wechseln?"
+
 #: server_ui/templates/about.html:12
 msgid "About Helios Voting"
 msgstr "Über Helios Voting"

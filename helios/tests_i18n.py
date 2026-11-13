@@ -103,3 +103,69 @@ class EmailLanguageTests(TestCase):
     from helios.tests import run_queued_tasks
     run_queued_tasks()
     self.assertTrue(mail.outbox[-1].subject.startswith('Ihre Zugangsdaten'), mail.outbox[-1].subject)
+
+
+class LanguageSwitchConfirmTests(TestCase):
+  """
+  Switching the language reloads the page; the switcher asks first when the
+  page has unsaved input. The script is run in Node with a minimal DOM stub.
+  """
+
+  NODE_HARNESS = r'''
+const script = require('fs').readFileSync(0, 'utf8');
+const listeners = {};
+const doc = {addEventListener: (t, f) => (listeners[t] = listeners[t] || []).push(f)};
+const switcherForm = {className: 'language-switcher', parentNode: null,
+  listeners: [], addEventListener(t, f) { this.listeners.push(f); }};
+const switcherButton = {className: '', parentNode: switcherForm};
+const pageForm = {className: '', parentNode: null};
+const pageField = {className: 'field', parentNode: pageForm};
+doc.querySelectorAll = () => [switcherForm];
+let confirmAnswer = false, asked = 0;
+global.document = doc;
+global.window = {confirm: (msg) => { asked++; global.lastMessage = msg; return confirmAnswer; }};
+eval(script);
+function fire(type, target) { (listeners[type] || []).forEach(f => f({target})); }
+function switchLanguage() {
+  let prevented = false;
+  const evt = {target: switcherForm, preventDefault: () => { prevented = true; }};
+  switcherForm.listeners.forEach(f => f(evt));
+  return prevented;
+}
+const r = {};
+r.clean = switchLanguage(); r.askedClean = asked;
+fire('input', switcherButton); r.switcherInputIgnored = !switchLanguage() && asked === 0;
+fire('input', pageField); confirmAnswer = false; r.cancelled = switchLanguage();
+confirmAnswer = true; r.confirmed = !switchLanguage();
+fire('submit', pageForm); asked = 0; r.afterSave = !switchLanguage() && asked === 0;
+fire('change', pageField); confirmAnswer = false; r.change = switchLanguage();
+r.message = global.lastMessage;
+console.log(JSON.stringify(r));
+'''
+
+  def _run_switcher_script(self, language):
+    import json, re, shutil, subprocess
+    node = shutil.which('node')
+    if not node:
+      self.skipTest('node not installed')
+    page = self.client.get('/', HTTP_ACCEPT_LANGUAGE=language).content.decode()
+    match = re.search(r'<form class="language-switcher".*?</form>\s*<script>(.*?)</script>', page, re.S)
+    self.assertIsNotNone(match, 'switcher script missing')
+    result = subprocess.run([node, '-e', self.NODE_HARNESS], input=match.group(1), capture_output=True, text=True)
+    self.assertEqual(result.returncode, 0, result.stderr)
+    return json.loads(result.stdout)
+
+  def test_asks_only_with_unsaved_input(self):
+    r = self._run_switcher_script('en')
+    self.assertFalse(r['clean'])               # nothing typed: switch without asking
+    self.assertEqual(r['askedClean'], 0)
+    self.assertTrue(r['switcherInputIgnored'])  # the switcher itself does not count
+    self.assertTrue(r['cancelled'])             # typed + "Cancel": stay on the page
+    self.assertTrue(r['confirmed'])             # typed + "OK": switch
+    self.assertTrue(r['afterSave'])             # after submitting the page form: no question
+    self.assertTrue(r['change'])                # select/checkbox changes count too
+    self.assertEqual(r['message'], 'Unsaved input on this page will be lost. Switch the language anyway?')
+
+  def test_question_is_translated(self):
+    r = self._run_switcher_script('de')
+    self.assertEqual(r['message'], 'Ungespeicherte Eingaben auf dieser Seite gehen verloren. Sprache trotzdem wechseln?')
