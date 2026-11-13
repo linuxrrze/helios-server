@@ -422,3 +422,15 @@ table.pretty .helptext { margin-top: 4px; }
 .tracker-plain { overflow-wrap: anywhere; word-break: break-all; }
 /* a step line ("step 2 of 4") directly above the page title */
 .content-body .step-indicator + h1 { margin-top: .2em; }
+
+/* --- voter groups and admin pages --------------------------------------- */
+.content-body input.input-wide { width: 100%; }
+.voters-table .num, .seat-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.seat-table td input, .seat-table td select { min-width: 8rem; }
+.content-body section.card > h2:first-child { margin-top: 0; font-size: 1.2rem; }
+/* results on phones: a shorter bar so that the share stays visible */
+@media only screen and (max-width: 40em) {
+  .result-table { min-width: 0; }
+  .result-table .share { min-width: 0; }
+  .share-bar { width: 3.5rem; }
+}

@@ -2,15 +2,14 @@
 {% load i18n %}
 {% block title %}{{group.short_name}} &mdash; {% translate "add member" %}{% endblock %}
 {% block content %}
-<h2 class="title">{% blocktranslate trimmed with name=group.short_name %}Add a member to voter group {{name}}{% endblocktranslate %}</h2>
+<h1 class="title">{% blocktranslate trimmed with name=group.short_name %}Add a member to voter group {{name}}{% endblocktranslate %}</h1>
 
-<form class="prettyform" action="" method="POST" id="add_member_form">
+<form class="prettyform form-narrow" action="" method="POST" id="add_member_form" novalidate>
   <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
-  <table class="pretty">
-    {{votergroupmember_form.as_table}}
-  </table>
-  <div><label for="">&nbsp;</label><input type="submit" value="{% translate "Add &gt;&gt;" %}" id="next_button" /></div>
+  {% include "_form_fields.html" with form=votergroupmember_form %}
+  <div class="actions">
+    <button type="submit" class="button" id="next_button">{% translate "Add member" %}</button>
+    <a href="{% url "votergroup@view" group.uuid %}">{% translate "cancel" %}</a>
+  </div>
 </form>
-
-<a href="{% url "votergroup@view" group.uuid %}">{% translate "Back to group" %}</a>
 {% endblock %}

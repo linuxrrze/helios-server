@@ -1,16 +1,20 @@
 {% extends TEMPLATE_BASE %}
-{% load i18n %}
+{% load i18n timezone_tags %}
 {% block title %}{% translate "Statistics" %}{% endblock %}
 
 {% block content %}
-<h1>{% translate "Recent Votes" %}</h1>
+<h1 class="title">{% translate "Recent Votes" %}</h1>
 
-{% translate "Last 24 hours" %}
+<p class="page-lead">{% translate "Last 24 hours" %}</p>
 
+{% if elections %}
+<ul class="election-list">
 {% for election in elections %}
-<p>
-<b><a href="{% url "election@view" election.uuid %}">{{election.name}}</a></b> -- {{election.last_cast_vote}} {% blocktranslate trimmed with num=election.num_recent_cast_votes %}{{num}} recently cast votes{% endblocktranslate %}
-</p>
+<li><b><a href="{% url "election@view" election.uuid %}">{{election.name}}</a></b> <span class="muted">{{election.last_cast_vote|utc_time}} &middot; {% blocktranslate trimmed with num=election.num_recent_cast_votes %}{{num}} recently cast votes{% endblocktranslate %}</span></li>
 {% endfor %}
+</ul>
+{% else %}
+<div class="callout empty-state"><p>{% translate "None" %}</p></div>
+{% endif %}
 
 {% endblock %}

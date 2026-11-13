@@ -2,19 +2,20 @@
 {% load i18n %}
 {% block title %}{{group.short_name}} &mdash; {% translate "new election" %}{% endblock %}
 {% block content %}
-<h2 class="title">{% blocktranslate trimmed with name=group.short_name %}Create a new election for {{name}}{% endblocktranslate %}</h2>
+<h1 class="title">{% blocktranslate trimmed with name=group.short_name %}Create a new election for {{name}}{% endblocktranslate %}</h1>
 
-{% if error %}<p class="error" style="color: red;">{{error}}</p>{% endif %}
-{% if form.non_form_errors %}<div class="error" style="color: red;">{{form.non_form_errors}}</div>{% endif %}
+{% if error %}<div class="callout callout-danger" role="alert"><p class="error">{{error}}</p></div>{% endif %}
+{% if form.non_form_errors %}<div class="callout callout-danger" role="alert">{{form.non_form_errors}}</div>{% endif %}
 
 <form class="prettyform" action="" method="POST" id="create_election_form">
   {{ form.management_form }}
   <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
 
-  <h3>{% translate "Voters" %}</h3>
+  <h2>{% translate "Voters" %}</h2>
   <p>{% translate "One row per vote. A vote can be delegated to another member of the group; the delegated vote is then issued to that member." %}</p>
-  <table class="pretty">
-    <tr><th>{% translate "First name" %}</th><th>{% translate "Last name" %}</th><th>{% translate "Email" %}</th><th>{% translate "Login ID" %}</th><th>{% translate "Delegate to" %}</th></tr>
+  <div class="table-scroll">
+  <table class="seat-table">
+    <thead><tr><th scope="col">{% translate "First name" %}</th><th scope="col">{% translate "Last name" %}</th><th scope="col">{% translate "Email" %}</th><th scope="col">{% translate "Login ID" %}</th><th scope="col">{% translate "Delegate to" %}</th></tr></thead>
     {% for seat in form %}
     <tr>
       <td>{{ seat.first_name }}{{ seat.first_name.errors }}</td>
@@ -25,13 +26,15 @@
     </tr>
     {% endfor %}
   </table>
+  </div>
 
-  <h3>{% translate "Election settings" %}</h3>
-  <table class="pretty">
-    {{electionform.as_table}}
-  </table>
-  <div><label for="">&nbsp;</label><input type="submit" value="{% translate "Create election &gt;&gt;" %}" id="next_button" /></div>
+  <h2>{% translate "Election settings" %}</h2>
+  <div class="form-narrow">
+  {% include "_form_fields.html" with form=electionform %}
+  </div>
+  <div class="actions">
+    <button type="submit" class="button" id="next_button">{% translate "Create election" %}</button>
+    <a href="{% url "votergroup@view" group.uuid %}">{% translate "cancel" %}</a>
+  </div>
 </form>
-
-<a href="{% url "votergroup@view" group.uuid %}">{% translate "Back to group" %}</a>
 {% endblock %}

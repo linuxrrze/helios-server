@@ -200,7 +200,7 @@ msgstr "Buchstaben, Ziffern und Bindestriche, keine Leerzeichen. Wird Teil der W
 msgid "Short name"
 msgstr "Kurzname"
 
-#: helios/forms.py:32 helios/templates/election_bboard.html:41 helios/templates/new_trustee.html:18
+#: helios/forms.py:32 helios/templates/election_bboard.html:24 helios/templates/new_trustee.html:18
 #: helios/templates/voters_list.html:145 helios/templates/voters_manage.html:28 helios/templates/voters_upload_confirm.html:14
 msgid "Name"
 msgstr "Name"
@@ -565,7 +565,8 @@ msgstr "Möchten Sie diesen Stimmzettel wirklich verwerfen und NICHT abgeben?"
 #: helios/templates/_castconfirm_docast.html:27 helios/templates/combine_decryptions.html:26 helios/templates/election_admin_add.html:7
 #: helios/templates/election_admin_remove.html:7 helios/templates/election_edit.html:17 helios/templates/election_extend.html:16
 #: helios/templates/election_new.html:18 helios/templates/election_new_guided.html:60 helios/templates/new_trustee.html:28
-#: helios/templates/release_result.html:24 helios/templates/voters_email.html:69 helios/templates/voters_upload.html:38
+#: helios/templates/release_result.html:24 helios/templates/votergroup_memberadd.html:12 helios/templates/votergroup_new.html:14
+#: helios/templates/votergroup_prepareelection.html:37 helios/templates/voters_email.html:69 helios/templates/voters_upload.html:38
 msgid "cancel"
 msgstr "abbrechen"
 
@@ -813,9 +814,8 @@ msgstr "Wahlleitung für %(name)s"
 msgid "Administrators"
 msgstr "Wahlleitung"
 
-#: helios/templates/election_admins.html:7 helios/templates/election_audited_ballots.html:7 helios/templates/election_bboard.html:7
-#: helios/templates/election_build.html:5 helios/templates/election_compute_tally.html:20 helios/templates/election_compute_tally.html:49
-#: helios/templates/voters_manage.html:5 helios/templates/voters_search.html:5
+#: helios/templates/election_admins.html:7 helios/templates/election_build.html:5 helios/templates/election_compute_tally.html:20
+#: helios/templates/election_compute_tally.html:49 helios/templates/voters_manage.html:5 helios/templates/voters_search.html:5
 msgid "back to election"
 msgstr "zurück zur Wahl"
 
@@ -862,35 +862,52 @@ msgid "Audited Ballots"
 msgstr "Geprüfte Stimmzettel"
 
 #: helios/templates/election_audited_ballots.html:10
-msgid "When you prepare a ballot with Helios, you immediately receive a ballot tracker. Before you choose to cast that ballot, you have the option to ask Helios to \"break open\" that encrypted ballot and verify that Helios encrypted your ballot correctly. Once that's done, you can post that opened ballot here, on the audited ballots' list, for everyone to verify (your identity is not included). Once you've done this, you have to re-encrypt your choices and obtain a different ballot tracker. This helps reduce the chance that someone might coerce you to vote differently from your true choice."
-msgstr "Wenn Sie mit Helios einen Stimmzettel ausfüllen, erhalten Sie sofort einen Stimmzettel-Tracker. Bevor Sie diesen Stimmzettel abgeben, können Sie Helios bitten, den verschlüsselten Stimmzettel „aufzubrechen“, und überprüfen, ob Helios ihn korrekt verschlüsselt hat. Danach können Sie den geöffneten Stimmzettel hier in der Liste der geprüften Stimmzettel veröffentlichen, damit alle ihn überprüfen können (Ihre Identität wird nicht angegeben). Anschließend müssen Sie Ihre Auswahl erneut verschlüsseln und erhalten einen anderen Stimmzettel-Tracker. Das verringert die Gefahr, dass jemand Sie zwingt, anders als nach Ihrer eigentlichen Wahl abzustimmen."
-
-#: helios/templates/election_audited_ballots.html:14
 msgid "These ballots are <em>not cast</em>, and they will not be counted. They are just here for auditing purposes, to spot-check that Helios is properly encrypting voter's choices."
 msgstr "Diese Stimmzettel wurden <em>nicht abgegeben</em> und werden nicht gezählt. Sie dienen nur der Prüfung, um stichprobenartig zu kontrollieren, ob Helios die Auswahl der Wahlberechtigten korrekt verschlüsselt."
 
-#: helios/templates/election_audited_ballots.html:18
+#: helios/templates/election_audited_ballots.html:14
+msgid "What is an audited ballot?"
+msgstr "Was ist ein geprüfter Stimmzettel?"
+
+#: helios/templates/election_audited_ballots.html:17
+msgid "When you prepare a ballot with Helios, you immediately receive a ballot tracker. Before you choose to cast that ballot, you have the option to ask Helios to \"break open\" that encrypted ballot and verify that Helios encrypted your ballot correctly. Once that's done, you can post that opened ballot here, on the audited ballots' list, for everyone to verify (your identity is not included). Once you've done this, you have to re-encrypt your choices and obtain a different ballot tracker. This helps reduce the chance that someone might coerce you to vote differently from your true choice."
+msgstr "Wenn Sie mit Helios einen Stimmzettel ausfüllen, erhalten Sie sofort einen Stimmzettel-Tracker. Bevor Sie diesen Stimmzettel abgeben, können Sie Helios bitten, den verschlüsselten Stimmzettel „aufzubrechen“, und überprüfen, ob Helios ihn korrekt verschlüsselt hat. Danach können Sie den geöffneten Stimmzettel hier in der Liste der geprüften Stimmzettel veröffentlichen, damit alle ihn überprüfen können (Ihre Identität wird nicht angegeben). Anschließend müssen Sie Ihre Auswahl erneut verschlüsseln und erhalten einen anderen Stimmzettel-Tracker. Das verringert die Gefahr, dass jemand Sie zwingt, anders als nach Ihrer eigentlichen Wahl abzustimmen."
+
+#: helios/templates/election_audited_ballots.html:23
 #, python-format
 msgid "To verify an audited ballot, copy its entire content and paste it in the <a target=\"_new\" href=\"%(verifier_url)s%(election_home_url)s\">single ballot verifier</a>."
 msgstr "Um einen geprüften Stimmzettel zu überprüfen, kopieren Sie seinen gesamten Inhalt und fügen Sie ihn in die <a target=\"_new\" href=\"%(verifier_url)s%(election_home_url)s\">Einzelstimmzettel-Überprüfung</a> ein."
 
-#: helios/templates/election_audited_ballots.html:23
+#: helios/templates/election_audited_ballots.html:27 helios/templates/election_bboard.html:13 helios/templates/stats_deleted_elections.html:15
+#: helios/templates/stats_elections.html:14 helios/templates/voters_list.html:125
+msgid "Pages"
+msgstr "Seiten"
+
+#: helios/templates/election_audited_ballots.html:28
 #, python-format
 msgid "Audited Ballots %(offset_plus_one)s - %(offset_plus_limit)s"
 msgstr "Geprüfte Stimmzettel %(offset_plus_one)s - %(offset_plus_limit)s"
 
-#: helios/templates/election_audited_ballots.html:27 helios/templates/election_audited_ballots.html:35 helios/templates/election_bboard.html:20
-#: helios/templates/stats_deleted_elections.html:25 helios/templates/stats_elections.html:24 helios/templates/voters_list.html:131
+#: helios/templates/election_audited_ballots.html:29 helios/templates/election_bboard.html:15 helios/templates/voters_manage.html:21
+msgid "back to start"
+msgstr "zurück zum Anfang"
+
+#: helios/templates/election_audited_ballots.html:30 helios/templates/election_audited_ballots.html:30 helios/templates/election_bboard.html:16
+#: helios/templates/stats_deleted_elections.html:21 helios/templates/stats_elections.html:20 helios/templates/voters_list.html:131
 #: helios/templates/voters_manage.html:16 helios/templates/voters_manage.html:24
 #, python-format
 msgid "next %(limit)s"
 msgstr "nächste %(limit)s"
 
-#: helios/templates/election_audited_ballots.html:32 helios/templates/election_bboard.html:25 helios/templates/voters_manage.html:21
-msgid "back to start"
-msgstr "zurück zum Anfang"
+#: helios/templates/election_audited_ballots.html:34 helios/templates/votergroup_view.html:19 helios/templates/voters_list.html:141
+msgid "Actions"
+msgstr "Aktionen"
 
-#: helios/templates/election_audited_ballots.html:39 helios/templates/election_bboard.html:50
+#: helios/templates/election_audited_ballots.html:34 helios/templates/election_bboard.html:24 helios/templates/voters_list.html:151
+msgid "Smart Ballot Tracker"
+msgstr "Stimmzettel-Tracker"
+
+#: helios/templates/election_audited_ballots.html:37 helios/templates/election_bboard.html:32
 msgid "view"
 msgstr "ansehen"
 
@@ -898,7 +915,7 @@ msgstr "ansehen"
 msgid "no audited ballots yet"
 msgstr "noch keine geprüften Stimmzettel"
 
-#: helios/templates/election_badge.html:2 helios/templates/election_bboard.html:14
+#: helios/templates/election_badge.html:2 helios/templates/election_bboard.html:11
 #, python-format
 msgid "<b>%(num)s</b> cast votes."
 msgstr "<b>%(num)s</b> abgegebene Stimmen."
@@ -920,30 +937,30 @@ msgstr "Stimmzettel-Übersicht für %(election_name)s"
 msgid "Ballot Tracking Center"
 msgstr "Stimmzettel-Übersicht"
 
-#: helios/templates/election_bboard.html:10
+#: helios/templates/election_bboard.html:9
 msgid "This is the ballot tracking center, which displays the tracking numbers of all cast ballots in this election."
 msgstr "Dies ist die Stimmzettel-Übersicht, die die Tracker aller abgegebenen Stimmzettel dieser Wahl anzeigt."
 
-#: helios/templates/election_bboard.html:17
+#: helios/templates/election_bboard.html:14
 #, python-format
 msgid "Voters %(offset_plus_one)s - %(offset_plus_limit)s"
 msgstr "Wahlberechtigte %(offset_plus_one)s - %(offset_plus_limit)s"
 
-#: helios/templates/election_bboard.html:29
+#: helios/templates/election_bboard.html:17
 msgid "Show:"
 msgstr "Anzeigen:"
 
-#: helios/templates/election_bboard.html:34
+#: helios/templates/election_bboard.html:19
 msgid "per page"
 msgstr "pro Seite"
 
-#: helios/templates/election_bboard.html:39 helios/templates/voters_list.html:149 helios/templates/voters_manage.html:28
+#: helios/templates/election_bboard.html:24 helios/templates/voters_list.html:149 helios/templates/voters_manage.html:28
 msgid "Alias"
 msgstr "Alias"
 
-#: helios/templates/election_bboard.html:43 helios/templates/voters_list.html:151
-msgid "Smart Ballot Tracker"
-msgstr "Stimmzettel-Tracker"
+#: helios/templates/election_bboard.html:32 helios/templates/voters_list.html:177
+msgid "no vote yet"
+msgstr "noch keine Stimme"
 
 #: helios/templates/election_build.html:5 helios/templates/election_questions.html:7 helios/templatetags/election_tags.py:42
 #: helios/templatetags/navigation_tags.py:28
@@ -1353,9 +1370,9 @@ msgstr "Prüfen Sie Ihre Einstellungen. Nach dem Erstellen der Wahl fügen Sie d
 msgid "Change"
 msgstr "Ändern"
 
-#: helios/templates/election_new_guided.html:49 helios/templates/elections_administered.html:8 helios/templatetags/navigation_tags.py:65
-#: helios/templatetags/navigation_tags.py:66 helios/templatetags/navigation_tags.py:72 helios/templatetags/navigation_tags.py:171
-#: server_ui/templates/index.html:34
+#: helios/templates/election_new_guided.html:49 helios/templates/elections_administered.html:8 helios/templates/votergroup_prepareelection.html:36
+#: helios/templatetags/navigation_tags.py:65 helios/templatetags/navigation_tags.py:66 helios/templatetags/navigation_tags.py:72
+#: helios/templatetags/navigation_tags.py:171 server_ui/templates/index.html:34
 msgid "Create election"
 msgstr "Wahl erstellen"
 
@@ -1539,8 +1556,8 @@ msgctxt "election type"
 msgid "referendum"
 msgstr "Abstimmung"
 
-#: helios/templates/election_view.html:8 helios/templates/stats_user_search.html:36 helios/templates/stats_user_search.html:52
-#: helios/templates/stats_user_search.html:68
+#: helios/templates/election_view.html:8 helios/templates/stats_user_search.html:34 helios/templates/stats_user_search.html:50
+#: helios/templates/stats_user_search.html:66
 msgid "archived"
 msgstr "archiviert"
 
@@ -1978,8 +1995,8 @@ msgstr "<a href=\"%(vote_url)s\">Wahlkabine</a> ansehen."
 msgid "Elections you Administer"
 msgstr "Von Ihnen geleitete Wahlen"
 
-#: helios/templates/elections_administered.html:14 helios/templates/stats_deleted_elections.html:34 helios/templates/stats_elections.html:30
-#: helios/templates/stats_user_search.html:34 helios/templates/stats_user_search.html:50 helios/templates/stats_user_search.html:66
+#: helios/templates/elections_administered.html:14 helios/templates/stats_deleted_elections.html:30 helios/templates/stats_elections.html:29
+#: helios/templates/stats_user_search.html:32 helios/templates/stats_user_search.html:48 helios/templates/stats_user_search.html:64
 #, python-format
 msgid "%(num_voters)s voters / %(num_cast_votes)s cast votes"
 msgstr "%(num_voters)s Wahlberechtigte / %(num_cast_votes)s abgegebene Stimmen"
@@ -2431,49 +2448,57 @@ msgstr "Ergebnis freigeben!"
 msgid "Statistics"
 msgstr "Statistiken"
 
-#: helios/templates/stats.html:6 helios/templatetags/navigation_tags.py:73
+#: helios/templates/stats.html:6 helios/templates/stats.html:8 helios/templatetags/navigation_tags.py:73
 msgid "Admin"
 msgstr "Administration"
 
-#: helios/templates/stats.html:9
+#: helios/templates/stats.html:10
 msgid "elections"
 msgstr "Wahlen"
 
-#: helios/templates/stats.html:10
+#: helios/templates/stats.html:11
 msgid "deleted elections"
 msgstr "gelöschte Wahlen"
 
-#: helios/templates/stats.html:11
+#: helios/templates/stats.html:12
 msgid "user search"
 msgstr "Benutzersuche"
 
-#: helios/templates/stats.html:12
+#: helios/templates/stats.html:13
 msgid "recent votes"
 msgstr "aktuelle Stimmabgaben"
 
-#: helios/templates/stats.html:13
+#: helios/templates/stats.html:14
 msgid "recent problem elections"
 msgstr "aktuelle problematische Wahlen"
 
-#: helios/templates/stats.html:16
+#: helios/templates/stats.html:19
+msgid "Background tasks"
+msgstr "Hintergrundaufgaben"
+
+#: helios/templates/stats.html:20
 #, python-format
 msgid "<b>%(num)s</b> votes in queue."
 msgstr "<b>%(num)s</b> Stimmen in der Warteschlange."
 
-#: helios/templates/stats.html:16
+#: helios/templates/stats.html:20
 msgid "force it"
 msgstr "erzwingen"
 
-#: helios/templates/stats.html:18
+#: helios/templates/stats.html:22
 #, python-format
 msgid "Background tasks: <b>%(ready)s</b> waiting, <b>%(running)s</b> running (%(stuck)s for over %(minutes)s minutes, see <tt>%(cmd)s</tt>), <b>%(failed)s</b> failed in the last day."
 msgstr "Hintergrundaufgaben: <b>%(ready)s</b> wartend, <b>%(running)s</b> laufend (%(stuck)s seit über %(minutes)s Minuten, siehe <tt>%(cmd)s</tt>), <b>%(failed)s</b> fehlgeschlagen am letzten Tag."
 
-#: helios/templates/stats.html:24
+#: helios/templates/stats.html:28
+msgid "Announcement"
+msgstr "Ankündigung"
+
+#: helios/templates/stats.html:32
 msgid "Announcement banner shown on every page (leave empty for none):"
 msgstr "Ankündigungsbanner auf jeder Seite (leer lassen für keines):"
 
-#: helios/templates/stats.html:27
+#: helios/templates/stats.html:35
 msgid "Save"
 msgstr "Speichern"
 
@@ -2481,45 +2506,45 @@ msgstr "Speichern"
 msgid "Deleted Elections"
 msgstr "Gelöschte Wahlen"
 
-#: helios/templates/stats_deleted_elections.html:11 helios/templates/stats_deleted_elections.html:12 helios/templates/stats_elections.html:10
-#: helios/templates/stats_elections.html:11 helios/templates/stats_user_search.html:11 helios/templates/voters_list.html:108
+#: helios/templates/stats_deleted_elections.html:10 helios/templates/stats_deleted_elections.html:11 helios/templates/stats_elections.html:9
+#: helios/templates/stats_elections.html:10 helios/templates/stats_user_search.html:10 helios/templates/voters_list.html:108
 #: helios/templates/voters_list.html:110 helios/templates/voters_manage.html:7 helios/templates/voters_manage.html:7
 msgid "search"
 msgstr "suchen"
 
-#: helios/templates/stats_deleted_elections.html:12 helios/templates/stats_elections.html:11 helios/templates/stats_user_search.html:11
+#: helios/templates/stats_deleted_elections.html:11 helios/templates/stats_elections.html:10 helios/templates/stats_user_search.html:10
 #: helios/templates/voters_list.html:105
 msgid "clear search"
 msgstr "Suche zurücksetzen"
 
-#: helios/templates/stats_deleted_elections.html:19 helios/templates/stats_elections.html:18 helios/templates/voters_list.html:127
+#: helios/templates/stats_deleted_elections.html:17 helios/templates/stats_elections.html:16 helios/templates/voters_list.html:127
 #, python-format
 msgid "previous %(limit)s"
 msgstr "vorherige %(limit)s"
 
-#: helios/templates/stats_deleted_elections.html:22 helios/templates/stats_elections.html:21
+#: helios/templates/stats_deleted_elections.html:19 helios/templates/stats_elections.html:18
 #, python-format
 msgid "Elections %(start)s - %(end)s (of %(total)s)"
 msgstr "Wahlen %(start)s - %(end)s (von %(total)s)"
 
-#: helios/templates/stats_deleted_elections.html:32
+#: helios/templates/stats_deleted_elections.html:29
 #, python-format
 msgid "<b>%(name)s</b> by <a href=\"mailto:%(email)s\">%(admin_name)s</a>"
 msgstr "<b>%(name)s</b> von <a href=\"mailto:%(email)s\">%(admin_name)s</a>"
 
-#: helios/templates/stats_deleted_elections.html:33
+#: helios/templates/stats_deleted_elections.html:30
 msgid "Deleted at:"
 msgstr "Gelöscht am:"
 
-#: helios/templates/stats_deleted_elections.html:35
+#: helios/templates/stats_deleted_elections.html:31
 msgid "Are you sure you want to restore this election? It will become visible to its administrators again."
 msgstr "Möchten Sie diese Wahl wirklich wiederherstellen? Sie wird für ihre Wahlleitung wieder sichtbar."
 
-#: helios/templates/stats_deleted_elections.html:37
+#: helios/templates/stats_deleted_elections.html:33
 msgid "undelete"
 msgstr "wiederherstellen"
 
-#: helios/templates/stats_deleted_elections.html:42
+#: helios/templates/stats_deleted_elections.html:39
 msgid "No deleted elections found."
 msgstr "Keine gelöschten Wahlen gefunden."
 
@@ -2527,7 +2552,7 @@ msgstr "Keine gelöschten Wahlen gefunden."
 msgid "Elections"
 msgstr "Wahlen"
 
-#: helios/templates/stats_elections.html:30
+#: helios/templates/stats_elections.html:28
 #, python-format
 msgid "<b><a href=\"%(url)s\">%(name)s</a></b> by <a href=\"mailto:%(email)s\">%(admin_name)s</a>"
 msgstr "<b><a href=\"%(url)s\">%(name)s</a></b> von <a href=\"mailto:%(email)s\">%(admin_name)s</a>"
@@ -2540,10 +2565,15 @@ msgstr "Problematische Wahlen"
 msgid "Unfrozen for more than a day."
 msgstr "Seit über einem Tag nicht eingefroren."
 
-#: helios/templates/stats_problem_elections.html:12
+#: helios/templates/stats_problem_elections.html:13
 #, python-format
 msgid "%(num_voters)s voters"
 msgstr "%(num_voters)s Wahlberechtigte"
+
+#: helios/templates/stats_problem_elections.html:17 helios/templates/stats_recent_votes.html:17 helios/templates/stats_user_search.html:39
+#: helios/templates/stats_user_search.html:55 helios/templates/stats_user_search.html:71
+msgid "None"
+msgstr "Keine"
 
 #: helios/templates/stats_recent_votes.html:6 helios/templatetags/navigation_tags.py:76
 msgid "Recent Votes"
@@ -2553,7 +2583,7 @@ msgstr "Aktuelle Stimmabgaben"
 msgid "Last 24 hours"
 msgstr "Letzte 24 Stunden"
 
-#: helios/templates/stats_recent_votes.html:12
+#: helios/templates/stats_recent_votes.html:13
 #, python-format
 msgid "%(num)s recently cast votes"
 msgstr "%(num)s kürzlich abgegebene Stimmen"
@@ -2562,60 +2592,56 @@ msgstr "%(num)s kürzlich abgegebene Stimmen"
 msgid "User Search"
 msgstr "Benutzersuche"
 
-#: helios/templates/stats_user_search.html:10
+#: helios/templates/stats_user_search.html:9
 msgid "Name or user ID"
 msgstr "Name oder Benutzer-ID"
 
-#: helios/templates/stats_user_search.html:10
+#: helios/templates/stats_user_search.html:9
 msgid "Search for user"
 msgstr "Benutzer*in suchen"
 
-#: helios/templates/stats_user_search.html:17
+#: helios/templates/stats_user_search.html:15
 #, python-format
 msgid "Found %(n)s user(s)"
 msgstr "%(n)s Benutzer*in(nen) gefunden"
 
-#: helios/templates/stats_user_search.html:23
+#: helios/templates/stats_user_search.html:21
 msgid "User ID:"
 msgstr "Benutzer-ID:"
 
-#: helios/templates/stats_user_search.html:24
+#: helios/templates/stats_user_search.html:22
 msgid "User Type:"
 msgstr "Benutzertyp:"
 
-#: helios/templates/stats_user_search.html:25
+#: helios/templates/stats_user_search.html:23
 msgid "Site Admin:"
 msgstr "Administration:"
 
-#: helios/templates/stats_user_search.html:28
+#: helios/templates/stats_user_search.html:26
 #, python-format
 msgid "Elections as Administrator (%(n)s)"
 msgstr "Wahlen als Wahlleitung (%(n)s)"
 
-#: helios/templates/stats_user_search.html:35 helios/templates/stats_user_search.html:51 helios/templates/stats_user_search.html:67
+#: helios/templates/stats_user_search.html:33 helios/templates/stats_user_search.html:49 helios/templates/stats_user_search.html:65
 msgid "frozen"
 msgstr "eingefroren"
 
-#: helios/templates/stats_user_search.html:41 helios/templates/stats_user_search.html:57 helios/templates/stats_user_search.html:73
-msgid "None"
-msgstr "Keine"
-
-#: helios/templates/stats_user_search.html:44
+#: helios/templates/stats_user_search.html:42
 #, python-format
 msgid "Elections as Voter (%(n)s)"
 msgstr "Wahlen als wahlberechtigte Person (%(n)s)"
 
-#: helios/templates/stats_user_search.html:60
+#: helios/templates/stats_user_search.html:58
 #, python-format
 msgid "Elections as Trustee (%(n)s)"
 msgstr "Wahlen als Treuhänder*in (%(n)s)"
 
-#: helios/templates/stats_user_search.html:78
+#: helios/templates/stats_user_search.html:76
 #, python-format
 msgid "No users found matching \"%(q)s\""
 msgstr "Keine Benutzer*innen zu „%(q)s“ gefunden"
 
-#: helios/templates/stats_user_search.html:81
+#: helios/templates/stats_user_search.html:79
 msgid "Enter a search term to find users"
 msgstr "Geben Sie einen Suchbegriff ein, um Benutzer*innen zu finden"
 
@@ -2832,17 +2858,17 @@ msgstr "Wählergruppen"
 msgid "Voter groups you administer"
 msgstr "Von Ihnen verwaltete Wählergruppen"
 
-#: helios/templates/votergroup_administered.html:5
-msgid "back to home"
-msgstr "zurück zur Startseite"
+#: helios/templates/votergroup_administered.html:6 server_ui/templates/index.html:41
+msgid "Voter groups are reusable lists of members, with their votes, from which you prepare an election."
+msgstr "Wählergruppen sind wiederverwendbare Mitgliederlisten mit Stimmenzahl, aus denen Sie eine Wahl vorbereiten."
 
-#: helios/templates/votergroup_administered.html:11
-msgid "none yet"
-msgstr "noch keine"
-
-#: helios/templates/votergroup_administered.html:15
+#: helios/templates/votergroup_administered.html:8
 msgid "Create new voter group"
 msgstr "Neue Wählergruppe erstellen"
+
+#: helios/templates/votergroup_administered.html:17
+msgid "none yet"
+msgstr "noch keine"
 
 #: helios/templates/votergroup_memberadd.html:3
 msgid "add member"
@@ -2853,13 +2879,9 @@ msgstr "Mitglied hinzufügen"
 msgid "Add a member to voter group %(name)s"
 msgstr "Mitglied zur Wählergruppe %(name)s hinzufügen"
 
-#: helios/templates/votergroup_memberadd.html:12
-msgid "Add &gt;&gt;"
-msgstr "Hinzufügen &gt;&gt;"
-
-#: helios/templates/votergroup_memberadd.html:15 helios/templates/votergroup_prepareelection.html:36
-msgid "Back to group"
-msgstr "Zurück zur Gruppe"
+#: helios/templates/votergroup_memberadd.html:11
+msgid "Add member"
+msgstr "Mitglied hinzufügen"
 
 #: helios/templates/votergroup_new.html:3
 msgid "New voter group"
@@ -2869,13 +2891,9 @@ msgstr "Neue Wählergruppe"
 msgid "Create a new voter group"
 msgstr "Neue Wählergruppe erstellen"
 
-#: helios/templates/votergroup_new.html:14
-msgid "Create &gt;&gt;"
-msgstr "Erstellen &gt;&gt;"
-
-#: helios/templates/votergroup_new.html:17
-msgid "Back to voter groups"
-msgstr "Zurück zu den Wählergruppen"
+#: helios/templates/votergroup_new.html:13
+msgid "Create voter group"
+msgstr "Wählergruppe erstellen"
 
 #: helios/templates/votergroup_prepareelection.html:3
 msgid "new election"
@@ -2890,54 +2908,50 @@ msgstr "Neue Wahl für %(name)s erstellen"
 msgid "One row per vote. A vote can be delegated to another member of the group; the delegated vote is then issued to that member."
 msgstr "Eine Zeile pro Stimme. Eine Stimme kann auf ein anderes Gruppenmitglied übertragen werden; die übertragene Stimme erhält dann dieses Mitglied."
 
-#: helios/templates/votergroup_prepareelection.html:17
+#: helios/templates/votergroup_prepareelection.html:18
 msgid "Delegate to"
 msgstr "Übertragen an"
 
-#: helios/templates/votergroup_prepareelection.html:17
+#: helios/templates/votergroup_prepareelection.html:18
 msgid "Login ID"
 msgstr "Wähler-ID"
 
-#: helios/templates/votergroup_prepareelection.html:29
+#: helios/templates/votergroup_prepareelection.html:31
 msgid "Election settings"
 msgstr "Wahleinstellungen"
-
-#: helios/templates/votergroup_prepareelection.html:33
-msgid "Create election &gt;&gt;"
-msgstr "Wahl erstellen &gt;&gt;"
 
 #: helios/templates/votergroup_view.html:6
 #, python-format
 msgid "created by %(admin)s"
 msgstr "erstellt von %(admin)s"
 
-#: helios/templates/votergroup_view.html:8
-msgid "Members"
-msgstr "Mitglieder"
-
-#: helios/templates/votergroup_view.html:11
-msgid "# of votes"
-msgstr "Anzahl Stimmen"
-
-#: helios/templates/votergroup_view.html:22
-msgid "Delete"
-msgstr "Löschen"
-
-#: helios/templates/votergroup_view.html:27
-msgid "no members yet"
-msgstr "noch keine Mitglieder"
-
-#: helios/templates/votergroup_view.html:32
-msgid "Add a new member"
-msgstr "Neues Mitglied hinzufügen"
-
-#: helios/templates/votergroup_view.html:33
+#: helios/templates/votergroup_view.html:9
 msgid "Start election"
 msgstr "Wahl starten"
 
-#: helios/templates/votergroup_view.html:34
-msgid "All voter groups"
-msgstr "Alle Wählergruppen"
+#: helios/templates/votergroup_view.html:10
+msgid "Add a new member"
+msgstr "Neues Mitglied hinzufügen"
+
+#: helios/templates/votergroup_view.html:13
+msgid "Members"
+msgstr "Mitglieder"
+
+#: helios/templates/votergroup_view.html:19
+msgid "# of votes"
+msgstr "Anzahl Stimmen"
+
+#: helios/templates/votergroup_view.html:30
+msgid "Remove this member from the group?"
+msgstr "Dieses Mitglied aus der Gruppe entfernen?"
+
+#: helios/templates/votergroup_view.html:32
+msgid "Delete"
+msgstr "Löschen"
+
+#: helios/templates/votergroup_view.html:41
+msgid "no members yet"
+msgstr "noch keine Mitglieder"
 
 #: helios/templates/voters_eligibility.html:4
 #, python-format
@@ -3129,18 +3143,10 @@ msgstr[1] "%(counter)s abgegebene Stimmen"
 msgid "no votes yet"
 msgstr "noch keine Stimmen"
 
-#: helios/templates/voters_list.html:125
-msgid "Pages"
-msgstr "Seiten"
-
 #: helios/templates/voters_list.html:129
 #, python-format
 msgid "Voters %(start)s - %(end)s (of %(total_voters)s)"
 msgstr "Wahlberechtigte %(start)s - %(end)s (von %(total_voters)s)"
-
-#: helios/templates/voters_list.html:141
-msgid "Actions"
-msgstr "Aktionen"
 
 #: helios/templates/voters_list.html:142 helios_auth/templates/ldapauth/login.html:21 helios_auth/templates/password/login.html:5
 #: helios_auth/templates/password/login.html:12 helios_auth/templates/password/login.html:21
@@ -3159,10 +3165,6 @@ msgstr "E-Mail"
 #, python-format
 msgid "are you sure you want to remove %(name)s ?"
 msgstr "Möchten Sie %(name)s wirklich entfernen?"
-
-#: helios/templates/voters_list.html:177
-msgid "no vote yet"
-msgstr "noch keine Stimme"
 
 #: helios/templates/voters_list.html:186
 msgid "no voters."
@@ -3631,16 +3633,16 @@ msgstr "Die E-Mail-Adresse %(email)s erhält wieder Helios-E-Mails."
 msgid "no spaces, e.g. faculty-council"
 msgstr "ohne Leerzeichen, z. B. fakultaetsrat"
 
-#: helios/votergroup.py:22 helios/templates/votergroup_prepareelection.html:17 helios/templates/votergroup_view.html:11
+#: helios/votergroup.py:22 helios/templates/votergroup_prepareelection.html:18 helios/templates/votergroup_view.html:19
 msgid "First name"
 msgstr "Vorname"
 
-#: helios/votergroup.py:23 helios/templates/votergroup_prepareelection.html:17 helios/templates/votergroup_view.html:11
+#: helios/votergroup.py:23 helios/templates/votergroup_prepareelection.html:18 helios/templates/votergroup_view.html:19
 msgid "Last name"
 msgstr "Nachname"
 
-#: helios/votergroup.py:24 helios/templates/new_trustee.html:22 helios/templates/votergroup_prepareelection.html:17
-#: helios/templates/votergroup_view.html:11
+#: helios/votergroup.py:24 helios/templates/new_trustee.html:22 helios/templates/votergroup_prepareelection.html:18
+#: helios/templates/votergroup_view.html:19
 msgid "Email"
 msgstr "E-Mail"
 
@@ -3707,11 +3709,11 @@ msgstr "Beim Einfrieren des Stimmzettels"
 msgid "When you compute the tally"
 msgstr "Beim Berechnen der Auszählung"
 
-#: helios/wizard_views.py:90 helios/templates/stats_user_search.html:25
+#: helios/wizard_views.py:90 helios/templates/stats_user_search.html:23
 msgid "No"
 msgstr "Nein"
 
-#: helios/wizard_views.py:90 helios/templates/stats_user_search.html:25
+#: helios/wizard_views.py:90 helios/templates/stats_user_search.html:23
 msgid "Yes"
 msgstr "Ja"
 
@@ -4185,10 +4187,6 @@ msgstr "Alle Wahlen anzeigen"
 #: server_ui/templates/index.html:40
 msgid "Committee administration"
 msgstr "Gremienverwaltung"
-
-#: server_ui/templates/index.html:41
-msgid "Voter groups are reusable lists of members, with their votes, from which you prepare an election."
-msgstr "Wählergruppen sind wiederverwendbare Mitgliederlisten mit Stimmenzahl, aus denen Sie eine Wahl vorbereiten."
 
 #: server_ui/templates/index.html:42
 msgid "See all groups"

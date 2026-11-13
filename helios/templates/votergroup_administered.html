@@ -2,15 +2,18 @@
 {% load i18n %}
 {% block title %}{% translate "Voter groups" %}{% endblock %}
 {% block content %}
-<h2 class="title">{% translate "Voter groups you administer" %} <span style="font-size:0.7em;">[<a href="/">{% translate "back to home" %}</a>]</span></h2>
+<h1 class="title">{% translate "Voter groups you administer" %}</h1>
+<p class="page-lead">{% translate "Voter groups are reusable lists of members, with their votes, from which you prepare an election." %}</p>
 
-<ul>
+<p class="actions"><a class="button" href="{% url "votergroup@new" %}">{% translate "Create new voter group" %}</a></p>
+
+{% if votergroups %}
+<ul class="election-list">
 {% for group in votergroups %}
   <li><a href="{% url "votergroup@view" group.uuid %}">{{group.short_name}}</a></li>
-{% empty %}
-  <li><em>{% translate "none yet" %}</em></li>
 {% endfor %}
 </ul>
-
-<a href="{% url "votergroup@new" %}">{% translate "Create new voter group" %}</a>
+{% else %}
+<div class="callout empty-state"><p>{% translate "none yet" %}</p></div>
+{% endif %}
 {% endblock %}

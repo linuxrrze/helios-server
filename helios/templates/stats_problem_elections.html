@@ -1,16 +1,20 @@
 {% extends TEMPLATE_BASE %}
-{% load i18n %}
+{% load i18n timezone_tags %}
 {% block title %}{% translate "Statistics" %}{% endblock %}
 
 {% block content %}
-<h1>{% translate "Problematic Elections" %}</h1>
+<h1 class="title">{% translate "Problematic Elections" %}</h1>
 
-{% translate "Unfrozen for more than a day." %}
+<p class="page-lead">{% translate "Unfrozen for more than a day." %}</p>
 
+{% if elections %}
+<ul class="election-list">
 {% for election in elections %}
-<p>
-<b><a href="{% url "election@view" election.uuid %}">{{election.name}}</a></b> -- {% blocktranslate trimmed with num_voters=election.num_voters %}{{num_voters}} voters{% endblocktranslate %}
-</p>
+<li><b><a href="{% url "election@view" election.uuid %}">{{election.name}}</a></b> <span class="muted">{% blocktranslate trimmed with num_voters=election.num_voters %}{{num_voters}} voters{% endblocktranslate %}</span></li>
 {% endfor %}
+</ul>
+{% else %}
+<div class="callout empty-state"><p>{% translate "None" %}</p></div>
+{% endif %}
 
 {% endblock %}

@@ -3,28 +3,37 @@
 {% block title %}{% translate "Statistics" %}{% endblock %}
 
 {% block content %}
-<h1>{% translate "Admin" %}</h1>
+<h1 class="title">{% translate "Admin" %}</h1>
 
+<nav class="election-nav" aria-label="{% translate "Admin" %}">
 <ul>
-<li> <a href="{% url "stats@elections" %}">{% translate "elections" %}</a></li>
-<li> <a href="{% url "stats@deleted-elections" %}">{% translate "deleted elections" %}</a></li>
-<li> <a href="{% url "stats@user-search" %}">{% translate "user search" %}</a></li>
-<li> <a href="{% url "stats@recent-votes" %}">{% translate "recent votes" %}</a></li>
-<li> <a href="{% url "stats@elections-problems" %}">{% translate "recent problem elections" %}</a></li>
+<li><a href="{% url "stats@elections" %}">{% translate "elections" %}</a></li>
+<li><a href="{% url "stats@deleted-elections" %}">{% translate "deleted elections" %}</a></li>
+<li><a href="{% url "stats@user-search" %}">{% translate "user search" %}</a></li>
+<li><a href="{% url "stats@recent-votes" %}">{% translate "recent votes" %}</a></li>
+<li><a href="{% url "stats@elections-problems" %}">{% translate "recent problem elections" %}</a></li>
 </ul>
+</nav>
 
-<div>{% blocktranslate trimmed with num=num_votes_in_queue %}<b>{{num}}</b> votes in queue.{% endblocktranslate %} {% if num_votes_in_queue %}[<form class="inline-action" method="post" action="{% url "stats@force-queue" %}"><input type="hidden" name="csrf_token" value="{{csrf_token}}" /><button type="submit" class="link-button">{% translate "force it" %}</button></form>]{% endif %}</div>
+<section class="card" aria-labelledby="stats-queue">
+<h2 id="stats-queue">{% translate "Background tasks" %}</h2>
+<p>{% blocktranslate trimmed with num=num_votes_in_queue %}<b>{{num}}</b> votes in queue.{% endblocktranslate %} {% if num_votes_in_queue %}[<form class="inline-action" method="post" action="{% url "stats@force-queue" %}"><input type="hidden" name="csrf_token" value="{{csrf_token}}" /><button type="submit" class="link-button">{% translate "force it" %}</button></form>]{% endif %}</p>
 
-<div>{% blocktranslate trimmed with ready=task_counts.ready running=task_counts.running stuck=task_counts.stuck minutes=stuck_after_minutes cmd="manage.py requeue_stuck_tasks" failed=task_counts.failed_last_day %}Background tasks: <b>{{ready}}</b> waiting, <b>{{running}}</b> running
+<p>{% blocktranslate trimmed with ready=task_counts.ready running=task_counts.running stuck=task_counts.stuck minutes=stuck_after_minutes cmd="manage.py requeue_stuck_tasks" failed=task_counts.failed_last_day %}Background tasks: <b>{{ready}}</b> waiting, <b>{{running}}</b> running
 ({{stuck}} for over {{minutes}} minutes, see <tt>{{cmd}}</tt>),
-<b>{{failed}}</b> failed in the last day.{% endblocktranslate %}</div>
+<b>{{failed}}</b> failed in the last day.{% endblocktranslate %}</p>
+</section>
 
-<form method="post" action="{% url "stats@set-announcement" %}">
+<section class="card" aria-labelledby="stats-announcement">
+<h2 id="stats-announcement">{% translate "Announcement" %}</h2>
+<form method="post" action="{% url "stats@set-announcement" %}" class="form-narrow">
   <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
-  <label>{% translate "Announcement banner shown on every page (leave empty for none):" %}
-    <input type="text" name="text" value="{{announcement}}" />
-  </label>
-  <button type="submit" class="tiny button">{% translate "Save" %}</button>
+  <div class="field">
+    <label for="announcement-text">{% translate "Announcement banner shown on every page (leave empty for none):" %}</label>
+    <input type="text" id="announcement-text" name="text" value="{{announcement}}" class="input-wide" />
+  </div>
+  <button type="submit" class="button">{% translate "Save" %}</button>
 </form>
+</section>
 
 {% endblock %}
