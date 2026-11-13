@@ -29,6 +29,7 @@ from helios_auth.models import AuthenticationExpired
 from helios_auth.security import check_csrf, login_required, get_user, save_in_session_across_logouts
 from helios_auth.utils import same_site_path
 from . import datatypes
+from . import election_progress
 from . import forms
 from . import tasks
 from .crypto import algs, electionalgs, elgamal
@@ -355,8 +356,17 @@ def one_election_view(request, election):
   # should we show the result?
   show_result = election.result_released_at or (election.result and admin_p)
 
+  status_key, status_label = election_progress.election_status(election)
+  if admin_p:
+    admin_steps = election_progress.admin_steps(election, trustees)
+    freeze_issues = election_progress.issues_with_links(election) if not election.frozen_at else []
+  else:
+    admin_steps, freeze_issues = None, []
+
   return render_template(request, 'election_view',
                          {'election' : election, 'trustees': trustees, 'admin_p': admin_p, 'user': user,
+                          'status_key': status_key, 'status_label': status_label,
+                          'admin_steps': admin_steps, 'freeze_issues': freeze_issues,
                           'voter': voter, 'votes': votes, 'notregistered': notregistered, 'eligible_p': eligible_p,
                           'can_feature_p': can_feature_p, 'election_url' : election_url, 
                           'vote_url': vote_url, 'election_badge_url' : election_badge_url,
