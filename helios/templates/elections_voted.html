@@ -1,12 +1,18 @@
 {% extends TEMPLATE_BASE %}
-{% load i18n %}
+{% load i18n election_tags %}
 
+{% block title %}{% translate "Elections where you voted" %}{% endblock %}
 {% block content %}
-  <h2 class="title">{% translate "Elections where you voted" %} <span style="font-size:0.7em;">[<a href="/">{% translate "back to home" %}</a>]</span></h2>
+<a class="back-link" href="/">{% translate "back to home" %}</a>
+<h1 class="title">{% translate "Elections where you voted" %}</h1>
 
-<ul>
+{% if elections %}
+<ul class="election-list">
 {% for election in elections %}
-<li> <a href="{% url "election@view" election.uuid %}">{{election.name}}</a></li>
+<li><a href="{% url "election@view" election.uuid %}">{{election.name}}</a> {% election_status_badge election %}</li>
 {% endfor %}
 </ul>
+{% else %}
+<div class="callout empty-state"><p>{% translate "None yet." %}</p></div>
+{% endif %}
 {% endblock %}

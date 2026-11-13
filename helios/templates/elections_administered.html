@@ -1,12 +1,21 @@
 {% extends TEMPLATE_BASE %}
-{% load i18n %}
+{% load i18n election_tags %}
 
+{% block title %}{% translate "Elections you Administer" %}{% endblock %}
 {% block content %}
-  <h2 class="title">{% translate "Elections you Administer" %} <span style="font-size:0.7em;">[<a href="/">{% translate "back to home" %}</a>]</span></h2>
+<a class="back-link" href="/">{% translate "back to home" %}</a>
+<h1 class="title">{% translate "Elections you Administer" %}</h1>
 
-<ul>
+<p class="actions"><a class="button" href="{% url "elections@new" %}">{% translate "Create election" %}</a></p>
+
+{% if elections %}
+<ul class="election-list">
 {% for election in elections %}
-<li> <a href="{% url "election@view" election.uuid %}">{{election.name}}</a><em> - {% blocktranslate trimmed with num_voters=election.num_voters num_cast_votes=election.num_cast_votes %}{{num_voters}} voters / {{num_cast_votes}} cast votes{% endblocktranslate %}</em></li>
+<li><a href="{% url "election@view" election.uuid %}">{{election.name}}</a> {% election_status_badge election %}
+<span class="muted">{% blocktranslate trimmed with num_voters=election.num_voters num_cast_votes=election.num_cast_votes %}{{num_voters}} voters / {{num_cast_votes}} cast votes{% endblocktranslate %}</span></li>
 {% endfor %}
 </ul>
+{% else %}
+<div class="callout empty-state"><p>{% translate "You don't administer any elections yet." %}</p></div>
+{% endif %}
 {% endblock %}

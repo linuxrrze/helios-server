@@ -322,3 +322,15 @@ table.pretty .helptext { margin-top: 4px; }
 .ballot-tracker-card .tracker { margin: 6px 8px 6px 0; font-size: 1.15rem; }
 .voter-login-form { max-width: 32rem; }
 .content-body blockquote { margin: .5em 0; padding-left: 12px; border-left: 3px solid var(--border-color); }
+
+/* --- start page and election lists --------------------------------------- */
+.home-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: 20px; align-items: start; }
+.content-body .home-section h2 { margin-top: 0; }
+.home-section .actions { margin-bottom: 0; }
+.election-list { margin: 0 0 1em; padding: 0; list-style: none; }
+.election-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 8px 0; border-bottom: 1px solid var(--border-color); }
+.election-list li:last-child { border-bottom: 0; }
+.election-list .muted { flex-basis: 100%; }
+.featured-elections { padding-left: 0; list-style: none; }
+.featured-elections li { margin: 0 0 .5em; }
+.welcome { max-width: 48rem; }
