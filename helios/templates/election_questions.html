@@ -48,7 +48,8 @@
     min_above_count: '{% filter escapejs %}{% blocktranslate with min="__MIN__" count="__COUNT__" %}Voters cannot choose at least {{min}} answers: the question has only {{count}}. Add answers or lower the minimum.{% endblocktranslate %}{% endfilter %}',
     max_above_count: '{% filter escapejs %}{% blocktranslate with max="__MAX__" count="__COUNT__" %}The maximum of {{max}} answers is more than the {{count}} answers of this question. Lower the maximum or choose "unlimited".{% endblocktranslate %}{% endfilter %}',
     saved: '{% filter escapejs %}{% translate "The questions have been saved." %}{% endfilter %}',
-    save_failed: '{% filter escapejs %}{% translate "The questions could not be saved. Please try again." %}{% endfilter %}'
+    save_failed: '{% filter escapejs %}{% translate "The questions could not be saved. Please try again." %}{% endfilter %}',
+    leave_unsaved: '{% filter escapejs %}{% translate "Your input for the questions has not been saved yet and will be lost. Leave this page anyway?" %}{% endfilter %}'
   };
 
   // gettext text with %(num)s, usable in the jTemplate (no braces there)
@@ -171,6 +172,7 @@
 
       // the new question starts with one answer field; "Add answer" adds more
       add_answers($('#answer_table'), 1);
+      remember_form_start(document.getElementById('question_form'));
  }
 
   // an error shown in the form (instead of a popup), announced by role=alert
@@ -296,6 +298,7 @@
     if (!q_data.answers.length)
       answer_table.append(createAnswerRowHTML());
     renumber_answers(answer_table);
+    remember_form_start(form[0]);
     form.find('input[name=question]').focus();
 }
 
@@ -359,6 +362,75 @@
     return $.toJSON([q.question, q.answers]);
   }
 
+  // Unsaved input: a question being added, or an open edit form with changes.
+  // Leaving the page asks first: links (setup steps, breadcrumbs, menu) with a
+  // confirm(), anything else (reload, back, closing the tab, other forms) with
+  // the browser's own leave dialog. A language switch keeps the input (see the
+  // "questions" hook below), so it is not asked about here.
+  var FORM_START = {};
+
+  // what was entered in a form, without empty answer rows and open link fields
+  function form_fingerprint(form) {
+    var state = question_form_state(form);
+    state.answers = $.map(state.answers, function(a) {
+      return (a.text || a.url) ? [[a.text, a.url]] : null;
+    });
+    return $.toJSON(state);
+  }
+
+  function remember_form_start(form) {
+    if (form)
+      FORM_START[form.id] = form_fingerprint(form);
+  }
+
+  function unsaved_question_input() {
+    var forms = [document.getElementById('question_form')];
+    $(QUESTIONS).each(function(i) {
+      if ($('#q_edit_' + i).css('display') != 'none')
+        forms.push(document.getElementById('question_edit_' + i + '_form'));
+    });
+    for (var i = 0; i < forms.length; i++) {
+      if (forms[i] && FORM_START[forms[i].id] !== undefined && form_fingerprint(forms[i]) != FORM_START[forms[i].id])
+        return true;
+    }
+    return false;
+  }
+
+  // set once the visitor has agreed to leave (or switches the language), so
+  // that the browser's leave dialog does not ask a second time
+  var LEAVING = false;
+  function leaving() {
+    LEAVING = true;
+    // in case the navigation does not happen after all (download, cancelled, ...)
+    setTimeout(function() { LEAVING = false; }, 3000);
+  }
+
+  document.addEventListener('click', function(evt) {
+    if (evt.defaultPrevented || evt.button !== 0 || evt.ctrlKey || evt.metaKey || evt.shiftKey || evt.altKey)
+      return;
+    var link = $(evt.target).closest('a[href]')[0];
+    if (!link || link.target == '_blank' || link.hasAttribute('download'))
+      return;
+    var href = link.getAttribute('href');
+    if (href.charAt(0) == '#' || /^(javascript|mailto|tel):/i.test(href))
+      return;
+    if (!unsaved_question_input())
+      return;
+    if (window.confirm(TEXTS.leave_unsaved))
+      leaving();
+    else
+      evt.preventDefault();
+  });
+
+  window.addEventListener('beforeunload', function(evt) {
+    if (LEAVING || !ADMIN_P || !unsaved_question_input())
+      return;
+    // current browsers show their own text
+    evt.preventDefault();
+    evt.returnValue = TEXTS.leave_unsaved;
+    return TEXTS.leave_unsaved;
+  });
+
   if (window.HeliosFormState) HeliosFormState.register('questions', {
     save: function() {
       var state = {edits: []};
@@ -392,6 +464,14 @@
   });
 
   $(document).ready(function() {
+      // switching the language keeps the input (language-switch.js runs its
+      // submit handler first and cancels the switch if the visitor says no)
+      $('form.language-switcher').each(function() {
+        this.addEventListener('submit', function(evt) {
+          if (!evt.defaultPrevented) leaving();
+        });
+      });
+
       $('#questions').setTemplateURL("/static/helios/static_templates/question.html");
 
       refresh();

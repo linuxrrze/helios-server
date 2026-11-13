@@ -150,3 +150,15 @@ class SaveQuestionsViewTests(TestCase):
     self.assertIn('id="question_editor_error"', content)
     self.assertIn('JSON.parse(xhr.responseText).error', content)
     self.assertNotIn('alert(TEXTS', content)
+
+  def test_editor_asks_before_unsaved_input_is_lost(self):
+    """Leaving the page with unsaved questions asks first; the language switch does not"""
+    content = self.client.get('/helios/elections/%s/questions' % self.election.uuid, HTTP_ACCEPT_LANGUAGE='de').content.decode()
+    self.assertIn("leave_unsaved: 'Ihre Eingaben zu den Fragen sind noch nicht gespeichert", content)
+    self.assertIn("addEventListener('beforeunload'", content)
+    self.assertIn("window.confirm(TEXTS.leave_unsaved)", content)
+    # the switch keeps the input through the "questions" hook, so it is not asked about
+    self.assertIn("HeliosFormState.register('questions'", content)
+    self.assertIn("if (!evt.defaultPrevented) leaving();", content)
+    # the setup navigation is there to be guarded
+    self.assertIn('class="setup-pager"', content)

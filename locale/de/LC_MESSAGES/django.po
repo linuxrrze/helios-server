@@ -1530,6 +1530,10 @@ msgstr "Die Fragen wurden gespeichert."
 msgid "The questions could not be saved. Please try again."
 msgstr "Die Fragen konnten nicht gespeichert werden. Bitte versuchen Sie es erneut."
 
+#: helios/templates/election_questions.html:52
+msgid "Your input for the questions has not been saved yet and will be lost. Leave this page anyway?"
+msgstr "Ihre Eingaben zu den Fragen sind noch nicht gespeichert und gehen verloren. Möchten Sie die Seite trotzdem verlassen?"
+
 #: helios/templates/election_register.html:5 helios/templatetags/navigation_tags.py:34
 msgid "Register"
 msgstr "Registrieren"
