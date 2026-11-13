@@ -3,22 +3,28 @@
 
 {% block title %}{% translate "Compute Tally" %} &mdash; {{election.name}}{% endblock %}
 {% block content %}
-  <h2 class="title">{{election.name}} &mdash; {% translate "Compute Tally" %} <span style="font-size:0.7em;">[<a href="{% url "election@view" election.uuid %}">{% translate "cancel" %}</a>]</span></h2>
+<a class="back-link" href="{% url "election@view" election.uuid %}">{% translate "back to election" %}</a>
+<h1 class="title">{{election.name}} &mdash; {% translate "Compute Tally" %}</h1>
 
   {% if decryption_failed %}
+  <div class="callout callout-danger" role="alert">
   <p class="error">
     {% translate "The trustees' partial decryptions don't decrypt the tally, so no result was saved." %}
     {% translate "Check that every trustee's partial decryption is for the current tally." %}
   </p>
+  </div>
   {% endif %}
 
   <p>
     {% translate "You are about to compute the tally for this election. You only will then see the results." %}
   </p>
+  <p class="muted">{% translate "You can check the result before you release it to everyone." %}</p>
 
   <form method="POST" action="">
     <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
-    <input type="submit" class="button" value="{% translate "compute the tally!" %}" />
+    <div class="actions">
+      <button type="submit" class="button">{% translate "compute the tally!" %}</button>
+      <a href="{% url "election@view" election.uuid %}">{% translate "cancel" %}</a>
+    </div>
   </form>
-
 {% endblock %}

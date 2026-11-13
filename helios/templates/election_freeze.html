@@ -1,44 +1,59 @@
 {% extends TEMPLATE_BASE %}
-{% load i18n %}
+{% load i18n timezone_tags %}
 
+{% block title %}{% translate "Freeze Ballot" %} &mdash; {{election.name}}{% endblock %}
 {% block content %}
-  <h2 class="title">{{election.name}} &mdash; {% translate "Freeze Ballot" %}</h2>
-<p>
-{% translate "Once an election is frozen, the questions, options, and trustees can no longer be modified." %}<br />
-</p>
-
-<p>
-{% if election.openreg %}
-{% translate "Registration for your election is currently <b>open</b>, which means anyone can vote, even after you freeze the ballot." %}
-{% else %}
-{% translate "Registration for your election is currently <b>closed</b>, which means only the voters you designate will be able to cast a ballot. As the administrator, you will still be able to modify that voter list as the election progresses." %}
-{% endif %}
-</p>    
-
-{% if helios.VOTERS_EMAIL %}
-<p>
-{% translate "You must freeze the ballot before you can contact voters." %}
-</p>
-{% endif %}
+<a class="back-link" href="{% url "election@view" election.uuid %}">{% translate "back to election" %}</a>
+<h1 class="title">{{election.name}} &mdash; {% translate "Freeze Ballot" %}</h1>
 
 {% if issues_p %}
-<p>
-    {% translate "Before you can freeze the election, you will need to:" %}
-    <ul>
-        {% for issue in issues %}
-        <li>{{issue.action}}</li>
-        {% endfor %}
-    </ul>
-    <a href="{% url "election@view" election.uuid %}">{% translate "go back to the election" %}</a>
-</p>
+<div class="callout callout-warning">
+  <span class="callout-title">{% translate "Before you can freeze the election, you will need to:" %}</span>
+  <ul>
+    {% for issue in issues %}
+    <li>{{issue.action}}</li>
+    {% endfor %}
+  </ul>
+</div>
+<p><a class="button secondary" href="{% url "election@view" election.uuid %}">{% translate "go back to the election" %}</a></p>
 {% else %}
+
+<div class="callout callout-warning">
+  <span class="callout-title">{% translate "This cannot be undone." %}</span>
+  <p>{% translate "Once an election is frozen, the questions, options, and trustees can no longer be modified." %}</p>
+</div>
+
+<h2>{% translate "What happens when you freeze the ballot" %}</h2>
+<ul>
+  <li>
+  {% if election.voting_starts_at %}
+  {% blocktranslate trimmed with start=election.voting_starts_at|utc_time %}Voting opens automatically at {{ start }}, as per your settings.{% endblocktranslate %}
+  {% else %}
+  {% translate "Voting opens immediately." %}
+  {% endif %}
+  </li>
+  <li>
+  {% if election.openreg %}
+  {% translate "Registration for your election is currently <b>open</b>, which means anyone can vote, even after you freeze the ballot." %}
+  {% else %}
+  {% translate "Registration for your election is currently <b>closed</b>, which means only the voters you designate will be able to cast a ballot. As the administrator, you will still be able to modify that voter list as the election progresses." %}
+  {% endif %}
+  </li>
+  {% if settings.HELIOS_VOTERS_EMAIL %}
+  <li>{% translate "After freezing, you can email the voters their invitation with the link and, if needed, their credentials." %}</li>
+  {% endif %}
+</ul>
+
+<p>{% blocktranslate trimmed count counter=election.questions|length %}The ballot has {{ counter }} question.{% plural %}The ballot has {{ counter }} questions.{% endblocktranslate %}
+<a href="{% url "election@questions" election.uuid %}">{% translate "Review the questions" %}</a> &middot;
+<a href="{{SECURE_URL_HOST}}/booth/vote.html?election_url={% url "election@home" election.uuid %}">{% translate "preview booth" %}</a></p>
+
 <form method="post" action="">
 <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
-    
-<input class="button" type="submit" value="{% translate "Freeze the ballot" %}" />
-<button class="button" onclick="document.location='{% url "election@view" election.uuid %}'; return false;">{% translate "do NOT freeze yet" %}</button>
+<div class="actions">
+  <button class="button" type="submit">{% translate "Freeze the ballot" %}</button>
+  <a href="{% url "election@view" election.uuid %}">{% translate "do NOT freeze yet" %}</a>
+</div>
 </form>
 {% endif %}
-
-<br /><br />
 {% endblock %}

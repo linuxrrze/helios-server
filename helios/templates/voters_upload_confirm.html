@@ -1,41 +1,50 @@
 {% extends TEMPLATE_BASE %}
 {% load i18n %}
 
+{% block title %}{% translate "Bulk Upload Voters" %} &mdash; {{election.name}}{% endblock %}
 {% block content %}
-  <h2 class="title">{{election.name}} &mdash; {% translate "Bulk Upload Voters" %} &mdash; {% translate "Confirm" %}<span style="font-size:0.7em;">[<a href="{% url "election@view" election.uuid %}">{% translate "back to election" %}</a>]</span></h2>
+<a class="back-link" href="{% url "election@view" election.uuid %}">{% translate "back to election" %}</a>
+<h1 class="title">{{election.name}} &mdash; {% translate "Bulk Upload Voters" %} &mdash; {% translate "Confirm" %}</h1>
 
 <p>
 {% translate "You have uploaded a file of voters. The first few rows of this file are:" %}
 </p>
 
-<table>
-<tr><th>{% translate "Voter Type" %}</th><th>{% translate "Voter Login" %}</th><th>{% translate "Email Address" %}</th><th>{% translate "Name" %}</th></tr>
+<div class="table-scroll">
+<table class="pretty">
+<thead><tr><th scope="col">{% translate "Voter Type" %}</th><th scope="col">{% translate "Voter Login" %}</th><th scope="col">{% translate "Email Address" %}</th><th scope="col">{% translate "Name" %}</th></tr></thead>
+<tbody>
 {% for v in voters %}
 <tr><td>{{v.voter_type}}</td><td>{{v.voter_id}}</td><td>{{v.email}}</td><td>{{v.name}}</td></tr>
 {% endfor %}
+</tbody>
 </table>
+</div>
 
 {% if problems %}
-<p style="font-size: 1.5em;">
-{% translate "HOLD ON:" %}<br />
+<div class="callout callout-danger" role="alert">
+<span class="callout-title">{% translate "HOLD ON:" %}</span>
+<ul>
 {% for problem in problems %}
-- {{problem}}<br />
+<li>{{problem}}</li>
 {% endfor %}
-</p>
-<br />
+</ul>
+</div>
 
 <form class="inline-action" method="post" action="{% url "election@voters@upload-cancel" election.uuid %}">
 <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
-<button type="submit" class="link-button">{% translate "never mind, upload a different file" %}</button>
+<button type="submit" class="button secondary">{% translate "never mind, upload a different file" %}</button>
 </form>
 
 {% else %}
-<p></p>
 <form method="post" action="" id="upload_form">
-  {% translate "Does this look right to you?" %}
+  <p><strong>{% translate "Does this look right to you?" %}</strong>
+  {% translate "The voters are added in the background; this can take a few minutes for long lists." %}</p>
   <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
   <input type="hidden" name="confirm_p" value="1" />
-  <input class="button" type="submit" value="{% translate "Yes, let's go" %}" />
+  <div class="actions">
+    <button class="button" type="submit">{% translate "Yes, let's go" %}</button>
+  </div>
 </form>
 
 <form class="inline-action" method="post" action="{% url "election@voters@upload-cancel" election.uuid %}">

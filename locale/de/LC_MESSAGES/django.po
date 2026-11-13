@@ -187,7 +187,7 @@ msgid "no spaces, will be part of the URL for your election, e.g. my-club-2010"
 msgstr "ohne Leerzeichen, wird Teil der URL Ihrer Wahl, z. B. mein-verein-2010"
 
 #: helios/forms.py:15 helios/templates/election_bboard.html:41 helios/templates/voters_list.html:144
-#: helios/templates/voters_manage.html:28 helios/templates/voters_upload_confirm.html:12
+#: helios/templates/voters_manage.html:28 helios/templates/voters_upload_confirm.html:15
 msgid "Name"
 msgstr "Name"
 
@@ -544,9 +544,9 @@ msgstr "Sie können beliebig oft einen Stimmzettel abgeben."
 msgid "Are you sure you want to clear this ballot and NOT cast it?"
 msgstr "Möchten Sie diesen Stimmzettel wirklich verwerfen und NICHT abgeben?"
 
-#: helios/templates/_castconfirm_docast.html:26 helios/templates/combine_decryptions.html:6 helios/templates/election_admin_add.html:7
+#: helios/templates/_castconfirm_docast.html:26 helios/templates/combine_decryptions.html:27 helios/templates/election_admin_add.html:7
 #: helios/templates/election_admin_remove.html:7 helios/templates/election_edit.html:6 helios/templates/election_extend.html:6
-#: helios/templates/new_trustee.html:5 helios/templates/release_result.html:6
+#: helios/templates/new_trustee.html:5 helios/templates/release_result.html:23
 msgid "cancel"
 msgstr "abbrechen"
 
@@ -647,23 +647,36 @@ msgstr "von"
 msgid "details"
 msgstr "Details"
 
-#: helios/templates/combine_decryptions.html:4 helios/templates/combine_decryptions.html:6
+#: helios/templates/combine_decryptions.html:4 helios/templates/combine_decryptions.html:7
 msgid "Compute Tally"
 msgstr "Auszählung berechnen"
 
-#: helios/templates/combine_decryptions.html:10
+#: helios/templates/combine_decryptions.html:6 helios/templates/election_admins.html:7 helios/templates/election_audited_ballots.html:7
+#: helios/templates/election_bboard.html:7 helios/templates/election_build.html:5 helios/templates/election_compute_tally.html:7
+#: helios/templates/election_compute_tally.html:21 helios/templates/election_compute_tally.html:50 helios/templates/election_freeze.html:6
+#: helios/templates/election_questions.html:6 helios/templates/list_trustees.html:7 helios/templates/release_result.html:6
+#: helios/templates/voters_email.html:13 helios/templates/voters_list.html:6 helios/templates/voters_manage.html:5
+#: helios/templates/voters_search.html:5 helios/templates/voters_upload.html:5 helios/templates/voters_upload_confirm.html:6
+msgid "back to election"
+msgstr "zurück zur Wahl"
+
+#: helios/templates/combine_decryptions.html:12
 msgid "The trustees' partial decryptions don't decrypt the tally, so no result was saved."
 msgstr "Die Teilentschlüsselungen der Treuhänder*innen entschlüsseln die Auszählung nicht, daher wurde kein Ergebnis gespeichert."
 
-#: helios/templates/combine_decryptions.html:11
+#: helios/templates/combine_decryptions.html:13
 msgid "Check that every trustee's partial decryption is for the current tally."
 msgstr "Prüfen Sie, ob sich die Teilentschlüsselung jeder*jedes Treuhänder*in auf die aktuelle Auszählung bezieht."
 
-#: helios/templates/combine_decryptions.html:16
+#: helios/templates/combine_decryptions.html:19
 msgid "You are about to compute the tally for this election. You only will then see the results."
 msgstr "Sie sind dabei, die Auszählung für diese Wahl zu berechnen. Danach sehen zunächst nur Sie die Ergebnisse."
 
 #: helios/templates/combine_decryptions.html:21
+msgid "You can check the result before you release it to everyone."
+msgstr "Sie können das Ergebnis prüfen, bevor Sie es für alle freigeben."
+
+#: helios/templates/combine_decryptions.html:26
 msgid "compute the tally!"
 msgstr "Auszählung berechnen!"
 
@@ -717,14 +730,6 @@ msgstr "Wahlleitung für %(name)s"
 #: helios/templates/election_admins.html:7
 msgid "Administrators"
 msgstr "Wahlleitung"
-
-#: helios/templates/election_admins.html:7 helios/templates/election_audited_ballots.html:7 helios/templates/election_bboard.html:7
-#: helios/templates/election_build.html:5 helios/templates/election_compute_tally.html:20 helios/templates/election_compute_tally.html:40
-#: helios/templates/election_questions.html:6 helios/templates/list_trustees.html:7 helios/templates/voters_email.html:13
-#: helios/templates/voters_list.html:6 helios/templates/voters_manage.html:5 helios/templates/voters_search.html:5
-#: helios/templates/voters_upload.html:5 helios/templates/voters_upload_confirm.html:5
-msgid "back to election"
-msgstr "zurück zur Wahl"
 
 #: helios/templates/election_admins.html:10
 msgid "Administrators have full control over this election, including managing voters, questions, trustees, and settings."
@@ -908,12 +913,12 @@ msgstr "Keine Sorge, Ihr Stimmzettel bleibt erhalten, während Sie sich anmelden
 msgid "Compute Encryted Tally for %(name)s"
 msgstr "Verschlüsselte Auszählung für %(name)s berechnen"
 
-#: helios/templates/election_compute_tally.html:7
+#: helios/templates/election_compute_tally.html:8
 #, python-format
 msgid "Compute Tally for Election: %(name)s"
 msgstr "Auszählung berechnen für Wahl: %(name)s"
 
-#: helios/templates/election_compute_tally.html:12
+#: helios/templates/election_compute_tally.html:13
 #, python-format
 msgid "%(counter)s vote still being processed."
 msgid_plural "%(counter)s votes still being processed."
@@ -929,32 +934,47 @@ msgstr "Alle Stimmen müssen überprüft sein, bevor die Auszählung berechnet w
 msgid "If this persists, contact <a href=\"mailto:%(email)s\">%(email)s</a>."
 msgstr "Wenn das Problem bestehen bleibt, wenden Sie sich an <a href=\"mailto:%(email)s\">%(email)s</a>."
 
-#: helios/templates/election_compute_tally.html:19
+#: helios/templates/election_compute_tally.html:20
 msgid "Refresh this page"
 msgstr "Seite neu laden"
 
-#: helios/templates/election_compute_tally.html:24
+#: helios/templates/election_compute_tally.html:25
 #, python-format
 msgid "You are about to compute the encrypted tally for election <b>%(name)s</b>."
 msgstr "Sie sind dabei, die verschlüsselte Auszählung für die Wahl <b>%(name)s</b> zu berechnen."
 
-#: helios/templates/election_compute_tally.html:28
+#: helios/templates/election_compute_tally.html:29 helios/templates/election_freeze.html:22 helios/templates/release_result.html:11
+msgid "This cannot be undone."
+msgstr "Das kann nicht rückgängig gemacht werden."
+
+#: helios/templates/election_compute_tally.html:30
 msgid "Once you do this, voters will no longer be able to cast a ballot."
 msgstr "Danach können Wahlberechtigte keinen Stimmzettel mehr abgeben."
 
-#: helios/templates/election_compute_tally.html:31
-msgid "ok, tally has begun"
-msgstr "OK, die Auszählung hat begonnen"
-
 #: helios/templates/election_compute_tally.html:34
+#, python-format
+msgid "%(counter)s ballot has been cast so far."
+msgid_plural "%(counter)s ballots have been cast so far."
+msgstr[0] "Bisher wurde %(counter)s Stimmzettel abgegeben."
+msgstr[1] "Bisher wurden %(counter)s Stimmzettel abgegeben."
+
+#: helios/templates/election_compute_tally.html:35
+msgid "The encrypted ballots are added up without decrypting any of them. Then each trustee decrypts their share of the totals."
+msgstr "Die verschlüsselten Stimmzettel werden addiert, ohne dass ein einzelner entschlüsselt wird. Danach entschlüsseln alle Treuhänder*innen ihren Anteil an den Summen."
+
+#: helios/templates/election_compute_tally.html:36
+msgid "The result is visible only to you until you release it."
+msgstr "Bis Sie das Ergebnis freigeben, sehen nur Sie es."
+
+#: helios/templates/election_compute_tally.html:42
 msgid "compute encrypted tally!"
 msgstr "verschlüsselte Auszählung berechnen!"
 
-#: helios/templates/election_compute_tally.html:35
+#: helios/templates/election_compute_tally.html:43
 msgid "never mind"
 msgstr "doch nicht"
 
-#: helios/templates/election_compute_tally.html:39
+#: helios/templates/election_compute_tally.html:48
 msgid "No votes have been cast in this election. At least one vote must be cast before you compute the tally."
 msgstr "In dieser Wahl wurden noch keine Stimmen abgegeben. Vor der Auszählung muss mindestens eine Stimme abgegeben worden sein."
 
@@ -966,39 +986,67 @@ msgstr "Aktualisieren"
 msgid "Extend Voting"
 msgstr "Stimmabgabe verlängern"
 
-#: helios/templates/election_freeze.html:5
+#: helios/templates/election_freeze.html:4 helios/templates/election_freeze.html:7
 msgid "Freeze Ballot"
 msgstr "Stimmzettel einfrieren"
 
-#: helios/templates/election_freeze.html:7
-msgid "Once an election is frozen, the questions, options, and trustees can no longer be modified."
-msgstr "Sobald eine Wahl eingefroren ist, können Fragen, Optionen und Treuhänder*innen nicht mehr geändert werden."
-
-#: helios/templates/election_freeze.html:12
-msgid "Registration for your election is currently <b>open</b>, which means anyone can vote, even after you freeze the ballot."
-msgstr "Die Registrierung für Ihre Wahl ist derzeit <b>offen</b>, d. h. alle können wählen, auch nachdem Sie den Stimmzettel eingefroren haben."
-
-#: helios/templates/election_freeze.html:14
-msgid "Registration for your election is currently <b>closed</b>, which means only the voters you designate will be able to cast a ballot. As the administrator, you will still be able to modify that voter list as the election progresses."
-msgstr "Die Registrierung für Ihre Wahl ist derzeit <b>geschlossen</b>, d. h. nur die von Ihnen festgelegten Wahlberechtigten können einen Stimmzettel abgeben. Als Wahlleitung können Sie das Wählerverzeichnis im Verlauf der Wahl weiterhin ändern."
-
-#: helios/templates/election_freeze.html:20
-msgid "You must freeze the ballot before you can contact voters."
-msgstr "Sie müssen den Stimmzettel einfrieren, bevor Sie die Wahlberechtigten kontaktieren können."
-
-#: helios/templates/election_freeze.html:26
+#: helios/templates/election_freeze.html:11
 msgid "Before you can freeze the election, you will need to:"
 msgstr "Bevor Sie die Wahl einfrieren können, müssen Sie:"
 
-#: helios/templates/election_freeze.html:32
+#: helios/templates/election_freeze.html:18
 msgid "go back to the election"
 msgstr "zurück zur Wahl"
 
-#: helios/templates/election_freeze.html:38
+#: helios/templates/election_freeze.html:23
+msgid "Once an election is frozen, the questions, options, and trustees can no longer be modified."
+msgstr "Sobald eine Wahl eingefroren ist, können Fragen, Optionen und Treuhänder*innen nicht mehr geändert werden."
+
+#: helios/templates/election_freeze.html:26
+msgid "What happens when you freeze the ballot"
+msgstr "Was beim Einfrieren des Stimmzettels passiert"
+
+#: helios/templates/election_freeze.html:30
+#, python-format
+msgid "Voting opens automatically at %(start)s, as per your settings."
+msgstr "Die Stimmabgabe beginnt laut Ihren Einstellungen automatisch am %(start)s."
+
+#: helios/templates/election_freeze.html:32
+msgid "Voting opens immediately."
+msgstr "Die Stimmabgabe beginnt sofort."
+
+#: helios/templates/election_freeze.html:37
+msgid "Registration for your election is currently <b>open</b>, which means anyone can vote, even after you freeze the ballot."
+msgstr "Die Registrierung für Ihre Wahl ist derzeit <b>offen</b>, d. h. alle können wählen, auch nachdem Sie den Stimmzettel eingefroren haben."
+
+#: helios/templates/election_freeze.html:39
+msgid "Registration for your election is currently <b>closed</b>, which means only the voters you designate will be able to cast a ballot. As the administrator, you will still be able to modify that voter list as the election progresses."
+msgstr "Die Registrierung für Ihre Wahl ist derzeit <b>geschlossen</b>, d. h. nur die von Ihnen festgelegten Wahlberechtigten können einen Stimmzettel abgeben. Als Wahlleitung können Sie das Wählerverzeichnis im Verlauf der Wahl weiterhin ändern."
+
+#: helios/templates/election_freeze.html:43
+msgid "After freezing, you can email the voters their invitation with the link and, if needed, their credentials."
+msgstr "Nach dem Einfrieren können Sie den Wahlberechtigten ihre Einladung mit dem Link und, falls nötig, ihren Zugangsdaten per E-Mail senden."
+
+#: helios/templates/election_freeze.html:47
+#, python-format
+msgid "The ballot has %(counter)s question."
+msgid_plural "The ballot has %(counter)s questions."
+msgstr[0] "Der Stimmzettel hat %(counter)s Frage."
+msgstr[1] "Der Stimmzettel hat %(counter)s Fragen."
+
+#: helios/templates/election_freeze.html:48
+msgid "Review the questions"
+msgstr "Fragen prüfen"
+
+#: helios/templates/election_freeze.html:49 helios/templates/election_view.html:315
+msgid "preview booth"
+msgstr "Vorschau der Wahlkabine"
+
+#: helios/templates/election_freeze.html:54
 msgid "Freeze the ballot"
 msgstr "Stimmzettel einfrieren"
 
-#: helios/templates/election_freeze.html:39
+#: helios/templates/election_freeze.html:55
 msgid "do NOT freeze yet"
 msgstr "noch NICHT einfrieren"
 
@@ -1661,10 +1709,6 @@ msgstr "Ihr Stimmzettel-Tracker:"
 msgid "Download Election Log (CSV)"
 msgstr "Wahlprotokoll herunterladen (CSV)"
 
-#: helios/templates/election_view.html:315
-msgid "preview booth"
-msgstr "Vorschau der Wahlkabine"
-
 #: helios/templates/election_view.html:322
 #, python-format
 msgid "verify <a target=\"_blank\" href=\"%(verifier_url)s%(election_home_url)s\">election tally</a>."
@@ -2083,7 +2127,7 @@ msgstr "Passwort vergessen? Geben Sie unten Ihre Wähler-ID ein, und wir senden 
 msgid "Resend Credentials"
 msgstr "Zugangsdaten erneut senden"
 
-#: helios/templates/release_result.html:4 helios/templates/release_result.html:6
+#: helios/templates/release_result.html:4 helios/templates/release_result.html:7
 msgid "Release Result"
 msgstr "Ergebnis freigeben"
 
@@ -2091,11 +2135,15 @@ msgstr "Ergebnis freigeben"
 msgid "You are about to release the result for this election."
 msgstr "Sie sind dabei, das Ergebnis dieser Wahl freizugeben."
 
-#: helios/templates/release_result.html:15
+#: helios/templates/release_result.html:12
+msgid "Once released, the result is visible to everyone who can see the election."
+msgstr "Nach der Freigabe ist das Ergebnis für alle sichtbar, die die Wahl sehen können."
+
+#: helios/templates/release_result.html:19
 msgid "Send email to voters reporting release of result."
 msgstr "Wahlberechtigte per E-Mail über die Freigabe des Ergebnisses informieren."
 
-#: helios/templates/release_result.html:17
+#: helios/templates/release_result.html:22
 msgid "release result!"
 msgstr "Ergebnis freigeben!"
 
@@ -2789,7 +2837,7 @@ msgstr "Aktionen"
 msgid "Login"
 msgstr "Anmelden"
 
-#: helios/templates/voters_list.html:142 helios/templates/voters_upload_confirm.html:12
+#: helios/templates/voters_list.html:142 helios/templates/voters_upload_confirm.html:15
 msgid "Email Address"
 msgstr "E-Mail-Adresse"
 
@@ -2842,7 +2890,7 @@ msgstr "Sobald diese Wahl eingefroren ist, können Sie dieser Person eine E-Mail
 msgid "no such voter found"
 msgstr "keine solche wahlberechtigte Person gefunden"
 
-#: helios/templates/voters_upload.html:5 helios/templates/voters_upload_confirm.html:5
+#: helios/templates/voters_upload.html:5 helios/templates/voters_upload_confirm.html:4 helios/templates/voters_upload_confirm.html:7
 msgid "Bulk Upload Voters"
 msgstr "Wählerliste hochladen"
 
@@ -2878,39 +2926,43 @@ msgstr "OK, das Hochladen ist abgeschlossen."
 msgid "You can now <a href=\"./manage\">view the list of voters</a>."
 msgstr "Sie können jetzt <a href=\"./manage\">das Wählerverzeichnis ansehen</a>."
 
-#: helios/templates/voters_upload_confirm.html:5
+#: helios/templates/voters_upload_confirm.html:7
 msgid "Confirm"
 msgstr "Bestätigen"
 
-#: helios/templates/voters_upload_confirm.html:8
+#: helios/templates/voters_upload_confirm.html:10
 msgid "You have uploaded a file of voters. The first few rows of this file are:"
 msgstr "Sie haben eine Datei mit Wahlberechtigten hochgeladen. Die ersten Zeilen dieser Datei sind:"
 
-#: helios/templates/voters_upload_confirm.html:12
+#: helios/templates/voters_upload_confirm.html:15
 msgid "Voter Login"
 msgstr "Wähler-ID"
 
-#: helios/templates/voters_upload_confirm.html:12
+#: helios/templates/voters_upload_confirm.html:15
 msgid "Voter Type"
 msgstr "Art der Wahlberechtigung"
 
-#: helios/templates/voters_upload_confirm.html:20
+#: helios/templates/voters_upload_confirm.html:26
 msgid "HOLD ON:"
 msgstr "MOMENT:"
 
-#: helios/templates/voters_upload_confirm.html:29
+#: helios/templates/voters_upload_confirm.html:36
 msgid "never mind, upload a different file"
 msgstr "doch nicht, andere Datei hochladen"
 
-#: helios/templates/voters_upload_confirm.html:35
+#: helios/templates/voters_upload_confirm.html:41
 msgid "Does this look right to you?"
 msgstr "Sieht das richtig aus?"
 
-#: helios/templates/voters_upload_confirm.html:38
+#: helios/templates/voters_upload_confirm.html:42
+msgid "The voters are added in the background; this can take a few minutes for long lists."
+msgstr "Die Wahlberechtigten werden im Hintergrund hinzugefügt; bei langen Listen kann das einige Minuten dauern."
+
+#: helios/templates/voters_upload_confirm.html:46
 msgid "Yes, let's go"
 msgstr "Ja, weiter"
 
-#: helios/templates/voters_upload_confirm.html:43
+#: helios/templates/voters_upload_confirm.html:52
 msgid "no, let me upload a different file"
 msgstr "Nein, andere Datei hochladen"
 
