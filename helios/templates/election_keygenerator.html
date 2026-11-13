@@ -100,13 +100,18 @@ function show_pk() {
 
 </script>
 
-<h2 class="title">{{election.name}} &mdash; {% blocktranslate trimmed with name=trustee.name %}Trustee {{name}}{% endblocktranslate %} &mdash; {% translate "Key Setup" %}</h2>
+<h1 class="title">{{election.name}} &mdash; {% blocktranslate trimmed with name=trustee.name %}Trustee {{name}}{% endblocktranslate %} &mdash; {% translate "Key Setup" %}</h1>
 
 <p>
   {% translate "As a trustee, it's time to set up your key for this election." %}
 </p>
+<ol>
+  <li>{% translate "Generate the key pair in your browser." %}</li>
+  <li>{% translate "Save the secret key in a safe place. Without it, the result can never be decrypted." %}</li>
+  <li>{% translate "Upload the public key." %}</li>
+</ol>
 
-<p id="waiting_message">
+<p id="waiting_message" role="status">
   {% translate "Please wait for the generator to load..." %}
 </p>
 
@@ -125,10 +130,11 @@ function show_pk() {
 {% translate "Enter your complete secret key below:" %}
 </p>
 <form onsubmit="reuse_key(this.secret_key.value); return false;">
-<textarea cols="80" rows="5" wrap="soft" name="secret_key">
+<label for="reuse_secret_key" class="screen-reader-text">{% translate "Enter your complete secret key below:" %}</label>
+<textarea id="reuse_secret_key" cols="80" rows="5" wrap="soft" name="secret_key">
 </textarea>
 <br />
-<input class="button" type="submit" value="{% translate "reuse" %}" />
+<button class="button" type="submit">{% translate "reuse" %}</button>
 </form>
 </div>
 
@@ -144,20 +150,21 @@ function show_pk() {
 </div>
 
 <div style="display:none;" id="pk_content">
-    <p>{% translate "Bellow is your trustee secret key content. Please copy its content and save it securely." %} <br>
-       {% blocktranslate trimmed %}You can also click to dowload it to a file.
-       And please don't lose it! Otherwise it will not be possible to decrypt the election tally.{% endblocktranslate %}<br>
+    <div class="callout callout-warning">
+    <p>{% translate "Below is your trustee secret key. Please copy it and save it securely." %}
+       {% blocktranslate trimmed %}You can also download it to a file.
+       And please don't lose it! Otherwise it will not be possible to decrypt the election tally.{% endblocktranslate %}
     </p>
-    <textarea id="sk_content" rows="5" wrap="soft" cols="50" style="height: 25em;"></textarea>
+    </div>
+    <label for="sk_content">{% translate "Your Secret Key" %}</label>
+    <textarea id="sk_content" rows="5" wrap="soft" cols="50" style="height: 25em;" readonly></textarea>
 </div>
 
 <div style="display:none;" id="pk_link">
-<p>
-<a id="download_to_file" href="javascript:download_sk_to_file('trustee_key_for_{{election.name}}.txt');">{% translate "download private key to a file" %}</a>
-</p>
-<p>
-  <a href="javascript:show_pk();">{% translate "ok, I've saved the key, let's move on" %}</a>
-</p>
+<div class="actions">
+<button type="button" class="button secondary" id="download_to_file" onclick="download_sk_to_file('trustee_key_for_{{election.name|escapejs}}.txt');">{% translate "download private key to a file" %}</button>
+<button type="button" class="button" onclick="show_pk();">{% translate "ok, I've saved the key, let's move on" %}</button>
+</div>
 </div>
 
 <form method="post" id="pk_form" action="{% url "election@trustee@upload-pk" election.uuid trustee.uuid %}">
@@ -167,13 +174,13 @@ function show_pk() {
     {% translate "It's time to upload the public key to the server." %}
 </p>
 <p>
-    {% translate "The fingerprint of your public key is:" %} <tt id="pk_hash" style="font-size: 1.5em; font-weight: bold;"></tt>.<br />
+    {% translate "The fingerprint of your public key is:" %} <tt id="pk_hash" class="tracker"></tt><br />
     {% translate "You may want to save this to confirm that your public key was properly stored by the server." %}<br />
     {% translate "(Your public key is not currently being displayed because you do not need to save it, the fingerprint is sufficient.)" %}
 </p>
 <textarea id="pk_textarea" name="public_key_json" cols="80" rows="10" style="display:none;">
 </textarea>
-<input class="button" type="submit" value="{% translate "Upload your public key" %}">
+<button class="button" type="submit">{% translate "Upload your public key" %}</button>
 </form>
 
 <div id="applet_div"></div>

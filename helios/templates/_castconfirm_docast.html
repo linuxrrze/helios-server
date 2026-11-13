@@ -4,27 +4,28 @@
 <div id="cast_form">
 <form id="cast_confirm_form" method="post" action="" onsubmit="show_waiting()">
     <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
-    
+
 {% if status_update_label %}
-<div class="round" style="background: #eee; padding: 10px; border: 1px dashed #888;">
-<input type="checkbox" name="status_update" value="1" checked /> {{status_update_label}}<br />
-<blockquote style="font-size: 1.3em;">
+<div class="card">
+<div class="field-check"><input type="checkbox" id="status_update" name="status_update" value="1" checked /> <label class="choice" for="status_update">{{status_update_label}}</label></div>
+<blockquote>
 "{{status_update_message}}"
 </blockquote>
 <input type="hidden" name="status_update_message" value="{{status_update_message}}" />
 </div>
-<br />
 {% endif %}
 
-{% blocktranslate trimmed with voter_name=voter.display_html_big|safe %}You are logged in as <u>{{ voter_name }}</u>{% endblocktranslate %}<br /><br />
+<p>{% blocktranslate trimmed with voter_name=voter.display_html_big|safe %}You are logged in as <u>{{ voter_name }}</u>{% endblocktranslate %}</p>
 
-    <button type="submit" class="button large">{% translate "CAST this ballot" %}</button>
-    <span style="font-size:0.8em;"><br />{% translate "You can cast as many ballots as you want." %}<br />{% translate "Only the last one counts." %}</span>
+    <div class="actions">
+      <button type="submit" class="button large">{% translate "CAST this ballot" %}</button>
+    </div>
+    <p class="muted">{% translate "You can cast as many ballots as you want." %} {% translate "Only the last one counts." %}</p>
 </form>
 
 <p>
-    <button class="button tiny" onclick="if (confirm('{% filter escapejs %}{% translate "Are you sure you want to clear this ballot and NOT cast it?" %}{% endfilter %}')) {ready_to_unload = true; document.location='{% url "election@view" election.uuid %}';}">{% translate "cancel" %}</button><br />
-    <span style="font-size:0.8em;">{% translate "If you cancel now, your ballot will <em>NOT</em> be recorded." %}<br />
+    <button type="button" class="button secondary small" onclick="if (confirm('{% filter escapejs %}{% translate "Are you sure you want to clear this ballot and NOT cast it?" %}{% endfilter %}')) {ready_to_unload = true; document.location='{% url "election@view" election.uuid %}';}">{% translate "cancel" %}</button><br />
+    <span class="muted">{% translate "If you cancel now, your ballot will <em>NOT</em> be recorded." %}
     {% translate "You can start the voting process over again, of course." %}</span>
 </p>
 
@@ -33,12 +34,12 @@
 
 </div>
   {% else %}
-<p style="font-size:1.4em;">
+<p class="callout callout-warning">
   {% translate "voting has stopped, sorry." %}
 </p>
   {% endif %}
 {% else %}
-<p style="font-size:1.4em;">
+<p class="callout callout-warning">
   {% translate "voting has not yet begun, sorry." %}
 </p>
 {% endif %}

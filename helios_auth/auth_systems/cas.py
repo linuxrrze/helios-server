@@ -5,6 +5,7 @@ Some code borrowed from
 https://sp.princeton.edu/oit/sdp/CAS/Wiki%20Pages/Python.aspx
 """
 
+from django.utils.translation import gettext_lazy
 import datetime
 import re
 import urllib.parse
@@ -31,7 +32,7 @@ if hasattr(settings, 'CAS_USERNAME'):
   CAS_ELIGIBILITY_REALM = settings.CAS_ELIGIBILITY_REALM
 
 # display tweaks
-LOGIN_MESSAGE = "Log in with my NetID"
+LOGIN_MESSAGE = gettext_lazy("Log in with my NetID")
 STATUS_UPDATES = False
 
 

@@ -3,6 +3,7 @@ Gitlab Authentication
 
 """
 
+from django.utils.translation import gettext_lazy
 import logging
 
 from django.conf import settings
@@ -15,7 +16,7 @@ from helios_auth.utils import format_recipient
 STATUS_UPDATES = False
 
 # display tweaks
-LOGIN_MESSAGE = "Log in with Gitlab"
+LOGIN_MESSAGE = gettext_lazy("Log in with Gitlab")
 
 AUTHORIZATION_URL = "https://gitlab.com/oauth/authorize"
 TOKEN_URL = "https://gitlab.com/oauth/token"

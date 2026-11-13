@@ -74,7 +74,15 @@ DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 # USE_TZ is False. Helios itself works in UTC (election start/end, cast times
 # and so on use utcnow()); this only affects Django's automatic timestamps
 # such as Election.created_at and the server process' local time.
-TIME_ZONE = get_from_env('TIME_ZONE', 'America/Los_Angeles')
+# Default UTC (Helios upstream used America/Los_Angeles): set TIME_ZONE, or ELECTION_TIME_ZONE,
+# to the zone your administrators think in, e.g. Europe/Berlin.
+TIME_ZONE = get_from_env('TIME_ZONE', 'UTC')
+
+# Time zone in which administrators enter election dates (voting start, end,
+# extension) and in which the pages show them, always with the zone's name.
+# Helios still stores and compares these times in UTC; set it to UTC to enter
+# and show UTC as before. An IANA name such as Europe/Berlin.
+ELECTION_TIME_ZONE = get_from_env('ELECTION_TIME_ZONE', TIME_ZONE)
 
 USE_TZ = False
 
@@ -318,6 +326,13 @@ FOOTER_LOGO_URL = get_from_env('FOOTER_LOGO_URL', '')
 # extra stylesheet loaded after the default layout, e.g. to set colors and a login
 # background image (CSS variables, see server_ui/media/layout.css)
 SITE_CSS_URL = get_from_env('SITE_CSS_URL', '')
+# Dark mode: 'auto' follows the visitor's system setting (prefers-color-scheme),
+# 'off' always shows the light colors. The default is 'auto' without a site
+# stylesheet and 'off' with one, because a site stylesheet usually sets light
+# colors only; set 'auto' after giving it dark colors too (see layout.css).
+DARK_MODE = get_from_env('DARK_MODE', 'off' if SITE_CSS_URL else 'auto')
+if DARK_MODE not in ('auto', 'off'):
+    DARK_MODE = 'off'
 # Legal pages linked in the footer; a link is shown only when its URL is set. They can
 # point to external pages, or to /imprint, /privacy and /accessibility, which render
 # server_ui/templates/<page>.html (provide imprint.html and accessibility.html in

@@ -10,31 +10,46 @@ voter_id = '{{voter.voter_id}}';
 {% endif %}
 </script>
 
-  <h2 class="title">{{election.name}} &mdash; {% translate "Contact Voters" %} <span style="font-size:0.7em;">[<a href="{% url "election@view" election.uuid %}">{% translate "back to election" %}</a>]</span></h2>
+<h1 class="title">{{election.name}} &mdash; {% translate "Contact Voters" %}</h1>
 
 {% if voter %}  
   <p>
     {% blocktranslate trimmed with name=voter.name voter_id=voter.voter_id %}You are sending this email to a specific user: <b>{{name}} ({{voter_id}})</b>{% endblocktranslate %}
   </p>
+{% elif not num_voters %}
+<div class="callout callout-info empty-state" id="no-voters">
+  {% if election.openreg %}
+  <p>{% translate "This election has open registration: people are only added to the voter list when they log in to cast a ballot. Nobody has done so yet, so there is no one to email." %}</p>
+  <p>{% translate "To invite voters, share the link to the election with them yourself:" %}<br /><tt class="tracker-plain">{{election_vote_url}}</tt></p>
+  {% else %}
+  <p>{% translate "This election has no voters yet, so there is no one to email." %}</p>
+  {% endif %}
+</div>
+<p class="actions"><a class="button" href="{% url "election@voters@list-pretty" election.uuid %}">{% translate "back to the voter list" %}</a></p>
+{% elif election.openreg %}
+<p class="callout callout-info">{% translate "This election has open registration: only people who have already logged in to cast a ballot are on the voter list, so only they receive this email." %}</p>
 {% endif %}
 
-<p>
-<b>{% translate "Templates" %}</b>:
+{% if voter or num_voters %}
 
+<nav class="template-choice" aria-label="{% translate "Templates" %}">
+<span class="label">{% translate "Templates" %}:</span>
+<ul>
 {% for template_option in templates %}
 {% if template_option.0 == template %}
-<b>{{template_option.1}}</b>
+<li><span aria-current="page">{{template_option.1}}</span></li>
 {% else %}
-<a href="?template={{template_option.0}}&voter_id={{voter.voter_login_id}}">{{template_option.1}}</a>
+<li><a href="?template={{template_option.0}}&voter_id={{voter.voter_login_id}}">{{template_option.1}}</a></li>
 {% endif %}
-&nbsp;&nbsp;&nbsp;
 {% endfor %}
+</ul>
+</nav>
 
 <p>
 {% translate "<b>Preview</b>: each voter receives this email, with the fields in angle brackets filled in for them." %}
 </p>
 
-<pre style="margin:10px; border: 1px solid #888; padding:20px">
+<pre class="email-preview">
 {% translate "Subject:" %} {{default_subject|force_escape}}
 
 {{default_body|force_escape}}
@@ -44,15 +59,14 @@ voter_id = '{{voter.voter_id}}';
 {% translate "You may tweak the subject and add a custom message using the form below. Your message appears where <tt>&lt;BODY&gt;</tt> is shown above. Don't paste the preview into it." %}
 </p>
 
-  <form class="prettyform" action="" method="POST" id="email_form">
+  <form class="prettyform form-narrow" action="" method="POST" id="email_form" novalidate>
     <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
     <input type="hidden" name="template" value="{{template}}" />
     <input type="hidden" name="voter_id" value="{{voter.voter_login_id}}" />
-    <table class="pretty">
-     {{email_form.as_table}}
-     </table>
-  <div>
-  <label for="">&nbsp;</label><input type="submit" value="{% translate "Send" %}" id="send_button" class="button" />
+    {% include "_form_fields.html" with form=email_form %}
+  <div class="actions">
+    <button type="submit" id="send_button" class="button">{% translate "Send" %}</button>
+    <a href="{% url "election@view" election.uuid %}">{% translate "cancel" %}</a>
   </div>
   </form>
   
@@ -66,5 +80,6 @@ voter_id = '{{voter.voter_id}}';
   <div id="error" style="display:none;">
     {% translate "Error emailing participants. Check server settings, make sure there's an SMTP server." %}
   </div>
+{% endif %}
 
 {% endblock %}

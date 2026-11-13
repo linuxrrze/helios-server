@@ -6,37 +6,53 @@ from django import forms
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
-from .fields import DateTimeLocalField
+from . import timezones
+from .fields import LocalDateTimeField
 from .models import Election
 
 
-class ElectionForm(forms.Form):
-  short_name = forms.SlugField(max_length=40, label=_('Short name'), help_text=_('no spaces, will be part of the URL for your election, e.g. my-club-2010'))
-  name = forms.CharField(max_length=100, widget=forms.TextInput(attrs={'size':60}), label=_('Name'), help_text=_('the pretty name for your election, e.g. My Club 2010 Election'))
-  description = forms.CharField(max_length=4000, widget=forms.Textarea(attrs={'cols': 70, 'wrap': 'soft'}), required=False, label=_('Description'))
-  election_type = forms.ChoiceField(label=_("type"), choices = Election.ELECTION_TYPES)
-  use_voter_aliases = forms.BooleanField(required=False, initial=False, label=_('Use voter aliases'), help_text=_('If selected, voter identities will be replaced with aliases, e.g. "V12", in the ballot tracking center'))
+class LocalTimesMixin:
+  """
+  Date fields (LocalDateTimeField) take local time in the election time zone:
+  say which zone in their hint, and tell the browser script (timezone-display.js).
+  """
+  def __init__(self, *args, **kwargs):
+    super().__init__(*args, **kwargs)
+    zone = timezones.zone_name()
+    zone_hint = _('Local time in %(zone)s (currently %(offset)s).') % {
+      'zone': zone, 'offset': timezones.current_offset_label()}
+    for field in self.fields.values():
+      if isinstance(field, LocalDateTimeField):
+        field.widget.attrs['data-time-zone'] = zone
+        field.help_text = '%s %s' % (zone_hint, field.help_text) if field.help_text else zone_hint
+
+
+class ElectionForm(LocalTimesMixin, forms.Form):
+  short_name = forms.SlugField(max_length=40, label=_('Short name'), help_text=_('Letters, digits and hyphens, no spaces. It becomes part of the election\'s web address, e.g. board-2026.'))
+  name = forms.CharField(max_length=100, widget=forms.TextInput(attrs={'size':60}), label=_('Name'), help_text=_('The name voters see, e.g. Board Election 2026.'))
+  description = forms.CharField(max_length=4000, widget=forms.Textarea(attrs={'cols': 70, 'wrap': 'soft'}), required=False, label=_('Description'), help_text=_('Shown on the election page. Explain what is being decided and by whom.'))
+  election_type = forms.ChoiceField(label=_("Type"), choices = Election.ELECTION_TYPES)
+  use_voter_aliases = forms.BooleanField(required=False, initial=False, label=_('Use voter aliases'), help_text=_('The public ballot tracking center then shows aliases such as "V12" instead of the voters\' names.'))
   #use_advanced_audit_features = forms.BooleanField(required=False, initial=True, help_text='disable this only if you want a simple election with reduced security but a simpler user interface')
-  randomize_answer_order = forms.BooleanField(required=False, initial=False, label=_('Randomize answer order'), help_text=_('enable this if you want the answers to questions to appear in random order for each voter'))
-  private_p = forms.BooleanField(required=False, initial=False, label=_("Private?"), help_text=_('A private election is only visible to registered voters.'))
+  randomize_answer_order = forms.BooleanField(required=False, initial=False, label=_('Randomize answer order'), help_text=_('Each voter sees the answers in a different random order, so that no answer profits from being listed first.'))
+  private_p = forms.BooleanField(required=False, initial=False, label=_("Private election"), help_text=_('A private election is only visible to registered voters.'))
   help_email = forms.CharField(required=False, initial="", label=_("Help Email Address"), help_text=_('An email address voters should contact if they need help.'))
   
   if settings.ALLOW_ELECTION_INFO_URL:
     election_info_url = forms.CharField(required=False, initial="", label=_("Election Info Download URL"), help_text=_("the URL of a PDF document that contains extra election information, e.g. candidate bios and statements"))
   
   # times
-  voting_starts_at = DateTimeLocalField(label=_('Voting starts at'), help_text = _('UTC date and time when voting begins'),
+  voting_starts_at = LocalDateTimeField(label=_('Voting starts at'), help_text = _('Leave empty to open voting as soon as you freeze the ballot.'),
                                    required=False)
-  voting_ends_at = DateTimeLocalField(label=_('Voting ends at'), help_text = _('UTC date and time when voting ends'),
+  voting_ends_at = LocalDateTimeField(label=_('Voting ends at'), help_text = _('Leave empty to end voting yourself, by computing the tally.'),
                                    required=False)
 
-class ElectionTimeExtensionForm(forms.Form):
-  voting_extended_until = DateTimeLocalField(label=_('Voting extended until'), help_text = _('UTC date and time voting extended to'),
-                                   required=False)
+class ElectionTimeExtensionForm(LocalTimesMixin, forms.Form):
+  voting_extended_until = LocalDateTimeField(label=_('Voting extended until'), required=False)
   
 class EmailVotersForm(forms.Form):
   subject = forms.CharField(max_length=80, label=_('Subject'))
-  body = forms.CharField(max_length=4000, widget=forms.Textarea, label=_('Body'))
+  body = forms.CharField(max_length=4000, widget=forms.Textarea, label=_('Body'), help_text=_('Your own message. It appears where <BODY> is shown in the preview.'))
   send_to = forms.ChoiceField(label=_("Send To"), initial="all", choices= [('all', _('all voters')), ('voted', _('voters who have cast a ballot')), ('not-voted', _('voters who have not yet cast a ballot'))])
 
   # placeholders shown in the email preview, which voters would receive literally
@@ -56,9 +72,11 @@ class TallyNotificationEmailForm(forms.Form):
   send_to = forms.ChoiceField(label=_("Send To"), choices= [('all', _('all voters')), ('voted', _('only voters who cast a ballot')), ('none', _('no one -- are you sure about this?'))])
 
 class VoterPasswordForm(forms.Form):
-  voter_id = forms.CharField(max_length=50, label=_("Voter ID"))
-  password = forms.CharField(widget=forms.PasswordInput(), max_length=100, label=_('Password'))
+  voter_id = forms.CharField(max_length=50, label=_("Voter ID"),
+                             widget=forms.TextInput(attrs={'autocomplete': 'username', 'autocapitalize': 'none', 'spellcheck': 'false'}))
+  password = forms.CharField(widget=forms.PasswordInput(attrs={'autocomplete': 'current-password'}), max_length=100, label=_('Password'))
 
 class VoterPasswordResendForm(forms.Form):
-  voter_id = forms.CharField(max_length=50, label=_("Voter ID"), help_text=_("Enter the voter ID you were assigned for this election"))
+  voter_id = forms.CharField(max_length=50, label=_("Voter ID"), help_text=_("Enter the voter ID you were assigned for this election"),
+                             widget=forms.TextInput(attrs={'autocomplete': 'username', 'autocapitalize': 'none', 'spellcheck': 'false'}))
 

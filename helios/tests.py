@@ -17,7 +17,7 @@ from django.conf import settings
 from django.core import mail
 from django.core.files import File
 from django.core.management import call_command
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import escape as html_escape
@@ -3336,8 +3336,150 @@ class VoterEmailCutoffViewTests(WebTest):
         response = self.client.get(f'/helios/elections/{self.election.uuid}/voters/list')
 
         # Should have disabled span instead of link
-        self.assertContains(response, 'opacity: 0.5')
-        self.assertContains(response, 'cursor: not-allowed')
+        self.assertContains(response, 'aria-disabled="true"')
+        self.assertNotContains(response, 'voters/email?voter_id=test')
+
+
+class VotersEmailOpenRegTests(WebTest):
+    """
+    With open registration, voters are only added to the list when they log in
+    to vote, so a frozen election can have no voters at all. Contacting voters
+    then used to fail with an IndexError (500) instead of saying so.
+    """
+    fixtures = ['users.json']
+    allow_database_queries = True
+
+    def setUp(self):
+        self.user = auth_models.User.objects.get(user_id='ben@adida.net', user_type='google')
+        self.election, _ = models.Election.get_or_create(
+            short_name='test-email-openreg',
+            name='Open Registration Election',
+            description='Anyone who can log in may vote',
+            admin=self.user
+        )
+        if not self.election.uuid:
+            self.election.uuid = str(uuid.uuid4())
+            self.election.save()
+        self.election.questions = [{"answer_urls": [None, None], "answers": ["Yes", "No"], "choice_type": "approval", "max": 1, "min": 0, "question": "Test?", "result_type": "absolute", "short_name": "Test?", "tally_type": "homomorphic"}]
+        self.election.generate_trustee(views.ELGAMAL_PARAMS)
+        self.election.openreg = True
+        self.election.freeze()
+        self.assertEqual(self.election.voter_set.count(), 0)
+
+        self.client.get("/")
+        session = self.client.session
+        session['user'] = {'type': self.user.user_type, 'user_id': self.user.user_id}
+        session.save()
+
+    def email_url(self, query=''):
+        return f'/helios/elections/{self.election.uuid}/voters/email{query}'
+
+    def test_election_page_disables_email_button_without_voters(self):
+        response = self.client.get(f'/helios/elections/{self.election.uuid}/view')
+        self.assertContains(response, 'no one has registered yet')
+        self.assertNotContains(response, 'href="%s"' % self.email_url())
+
+    def test_election_page_offers_email_with_voters(self):
+        models.Voter.objects.create(uuid=str(uuid.uuid4()), election=self.election, voter_email='v@example.com',
+                                    voter_name='V', voter_login_id='v')
+        response = self.client.get(f'/helios/elections/{self.election.uuid}/view')
+        self.assertContains(response, 'href="%s"' % self.email_url())
+
+    def post_email(self, send_to='all', query=''):
+        return self.client.post(self.email_url(query), {
+            'csrf_token': self.client.session['csrf_token'],
+            'subject': 'Vote now',
+            'body': 'Polls close Friday.',
+            'send_to': send_to
+        })
+
+    def register_voter(self):
+        return models.Voter.register_user_in_election(self.user, self.election)
+
+    def test_get_without_voters_explains_instead_of_failing(self):
+        for template in ['vote', 'simple', 'info', 'result']:
+            response = self.client.get(self.email_url(f'?template={template}'))
+            self.assertStatusCode(response, 200)
+            self.assertContains(response, 'id="no-voters"')
+            self.assertContains(response, 'open registration')
+            self.assertNotContains(response, 'id="email_form"')
+
+    def test_get_without_voters_closed_registration(self):
+        self.election.openreg = False
+        self.election.save()
+        response = self.client.get(self.email_url())
+        self.assertStatusCode(response, 200)
+        self.assertContains(response, 'This election has no voters yet')
+        self.assertNotContains(response, 'id="email_form"')
+
+    def test_get_without_voters_in_german(self):
+        response = self.client.get(self.email_url(), HTTP_ACCEPT_LANGUAGE='de')
+        self.assertStatusCode(response, 200)
+        self.assertContains(response, 'offene Registrierung')
+
+    def test_post_without_voters_sends_nothing(self):
+        with mock.patch('helios.views.tasks.voters_email') as voters_email:
+            response = self.post_email()
+        self.assertStatusCode(response, 200)
+        self.assertContains(response, 'id="no-voters"')
+        voters_email.enqueue.assert_not_called()
+
+    def test_voters_list_disables_email_button_without_voters(self):
+        response = self.client.get(f'/helios/elections/{self.election.uuid}/voters/list')
+        self.assertStatusCode(response, 200)
+        self.assertContains(response, 'email voters (disabled:')
+        self.assertContains(response, 'no one has registered yet')
+        self.assertNotContains(response, f'href="/helios/elections/{self.election.uuid}/voters/email"')
+
+    def test_release_result_does_not_offer_email_without_voters(self):
+        response = self.client.get(f'/helios/elections/{self.election.uuid}/release_result')
+        self.assertStatusCode(response, 200)
+        self.assertNotContains(response, 'name="send_email"')
+
+    def test_get_with_registered_voter(self):
+        self.register_voter()
+        response = self.client.get(self.email_url())
+        self.assertStatusCode(response, 200)
+        self.assertContains(response, 'id="email_form"')
+        self.assertNotContains(response, 'id="no-voters"')
+        # the preview uses the login type of a voter on the list
+        self.assertContains(response, 'Log in with your google account.')
+        # each recipient choice says how many voters it reaches
+        self.assertContains(response, 'all voters (1)')
+        self.assertContains(response, 'voters who have cast a ballot (0)')
+        self.assertContains(response, 'only people who have already logged in to cast a ballot')
+
+        response = self.client.get(f'/helios/elections/{self.election.uuid}/voters/list')
+        self.assertContains(response, f'href="/helios/elections/{self.election.uuid}/voters/email"')
+
+    def test_post_with_registered_voter_enqueues_email(self):
+        self.register_voter()
+        with mock.patch('helios.views.tasks.voters_email') as voters_email:
+            response = self.post_email('not-voted')
+        self.assertRedirects(response, f'/helios/elections/{self.election.uuid}/view')
+        kwargs = voters_email.enqueue.call_args.kwargs
+        self.assertEqual(kwargs['election_id'], self.election.id)
+        self.assertEqual(kwargs['voter_constraints_include'], {'vote_hash': None})
+        self.assertIsNone(kwargs['voter_constraints_exclude'])
+
+    def test_post_to_choice_without_recipients_is_rejected(self):
+        self.register_voter()
+        with mock.patch('helios.views.tasks.voters_email') as voters_email:
+            response = self.post_email('voted')
+        self.assertStatusCode(response, 200)
+        self.assertContains(response, 'None of the voters match this choice')
+        voters_email.enqueue.assert_not_called()
+
+    def test_single_voter_email(self):
+        voter = self.register_voter()
+        query = f'?voter_id={voter.voter_login_id}'
+        response = self.client.get(self.email_url(query))
+        self.assertStatusCode(response, 200)
+        self.assertContains(response, 'id="email_form"')
+        with mock.patch('helios.views.tasks.single_voter_email') as single_voter_email:
+            response = self.post_email(query=query)
+        self.assertRedirects(response, f'/helios/elections/{self.election.uuid}/view')
+        self.assertEqual(single_voter_email.enqueue.call_args.kwargs['voter_uuid'], voter.uuid)
 
 
 class DateTimeLocalWidgetTests(TestCase):
@@ -4019,8 +4161,8 @@ class VoterDeleteRestrictionTests(WebTest):
 
         response = self.client.get("/helios/elections/%s/voters/list" % self.election.uuid)
         self.assertStatusCode(response, 200)
-        # Check for the delete [x] button (a POST form, so that it carries a CSRF token)
-        self.assertContains(response, '>x</button></form>]')
+        # Check for the delete button (a POST form, so that it carries a CSRF token)
+        self.assertContains(response, 'action="/helios/elections/%s/voters/%s/delete"' % (self.election.uuid, self.voter.uuid))
 
     def test_voters_list_hides_delete_button_when_blocked(self):
         """Voter list should hide delete [x] button when tallying has started"""
@@ -4031,7 +4173,7 @@ class VoterDeleteRestrictionTests(WebTest):
         response = self.client.get("/helios/elections/%s/voters/list" % self.election.uuid)
         self.assertStatusCode(response, 200)
         # Check that the delete button is not present
-        self.assertNotContains(response, '>x</button></form>]')
+        self.assertNotContains(response, '/voters/%s/delete' % self.voter.uuid)
 
 
 
@@ -4670,3 +4812,365 @@ class RequeueStuckTasksTests(TestCase):
         stuck.refresh_from_db()
         self.assertEqual(stuck.status, TaskResultStatus.RUNNING)
         self.assertIn('would requeue 1 tasks', out.getvalue())
+
+
+@override_settings(ELECTION_TIME_ZONE='Europe/Berlin')
+class ElectionTimeZoneTests(WebTest):
+    """Election dates are entered and shown in ELECTION_TIME_ZONE and stored in UTC"""
+    fixtures = ['users.json', 'election.json']
+    allow_database_queries = True
+
+    def setUp(self):
+        self.election = models.Election.objects.get(short_name='test')
+        self.user = auth_models.User.objects.get(user_id='ben@adida.net', user_type='google')
+
+    def login(self):
+        self.client.get("/")
+        session = self.client.session
+        session['user'] = {'type': self.user.user_type, 'user_id': self.user.user_id}
+        session.save()
+
+    def test_local_to_utc_winter_and_summer(self):
+        from helios import timezones
+        self.assertEqual(timezones.local_to_utc(datetime.datetime(2026, 1, 15, 14, 30)), datetime.datetime(2026, 1, 15, 13, 30))
+        self.assertEqual(timezones.local_to_utc(datetime.datetime(2026, 7, 15, 14, 30)), datetime.datetime(2026, 7, 15, 12, 30))
+
+    def test_time_that_occurs_twice_is_the_first(self):
+        # 2026-10-25: the clocks go back from 03:00 CEST to 02:00 CET
+        from helios import timezones
+        self.assertEqual(timezones.local_to_utc(datetime.datetime(2026, 10, 25, 2, 30)), datetime.datetime(2026, 10, 25, 0, 30))
+
+    def test_skipped_time_is_rejected(self):
+        # 2026-03-29: the clocks go forward from 02:00 CET to 03:00 CEST
+        from helios import forms, timezones
+        with self.assertRaises(timezones.NonexistentLocalTime):
+            timezones.local_to_utc(datetime.datetime(2026, 3, 29, 2, 30))
+        form = forms.ElectionTimeExtensionForm({'voting_extended_until': '2026-03-29T02:30'})
+        self.assertFalse(form.is_valid())
+        self.assertIn('Europe/Berlin', form.errors['voting_extended_until'][0])
+
+    def test_round_trip(self):
+        from helios import timezones
+        for utc in [datetime.datetime(2026, 3, 29, 0, 59), datetime.datetime(2026, 3, 29, 1, 0),
+                    datetime.datetime(2026, 10, 25, 0, 30), datetime.datetime(2026, 12, 31, 23, 0)]:
+            local = timezones.utc_to_local(utc).replace(tzinfo=None)
+            self.assertEqual(timezones.local_to_utc(local), utc)
+
+    def test_form_converts_to_utc(self):
+        from helios import forms
+        form = forms.ElectionTimeExtensionForm({'voting_extended_until': '2026-11-20T10:00'})
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['voting_extended_until'], datetime.datetime(2026, 11, 20, 9, 0))
+        self.assertIn('Europe/Berlin', str(form['voting_extended_until'].help_text))
+        self.assertIn('data-time-zone="Europe/Berlin"', str(form['voting_extended_until']))
+
+    @override_settings(ELECTION_TIME_ZONE='UTC')
+    def test_utc_setting_keeps_utc(self):
+        from helios import forms
+        form = forms.ElectionTimeExtensionForm({'voting_extended_until': '2026-11-20T10:00'})
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['voting_extended_until'], datetime.datetime(2026, 11, 20, 10, 0))
+
+    def test_edit_form_prefills_local_time(self):
+        self.election.voting_starts_at = datetime.datetime(2026, 7, 1, 6, 0)
+        self.election.voting_ends_at = datetime.datetime(2026, 12, 1, 17, 0)
+        self.election.save()
+        self.login()
+        response = self.client.get(f'/helios/elections/{self.election.uuid}/edit')
+        self.assertContains(response, 'value="2026-07-01T08:00"')
+        self.assertContains(response, 'value="2026-12-01T18:00"')
+        self.assertContains(response, 'Europe/Berlin')
+
+    def test_edit_stores_utc(self):
+        self.login()
+        response = self.client.post(f'/helios/elections/{self.election.uuid}/edit', {
+            'short_name': self.election.short_name, 'name': self.election.name,
+            'description': self.election.description, 'election_type': self.election.election_type,
+            'voting_starts_at': '2026-07-01T08:00', 'voting_ends_at': '2026-12-01T18:00',
+            'csrf_token': self.client.session['csrf_token']})
+        self.assertRedirects(response, f'/helios/elections/{self.election.uuid}/view')
+        election = models.Election.objects.get(uuid=self.election.uuid)
+        self.assertEqual(election.voting_starts_at, datetime.datetime(2026, 7, 1, 6, 0))
+        self.assertEqual(election.voting_ends_at, datetime.datetime(2026, 12, 1, 17, 0))
+
+    def test_unchanged_resubmit_keeps_value(self):
+        from helios import forms
+        stored = datetime.datetime(2026, 12, 1, 17, 0)
+        form = forms.ElectionTimeExtensionForm({'voting_extended_until': stored})
+        shown = form['voting_extended_until'].value()
+        self.assertEqual(shown, datetime.datetime(2026, 12, 1, 18, 0))
+        resubmitted = forms.ElectionTimeExtensionForm({'voting_extended_until': shown.strftime('%Y-%m-%dT%H:%M')})
+        self.assertTrue(resubmitted.is_valid())
+        self.assertEqual(resubmitted.cleaned_data['voting_extended_until'], stored)
+
+    def test_time_shown_with_zone(self):
+        from helios.templatetags.timezone_tags import utc_time
+        html = str(utc_time(datetime.datetime(2026, 11, 20, 9, 0)))
+        self.assertIn('10:00 CET', html)
+        self.assertIn('datetime="2026-11-20T09:00Z"', html)
+        self.assertIn('2026-11-20 09:00 UTC', html)
+        self.assertEqual(utc_time(None), '')
+        summer = str(utc_time(datetime.datetime(2026, 7, 20, 9, 0)))
+        self.assertIn('11:00 CEST', summer)
+
+    def test_election_page_shows_local_time(self):
+        self.election.voting_ends_at = datetime.datetime(2026, 12, 1, 17, 0)
+        self.election.save()
+        self.login()
+        response = self.client.get(f'/helios/elections/{self.election.uuid}/view')
+        self.assertContains(response, '18:00 CET')
+
+
+@override_settings(ELECTION_TIME_ZONE='Europe/Berlin')
+class ElectionWizardTests(WebTest):
+    """Guided creation of an election (helios/wizard_views.py)"""
+    fixtures = ['users.json', 'election.json']
+    allow_database_queries = True
+    URL = '/helios/elections/new/guided'
+
+    def setUp(self):
+        self.user = auth_models.User.objects.get(user_id='ben@adida.net', user_type='google')
+        self.client.get("/")
+        session = self.client.session
+        session['user'] = {'type': self.user.user_type, 'user_id': self.user.user_id}
+        session.save()
+
+    def post(self, data):
+        data = dict(data, csrf_token=self.client.session['csrf_token'])
+        return self.client.post(self.URL, data)
+
+    def test_requires_login(self):
+        self.client.session.flush()
+        self.client.logout()
+        response = self.client.get(self.URL)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/auth/', response['location'])
+
+    def test_first_step(self):
+        response = self.client.get(self.URL)
+        self.assertContains(response, 'step 1 of 4')
+        self.assertContains(response, 'name="name"')
+        self.assertNotContains(response, 'name="voting_starts_at"')
+        # an untouched step shows no errors
+        self.assertNotContains(response, 'error-summary')
+
+    def test_full_flow(self):
+        response = self.post({'step': 'basics', 'name': 'Board Election 2027', 'short_name': '', 'description': 'Who leads the board.'})
+        self.assertRedirects(response, self.URL + '?step=schedule')
+        self.assertEqual(self.client.session['election_wizard']['short_name'], 'board-election-2027')
+
+        response = self.post({'step': 'schedule', 'voting_starts_at': '2027-01-10T09:00', 'voting_ends_at': '2027-01-17T18:00'})
+        self.assertRedirects(response, self.URL + '?step=options')
+
+        response = self.client.get(self.URL + '?step=options')
+        self.assertContains(response, 'name="election_type"')
+        response = self.post({'step': 'options', 'election_type': 'election', 'randomize_answer_order': 'on', 'help_email': 'help@example.org'})
+        self.assertRedirects(response, self.URL + '?step=review')
+
+        response = self.client.get(self.URL + '?step=review')
+        self.assertContains(response, 'Board Election 2027')
+        self.assertContains(response, '09:00 CET')
+        self.assertContains(response, '?step=schedule')
+
+        response = self.post({'step': 'review'})
+        election = models.Election.objects.get(short_name='board-election-2027')
+        self.assertRedirects(response, f'/helios/elections/{election.uuid}/questions')
+        self.assertEqual(election.admin, self.user)
+        self.assertEqual(election.voting_starts_at, datetime.datetime(2027, 1, 10, 8, 0))
+        self.assertEqual(election.voting_ends_at, datetime.datetime(2027, 1, 17, 17, 0))
+        self.assertTrue(election.randomize_answer_order)
+        self.assertFalse(election.use_voter_aliases)
+        self.assertEqual(election.help_email, 'help@example.org')
+        self.assertIsNotNone(election.get_helios_trustee())
+        self.assertNotIn('election_wizard', self.client.session)
+
+        # the setup pages then show where the administrator is
+        response = self.client.get(f'/helios/elections/{election.uuid}/questions')
+        self.assertContains(response, 'Election setup')
+        self.assertContains(response, f'/helios/elections/{election.uuid}/voters/list')
+
+    def test_derived_short_name_is_unique(self):
+        self.post({'step': 'basics', 'name': 'Test', 'short_name': ''})
+        # the fixture election already uses "test"
+        self.assertEqual(self.client.session['election_wizard']['short_name'], 'test-2')
+
+    def test_taken_short_name(self):
+        response = self.post({'step': 'basics', 'name': 'Another', 'short_name': 'test'})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'already exists')
+
+    def test_missing_name(self):
+        response = self.post({'step': 'basics', 'name': '', 'short_name': ''})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'error-summary')
+
+    def test_review_without_data_goes_to_first_step(self):
+        response = self.client.get(self.URL + '?step=review')
+        self.assertRedirects(response, self.URL + '?step=basics')
+
+    def test_unknown_step(self):
+        response = self.client.get(self.URL + '?step=nonsense')
+        self.assertContains(response, 'step 1 of 4')
+
+    def test_restart(self):
+        self.post({'step': 'basics', 'name': 'To be discarded', 'short_name': ''})
+        response = self.client.get(self.URL + '?restart=1')
+        self.assertRedirects(response, self.URL)
+        self.assertNotIn('election_wizard', self.client.session)
+
+    def test_no_setup_nav_after_freeze(self):
+        election = models.Election.objects.get(short_name='test')
+        election.frozen_at = datetime.datetime.utcnow()
+        election.save()
+        response = self.client.get(f'/helios/elections/{election.uuid}/trustees/view')
+        self.assertNotContains(response, 'Election setup')
+
+
+class BallotTrackerDisplayTests(TestCase):
+    """Trackers shown in groups, with a QR code of the link to the ballot"""
+    HASH = 'ab+/cdEFgh1234/xyz+9876543210abcdefghijklmnopq'
+
+    def test_groups_keep_the_exact_tracker(self):
+        from helios.templatetags.tracker_tags import tracker_groups
+        html = str(tracker_groups(self.HASH))
+        self.assertEqual(html.count('<span class="tracker-group">'), 12)
+        # no characters between the groups: the text content is the tracker
+        self.assertEqual(re.sub(r'<[^>]+>', '', html), html_escape(self.HASH))
+        self.assertEqual(tracker_groups(''), '')
+
+    def test_groups_escape(self):
+        from helios.templatetags.tracker_tags import tracker_groups
+        self.assertNotIn('<script', str(tracker_groups('<script>x</script>')))
+
+    def test_full_hash_url_with_slashes(self):
+        from django.urls import resolve
+        from helios.templatetags.tracker_tags import tracker_url
+        url = tracker_url(self.HASH)
+        self.assertTrue(url.endswith('/helios/vh/' + self.HASH))
+        match = resolve('/helios/vh/' + self.HASH)
+        self.assertEqual(match.kwargs['vote_hash'], self.HASH)
+
+    def test_qr_code_svg(self):
+        from helios.templatetags.tracker_tags import tracker_qr, tracker_url
+        from helios.vendor.qrcodegen import QrCode
+        svg = str(tracker_qr(self.HASH))
+        self.assertTrue(svg.startswith('<svg class="qr-code"'))
+        self.assertIn('role="img"', svg)
+        size = QrCode.encode_text(tracker_url(self.HASH), QrCode.Ecc.MEDIUM).get_size()
+        self.assertIn('viewBox="0 0 %d %d"' % (size + 8, size + 8), svg)
+        self.assertEqual(tracker_qr(None), '')
+
+    def test_unknown_full_hash_is_404(self):
+        response = self.client.get('/helios/vh/no/such+tracker')
+        self.assertEqual(response.status_code, 404)
+
+    def test_cast_vote_page_keeps_the_full_tracker(self):
+        # the page of a cast vote shows the tracker grouped and once as one string
+        from django.template.loader import render_to_string
+        voter = SimpleNamespace(alias=None, name='Voter')
+        html = render_to_string('helios/templates/castvote.html', {
+            'cast_vote': SimpleNamespace(vote_hash=self.HASH, vote_tinyhash='abcdEFgh'),
+            'the_voter': voter, 'vote_content': '{}', 'TEMPLATE_BASE': 'helios/templates/base.html',
+            'election': SimpleNamespace(uuid='00000000-0000-0000-0000-000000000000', name='E'),
+            'settings': settings})
+        self.assertIn(self.HASH, html)
+        self.assertIn('tracker-group', html)
+
+
+@override_settings(USE_TZ=False, TIME_ZONE='Europe/Berlin', ELECTION_TIME_ZONE='Europe/Berlin')
+class ElectionTimeZoneBerlinNaiveTests(WebTest):
+    """
+    The configuration of a typical installation: USE_TZ=False (naive datetimes
+    meant as UTC) and TIME_ZONE=Europe/Berlin, so that the server process
+    itself runs in Berlin time. Entry, storage, display and the start/end
+    checks must agree, also around the change to and from summer time.
+    """
+    fixtures = ['users.json', 'election.json']
+    allow_database_queries = True
+
+    def setUp(self):
+        self.election = models.Election.objects.get(short_name='test')
+        self.user = auth_models.User.objects.get(user_id='ben@adida.net', user_type='google')
+        self.client.get("/")
+        session = self.client.session
+        session['user'] = {'type': self.user.user_type, 'user_id': self.user.user_id}
+        session.save()
+
+    def test_default_election_zone_follows_time_zone(self):
+        import os, runpy
+        env = {k: v for k, v in os.environ.items() if k != 'ELECTION_TIME_ZONE'}
+        env.update(TIME_ZONE='Europe/Berlin', DEBUG='1')
+        # settings.py ignores the environment while the tests run (TESTING)
+        with mock.patch.dict(os.environ, env, clear=True), mock.patch('sys.argv', ['manage.py', 'runserver']):
+            values = runpy.run_path(os.path.join(settings.ROOT_PATH, 'settings.py'))
+        self.assertEqual(values['ELECTION_TIME_ZONE'], 'Europe/Berlin')
+        self.assertFalse(values['USE_TZ'])
+
+    def test_default_time_zone_is_utc(self):
+        import os, runpy
+        env = {k: v for k, v in os.environ.items() if k not in ('TIME_ZONE', 'ELECTION_TIME_ZONE')}
+        env.update(DEBUG='1')
+        with mock.patch.dict(os.environ, env, clear=True), mock.patch('sys.argv', ['manage.py', 'runserver']):
+            values = runpy.run_path(os.path.join(settings.ROOT_PATH, 'settings.py'))
+        self.assertEqual(values['TIME_ZONE'], 'UTC')
+        self.assertEqual(values['ELECTION_TIME_ZONE'], 'UTC')
+
+    def save_dates(self, start, end):
+        response = self.client.post(f'/helios/elections/{self.election.uuid}/edit', {
+            'short_name': self.election.short_name, 'name': self.election.name,
+            'description': self.election.description, 'election_type': self.election.election_type,
+            'voting_starts_at': start, 'voting_ends_at': end,
+            'csrf_token': self.client.session['csrf_token']})
+        self.assertRedirects(response, f'/helios/elections/{self.election.uuid}/view')
+        return models.Election.objects.get(uuid=self.election.uuid)
+
+    def test_dst_edges_stored_as_utc(self):
+        cases = [
+            # the night summer time starts (2026-03-29, 02:00 CET -> 03:00 CEST)
+            ('2026-03-29T01:30', '2026-03-29T03:30', datetime.datetime(2026, 3, 29, 0, 30), datetime.datetime(2026, 3, 29, 1, 30)),
+            # the night summer time ends (2026-10-25, 03:00 CEST -> 02:00 CET)
+            ('2026-10-25T01:59', '2026-10-25T03:00', datetime.datetime(2026, 10, 24, 23, 59), datetime.datetime(2026, 10, 25, 2, 0)),
+            # plain winter and summer days
+            ('2026-01-15T08:00', '2026-07-15T18:00', datetime.datetime(2026, 1, 15, 7, 0), datetime.datetime(2026, 7, 15, 16, 0)),
+        ]
+        for start, end, start_utc, end_utc in cases:
+            election = self.save_dates(start, end)
+            self.assertEqual(election.voting_starts_at, start_utc, start)
+            self.assertEqual(election.voting_ends_at, end_utc, end)
+            # shown again as entered
+            response = self.client.get(f'/helios/elections/{self.election.uuid}/edit')
+            self.assertContains(response, 'value="%s"' % start)
+            self.assertContains(response, 'value="%s"' % end)
+
+    def test_skipped_hour_is_refused(self):
+        response = self.client.post(f'/helios/elections/{self.election.uuid}/edit', {
+            'short_name': self.election.short_name, 'name': self.election.name,
+            'description': self.election.description, 'election_type': self.election.election_type,
+            'voting_starts_at': '2026-03-29T02:30', 'voting_ends_at': '',
+            'csrf_token': self.client.session['csrf_token']})
+        self.assertContains(response, 'Europe/Berlin')
+        self.assertIsNone(models.Election.objects.get(uuid=self.election.uuid).voting_starts_at)
+
+    def test_display(self):
+        self.election.voting_starts_at = datetime.datetime(2026, 3, 29, 0, 30)
+        self.election.voting_ends_at = datetime.datetime(2026, 10, 25, 0, 30)
+        self.election.save()
+        response = self.client.get(f'/helios/elections/{self.election.uuid}/view')
+        self.assertContains(response, '01:30 CET')
+        self.assertContains(response, '02:30 CEST')
+
+    def test_start_and_end_checks_use_utc(self):
+        # local times entered half an hour around now (Berlin) open voting now,
+        # although the naive local clock of the process is one or two hours ahead of UTC
+        from helios import timezones
+        local_now = timezones.utc_to_local(datetime.datetime.utcnow()).replace(tzinfo=None, second=0, microsecond=0)
+        fmt = '%Y-%m-%dT%H:%M'
+        election = self.save_dates((local_now - datetime.timedelta(minutes=30)).strftime(fmt),
+                                   (local_now + datetime.timedelta(minutes=30)).strftime(fmt))
+        election.frozen_at = datetime.datetime.utcnow()
+        self.assertTrue(election.voting_has_started())
+        self.assertFalse(election.voting_has_stopped())
+        # and half an hour ahead has not started yet
+        election = self.save_dates((local_now + datetime.timedelta(minutes=30)).strftime(fmt), '')
+        election.frozen_at = datetime.datetime.utcnow()
+        self.assertFalse(election.voting_has_started())

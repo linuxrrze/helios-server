@@ -8,7 +8,7 @@
 {% if voter.voter_type == "password" %}
 {% translate "Your voter ID:" %} {{voter.voter_login_id}}
 {% translate "Your password:" %} {{voter.voter_password}}
-{% else %}
+{% elif voter.voter_type %}
 {% blocktranslate trimmed with voter_type=voter.voter_type %}Log in with your {{ voter_type }} account.{% endblocktranslate %}
 {% endif %}{% if voter.vote_hash %}
 {% translate "We have recorded your vote with ballot tracker:" %}

@@ -1,12 +1,14 @@
-{% load announcement_tags i18n localized_settings %}<!DOCTYPE html>
-{% get_current_language as LANGUAGE_CODE %}<html lang="{{ LANGUAGE_CODE }}" class="no-js">
+{% load announcement_tags i18n localized_settings navigation_tags %}<!DOCTYPE html>
+{% get_current_language as LANGUAGE_CODE %}{% color_scheme_class as color_scheme %}<html lang="{{ LANGUAGE_CODE }}" class="no-js {{ color_scheme }}">
     <head>
     <title>{% block title %}{% endblock %}</title>  
     <meta http-equiv="X-UA-Compatible" content="IE=edge,Chrome=1">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="description" content="{% localized_setting "SITE_TITLE" %}">
+    {% if color_scheme %}<meta name="color-scheme" content="light dark">{% endif %}
     <link rel="stylesheet" href="/static/layout.css">
+    <link rel="stylesheet" href="/static/navigation.css">
     {% if settings.SITE_CSS_URL %}<link rel="stylesheet" href="{{ settings.SITE_CSS_URL }}">{% endif %}
     <link rel="stylesheet" href="/static/helios/timezone-display.css">
     <script src="/static/20140302-helios-combined.js"></script>
@@ -18,7 +20,7 @@
 
 </head>
 <body>
-    
+ <a class="skip-link" href="#main-content">{% translate "Skip to main content" %}</a>
  <div class="container">
     <header>
 	 <div class="meta-header">
@@ -55,6 +57,7 @@
 
 	    </div>
 	 </div>     	 
+	 {% block site_nav %}{% site_nav %}{% endblock %}
     </header>
 
     {% site_announcement as announcement %}
@@ -62,34 +65,25 @@
     <div class="announcement-banner">{{announcement}}</div>
     {% endif %}
 
-     {% if user %}
-     <main class="content-body userlogin">
-     {% else %}
-       {% if voter %}
-     <main class="content-body voterlogin">
-       {% else %}
-	{% if settings.SHOW_LOGIN_OPTIONS %}
-     <main class="content-body login">
-	{% else %}
-     <main class="content-body">
-	{% endif %}
-       {% endif %}
-     {% endif %}
-
+     {% comment %}Pages that offer the login (start page, login pages) set the "login" layout: a narrow box
+        over the site's background image. All other pages use the full-width layout, also for anonymous
+        visitors.{% endcomment %}
+     <main id="main-content" tabindex="-1" class="content-body {% block layout_class %}{% if user %}userlogin{% elif voter %}voterlogin{% endif %}{% endblock %}">
      <div class="content">
 	<div class="row">    
 	    <p class="logo">
 		<a href="/"><img src="{{ settings.MAIN_LOGO_URL }}" class="helios-logo" alt="{% localized_setting "SITE_TITLE" %}"></a> 
 	    </p>
+	    {% block breadcrumbs %}{% breadcrumbs %}{% endblock %}
       {% block content %}{% endblock %}
        </div>
      </div>
     </main>
     <footer>
 	 <div class="content-footer">
-	    <div class="logo">
-		{% if settings.FOOTER_LOGO_URL %}{% if settings.ORGANIZATION_URL %}<a href="{{ settings.ORGANIZATION_URL }}">{% endif %}<img src="{{ settings.FOOTER_LOGO_URL }}" alt="{{ organization_name }}">{% if settings.ORGANIZATION_URL %}</a>{% endif %}{% endif %}
-	    </div>
+	    {% if settings.FOOTER_LOGO_URL %}<div class="logo">
+		{% if settings.ORGANIZATION_URL %}<a href="{{ settings.ORGANIZATION_URL }}">{% endif %}<img src="{{ settings.FOOTER_LOGO_URL }}" alt="{{ organization_name }}">{% if settings.ORGANIZATION_URL %}</a>{% endif %}
+	    </div>{% endif %}
 	    <div class="meta">
 		<nav aria-labelledby="footer-nav-title">
 		    <h2 class="screen-reader-text" id="footer-nav-title">{% translate "Contact, imprint and further information" %}</h2>
@@ -106,6 +100,21 @@
 	</div>     
     </footer>
 </div>   
+<script>
+  /* The footer stays at the bottom edge of the window (layout.css): pass its height on,
+     so that focused elements and link targets are not scrolled behind it. */
+  (function () {
+    var footer = document.querySelector('.container > footer');
+    if (!footer) return;
+    function update() {
+      var sticky = getComputedStyle(footer).position === 'sticky';
+      document.documentElement.style.setProperty('--footer-height', sticky ? footer.offsetHeight + 'px' : '0px');
+    }
+    update();
+    if (window.ResizeObserver) new ResizeObserver(update).observe(footer);
+    window.addEventListener('resize', update);
+  })();
+</script>
 
 </body>
 </html>

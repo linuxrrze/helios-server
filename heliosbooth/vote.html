@@ -8,6 +8,7 @@
   <script language="javascript" src="/jsi18n/"></script>
   <link rel="stylesheet" type="text/css" href="css/booth.css" />
   <link rel="stylesheet" type="text/css" href="css/forms.css" />
+  <link rel="stylesheet" type="text/css" href="css/booth-ui.css" />
 
 <!--
   <script language="javascript" src="js/jscrypto/class.js"></script>
@@ -38,7 +39,7 @@
 <div id="wrapper">
 <div id="banner" class="edge">
   <div style="text-align:center; width: 100%;"><span id="banner_title">Helios Voting Booth</span>
-      <div style="float: right; margin-right: 10px; font-size: 0.8em;"><span><a id="exit_link" href="javascript:BOOTH.exit();">exit</a></span></div>
+      <div class="exit"><button type="button" id="exit_link" class="exit-button" onclick="BOOTH.exit();">exit</button></div>
   </div>
 </div>
 <div id="content">
@@ -66,9 +67,9 @@ BOOTH.translate_page = function() {
   var texts = {
     'banner_title': gettext("Helios Voting Booth"),
     'exit_link': gettext("exit"),
-    'progress_1': "(1) " + gettext("Select"),
-    'progress_2': "(2) " + gettext("Review"),
-    'progress_3': "(3) " + gettext("Submit"),
+    'progress_1': gettext("Select"),
+    'progress_2': gettext("Review"),
+    'progress_3': gettext("Submit"),
     'loading_title': gettext("Checking capabilities and loading election booth..."),
     'loading_note': gettext("This may take up to 10 seconds"),
     'processing_title': gettext("Processing..."),
@@ -77,6 +78,17 @@ BOOTH.translate_page = function() {
   };
   for (var id in texts)
     $('#' + id).text(texts[id]);
+  $('#progress_div').attr('aria-label', gettext("Steps of voting"));
+};
+
+// a ballot tracker or fingerprint in groups of four characters; the groups are
+// separate elements without spaces, so copying still gives the exact value
+BOOTH.tracker_html = function(hash) {
+  var html = '';
+  hash = String(hash || '');
+  for (var i = 0; i < hash.length; i += 4)
+    html += '<span class="tracker-group">' + escape_html(hash.substring(i, i + 4)) + '</span>';
+  return html;
 };
 
 // opening tag of the link that selects the audit trail (audit template)
@@ -245,6 +257,16 @@ BOOTH.setup_election = function(raw_json, election_metadata) {
 BOOTH.show = function(el) {
   $('.panel').hide();
   el.show();
+  // after the panel's template is filled in, move keyboard and screen reader
+  // focus to its heading, so that the new step is announced and Tab starts there
+  setTimeout(function() {
+    var heading = el.find('h2, h3').eq(0);
+    if (heading.length) {
+      if (!heading.attr('tabindex'))
+        heading.attr('tabindex', '-1');
+      heading[0].focus();
+    }
+  }, 0);
   return el;
 };
 
@@ -268,7 +290,9 @@ BOOTH.launch_async_encryption_answer = function(question_num) {
 BOOTH.validate_question = function(question_num) {
     // check if enough answers are checked
     if (BOOTH.ballot.answers[question_num].length < BOOTH.election.questions[question_num].min) {
-        alert(BOOTH.fmt(gettext("You need to select at least %(min)s answer(s)."), 'min', BOOTH.election.questions[question_num].min));
+        // shown next to the answers rather than in a popup
+        $('#warning_box').attr('role', 'alert').addClass('error')
+          .text(BOOTH.fmt(gettext("You need to select at least %(min)s answer(s)."), 'min', BOOTH.election.questions[question_num].min));
         return false;
     }
 
@@ -360,6 +384,7 @@ BOOTH.click_checkbox_script = function(question_num, answer_num) {
 BOOTH.click_checkbox = function(question_num, answer_num, checked_p) {
   // keep track of dirty answers that need encrypting
   BOOTH.dirty[question_num] = true;
+  $('#warning_box').attr('role', 'status').removeClass('error');
 
   if (checked_p) {
      // multiple click events shouldn't screw this up
@@ -439,9 +464,9 @@ BOOTH.show_progress = function(step_num) {
     $('#progress_div').show();
     $(['1','2','3','4']).each(function(n, step) {
         if (step == step_num)
-            $('#progress_' + step).attr('class', 'selected');
+            $('#progress_' + step).attr('class', 'selected').attr('aria-current', 'step');
         else
-            $('#progress_' + step).attr('class', 'unselected');
+            $('#progress_' + step).attr('class', 'unselected').removeAttr('aria-current');
     });
 };
 
@@ -568,7 +593,8 @@ BOOTH.audit_ballot = function() {
 
 BOOTH.post_audited_ballot = function() {
   $.post(BOOTH.election_url + "/post-audited-ballot", {'audited_ballot': BOOTH.audit_trail}, function(result) {
-    alert(gettext('This audited ballot has been posted.\nRemember, this vote will only be used for auditing and will not be tallied.\nClick "back to voting" and cast a new ballot to make sure your vote counts.'));
+    // shown in the page (role=status) rather than in a popup
+    $('#audit_post_status').addClass('notice').html(escape_html(gettext('This audited ballot has been posted.\nRemember, this vote will only be used for auditing and will not be tallied.\nClick "back to voting" and cast a new ballot to make sure your vote counts.')).replace(/\n/g, '<br />'));
   });
 };
 
@@ -606,18 +632,16 @@ BOOTH.do_done = function() {
 
 </script>
 <div id="page">
-  <div id="progress_div" style="display:none">
-      <table>
-          <tr>
-              <td id="progress_1">(1) Select</td>
-              <td id="progress_2">(2) Review</td>
-              <td id="progress_3">(3) Submit</td>
-          </tr>
-      </table>
-  </div>
+  <nav id="progress_div" style="display:none" aria-label="Steps">
+      <ol class="booth-progress">
+          <li id="progress_1">(1) Select</li>
+          <li id="progress_2">(2) Review</li>
+          <li id="progress_3">(3) Submit</li>
+      </ol>
+  </nav>
   <div id="election_div" class="panel">
     <h3 id="loading_title">Checking capabilities and loading election booth...</h3>
-    <div align="center"><img src="loading.gif" /><br /><span id="loading_note">This may take up to 10 seconds</span></div>
+    <div class="panel-centered" role="status"><img src="loading.gif" alt="" /><br /><span id="loading_note">This may take up to 10 seconds</span></div>
   </div>
 
   <div id="error_div" class="panel" style="display: none;">
@@ -637,11 +661,11 @@ BOOTH.do_done = function() {
       <h3 align="center" id="processing_title">Processing....</h3>
   </div>
 
-  <div id="encrypting_div" class="panel" style="display:none;">
-      <h3 align="center"><span id="encrypting_title">Helios is now encrypting your ballot</span><br />
-          <img src="encrypting.gif" /> <span style="font-size:0.7em; display:none;" id="percent_done_container">(<span id="percent_done">0</span>%)</span></h3>
+  <div id="encrypting_div" class="panel" style="display:none;" role="status">
+      <h3 class="panel-centered"><span id="encrypting_title">Helios is now encrypting your ballot</span><br />
+          <img src="encrypting.gif" alt="" /> <span style="display:none;" id="percent_done_container">(<span id="percent_done">0</span>%)</span></h3>
 
-      <p align="center"><b id="encrypting_note">This may take up to two minutes.</b>
+      <p class="panel-centered"><b id="encrypting_note">This may take up to two minutes.</b></p>
   </div>
 
   <div id="seal_div" class="panel">

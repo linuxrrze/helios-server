@@ -3,6 +3,7 @@ Google Authentication
 
 """
 
+from django.utils.translation import gettext_lazy
 import requests
 from django.conf import settings
 from django.core.mail import send_mail
@@ -14,7 +15,7 @@ from helios_auth.utils import AuthenticationError, format_recipient
 STATUS_UPDATES = False
 
 # display tweaks
-LOGIN_MESSAGE = "Log in with my Google Account"
+LOGIN_MESSAGE = gettext_lazy("Log in with my Google Account")
 
 def get_flow(redirect_url=None):
   client_config = {

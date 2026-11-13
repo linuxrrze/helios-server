@@ -3,32 +3,33 @@
 {% block title %}{% translate "Statistics" %}{% endblock %}
 
 {% block content %}
-<h1>{% translate "Elections" %}</h1>
+<h1 class="title">{% translate "Elections" %}</h1>
 
-<p>
-<form method="get" action="{% url "stats@elections" %}">
-<b>{% translate "search" %}</b>: <input type="text" name="q" value="{{q}}"/> 
-<input class="small button" type="submit" value="{% translate "search" %}" /> <a class="small button" href="?">{% translate "clear search" %}</a>
+<form method="get" action="{% url "stats@elections" %}" class="voter-search" role="search">
+<label for="search-q">{% translate "search" %}</label> <input type="search" id="search-q" name="q" value="{{q}}"/>
+<button class="button small" type="submit">{% translate "search" %}</button>{% if q %} <a href="?">{% translate "clear search" %}</a>{% endif %}
 </form>
-</p>
 
 
-<p>
+<nav class="pager" aria-label="{% translate "Pages" %}">
 {% if elections_page.has_previous %}
-<a href="?page={{elections_page.previous_page_number}}&limit={{limit}}&q={{q|urlencode}}">{% blocktranslate trimmed %}previous {{limit}}{% endblocktranslate %}</a> &nbsp;&nbsp;
+<a href="?page={{elections_page.previous_page_number}}&limit={{limit}}&q={{q|urlencode}}">{% blocktranslate trimmed %}previous {{limit}}{% endblocktranslate %}</a>
 {% endif %}
-
-{% blocktranslate trimmed with start=elections_page.start_index end=elections_page.end_index total=total_elections %}Elections {{start}} - {{end}} (of {{total}}){% endblocktranslate %}&nbsp;&nbsp;
-
+<span>{% blocktranslate trimmed with start=elections_page.start_index end=elections_page.end_index total=total_elections %}Elections {{start}} - {{end}} (of {{total}}){% endblocktranslate %}</span>
 {% if elections_page.has_next %}
-<a href="?page={{elections_page.next_page_number}}&limit={{limit}}&q={{q|urlencode}}">{% blocktranslate trimmed %}next {{limit}}{% endblocktranslate %}</a> &nbsp;&nbsp;
+<a href="?page={{elections_page.next_page_number}}&limit={{limit}}&q={{q|urlencode}}">{% blocktranslate trimmed %}next {{limit}}{% endblocktranslate %}</a>
 {% endif %}
-</p>
+</nav>
 
+{% if elections %}
+<ul class="election-list">
 {% for election in elections %}
-<p>
-{% url "election@view" election.uuid as election_view_url %}{% blocktranslate trimmed with url=election_view_url name=election.name email=election.admin.info.email admin_name=election.admin.pretty_name %}<b><a href="{{url}}">{{name}}</a></b> by <a href="mailto:{{email}}">{{admin_name}}</a>{% endblocktranslate %} -- {% blocktranslate trimmed with num_voters=election.num_voters num_cast_votes=election.num_cast_votes %}{{num_voters}} voters / {{num_cast_votes}} cast votes{% endblocktranslate %}
-</p>
+<li>
+{% url "election@view" election.uuid as election_view_url %}{% blocktranslate trimmed with url=election_view_url name=election.name email=election.admin.info.email admin_name=election.admin.pretty_name %}<b><a href="{{url}}">{{name}}</a></b> by <a href="mailto:{{email}}">{{admin_name}}</a>{% endblocktranslate %}
+<span class="muted">{% blocktranslate trimmed with num_voters=election.num_voters num_cast_votes=election.num_cast_votes %}{{num_voters}} voters / {{num_cast_votes}} cast votes{% endblocktranslate %}</span>
+</li>
 {% endfor %}
+</ul>
+{% endif %}
 
 {% endblock %}

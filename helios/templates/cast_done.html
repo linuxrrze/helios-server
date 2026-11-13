@@ -1,28 +1,60 @@
 {% extends TEMPLATE_BASE %}
-{% load i18n %}
+{% load i18n tracker_tags %}
 {% block title %}{% translate "Confirm Vote" %}{% endblock %}
 
 {% block content %}
-<h1>{{election.name}} &mdash; {% translate "Vote Successfully Cast!" %}</h1>
+<div class="callout callout-success" role="status">
+<h1 class="callout-heading">{{election.name}} &mdash; {% translate "Vote Successfully Cast!" %}</h1>
+<p>{% translate "Your ballot has been recorded. Only your last ballot counts if you vote again." %}</p>
+</div>
 
 {% if vote_hash %}
+<div class="card ballot-tracker-card">
+<div class="tracker-with-qr">
+<div class="tracker-text">
+<h2 class="tracker-heading" id="tracker-heading">{% translate "Your ballot tracker" %}</h2>
 <p>
-  {% translate "Your ballot tracker is:" %}<br />
-    <span style="font-size:1.4em; font-weight: bold; word-break: break-word;">  {{vote_hash}}</span>
+  <span class="tracker" id="vote-hash" translate="no" aria-labelledby="tracker-heading">{{vote_hash|tracker_groups}}</span>
+  <button type="button" class="button secondary small copy-button" data-copy="vote-hash" hidden>{% translate "Copy" %}</button>
+  <span class="muted copy-done" role="status" aria-live="polite"></span>
 </p>
+<p class="muted">{% translate "The tracker is shown in groups of four characters for easier reading; it is one string without spaces. Copying it, the link and the QR code keep the whole tracker. When you check it, compare all groups." %}</p>
 <p>
   {% url "election@voters@list-pretty" election.uuid as voters_url %}{% translate "This ballot tracker mathematically ensures that your ballot is counted." %} {% blocktranslate trimmed %}You can check all ballot trackers by viewing the <a href="{{ voters_url }}">voter list</a>, where your ballot tracker should appear within a few minutes.{% endblocktranslate %}
 </p>
+<p>{% tracker_link vote_hash as link %}<a href="{{ link }}">{% translate "Link to your ballot on this server" %}</a></p>
+</div>
+<figure class="tracker-qr">
+  {% tracker_qr vote_hash %}
+  <figcaption class="muted">{% translate "Scan to open the link to your ballot on another device, e.g. to check it later." %}</figcaption>
+</figure>
+</div>
+<p class="muted">{% translate "You will also receive a confirmation email with your ballot tracker, unless you have opted out of emails." %}</p>
+</div>
+<script>
+// "Copy" button for the ballot tracker; shown only if the browser can copy
+(function () {
+  var button = document.querySelector('.copy-button');
+  if (!button || !navigator.clipboard) return;
+  button.hidden = false;
+  button.addEventListener('click', function () {
+    var text = document.getElementById(button.getAttribute('data-copy')).textContent.trim();
+    navigator.clipboard.writeText(text).then(function () {
+      document.querySelector('.copy-done').textContent = "{% filter escapejs %}{% translate "Copied." %}{% endfilter %}";
+    });
+  });
+})();
+</script>
 {% endif %}
 
 {% if logout %}
 <p><b>{% translate "For your safety, we have logged you out." %}</b></p>
-<iframe width="0" height="0" border="0" frameborder="0" src="{% url "auth@logout" %}">
+<iframe width="0" height="0" border="0" frameborder="0" src="{% url "auth@logout" %}" title="" aria-hidden="true">
 </iframe>
 {% endif %}
 
-<p style="font-size: 1.4em;">
-[ <a href="{% url "election@view" election.uuid %}">{% translate "return to election info" %}</a> ]
+<p class="actions">
+<a class="button secondary" href="{% url "election@view" election.uuid %}">{% translate "return to election info" %}</a>
 </p>
 
 {% endblock %}

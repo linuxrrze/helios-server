@@ -2,23 +2,23 @@
 <div id="questions_div">
 <p>
     {gettext("To vote, follow these steps:")}
-<p>
+</p>
     
-<ol>
+<ol class="booth-steps">
     <li> {gettext("<b>Select</b> your preferred options.")}</li>
-<br />
-
     <li> {gettext("<b>Review</b> your choices, which are then encrypted.")}</li>
-<br />
-
     <li> {gettext("<b>Submit</b> your encrypted ballot and authenticate to verify your eligibility.")}</li>
 
 </ol>
 
-<div align="center"><button onclick="BOOTH.show_question(0);">{gettext("Start")}</button></div>
+<div class="booth-actions booth-start"><button type="button" class="primary" onclick="BOOTH.show_question(0);">{gettext("Start")}</button></div>
 </div>
 
+<p class="booth-start-note">{BOOTH.fmt(gettext("The ballot has %(count)s question(s). Your choices are encrypted in this browser; your ballot is cast only in the last step, after you confirm who you are."), 'count', $T.election.questions.length)}</p>
+
+{#if $T.election_metadata.help_email}
 <p>
   {BOOTH.fmt(gettext('You can <a target="_new" href="%(url)s">email for help</a>.'), 'url', 'mailto:' + $T.election_metadata.help_email + '?subject=help%20with%20election%20' + $T.election.name + '&body=I%20need%20help%20with%20election%20' + $T.election.uuid)}
 </p>
+{#/if}
 

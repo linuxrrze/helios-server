@@ -3,18 +3,25 @@
 
 {% block title %}{% translate "Release Result" %} &mdash; {{election.name}}{% endblock %}
 {% block content %}
-  <h2 class="title">{{election.name}} &mdash; {% translate "Release Result" %} <span style="font-size:0.7em;">[<a href="{% url "election@view" election.uuid %}">{% translate "cancel" %}</a>]</span></h2>
+<h1 class="title">{{election.name}} &mdash; {% translate "Release Result" %}</h1>
 
-  <p>
-    {% translate "You are about to release the result for this election." %}
-  </p>
+<p>{% translate "You are about to release the result for this election." %}</p>
+<div class="callout callout-warning">
+  <span class="callout-title">{% translate "This cannot be undone." %}</span>
+  <p>{% translate "Once released, the result is visible to everyone who can see the election." %}</p>
+</div>
 
-  <form method="POST" action="">
-    <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
-    <p>
-    <input type="checkbox" name="send_email" value="send_email" checked="checked"/> {% translate "Send email to voters reporting release of result." %}
-    </p>
-    <input type="submit" class="button" value="{% translate "release result!" %}" />
-  </form>
-
+<form method="POST" action="">
+  <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
+  {% if election.num_voters %}
+  <div class="field field-check">
+    <input type="checkbox" id="send_email" name="send_email" value="send_email" checked="checked"/>
+    <label for="send_email">{% translate "Send email to voters reporting release of result." %}</label>
+  </div>
+  {% endif %}
+  <div class="actions">
+    <button type="submit" class="button">{% translate "release result!" %}</button>
+    <a href="{% url "election@view" election.uuid %}">{% translate "cancel" %}</a>
+  </div>
+</form>
 {% endblock %}

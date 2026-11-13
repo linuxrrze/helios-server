@@ -1,11 +1,14 @@
 """
-Template tags for timezone display in Helios
+Template tags for showing election times (stored in UTC) in local time
 """
 
-from django import template
-from django.utils.safestring import mark_safe
-from django.utils.html import escape
 import datetime
+
+from django import template
+from django.utils import formats
+from django.utils.html import format_html
+
+from helios import timezones
 
 register = template.Library()
 
@@ -13,8 +16,10 @@ register = template.Library()
 @register.filter(name='utc_time')
 def utc_time(value):
   """
-  Marks a datetime value for automatic timezone conversion.
-  The JavaScript will convert this to show both UTC and local timezone.
+  A stored (naive UTC) datetime in the election time zone, with the zone's
+  abbreviation, e.g. "20 November 2026, 10:00 CET". The UTC time is in the
+  title and the datetime attribute; timezone-display.js adds the visitor's
+  own local time if their browser is in another zone.
 
   Usage in templates:
     {{ election.voting_starts_at|utc_time }}
@@ -22,20 +27,12 @@ def utc_time(value):
   if value is None:
     return ''
 
-  # Only accept datetime objects to prevent XSS
-  # Note: datetime.datetime is a subclass of datetime.date, so check datetime first
+  # datetime.datetime is a subclass of datetime.date, so check datetime first
   if isinstance(value, datetime.datetime):
-    # Format datetime with time
-    formatted = value.strftime('%Y-%m-%d %H:%M')
-  elif isinstance(value, datetime.date):
-    # Format date only (no time component)
-    formatted = value.strftime('%Y-%m-%d 00:00')
-  else:
-    # Reject any other type and escape it
-    return escape(str(value))
-
-  # Escape the formatted string to prevent XSS
-  escaped_formatted = escape(formatted)
-
-  # Return HTML with data attribute for JavaScript processing
-  return mark_safe(f'<span class="tz-timestamp" data-utc-time="{escaped_formatted}">{escaped_formatted} UTC</span>')
+    utc = value.replace(tzinfo=None) if value.tzinfo is None else value.astimezone(timezones.UTC).replace(tzinfo=None)
+    iso = utc.strftime('%Y-%m-%dT%H:%MZ')
+    return format_html('<time class="tz-timestamp" datetime="{}" data-utc-time="{}" data-time-zone="{}" title="{}">{}</time>',
+                       iso, iso, timezones.zone_name(), utc.strftime('%Y-%m-%d %H:%M UTC'), timezones.format_local(utc))
+  if isinstance(value, datetime.date):
+    return format_html('<time datetime="{}">{}</time>', value.isoformat(), formats.date_format(value, 'DATE_FORMAT'))
+  return format_html('{}', str(value))

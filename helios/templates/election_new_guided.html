@@ -1,0 +1,66 @@
+{% extends TEMPLATE_BASE %}
+{% load i18n %}
+
+{% block title %}{{ step_title }} &mdash; {% translate "Create a New Election" %}{% endblock %}
+{% block content %}
+<p class="step-indicator">{% blocktranslate trimmed with number=step_number total=num_steps %}Create a new election &ndash; step {{ number }} of {{ total }}{% endblocktranslate %}</p>
+<h1 class="title">{{ step_title }}</h1>
+
+<nav class="wizard-nav" aria-label="{% translate "Steps to create an election" %}">
+<ol class="wizard-steps">
+{% for s in steps %}
+  <li class="wizard-step wizard-step-{{ s.state }}"{% if s.state == "current" %} aria-current="step"{% endif %}>
+    <span class="wizard-step-number" aria-hidden="true">{% if s.state == "done" %}&#10003;{% else %}{{ s.number }}{% endif %}</span>
+    {% if s.url %}<a href="{{ s.url }}">{{ s.title }}</a>{% else %}<span>{{ s.title }}</span>{% endif %}
+    {% if s.state == "done" %}<span class="screen-reader-text">({% translate "done" %})</span>{% endif %}
+  </li>
+{% endfor %}
+</ol>
+</nav>
+
+{% if error %}
+<div class="callout callout-danger" role="alert"><p class="error">{{ error }}</p></div>
+{% endif %}
+
+{% if step == "basics" %}
+<p class="page-lead">{% translate "Start with the name voters will see. You can change all settings until you freeze the ballot." %}</p>
+{% elif step == "schedule" %}
+<p class="page-lead">{% translate "When can people vote? You can also leave both empty and open and close voting yourself." %}</p>
+{% elif step == "options" %}
+<p class="page-lead">{% translate "These settings have sensible defaults; check them and continue." %}</p>
+{% elif step == "review" %}
+<p class="page-lead">{% translate "Check your settings. After creating the election you add the questions, the voters and, if you like, your own trustees." %}</p>
+{% endif %}
+
+{% if last_step %}
+<dl class="summary-list">
+{% for row in rows %}
+  <div class="summary-row">
+    <dt>{{ row.label }}</dt>
+    <dd class="summary-value">{{ row.value }}</dd>
+    <dd class="summary-action"><a href="?step={{ row.step }}">{% translate "Change" %}<span class="screen-reader-text"> {{ row.label }}</span></a></dd>
+  </div>
+{% endfor %}
+</dl>
+<form action="" method="POST" id="create_election_form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+  <input type="hidden" name="step" value="review" />
+  <div class="actions">
+    <button class="button" type="submit">{% translate "Create election" %}</button>
+    <a href="?restart=1">{% translate "Start again" %}</a>
+  </div>
+</form>
+{% else %}
+<form class="prettyform form-narrow" action="" method="POST" id="wizard_form" novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+  <input type="hidden" name="step" value="{{ step }}" />
+  {% include "_form_fields.html" with form=form %}
+  <div class="actions">
+    <button class="button" type="submit">{% translate "Continue" %}</button>
+    {% if previous_url %}<a href="{{ previous_url }}">{% translate "Back" %}</a>{% else %}<a href="/">{% translate "cancel" %}</a>{% endif %}
+  </div>
+</form>
+{% endif %}
+
+<p class="muted">{% url "elections@new" as single_form_url %}{% blocktranslate trimmed %}Prefer one form for everything? Use the <a href="{{ single_form_url }}">single form</a>.{% endblocktranslate %}</p>
+{% endblock %}

@@ -2,11 +2,8 @@
 <form onsubmit="return false;" class="prettyform" id="answer_form">
 <input type="hidden" name="question_num" value="{$T.question_num}" />
 
-<p>
-<br /> 
-<b style="white-space: pre-line;">{$T.question.question}</b>
-<br />
-<span style="font-size: 0.6em;">{BOOTH.fmt(gettext("#%(num)s of %(total)s"), 'num', $T.question_num + 1, 'total', $T.last_question_num + 1)} &mdash;
+<h2 class="question-text" id="question_heading" tabindex="-1">{$T.question.question}</h2>
+<p class="question-rules">{BOOTH.fmt(gettext("#%(num)s of %(total)s"), 'num', $T.question_num + 1, 'total', $T.last_question_num + 1)} &mdash;
 {#if $T.question.min && $T.question.min > 0}
 {#if $T.question.max}
  {BOOTH.fmt(gettext("vote for %(min)s to %(max)s"), 'min', $T.question.min, 'max', $T.question.max)}
@@ -24,45 +21,43 @@
  {gettext("vote for as many as you approve of")}
 {#/if} 
 {#/if}
-</span>
 </p>
 
+<fieldset class="answers" aria-labelledby="question_heading">
 {#foreach $T.question.answers as answer}
-<div id="answer_label_{$T.question_num}_{$T.answer_ordering[$T.answer$index]}">
+<div class="answer-row" id="answer_label_{$T.question_num}_{$T.answer_ordering[$T.answer$index]}">
   <input type="checkbox" class="ballot_answer" id="answer_{$T.question_num}_{$T.answer_ordering[$T.answer$index]}" name="answer_{$T.question_num}_{$T.answer_ordering[$T.answer$index]}" value="yes" onclick="BOOTH.click_checkbox({$T.question_num}, {$T.answer_ordering[$T.answer$index]}, this.checked);" />
 
   <label class="answer" for="answer_{$T.question_num}_{$T.answer_ordering[$T.answer$index]}">
     {$T.question.answers[$T.answer_ordering[$T.answer$index]]}
 
     {#if $T.question.answer_urls && $T.question.answer_urls[$T.answer_ordering[$T.answer$index]] && $T.question.answer_urls[$T.answer_ordering[$T.answer$index]] != ""}
-      &nbsp;&nbsp;
-      <span style="font-size: 12pt;">
-        [<a target="_blank" href="{$T.question.answer_urls[$T.answer_ordering[$T.answer$index]]}" rel="noopener noreferrer">{gettext("more info")}</a>]
+      <span class="answer-info">
+        <a target="_blank" href="{$T.question.answer_urls[$T.answer_ordering[$T.answer$index]]}" rel="noopener noreferrer">{gettext("more info")}</a>
       </span>
     {#/if}
   </label>
 </div>
 {#/for}
+</fieldset>
 
-<div id="warning_box" style="color: green; text-align:center; font-size: 0.8em; padding-top:10px; padding-bottom: 10px; height:50px;">
+<div id="warning_box" class="warning-box" role="status" aria-live="polite">
 </div>
 
 
-{#if $T.show_reviewall}
-<div style="float: right;">
-<button onclick="BOOTH.validate_and_confirm({$T.question_num});">{gettext("Proceed")}</button>
-</div>
-{#/if}
-
+<div class="booth-actions">
 {#if $T.question_num != 0}
-<button onclick="BOOTH.previous({$T.question_num});">{gettext("Previous")}</button>
-&nbsp;
+<button type="button" class="secondary" onclick="BOOTH.previous({$T.question_num});">{gettext("Previous")}</button>
 {#/if}
 
 {#if $T.question_num < $T.last_question_num}
-<button onclick="BOOTH.next({$T.question_num});">{gettext("Next")}</button>
-&nbsp;
+<button type="button" class="{#if $T.show_reviewall}secondary{#else}primary{#/if}" onclick="BOOTH.next({$T.question_num});">{gettext("Next")}</button>
 {#/if}
+
+{#if $T.show_reviewall}
+<button type="button" class="primary" onclick="BOOTH.validate_and_confirm({$T.question_num});">{gettext("Proceed")}</button>
+{#/if}
+</div>
 
 <br clear="both" />
 

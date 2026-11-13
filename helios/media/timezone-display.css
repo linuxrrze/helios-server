@@ -1,48 +1,17 @@
-/* Helios Timezone Display Styles */
+/* Helios time zone display (timezone-display.js) */
 
-.tz-display {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  font-size: 14px;
-  line-height: 1.5;
+/* the visitor's own local time after a server-rendered time */
+.tz-viewer {
+  color: var(--muted-color, #52606d);
+  font-weight: 400;
 }
 
-.tz-utc {
-  color: #333;
-  font-weight: 500;
-}
-
-.tz-separator {
-  color: #999;
-  margin: 0 4px;
-}
-
-.tz-local {
-  color: #0066cc;
-  font-weight: 500;
-}
-
-.tz-utc:hover,
-.tz-local:hover {
-  text-decoration: underline;
-}
-
-/* Helper text for datetime inputs */
+/* the line below a date field: the entered time in UTC and in the visitor's zone */
 .tz-input-helper {
   margin-top: 6px;
-  padding: 8px 12px;
-  background-color: #f5f5f5;
-  border-left: 3px solid #0066cc;
-  border-radius: 3px;
-  font-size: 14px;
-  color: #555;
+  color: var(--muted-color, #52606d);
+  font-size: .9rem;
 }
-
-.tz-input-helper small {
-  display: block;
-  line-height: 1.4;
-}
-
-.tz-input-helper strong {
-  color: #333;
-  font-weight: 600;
+.tz-input-helper:empty {
+  display: none;
 }

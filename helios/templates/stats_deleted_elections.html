@@ -4,42 +4,39 @@
 {% block title %}{% translate "Deleted Elections" %}{% endblock %}
 
 {% block content %}
-<h1>{% translate "Deleted Elections" %}</h1>
+<h1 class="title">{% translate "Deleted Elections" %}</h1>
 
-<p>
-<form method="get" action="{% url "stats@deleted-elections" %}">
-<b>{% translate "search" %}</b>: <input type="text" name="q" value="{{q}}"/>
-<input class="small button" type="submit" value="{% translate "search" %}" /> <a class="small button" href="?">{% translate "clear search" %}</a>
+<form method="get" action="{% url "stats@deleted-elections" %}" class="voter-search" role="search">
+<label for="search-q">{% translate "search" %}</label> <input type="search" id="search-q" name="q" value="{{q}}"/>
+<button class="button small" type="submit">{% translate "search" %}</button>{% if q %} <a href="?">{% translate "clear search" %}</a>{% endif %}
 </form>
-</p>
 
 
-<p>
+<nav class="pager" aria-label="{% translate "Pages" %}">
 {% if elections_page.has_previous %}
-<a href="?page={{elections_page.previous_page_number}}&limit={{limit}}&q={{q|urlencode}}">{% blocktranslate trimmed %}previous {{limit}}{% endblocktranslate %}</a> &nbsp;&nbsp;
+<a href="?page={{elections_page.previous_page_number}}&limit={{limit}}&q={{q|urlencode}}">{% blocktranslate trimmed %}previous {{limit}}{% endblocktranslate %}</a>
 {% endif %}
-
-{% blocktranslate trimmed with start=elections_page.start_index end=elections_page.end_index total=total_elections %}Elections {{start}} - {{end}} (of {{total}}){% endblocktranslate %}&nbsp;&nbsp;
-
+<span>{% blocktranslate trimmed with start=elections_page.start_index end=elections_page.end_index total=total_elections %}Elections {{start}} - {{end}} (of {{total}}){% endblocktranslate %}</span>
 {% if elections_page.has_next %}
-<a href="?page={{elections_page.next_page_number}}&limit={{limit}}&q={{q|urlencode}}">{% blocktranslate trimmed %}next {{limit}}{% endblocktranslate %}</a> &nbsp;&nbsp;
+<a href="?page={{elections_page.next_page_number}}&limit={{limit}}&q={{q|urlencode}}">{% blocktranslate trimmed %}next {{limit}}{% endblocktranslate %}</a>
 {% endif %}
-</p>
+</nav>
 
 {% if elections %}
+<ul class="election-list">
 {% for election in elections %}
-<p>
-{% blocktranslate trimmed with name=election.name email=election.admin.info.email admin_name=election.admin.pretty_name %}<b>{{name}}</b> by <a href="mailto:{{email}}">{{admin_name}}</a>{% endblocktranslate %}<br />
-{% translate "Deleted at:" %} {{election.deleted_at|utc_time}}<br />
-{% blocktranslate trimmed with num_voters=election.num_voters num_cast_votes=election.num_cast_votes %}{{num_voters}} voters / {{num_cast_votes}} cast votes{% endblocktranslate %}<br />
-<form method="post" action="{% url "stats@undelete-election" election.uuid %}" style="display:inline;" onsubmit="return confirm('{% filter escapejs %}{% translate "Are you sure you want to restore this election? It will become visible to its administrators again." %}{% endfilter %}');">
+<li>
+{% blocktranslate trimmed with name=election.name email=election.admin.info.email admin_name=election.admin.pretty_name %}<b>{{name}}</b> by <a href="mailto:{{email}}">{{admin_name}}</a>{% endblocktranslate %}
+<span class="muted">{% translate "Deleted at:" %} {{election.deleted_at|utc_time}} &middot; {% blocktranslate trimmed with num_voters=election.num_voters num_cast_votes=election.num_cast_votes %}{{num_voters}} voters / {{num_cast_votes}} cast votes{% endblocktranslate %}</span>
+<form class="inline-action" method="post" action="{% url "stats@undelete-election" election.uuid %}" onsubmit="return confirm('{% filter escapejs %}{% translate "Are you sure you want to restore this election? It will become visible to its administrators again." %}{% endfilter %}');">
 <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
-<button type="submit" class="small button">{% translate "undelete" %}</button>
+<button type="submit" class="button secondary small">{% translate "undelete" %}<span class="screen-reader-text"> {{election.name}}</span></button>
 </form>
-</p>
+</li>
 {% endfor %}
+</ul>
 {% else %}
-<p>{% translate "No deleted elections found." %}</p>
+<div class="callout empty-state"><p>{% translate "No deleted elections found." %}</p></div>
 {% endif %}
 
 {% endblock %}

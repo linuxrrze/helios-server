@@ -60,7 +60,8 @@ Single sign-on is described in more detail in [sso.md](sso.md).
 | `SESSION_COOKIE_SAMESITE` | `Lax` | Don't change it: `Lax` is part of Helios' CSRF protection, and the SAML and OIDC logins rely on it. |
 | `CSP_REPORT_ONLY` | `0` | `1`: report Content Security Policy violations without enforcing the policy (for testing). |
 | `CSP_REPORT_URI` | – | URL that receives CSP violation reports. |
-| `TIME_ZONE` | `America/Los_Angeles` | Only for automatic timestamps such as the creation date of an election. Election start/end times are always UTC. |
+| `TIME_ZONE` | `UTC` | Only for automatic timestamps such as the creation date of an election. Also the default of `ELECTION_TIME_ZONE`. |
+| `ELECTION_TIME_ZONE` | `TIME_ZONE` | Time zone (IANA name, e.g. `Europe/Berlin`) in which administrators enter voting start, end and extension, and in which the pages show these times, always with the zone's abbreviation (the visitor's own time is added by the browser if it differs). Helios still stores and compares them in UTC. `UTC` restores the earlier behaviour (entry and display in UTC). With neither variable set, times are entered and shown in UTC; set `TIME_ZONE` (or only `ELECTION_TIME_ZONE`) to your local zone. Installations that relied on the former default `America/Los_Angeles` must now set it explicitly. |
 | `LANGUAGE_CODE` | `en` | Interface language (`en` or `de`) for visitors whose browser prefers neither. Everyone can switch with the language button. Emails use the language of the person whose action sends them. |
 | `ADMIN_EMAIL` | – | Receives an email for every server error (500). Use a team address. Without it, errors appear only in the log. |
 | `ADMIN_NAME` | empty | Name to go with `ADMIN_EMAIL`. |
@@ -178,6 +179,7 @@ and the built-in pages. See [section 10](#10-customizing-the-site) for a worked 
 | `ORGANIZATION_LOGO_URL` | empty | Small logo (16 px high) shown instead of the name in the header bar. |
 | `FOOTER_LOGO_URL` | empty | Larger logo in the footer (up to 240 px wide), on the dark footer background: use a light/white version. |
 | `SITE_CSS_URL` | empty | Extra stylesheet, loaded after the default layout (`server_ui/media/layout.css`, served at `/static/layout.css`). Usually sets the CSS variables listed below. |
+| `DARK_MODE` | `auto` without `SITE_CSS_URL`, else `off` | `auto`: the pages follow the visitor's system setting for dark mode (`prefers-color-scheme`); `off`: always light. With a site stylesheet the default is `off`, because such a stylesheet usually sets light colors only. To enable it, give the stylesheet dark values under `@media (prefers-color-scheme: dark) { :root.color-scheme-auto { ... } }` (same variables as below, plus `--accent-color` for links and outlined buttons) and set `DARK_MODE=auto`. The voting booth stays light. |
 | `IMPRINT_URL` | empty | Footer link "Imprint". `/imprint` renders `server_ui/templates/imprint.html`, which only exists if the site provides it (otherwise 404); or link an external page. |
 | `PRIVACY_URL` | `/privacy` | Footer link "Privacy". `/privacy` is a built-in, generic description of how Helios handles data; it is not a complete privacy policy. Replace it with your own template or link an external page. Set it empty to hide the link. |
 | `ACCESSIBILITY_URL` | empty | Footer link "Accessibility". `/accessibility` renders `server_ui/templates/accessibility.html`, which only exists if the site provides it (otherwise 404); or link an external page. |

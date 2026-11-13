@@ -1,33 +1,42 @@
 {% extends "helios/templates/cryptobase.html" %}
 {% load i18n %}
 
+{% block title %}{% blocktranslate trimmed with name=trustee.name %}Trustee {{name}} Home{% endblocktranslate %} &mdash; {{election.name}}{% endblock %}
 {% block content %}
-  <h2 class="title">{{election.name}} &mdash; {% blocktranslate trimmed with name=trustee.name %}Trustee {{name}} Home{% endblocktranslate %}</span></h2>
+<h1 class="title">{{election.name}} &mdash; {% blocktranslate trimmed with name=trustee.name %}Trustee {{name}} Home{% endblocktranslate %}</h1>
+<p class="page-lead">{% translate "As a trustee you hold one of the keys needed to decrypt the result. You have two tasks: set up your key before the election opens, and decrypt your share of the tally after voting ends." %}</p>
 
-<p>
-{% if trustee.public_key_hash %}
-{% translate "You have successfully uploaded your public key." %}<br />
-{% blocktranslate trimmed with hash=trustee.public_key_hash %}Your public key fingerprint is: <b>{{hash}}</b>.{% endblocktranslate %}<br />
-{% url "election@trustee@check-sk" election.uuid trustee.uuid as check_sk_url %}{% blocktranslate trimmed with url=check_sk_url %}You can <a href="{{url}}">verify that you have the right secret key</a>.{% endblocktranslate %}
-{% else %}
-<a href="{% url "election@trustee@key-generator" election.uuid trustee.uuid %}">{% translate "setup your key" %}</a>
-{% endif %}
-</p>
-
-<p>
-{% if election.encrypted_tally %}
-{% if trustee.decryption_factors %}
-{% translate "You have successfully uploaded your decryption." %}
-{% else %}
-    {% translate "The encrypted tally for this election is ready." %}<br />
-    <a href="{% url "election@trustee@decrypt-and-prove" election.uuid trustee.uuid %}">{% translate "decrypt with your key" %}</a>
-{% endif %}
-{% else %}
-{% translate "Once the tally is computed, come back here to provide your secret key for decryption purposes." %}<br />
-{% translate "You should keep the email with your trustee homepage link, which contains the credentials needed to get back here." %}
-{% endif %}
-</p>
-
-
-
+<ol class="steps" aria-label="{% translate "Progress" %}">
+  <li class="step {% if trustee.public_key_hash %}step-done{% else %}step-current{% endif %}"{% if not trustee.public_key_hash %} aria-current="step"{% endif %}>
+    <span class="step-marker" aria-hidden="true">{% if trustee.public_key_hash %}&#10003;{% else %}1{% endif %}</span>
+    <span class="step-body">
+      <span class="step-title">{% translate "Set up your key" %}</span>
+      {% if trustee.public_key_hash %}
+      <span class="step-detail">{% translate "You have successfully uploaded your public key." %}</span>
+      <span class="step-detail">{% blocktranslate trimmed with hash=trustee.public_key_hash %}Your public key fingerprint is: <b>{{hash}}</b>.{% endblocktranslate %}</span>
+      <span class="step-hint">{% url "election@trustee@check-sk" election.uuid trustee.uuid as check_sk_url %}{% blocktranslate trimmed with url=check_sk_url %}You can <a href="{{url}}">verify that you have the right secret key</a>.{% endblocktranslate %}</span>
+      {% else %}
+      <span class="step-hint">{% translate "Your browser generates the key pair; only the public key is sent to the server. You save the secret key yourself." %}</span>
+      <span class="actions"><a class="button" href="{% url "election@trustee@key-generator" election.uuid trustee.uuid %}">{% translate "setup your key" %}</a></span>
+      {% endif %}
+    </span>
+  </li>
+  <li class="step {% if trustee.decryption_factors %}step-done{% elif election.encrypted_tally and trustee.public_key_hash %}step-current{% else %}step-todo{% endif %}"{% if election.encrypted_tally and not trustee.decryption_factors %} aria-current="step"{% endif %}>
+    <span class="step-marker" aria-hidden="true">{% if trustee.decryption_factors %}&#10003;{% else %}2{% endif %}</span>
+    <span class="step-body">
+      <span class="step-title">{% translate "Decrypt your share of the tally" %}</span>
+      {% if election.encrypted_tally %}
+      {% if trustee.decryption_factors %}
+      <span class="step-detail">{% translate "You have successfully uploaded your decryption." %}</span>
+      {% else %}
+      <span class="step-detail">{% translate "The encrypted tally for this election is ready." %}</span>
+      <span class="actions"><a class="button" href="{% url "election@trustee@decrypt-and-prove" election.uuid trustee.uuid %}">{% translate "decrypt with your key" %}</a></span>
+      {% endif %}
+      {% else %}
+      <span class="step-detail">{% translate "Once the tally is computed, come back here to provide your secret key for decryption purposes." %}</span>
+      <span class="step-hint">{% translate "You should keep the email with your trustee homepage link, which contains the credentials needed to get back here." %}</span>
+      {% endif %}
+    </span>
+  </li>
+</ol>
 {% endblock %}

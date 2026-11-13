@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.urls import include, path
 
-from . import views, votergroup_views, url_names as names
+from . import views, votergroup_views, wizard_views, url_names as names
 
 urlpatterns = [
   path('autologin', views.admin_autologin),
@@ -17,8 +17,8 @@ urlpatterns = [
   # vote shortcut
   path('v/<str:vote_tinyhash>', views.castvote_shortcut, name=names.CAST_VOTE_SHORTCUT),
 
-  # vote by hash
-  path('vh/<str:vote_hash>', views.castvote_fullhash_shortcut, name=names.CAST_VOTE_FULLHASH_SHORTCUT),
+  # vote by hash (the full ballot tracker, which is base64 and may contain "/")
+  path('vh/<path:vote_hash>', views.castvote_fullhash_shortcut, name=names.CAST_VOTE_FULLHASH_SHORTCUT),
   
   # trustee login
   path('t/<str:election_short_name>/<str:trustee_email>/<str:trustee_secret>', views.trustee_login,
@@ -29,6 +29,7 @@ urlpatterns = [
   path('elections/verifier', views.election_verifier, name=names.ELECTIONS_VERIFIER),
   path('elections/single_ballot_verifier', views.election_single_ballot_verifier, name=names.ELECTIONS_VERIFIER_SINGLE_BALLOT),
   path('elections/new', views.election_new, name=names.ELECTIONS_NEW),
+  path('elections/new/guided', wizard_views.election_new_guided, name=names.ELECTIONS_NEW_GUIDED),
   path('elections/administered', views.elections_administered, name=names.ELECTIONS_ADMINISTERED),
   path('elections/voted', views.elections_voted, name=names.ELECTIONS_VOTED),
   

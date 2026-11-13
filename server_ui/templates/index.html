@@ -1,25 +1,79 @@
 {% extends 'server_ui/templates/base.html' %}
-{% load i18n localized_settings %}
+{% load i18n localized_settings election_tags %}
 {% block title %}{% localized_setting "SITE_TITLE" %}{% endblock %}
 
 {% block header %}
 <h2>{% localized_setting "SITE_TITLE" %}</h2>
 {% endblock %}
 
+{% block layout_class %}{% if user %}userlogin{% elif voter %}voterlogin{% elif settings.SHOW_LOGIN_OPTIONS %}login{% endif %}{% endblock %}
 {% block content %}
+{% localized_setting "WELCOME_MESSAGE" as welcome_message %}
+{% if user %}
+<h1>{% localized_setting "SITE_TITLE" %}</h1>
+{% else %}
+<h1 class="screen-reader-text">{% localized_setting "SITE_TITLE" %}</h1>
+{% endif %}
+{% if welcome_message %}<p class="welcome">{{ welcome_message|safe }}</p>{% endif %}
 
-    
-    <p>{% localized_setting "WELCOME_MESSAGE" as welcome_message %}{{ welcome_message|safe }}</p>
+{% if user %}
+<div class="home-grid">
+{% if create_p %}
+<section class="card home-section" aria-labelledby="home-admin">
+  <h2 id="home-admin">{% translate "Administration" %}</h2>
+  {% if elections_administered %}
+  <ul class="election-list">
+  {% for election in elections_administered %}
+  <li><a href="{% url "election@view" election.uuid %}">{{election.name}}</a> {% election_status_badge election %}</li>
+  {% endfor %}
+  </ul>
+  {% else %}
+  <p class="muted">{% translate "You don't administer any elections yet. Create one: you add questions and voters next, and nothing is sent to anyone until you decide to." %}</p>
+  {% endif %}
+  <p class="actions">
+    <a class="button" href="{% url "elections@new@guided" %}">{% translate "Create election" %}</a>
+    {% if elections_administered %}<a class="button secondary" href="{% url "elections@administered" %}">{% translate "See all elections" %}</a>{% endif %}
+  </p>
+</section>
 
+<section class="card home-section" aria-labelledby="home-groups">
+  <h2 id="home-groups">{% translate "Committee administration" %}</h2>
+  <p class="muted">{% translate "Voter groups are reusable lists of members, with their votes, from which you prepare an election." %}</p>
+  <p class="actions"><a class="button secondary" href="{% url "votergroup@administered" %}">{% translate "See all groups" %}</a></p>
+</section>
+{% endif %}
 
-  
+<section class="card home-section" aria-labelledby="home-votes">
+  <h2 id="home-votes">{% translate "Recent votes" %}</h2>
+  {% if elections_voted %}
+  <ul class="election-list">
+  {% for election in elections_voted %}
+  <li><a href="{% url "election@view" election.uuid %}">{{election.name}}</a> {% election_status_badge election %}</li>
+  {% endfor %}
+  </ul>
+  <p class="actions"><a class="button secondary" href="{% url "elections@voted" %}">{% translate "See all votes" %}</a></p>
+  {% else %}
+  <p class="muted">{% translate "None yet." %}</p>
+  {% endif %}
+</section>
+
+{% if elections|length %}
+<section class="card home-section" aria-labelledby="home-featured">
+  <h2 id="home-featured">{% translate "Featured elections" %}</h2>
+  <ul class="election-list featured-elections">
+    {% for election in elections %}
+    <li><a href="{% url "shortcut@election" election.short_name %}">{{election.name}}</a>{% if settings.SHOW_USER_INFO %} <span class="muted">&mdash; {{election.admin.display_html_small|safe}}</span>{% endif %}</li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+</div>
+
+{% else %}
     {% if elections|length %}
     <ul class="featured-elections">
       {% for election in elections %}
-      <li>
-	<a href="{% url "shortcut@election" election.short_name %}">{{election.name}}</a>{% if settings.SHOW_USER_INFO %} (&mdash; {{election.admin.display_html_small|safe}}){% endif %}
-      </li>
-      <br />
+      <li><a href="{% url "shortcut@election" election.short_name %}">{{election.name}}</a>{% if settings.SHOW_USER_INFO %} (&mdash; {{election.admin.display_html_small|safe}}){% endif %}</li>
       {% endfor %}
     </ul>
     {% else %}
@@ -28,53 +82,6 @@
     </div>
     {% endif %}
 
-  
-{% if user %}
-    <!--<div class="row right">{{user.display_html_big|safe}}</div>-->
-    {% if create_p %}
-	    <p>
-		<a class="standard-btn" href="{% url "elections@new" %}">{% translate "Create election" %}</a>
-	    </p>
-    
-    <h2>{% translate "Committee administration" %}</h2>
-
-    <a class="standard-btn" href="{% url "votergroup@administered" %}">{% translate "See all groups" %}</a>
-
-	<h2>{% translate "Administration" %}</h2>
-	  
-	    {% if elections_administered %}
-	    <ul>
-	    {% for election in elections_administered %}
-	    <li> <a href="{% url "election@view" election.uuid %}">{{election.name}}</a></li>
-	    {% endfor %}
-	    </ul>
-	    {% endif %}
-	   
-	    <p>
-	<a class="standard-btn" href="{% url "elections@administered" %}">{% translate "See all elections" %}</a>
-	    </p>
-    {% endif %}
-
-     <h2>{% translate "Recent votes" %}</h2>
-    {% if elections_voted %}
-   
-    <ul>
-    {% for election in elections_voted %}
-    <li><a href="{% url "election@view" election.uuid %}">{{election.name}}</a></li>
-    {% endfor %}
-    </ul>
-    <p>
-      <a class="standard-btn" href="{% url "elections@voted" %}">{% translate "See all votes" %}</a>
-   </p>
-   {% else %}
-      <div class="alert alert-info">
-	{% translate "None yet." %}
-    </div>
-    {% endif %}
-   
-  
-   
-{% else %}
     {% if settings.SHOW_LOGIN_OPTIONS %}
    
      <div class="buttonlist">	    

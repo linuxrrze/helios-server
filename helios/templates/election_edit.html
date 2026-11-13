@@ -1,24 +1,20 @@
 {% extends TEMPLATE_BASE %}
 {% load i18n %}
 
+{% block title %}{% translate "Update" %} &mdash; {{election.name}}{% endblock %}
 {% block content %}
+<h1 class="title">{{election.name}} &mdash; {% translate "Update" %}</h1>
 
-  <h2 class="title">{{election.name}} &mdash; {% translate "Update" %} <span style="font-size:0.7em;">[<a href="{% url "election@view" election.uuid %}">{% translate "cancel" %}</a>]</span></h2>
-  
 {% if error %}
-<p style="color: red;">
-    {{error}}
-</p>
+<div class="callout callout-danger" role="alert"><p class="error">{{error}}</p></div>
 {% endif %}
-  
-  <form class="prettyform" action="" method="POST" id="edit_election_form">
-    <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
-    <table class="pretty">
-     {{election_form.as_table}}
-     </table>
-  <div>
-  <label for="">&nbsp;</label><input class="button" type="submit" value="{% translate "Update" %}" id="update_button" />
-  </div>
-  </form>
 
+<form class="prettyform form-narrow" action="" method="POST" id="edit_election_form" novalidate>
+  <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
+  {% include "_form_fields.html" with form=election_form %}
+  <div class="actions">
+    <button class="button" type="submit" id="update_button">{% translate "Save changes" %}</button>
+    <a href="{% url "election@view" election.uuid %}">{% translate "cancel" %}</a>
+  </div>
+</form>
 {% endblock %}

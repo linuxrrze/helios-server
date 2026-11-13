@@ -1,0 +1,60 @@
+/* Main navigation (below the header bar) and breadcrumbs of server_ui/templates/base.html.
+ *
+ * Loaded after layout.css and before the site stylesheet (SITE_CSS_URL), which can
+ * adapt it with these variables (or any rule):
+ *
+ * :root {
+ *   --nav-bg-color: #fff;                 background of the navigation bar
+ *   --nav-border-color: #c7d0d9;          line below it, and around the phone menu
+ *   --nav-link-color: var(--primary-color);
+ *   --nav-site-name-color: #1f2933;       the site name on the left, linking to the start page
+ * }
+ */
+:root {
+  --nav-bg-color: var(--main-bg-color, #fff);
+  --nav-border-color: #c7d0d9;
+  --nav-link-color: var(--primary-color);
+  --nav-site-name-color: #1f2933;
+}
+
+.site-nav { position: relative; z-index: 20; background: var(--nav-bg-color); border-bottom: 1px solid var(--nav-border-color); }
+.site-nav-inner { box-sizing: border-box; display: flex; flex-wrap: wrap; align-items: center; gap: 0 20px;
+  max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+.site-nav a { display: block; color: var(--nav-link-color); text-decoration: none; }
+.site-nav .site-name { padding: 10px 0; color: var(--nav-site-name-color); font-size: 1.1rem; font-weight: 700; line-height: 1.3; }
+.site-nav ul { margin: 0; padding: 0; list-style: none; }
+.site-nav li { margin: 0; padding: 0; font-size: 1rem; background: none; }
+.site-nav-links { display: flex; flex-wrap: wrap; gap: 0 4px; }
+.site-nav-links a { padding: 10px 10px 7px; border-bottom: 3px solid transparent; line-height: 1.3; }
+.site-nav-links a:hover { border-bottom-color: var(--nav-border-color); }
+.site-nav a[aria-current="page"] { border-bottom-color: var(--nav-link-color); font-weight: 600; }
+.site-nav a:focus-visible, .site-nav summary:focus-visible {
+  outline: 3px solid var(--focus-color, #1a5fb4); outline-offset: -3px;
+}
+
+/* phones: the links move into a menu that opens without JavaScript */
+.site-nav-menu { display: none; }
+@media only screen and (max-width: 40em) {
+  .site-nav-inner { padding: 0 16px; }
+  .site-nav-inner.has-menu .site-nav-links { display: none; }
+  .site-nav-inner.has-menu .site-nav-menu { display: block; margin-left: auto; }
+  .site-nav-menu > summary { display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px;
+    color: var(--nav-link-color); font-weight: 600; cursor: pointer; list-style: none; }
+  .site-nav-menu > summary::-webkit-details-marker { display: none; }
+  .site-nav-menu > summary::after { content: ""; width: 7px; height: 7px; margin-top: -4px; border: solid currentColor;
+    border-width: 0 2px 2px 0; transform: rotate(45deg); }
+  .site-nav-menu[open] > summary::after { margin-top: 4px; transform: rotate(-135deg); }
+  .site-nav-menu > ul { position: absolute; left: 0; right: 0; top: 100%; padding: 4px 0;
+    background: var(--nav-bg-color); border-bottom: 1px solid var(--nav-border-color); box-shadow: 0 6px 12px rgba(0, 0, 0, .12); }
+  .site-nav-menu a { min-height: 44px; box-sizing: border-box; padding: 11px 16px; border-left: 4px solid transparent; }
+  .site-nav-menu a[aria-current="page"] { border-left-color: var(--nav-link-color); }
+}
+
+/* breadcrumbs: Home > election > page */
+.breadcrumbs { margin: 0 0 12px; font-size: .95rem; line-height: 1.4; }
+.breadcrumbs ol { margin: 0; padding: 0; list-style: none; }
+/* inline, so that a long election name wraps like text instead of taking a line of its own */
+.breadcrumbs li { display: inline; margin: 0; padding: 0; font-size: inherit; overflow-wrap: anywhere; background: none; }
+.breadcrumbs li + li::before { content: "\203A"; content: "\203A" / ""; margin: 0 .5em; color: #52606d; }
+.breadcrumbs a { color: var(--link-color, var(--primary-color)); }
+.breadcrumbs [aria-current="page"] { color: var(--muted-color, #52606d); }

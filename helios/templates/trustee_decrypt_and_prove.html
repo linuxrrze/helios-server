@@ -132,7 +132,7 @@ function reset() {
 }
 
 </script>
-  <h2 class="title">{% blocktranslate trimmed with name=trustee.name %}Trustee {{name}}{% endblocktranslate %} &mdash; {% blocktranslate trimmed with name=election.name %}Decrypt Result for {{name}}{% endblocktranslate %}</h2>
+  <h1 class="title">{% blocktranslate trimmed with name=trustee.name %}Trustee {{name}}{% endblocktranslate %} &mdash; {% blocktranslate trimmed with name=election.name %}Decrypt Result for {{name}}{% endblocktranslate %}</h1>
 
 <p>
     <b>{% translate "Trustee:" %}</b> <tt>{{trustee.email}}</tt><br />
@@ -157,7 +157,7 @@ function reset() {
   <div id="sk_section" style="display:none;">
 
       <form onsubmit="return false;">
-          <h3>{% translate "FIRST STEP: enter your secret key" %}</h3>
+          <h2><label for="sk_textarea">{% translate "FIRST STEP: enter your secret key" %}</label></h2>
           <textarea id="sk_textarea" cols="60" rows="5" style="height: 25em;"></textarea>
       </form>
       <p id="tally_section">
@@ -165,41 +165,41 @@ function reset() {
       </p>
 
       <p id="skip_to_second_step_instructions">
-        <a href="javascript:skip_to_second_step();">{% translate "skip to the second step" %}</a><br />
+        <button type="button" class="link-button" onclick="skip_to_second_step();">{% translate "skip to the second step" %}</button><br />
         {% translate "(you need to have already computed your decryption factors.)" %}
       </p>
   </div>
   
-  <div id="waiting_div">
+  <div id="waiting_div" role="status">
       {% translate "Generating partial decryption factors and proofs..." %}<br />
       <img src="/static/helios/loading.gif" />
   </div>
 
-  <div id="waiting_submit_div">
+  <div id="waiting_submit_div" role="status">
       {% translate "Submitting and checking your decryption factors and proofs..." %}<br />
       <img src="/static/helios/loading.gif" />
   </div>
   
   <div id="result_div">
-      <h3>{% translate "SECOND STEP: upload your partial decryption" %}</h3>
+      <h2>{% translate "SECOND STEP: upload your partial decryption" %}</h2>
       <p id="first-step-success" style="display: none;">
           {% translate "Your partial decryption factors and proofs have been generated below." %}<br />
           {% translate "Your secret key has been cleared from memory." %}<br />
           {% translate "When you're ready, you can submit this result to the server." %}
       </p>
-      {% translate "Your partial decryption:" %}<br />
+      <label for="result_textarea">{% translate "Your partial decryption:" %}</label>
       <p>
           <textarea id="result_textarea" cols="60" rows="5" wrap="soft" style="height: 25em;"></textarea>
           <button class="button" onclick="submit_result();">{% translate "Upload decryption factors to server" %}</button>
       </p>
-      <p><a href="javascript:reset()">{% translate "reset and restart decryption process" %}</a></p>
+      <p><button type="button" class="link-button" onclick="reset();">{% translate "reset and restart decryption process" %}</button></p>
   </div>
   
-  <div id="done_div">
+  <div id="done_div" class="callout callout-success" role="status">
       {% translate "Done!" %} <a href="{% url "election@view" election.uuid %}">{% translate "Back to election" %}</a>
   </div>
   
-  <div id="error_div">
+  <div id="error_div" class="callout callout-danger" role="alert">
       {% translate "Error: your secret key was likely incorrect." %}
   </div>
 

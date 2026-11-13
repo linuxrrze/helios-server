@@ -1,7 +1,5 @@
-{% extends 'base.html' %}
+{% extends '_error_page.html' %}
 {% load i18n %}
 {% block title %}{% translate "Server error" %}{% endblock %}
-
-{% block content %}
-{% translate "There was an error while handling your request." %}
-{% endblock %}
+{% block heading %}{% translate "Server error" %}{% endblock %}
+{% block message %}{% translate "There was an error while handling your request." %} {% translate "Please try again in a few minutes. If you were casting a ballot, you can simply vote again: only your last ballot counts." %}{% endblock %}

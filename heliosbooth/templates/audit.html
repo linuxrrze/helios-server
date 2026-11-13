@@ -15,8 +15,9 @@
 {gettext("Once you're satisfied, click the \"back to voting\" button to re-encrypt and cast your ballot.")}
 </p>
 
-<form action="#">
-<textarea name="audit_trail" id="audit_trail" cols="80" rows="10" wrap="soft">
+<form action="#" onsubmit="return false;">
+<label for="audit_trail" class="screen-reader-text">{gettext("Your ballot audit info")}</label>
+<textarea name="audit_trail" id="audit_trail" cols="80" rows="10" wrap="soft" readonly>
 {$T.audit_trail}
 </textarea>
 <br /><br />
@@ -24,9 +25,11 @@
 <br /><br />
 <b>{gettext('Even if you post your audited ballot, you must go back to voting and choose "cast" if you want your vote to count.')}</b>
 <br /><br />
-<button onclick="BOOTH.reset_ciphertexts();BOOTH.seal_ballot(); return false;" class="pretty">{gettext("back to voting")}</button>
-&nbsp; &nbsp;&nbsp;
-<button onclick="$(this).attr('disabled', 'disabled');BOOTH.post_audited_ballot(); return false;" id="post_audited_ballot_button" class="pretty" style="font-size:0.8em;">{gettext("post audited ballot to tracking center")}</button>
+<div class="booth-actions">
+<button type="button" onclick="$(this).attr('disabled', 'disabled');BOOTH.post_audited_ballot(); return false;" id="post_audited_ballot_button" class="secondary">{gettext("post audited ballot to tracking center")}</button>
+<button type="button" onclick="BOOTH.reset_ciphertexts();BOOTH.seal_ballot(); return false;" class="primary">{gettext("back to voting")}</button>
+</div>
+<p id="audit_post_status" role="status"></p>
 
 </form>
 

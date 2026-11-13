@@ -3,6 +3,7 @@ Github Authentication
 
 """
 
+from django.utils.translation import gettext_lazy
 import logging
 
 from django.conf import settings
@@ -18,7 +19,7 @@ STATUS_UPDATES = False
 CASE_INSENSITIVE_USER_ID = True
 
 # display tweaks
-LOGIN_MESSAGE = "Log in with GitHub"
+LOGIN_MESSAGE = gettext_lazy("Log in with GitHub")
 
 AUTHORIZATION_URL = "https://github.com/login/oauth/authorize"
 TOKEN_URL = "https://github.com/login/oauth/access_token"

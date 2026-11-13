@@ -10,115 +10,150 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: helios/media/static_templates/question.html:8
+#: helios/media/static_templates/question.html:9
+#, python-format
+msgid "Move question %(num)s up"
+msgstr "Frage %(num)s nach oben verschieben"
+
+#: helios/media/static_templates/question.html:9
+msgid "Move question up"
+msgstr "Frage nach oben verschieben"
+
+#: helios/media/static_templates/question.html:10
+#, python-format
+msgid "Move question %(num)s down"
+msgstr "Frage %(num)s nach unten verschieben"
+
+#: helios/media/static_templates/question.html:10
+msgid "Move question down"
+msgstr "Frage nach unten verschieben"
+
+#: helios/media/static_templates/question.html:11
 msgid "edit"
 msgstr "bearbeiten"
 
-#: helios/media/static_templates/question.html:9
+#: helios/media/static_templates/question.html:11 helios/media/static_templates/question.html:12
+#, python-format
+msgid "question %(num)s"
+msgstr "Frage %(num)s"
+
+#: helios/media/static_templates/question.html:12
 msgid "Are you sure you want to remove this question?"
 msgstr "Möchten Sie diese Frage wirklich entfernen?"
 
-#: helios/media/static_templates/question.html:18
+#: helios/media/static_templates/question.html:12
+msgid "remove"
+msgstr "entfernen"
+
+#: helios/media/static_templates/question.html:19
 msgid "Selection:"
 msgstr "Auswahl:"
 
-#: helios/media/static_templates/question.html:18
+#: helios/media/static_templates/question.html:19
 msgid "to"
 msgstr "bis"
 
-#: helios/media/static_templates/question.html:18
+#: helios/media/static_templates/question.html:19 helios/media/static_templates/question.html:77 helios/media/static_templates/question.html:152
 msgid "unlimited"
 msgstr "unbegrenzt"
 
-#: helios/media/static_templates/question.html:21 helios/media/static_templates/question.html:75 helios/media/static_templates/question.html:138
+#: helios/media/static_templates/question.html:22
 msgid "Result type:"
 msgstr "Ergebnisart:"
 
-#: helios/media/static_templates/question.html:21 helios/media/static_templates/question.html:77 helios/media/static_templates/question.html:140
+#: helios/media/static_templates/question.html:22 helios/media/static_templates/question.html:83 helios/media/static_templates/question.html:158
 msgid "absolute"
 msgstr "absolut"
 
-#: helios/media/static_templates/question.html:21 helios/media/static_templates/question.html:78 helios/media/static_templates/question.html:141
+#: helios/media/static_templates/question.html:22 helios/media/static_templates/question.html:84 helios/media/static_templates/question.html:159
 msgid "relative"
 msgstr "relativ"
 
-#: helios/media/static_templates/question.html:25
+#: helios/media/static_templates/question.html:26
 msgid "Order:"
 msgstr "Reihenfolge:"
 
-#: helios/media/static_templates/question.html:25
+#: helios/media/static_templates/question.html:26
 msgid "randomized"
 msgstr "zufällig"
 
-#: helios/media/static_templates/question.html:35
+#: helios/media/static_templates/question.html:36 helios/media/static_templates/question.html:37
 msgid "More information"
 msgstr "Weitere Informationen"
 
-#: helios/media/static_templates/question.html:47
+#: helios/media/static_templates/question.html:48
 msgid "Edit Question"
 msgstr "Frage bearbeiten"
 
-#: helios/media/static_templates/question.html:53 helios/media/static_templates/question.html:116
+#: helios/media/static_templates/question.html:54 helios/media/static_templates/question.html:129
 msgid "Question Text"
 msgstr "Fragetext"
 
-#: helios/media/static_templates/question.html:54 helios/media/static_templates/question.html:117
+#: helios/media/static_templates/question.html:55 helios/media/static_templates/question.html:130
 msgid "Enter your question here"
 msgstr "Geben Sie hier Ihre Frage ein"
 
-#: helios/media/static_templates/question.html:58 helios/media/static_templates/question.html:121
-msgid "Select between"
-msgstr "Auswahl zwischen"
+#: helios/media/static_templates/question.html:59 helios/media/static_templates/question.html:134
+msgid "How voters answer"
+msgstr "Wie abgestimmt wird"
 
-#: helios/media/static_templates/question.html:65 helios/media/static_templates/question.html:128
-msgid "and"
-msgstr "und"
+#: helios/media/static_templates/question.html:62 helios/media/static_templates/question.html:137
+msgid "Minimum number of answers"
+msgstr "Mindestanzahl an Antworten"
 
-#: helios/media/static_templates/question.html:74 helios/media/static_templates/question.html:137
-msgid "answers."
-msgstr "Antworten."
+#: helios/media/static_templates/question.html:71 helios/media/static_templates/question.html:146
+msgid "Maximum number of answers"
+msgstr "Höchstanzahl an Antworten"
 
-#: helios/media/static_templates/question.html:80 helios/media/static_templates/question.html:143
-msgid "Random order:"
-msgstr "Zufällige Reihenfolge:"
+#: helios/media/static_templates/question.html:81 helios/media/static_templates/question.html:156
+msgid "Result type"
+msgstr "Ergebnisart"
 
-#: helios/media/static_templates/question.html:82 helios/media/static_templates/question.html:145
-msgid "No"
-msgstr "Nein"
+#: helios/media/static_templates/question.html:88 helios/media/static_templates/question.html:163
+msgid "Answer order in the booth"
+msgstr "Reihenfolge der Antworten in der Wahlkabine"
 
-#: helios/media/static_templates/question.html:83 helios/media/static_templates/question.html:146
-msgid "Yes"
-msgstr "Ja"
+#: helios/media/static_templates/question.html:90 helios/media/static_templates/question.html:165
+msgid "as entered"
+msgstr "wie eingegeben"
 
-#: helios/media/static_templates/question.html:88 helios/media/static_templates/question.html:151
+#: helios/media/static_templates/question.html:91 helios/media/static_templates/question.html:166
+msgid "random for each voter"
+msgstr "zufällig für jede Person"
+
+#: helios/media/static_templates/question.html:95 helios/media/static_templates/question.html:170
+msgid "Voters may choose fewer than the maximum, or none if the minimum is 0. Absolute: if only one answer can be chosen, it wins only with more than half of all ballots cast. Relative: the answers with the most votes win."
+msgstr "Wahlberechtigte dürfen weniger Antworten als die Höchstzahl wählen, bei einer Mindestzahl von 0 auch keine. Absolut: Ist nur eine Antwort wählbar, gewinnt sie nur mit mehr als der Hälfte aller abgegebenen Stimmzettel. Relativ: Die Antworten mit den meisten Stimmen gewinnen."
+
+#: helios/media/static_templates/question.html:99 helios/media/static_templates/question.html:174
 msgid "Answer Options"
 msgstr "Antwortmöglichkeiten"
 
-#: helios/media/static_templates/question.html:93 helios/media/static_templates/question.html:156
-msgid "Add 5 More Answers"
-msgstr "5 weitere Antworten hinzufügen"
+#: helios/media/static_templates/question.html:104 helios/media/static_templates/question.html:179
+msgid "Add answer"
+msgstr "Antwort hinzufügen"
 
-#: helios/media/static_templates/question.html:98
+#: helios/media/static_templates/question.html:111
 msgid "Update Question"
 msgstr "Frage aktualisieren"
 
-#: helios/media/static_templates/question.html:99
+#: helios/media/static_templates/question.html:112
 msgid "Cancel"
 msgstr "Abbrechen"
 
-#: helios/media/static_templates/question.html:105
+#: helios/media/static_templates/question.html:118
 msgid "No questions have been added yet."
 msgstr "Es wurden noch keine Fragen hinzugefügt."
 
-#: helios/media/static_templates/question.html:111
+#: helios/media/static_templates/question.html:124
 msgid "Add a New Question"
 msgstr "Neue Frage hinzufügen"
 
-#: helios/media/static_templates/question.html:161
+#: helios/media/static_templates/question.html:186
 msgid "Add Question"
 msgstr "Frage hinzufügen"
 
-#: heliosbooth/single-ballot-verify.html:12 heliosbooth/vote.html:33 heliosverifier/verify.html:10
+#: heliosbooth/single-ballot-verify.html:12 heliosbooth/vote.html:34 heliosverifier/verify.html:10
 msgctxt "HTML lang attribute, the language code of this translation"
 msgid "en"
 msgstr "de"
@@ -204,21 +239,25 @@ msgstr "<b>Wie geht es weiter?</b> %(select_link_start)sMarkieren Sie die Prüfd
 msgid "Once you're satisfied, click the \"back to voting\" button to re-encrypt and cast your ballot."
 msgstr "Wenn Sie zufrieden sind, klicken Sie auf „Zurück zur Stimmabgabe“, um Ihren Stimmzettel erneut zu verschlüsseln und abzugeben."
 
-#: heliosbooth/templates/audit.html:23
+#: heliosbooth/templates/audit.html:19
+msgid "Your ballot audit info"
+msgstr "Ihre Prüfdaten zum Stimmzettel"
+
+#: heliosbooth/templates/audit.html:24
 msgid "Before going back to voting,<br />you can post this audited ballot to the Helios tracking center so that others might double-check the verification of this ballot."
 msgstr "Bevor Sie zur Stimmabgabe zurückkehren,<br />können Sie diesen geprüften Stimmzettel in der Helios-Stimmzettel-Übersicht veröffentlichen, damit andere die Überprüfung dieses Stimmzettels nachvollziehen können."
 
-#: heliosbooth/templates/audit.html:25
+#: heliosbooth/templates/audit.html:26
 msgid "Even if you post your audited ballot, you must go back to voting and choose \"cast\" if you want your vote to count."
 msgstr "Auch wenn Sie Ihren geprüften Stimmzettel veröffentlichen, müssen Sie zur Stimmabgabe zurückkehren und „abgeben“ wählen, damit Ihre Stimme zählt."
-
-#: heliosbooth/templates/audit.html:27
-msgid "back to voting"
-msgstr "Zurück zur Stimmabgabe"
 
 #: heliosbooth/templates/audit.html:29
 msgid "post audited ballot to tracking center"
 msgstr "Geprüften Stimmzettel in der Stimmzettel-Übersicht veröffentlichen"
+
+#: heliosbooth/templates/audit.html:30
+msgid "back to voting"
+msgstr "Zurück zur Stimmabgabe"
 
 #: heliosbooth/templates/election.html:4
 msgid "To vote, follow these steps:"
@@ -228,19 +267,24 @@ msgstr "Gehen Sie zur Stimmabgabe wie folgt vor:"
 msgid "<b>Select</b> your preferred options."
 msgstr "<b>Wählen</b> Sie die gewünschten Antworten aus."
 
-#: heliosbooth/templates/election.html:11
+#: heliosbooth/templates/election.html:9
 msgid "<b>Review</b> your choices, which are then encrypted."
 msgstr "<b>Überprüfen</b> Sie Ihre Auswahl, die anschließend verschlüsselt wird."
 
-#: heliosbooth/templates/election.html:14
+#: heliosbooth/templates/election.html:10
 msgid "<b>Submit</b> your encrypted ballot and authenticate to verify your eligibility."
 msgstr "<b>Senden</b> Sie Ihren verschlüsselten Stimmzettel ab und melden Sie sich an, um Ihre Wahlberechtigung nachzuweisen."
 
-#: heliosbooth/templates/election.html:18
+#: heliosbooth/templates/election.html:14
 msgid "Start"
 msgstr "Starten"
 
-#: heliosbooth/templates/election.html:22
+#: heliosbooth/templates/election.html:17
+#, python-format
+msgid "The ballot has %(count)s question(s). Your choices are encrypted in this browser; your ballot is cast only in the last step, after you confirm who you are."
+msgstr "Der Stimmzettel hat %(count)s Frage(n). Ihre Auswahl wird in diesem Browser verschlüsselt; abgegeben wird Ihr Stimmzettel erst im letzten Schritt, nachdem Sie sich ausgewiesen haben."
+
+#: heliosbooth/templates/election.html:21
 #, python-format
 msgid "You can <a target=\"_new\" href=\"%(url)s\">email for help</a>."
 msgstr "Sie können <a target=\"_new\" href=\"%(url)s\">per E-Mail um Hilfe bitten</a>."
@@ -253,50 +297,50 @@ msgstr "Der öffentliche Schlüssel für diese Wahl ist noch nicht bereit. Diese
 msgid "Election Fingerprint:"
 msgstr "Fingerabdruck der Wahl:"
 
-#: heliosbooth/templates/question.html:9
+#: heliosbooth/templates/question.html:6
 #, python-format
 msgid "#%(num)s of %(total)s"
 msgstr "#%(num)s von %(total)s"
 
-#: heliosbooth/templates/question.html:12
+#: heliosbooth/templates/question.html:9
 #, python-format
 msgid "vote for %(min)s to %(max)s"
 msgstr "wählen Sie %(min)s bis %(max)s"
 
-#: heliosbooth/templates/question.html:14
+#: heliosbooth/templates/question.html:11
 #, python-format
 msgid "vote for at least %(min)s"
 msgstr "wählen Sie mindestens %(min)s"
 
-#: heliosbooth/templates/question.html:19
+#: heliosbooth/templates/question.html:16
 #, python-format
 msgid "vote for up to %(max)s"
 msgstr "wählen Sie bis zu %(max)s"
 
-#: heliosbooth/templates/question.html:21
+#: heliosbooth/templates/question.html:18
 #, python-format
 msgid "vote for %(max)s"
 msgstr "wählen Sie %(max)s"
 
-#: heliosbooth/templates/question.html:24
+#: heliosbooth/templates/question.html:21
 msgid "vote for as many as you approve of"
 msgstr "wählen Sie so viele, wie Sie befürworten"
 
-#: heliosbooth/templates/question.html:40
+#: heliosbooth/templates/question.html:36
 msgid "more info"
 msgstr "weitere Informationen"
 
-#: heliosbooth/templates/question.html:53
-msgid "Proceed"
-msgstr "Fortfahren"
-
-#: heliosbooth/templates/question.html:58
+#: heliosbooth/templates/question.html:50
 msgid "Previous"
 msgstr "Zurück"
 
-#: heliosbooth/templates/question.html:63
+#: heliosbooth/templates/question.html:54
 msgid "Next"
 msgstr "Weiter"
+
+#: heliosbooth/templates/question.html:58
+msgid "Proceed"
+msgstr "Fortfahren"
 
 #: heliosbooth/templates/seal.html:1
 msgid "Review your Ballot"
@@ -307,41 +351,50 @@ msgstr "Stimmzettel überprüfen"
 msgid "Question #%(num)s: %(name)s"
 msgstr "Frage #%(num)s: %(name)s"
 
-#: heliosbooth/templates/seal.html:8
+#: heliosbooth/templates/seal.html:9
 msgid "No choice selected"
 msgstr "Keine Auswahl getroffen"
 
-#: heliosbooth/templates/seal.html:14
+#: heliosbooth/templates/seal.html:16
 #, python-format
 msgid "%(count)s selections out of possible %(min)s-%(max)s"
 msgstr "%(count)s ausgewählt von möglichen %(min)s-%(max)s"
 
-#: heliosbooth/templates/seal.html:16
+#: heliosbooth/templates/seal.html:18
+#, python-format
+msgid "answers to question #%(num)s"
+msgstr "Antworten auf Frage Nr. %(num)s"
+
+#: heliosbooth/templates/seal.html:18
 msgid "change"
 msgstr "ändern"
 
-#: heliosbooth/templates/seal.html:21
+#: heliosbooth/templates/seal.html:23
 #, python-format
 msgid "Your ballot tracker is %(tracker)s."
 msgstr "Ihr Stimmzettel-Tracker lautet %(tracker)s."
 
-#: heliosbooth/templates/seal.html:24
+#: heliosbooth/templates/seal.html:25
+msgid "Your ballot is now encrypted, but it has not been cast yet. In the next step you confirm who you are and cast it."
+msgstr "Ihr Stimmzettel ist jetzt verschlüsselt, aber noch nicht abgegeben. Im nächsten Schritt bestätigen Sie, wer Sie sind, und geben ihn ab."
+
+#: heliosbooth/templates/seal.html:28
 msgid "Proceed to Login"
 msgstr "Weiter zur Anmeldung"
 
-#: heliosbooth/templates/seal.html:38 heliosbooth/templates/seal.html:46
+#: heliosbooth/templates/seal.html:42 heliosbooth/templates/seal.html:49
 msgid "Spoil & Audit"
 msgstr "Verwerfen & prüfen"
 
-#: heliosbooth/templates/seal.html:38
+#: heliosbooth/templates/seal.html:42
 msgid "optional"
 msgstr "optional"
 
-#: heliosbooth/templates/seal.html:41
+#: heliosbooth/templates/seal.html:44
 msgid "If you choose, you can spoil this ballot and reveal how your choices were encrypted. This is an optional auditing process."
 msgstr "Wenn Sie möchten, können Sie diesen Stimmzettel verwerfen und offenlegen, wie Ihre Auswahl verschlüsselt wurde. Diese Prüfung ist optional."
 
-#: heliosbooth/templates/seal.html:44
+#: heliosbooth/templates/seal.html:47
 msgid "You will then be guided to re-encrypt your choices for final casting."
 msgstr "Anschließend werden Sie angeleitet, Ihre Auswahl für die endgültige Abgabe erneut zu verschlüsseln."
 
@@ -396,69 +449,73 @@ msgstr "PROBLEM = Beweise sind ungültig."
 msgid "problem parsing election or ballot data structures, malformed inputs:"
 msgstr "Problem beim Verarbeiten der Wahl- oder Stimmzetteldaten, fehlerhafte Eingaben:"
 
-#: heliosbooth/vote.html:65 heliosbooth/vote.html:67
+#: heliosbooth/vote.html:66 heliosbooth/vote.html:68
 msgid "Helios Voting Booth"
 msgstr "Helios-Wahlkabine"
 
-#: heliosbooth/vote.html:68
+#: heliosbooth/vote.html:69
 msgid "exit"
 msgstr "verlassen"
 
-#: heliosbooth/vote.html:69
+#: heliosbooth/vote.html:70
 msgid "Select"
 msgstr "Auswählen"
 
-#: heliosbooth/vote.html:70
+#: heliosbooth/vote.html:71
 msgid "Review"
 msgstr "Überprüfen"
 
-#: heliosbooth/vote.html:71
+#: heliosbooth/vote.html:72
 msgid "Submit"
 msgstr "Absenden"
 
-#: heliosbooth/vote.html:72
+#: heliosbooth/vote.html:73
 msgid "Checking capabilities and loading election booth..."
 msgstr "Browserfunktionen werden geprüft und die Wahlkabine wird geladen..."
 
-#: heliosbooth/vote.html:73
+#: heliosbooth/vote.html:74
 msgid "This may take up to 10 seconds"
 msgstr "Dies kann bis zu 10 Sekunden dauern"
 
-#: heliosbooth/vote.html:74 heliosbooth/vote.html:399
+#: heliosbooth/vote.html:75 heliosbooth/vote.html:424 heliosbooth/templates/seal.html:28
 msgid "Processing..."
 msgstr "Wird verarbeitet..."
 
-#: heliosbooth/vote.html:75
+#: heliosbooth/vote.html:76
 msgid "Helios is now encrypting your ballot"
 msgstr "Helios verschlüsselt jetzt Ihren Stimmzettel"
 
-#: heliosbooth/vote.html:76
+#: heliosbooth/vote.html:77
 msgid "This may take up to two minutes."
 msgstr "Dies kann bis zu zwei Minuten dauern."
 
-#: heliosbooth/vote.html:112
+#: heliosbooth/vote.html:81
+msgid "Steps of voting"
+msgstr "Schritte der Stimmabgabe"
+
+#: heliosbooth/vote.html:124
 msgid "If you leave this page with an in-progress ballot, your ballot will be lost."
 msgstr "Wenn Sie diese Seite mit einem nicht abgegebenen Stimmzettel verlassen, geht Ihr Stimmzettel verloren."
 
-#: heliosbooth/vote.html:122
+#: heliosbooth/vote.html:134
 msgid "Are you sure you want to exit the booth and lose all information about your current ballot?"
 msgstr "Möchten Sie die Wahlkabine wirklich verlassen? Alle Angaben zu Ihrem aktuellen Stimmzettel gehen dabei verloren."
 
-#: heliosbooth/vote.html:271
+#: heliosbooth/vote.html:295
 #, python-format
 msgid "You need to select at least %(min)s answer(s)."
 msgstr "Sie müssen mindestens %(min)s Antwort(en) auswählen."
 
-#: heliosbooth/vote.html:384
+#: heliosbooth/vote.html:409
 msgid "Maximum number of options selected.<br />To change your selection, please de-select a current selection first."
 msgstr "Die maximale Anzahl an Antworten ist ausgewählt.<br />Um Ihre Auswahl zu ändern, heben Sie bitte zuerst eine bestehende Auswahl auf."
 
-#: heliosbooth/vote.html:393
+#: heliosbooth/vote.html:418
 #, python-format
 msgid "You may select up to %(max)s choices total."
 msgstr "Sie können insgesamt bis zu %(max)s Antworten auswählen."
 
-#: heliosbooth/vote.html:529
+#: heliosbooth/vote.html:554
 #, python-format
 msgid ""
 "there appears to be a problem with the encryption process.\n"
@@ -467,7 +524,7 @@ msgstr ""
 "Bei der Verschlüsselung ist offenbar ein Problem aufgetreten.\n"
 "Bitte schreiben Sie eine E-Mail an %(email)s und geben Sie an, dass die Verschlüsselung bei %(percent)s stehen geblieben ist."
 
-#: heliosbooth/vote.html:571
+#: heliosbooth/vote.html:597
 msgid ""
 "This audited ballot has been posted.\n"
 "Remember, this vote will only be used for auditing and will not be tallied.\n"
@@ -477,7 +534,7 @@ msgstr ""
 "Denken Sie daran: Diese Stimme dient nur der Prüfung und wird nicht ausgezählt.\n"
 "Klicken Sie auf „Zurück zur Stimmabgabe“ und geben Sie einen neuen Stimmzettel ab, damit Ihre Stimme zählt."
 
-#: heliosbooth/vote.html:600
+#: heliosbooth/vote.html:626
 #, python-format
 msgid "Your ballot tracker for %(name)s: %(tracker)s"
 msgstr "Ihr Stimmzettel-Tracker für %(name)s: %(tracker)s"

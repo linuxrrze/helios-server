@@ -3,31 +3,29 @@
 {% block title %}{% translate "User Search" %}{% endblock %}
 
 {% block content %}
-<h1>{% translate "User Search" %}</h1>
+<h1 class="title">{% translate "User Search" %}</h1>
 
-<p>
-<form method="get" action="{% url "stats@user-search" %}">
-<b>{% translate "Search for user" %}</b>: <input type="text" name="q" value="{{q}}" placeholder="{% translate "Name or user ID" %}"/>
-<input class="small button" type="submit" value="{% translate "search" %}" /> <a class="small button" href="?">{% translate "clear search" %}</a>
+<form method="get" action="{% url "stats@user-search" %}" class="voter-search" role="search">
+<label for="user-q">{% translate "Search for user" %}</label> <input type="search" id="user-q" name="q" value="{{q}}" placeholder="{% translate "Name or user ID" %}"/>
+<button class="button small" type="submit">{% translate "search" %}</button>{% if q %} <a href="?">{% translate "clear search" %}</a>{% endif %}
 </form>
-</p>
 
 {% if q %}
   {% if users_with_elections %}
-    <p><b>{% blocktranslate trimmed with n=users_with_elections|length %}Found {{n}} user(s){% endblocktranslate %}</b></p>
+    <p role="status"><b>{% blocktranslate trimmed with n=users_with_elections|length %}Found {{n}} user(s){% endblocktranslate %}</b></p>
 
     {% for item in users_with_elections %}
-    <div style="margin-bottom: 2em; padding: 1em; border: 1px solid #ccc;">
-      <h2>{{item.user.pretty_name}}</h2>
-      <p>
-        <b>{% translate "User ID:" %}</b> {{item.user.user_id}}<br/>
-        <b>{% translate "User Type:" %}</b> {{item.user.user_type}}<br/>
-        <b>{% translate "Site Admin:" %}</b> {% if item.user.admin_p %}{% translate "Yes" %}{% else %}{% translate "No" %}{% endif %}
-      </p>
+    <section class="card">
+      <h2 class="title">{{item.user.pretty_name}}</h2>
+      <dl class="facts">
+        <div><dt>{% translate "User ID:" %}</dt><dd>{{item.user.user_id}}</dd></div>
+        <div><dt>{% translate "User Type:" %}</dt><dd>{{item.user.user_type}}</dd></div>
+        <div><dt>{% translate "Site Admin:" %}</dt><dd>{% if item.user.admin_p %}{% translate "Yes" %}{% else %}{% translate "No" %}{% endif %}</dd></div>
+      </dl>
 
       <h3>{% blocktranslate trimmed with n=item.elections_as_admin|length %}Elections as Administrator ({{n}}){% endblocktranslate %}</h3>
       {% if item.elections_as_admin %}
-        <ul>
+        <ul class="election-list">
         {% for election in item.elections_as_admin %}
           <li>
             <a href="{% url "election@view" election.uuid %}">{{election.name}}</a>
@@ -38,12 +36,12 @@
         {% endfor %}
         </ul>
       {% else %}
-        <p><i>{% translate "None" %}</i></p>
+        <p class="muted">{% translate "None" %}</p>
       {% endif %}
 
       <h3>{% blocktranslate trimmed with n=item.elections_as_voter|length %}Elections as Voter ({{n}}){% endblocktranslate %}</h3>
       {% if item.elections_as_voter %}
-        <ul>
+        <ul class="election-list">
         {% for election in item.elections_as_voter %}
           <li>
             <a href="{% url "election@view" election.uuid %}">{{election.name}}</a>
@@ -54,12 +52,12 @@
         {% endfor %}
         </ul>
       {% else %}
-        <p><i>{% translate "None" %}</i></p>
+        <p class="muted">{% translate "None" %}</p>
       {% endif %}
 
       <h3>{% blocktranslate trimmed with n=item.elections_as_trustee|length %}Elections as Trustee ({{n}}){% endblocktranslate %}</h3>
       {% if item.elections_as_trustee %}
-        <ul>
+        <ul class="election-list">
         {% for election in item.elections_as_trustee %}
           <li>
             <a href="{% url "election@view" election.uuid %}">{{election.name}}</a>
@@ -70,15 +68,15 @@
         {% endfor %}
         </ul>
       {% else %}
-        <p><i>{% translate "None" %}</i></p>
+        <p class="muted">{% translate "None" %}</p>
       {% endif %}
-    </div>
+    </section>
     {% endfor %}
   {% else %}
-    <p><i>{% blocktranslate trimmed %}No users found matching "{{q}}"{% endblocktranslate %}</i></p>
+    <div class="callout empty-state"><p>{% blocktranslate trimmed %}No users found matching "{{q}}"{% endblocktranslate %}</p></div>
   {% endif %}
 {% else %}
-  <p><i>{% translate "Enter a search term to find users" %}</i></p>
+  <p class="muted">{% translate "Enter a search term to find users" %}</p>
 {% endif %}
 
 {% endblock %}

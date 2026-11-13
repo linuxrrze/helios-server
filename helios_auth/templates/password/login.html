@@ -6,23 +6,19 @@
 {% endblock %}
 
 
+{% block layout_class %}{% if user %}userlogin{% elif voter %}voterlogin{% elif settings.SHOW_LOGIN_OPTIONS %}login{% endif %}{% endblock %}
 {% block content %}
 
+<h1>{% translate "Login" %}</h1>
 {% if error %}
-<p style="border: 1px solid black; padding: 5px;">
-    {{error}}
-</p>
+<div class="callout callout-danger" role="alert"><p>{{error}}</p></div>
 {% endif %}
 
-<p>
 <form class="prettyform" action="" method="POST" id="login_form">
     <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
-<table>
-    {{form.as_table}}
-</table>
-<div>
-<label for="">&nbsp;</label><input class="button" type="submit" value="{% translate "Login" %}" />
-</div>
+    {% include "_form_fields.html" with form=form %}
+    <div class="actions">
+      <button class="button" type="submit">{% translate "Login" %}</button>
+    </div>
 </form>
-</p>
 {% endblock %}

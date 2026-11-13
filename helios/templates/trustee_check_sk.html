@@ -48,11 +48,11 @@ function check_sk(sk_value) {
     if (key_ok_p) {
       $('#result').html("{% filter escapejs %}{% translate "your secret key matches!" %}{% endfilter %}");
     } else {
-      $('#result').html("{% filter escapejs %}{% translate "OH OH, your key is bad." %}{% endfilter %}" + reset_link);
+      $('#result').html("{% filter escapejs %}{% translate "This is not the right secret key: it does not match your public key fingerprint." %}{% endfilter %}" + reset_link);
     }
 }
 </script>
-  <h2 class="title">{{election.name}} &mdash; {% blocktranslate trimmed with name=trustee.name %}Trustee {{name}}{% endblocktranslate %} &mdash; {% translate "Check Secret Key" %} <span style="font-size:0.7em;">[<a href="{% url "election@trustee" election_uuid=election.uuid trustee_uuid=trustee.uuid %}">{% translate "back to trustee home" %}</a>]</span></h2>
+  <h1 class="title">{{election.name}} &mdash; {% blocktranslate trimmed with name=trustee.name %}Trustee {{name}}{% endblocktranslate %} &mdash; {% translate "Check Secret Key" %}</h1>
 
 <p>
 {% blocktranslate trimmed with hash=trustee.public_key_hash %}Your public key fingerprint is: <b>{{hash}}</b>{% endblocktranslate %}
@@ -63,15 +63,12 @@ function check_sk(sk_value) {
 </div>
 
 <div id="input" style="display:none;">
-<p>
-{% translate "To verify that you have the right secret key, paste it here:" %}
-<p>
-
 <form onsubmit="check_sk(this.secret_key.value); this.secret_key.value=''; return false;">
-<textarea name="secret_key" cols="60" rows ="5" wrap="soft" style="height: 25em;">
+<p><label for="check_secret_key">{% translate "To verify that you have the right secret key, paste it here:" %}</label></p>
+<textarea id="check_secret_key" name="secret_key" cols="60" rows ="5" wrap="soft" style="height: 25em;">
 </textarea>
 <br />
-<input class="button" type="submit" value="{% translate "check" %}" />
+<button class="button" type="submit">{% translate "check" %}</button>
 </form>
 </div>
 
@@ -79,7 +76,7 @@ function check_sk(sk_value) {
 {% translate "checking your secret key..." %}
 </div>
 
-<div id="result">
+<div id="result" role="status">
 </div>
 
 

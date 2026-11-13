@@ -4,43 +4,49 @@
 {% block title %}{% blocktranslate trimmed with name=election.name %}Compute Encryted Tally for {{name}}{% endblocktranslate %}{% endblock %}
 
 {% block content %}
-  <h2 class="title">{% blocktranslate trimmed with name=election.name %}Compute Tally for Election: {{name}}{% endblocktranslate %}</h2>
+<h1 class="title">{% blocktranslate trimmed with name=election.name %}Compute Tally for Election: {{name}}{% endblocktranslate %}</h1>
 
 <div id="instructions">
 {% if num_pending_votes > 0 %}
-<p>
-    <b>{% blocktranslate trimmed count counter=num_pending_votes %}{{ counter }} vote still being processed.{% plural %}{{ counter }} votes still being processed.{% endblocktranslate %}</b>
-</p>
-<p>
+<div class="callout callout-info">
+  <span class="callout-title">{% blocktranslate trimmed count counter=num_pending_votes %}{{ counter }} vote still being processed.{% plural %}{{ counter }} votes still being processed.{% endblocktranslate %}</span>
+  <p>
     {% translate "All votes must be verified before computing the tally. Please wait and try again shortly." %}
     {% blocktranslate trimmed with email=settings.HELP_EMAIL_ADDRESS %}If this persists, contact <a href="mailto:{{email}}">{{email}}</a>.{% endblocktranslate %}
-</p>
-<p>
-    <a href="{% url "election@compute-tally" election.uuid %}">{% translate "Refresh this page" %}</a> |
+  </p>
+</div>
+<div class="actions">
+    <a class="button" href="{% url "election@compute-tally" election.uuid %}">{% translate "Refresh this page" %}</a>
     <a href="{% url "election@view" election.uuid %}">{% translate "back to election" %}</a>
-</p>
+</div>
 {% elif election.num_cast_votes %}
 <p>
     {% blocktranslate trimmed with name=election.name %}You are about to compute the encrypted tally for election <b>{{name}}</b>.{% endblocktranslate %}
 </p>
 
-<p>
-    {% translate "Once you do this, voters will no longer be able to cast a ballot." %}
-</p>
-
-<form method="post" action="" onsubmit="alert('{% filter escapejs %}{% translate "ok, tally has begun" %}{% endfilter %}')" class="pretty">
-<input type="hidden" name="csrf_token" value="{{csrf_token}}" />
-
-<input class="button" type="submit" value="{% translate "compute encrypted tally!" %}" />
-<button class="button" onclick="document.location='{% url "election@view" election.uuid %}'; return false;">{% translate "never mind" %}</button>
-</form>
-{% else %}
-<p>
-{% translate "No votes have been cast in this election. At least one vote must be cast before you compute the tally." %}<br /><br />
-<a href="{% url "election@view" election.uuid %}">{% translate "back to election" %}</a>
-</p>
-{% endif %}
+<div class="callout callout-warning">
+  <span class="callout-title">{% translate "This cannot be undone." %}</span>
+  <p>{% translate "Once you do this, voters will no longer be able to cast a ballot." %}</p>
 </div>
 
-<br /><br />
+<ul>
+  <li>{% blocktranslate trimmed count counter=election.num_cast_votes %}{{ counter }} ballot has been cast so far.{% plural %}{{ counter }} ballots have been cast so far.{% endblocktranslate %}</li>
+  <li>{% translate "The encrypted ballots are added up without decrypting any of them. Then each trustee decrypts their share of the totals." %}</li>
+  <li>{% translate "The result is visible only to you until you release it." %}</li>
+</ul>
+
+<form method="post" action="">
+<input type="hidden" name="csrf_token" value="{{csrf_token}}" />
+<div class="actions">
+  <button class="button" type="submit">{% translate "compute encrypted tally!" %}</button>
+  <a href="{% url "election@view" election.uuid %}">{% translate "never mind" %}</a>
+</div>
+</form>
+{% else %}
+<div class="callout callout-info">
+<p>{% translate "No votes have been cast in this election. At least one vote must be cast before you compute the tally." %}</p>
+</div>
+<p><a class="button secondary" href="{% url "election@view" election.uuid %}">{% translate "back to election" %}</a></p>
+{% endif %}
+</div>
 {% endblock %}

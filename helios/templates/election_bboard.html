@@ -1,54 +1,38 @@
 {% extends TEMPLATE_BASE %}
-{% load i18n login_icons %}
+{% load i18n login_icons tracker_tags %}
 
 {% block title %}{% blocktranslate trimmed with election_name=election.name %}Ballot Tracking Center for {{ election_name }}{% endblocktranslate %}{% endblock %}
 
 {% block content %}
-  <h2 class="title">{{election.name}} &mdash; {% translate "Ballot Tracking Center" %} <span style="font-size:0.7em;">[<a href="{% url "election@view" election_uuid=election.uuid %}">{% translate "back to election" %}</a>]</span></h2>
+<h1 class="title">{{election.name}} &mdash; {% translate "Ballot Tracking Center" %}</h1>
 
-<p>
-  {% translate "This is the ballot tracking center, which displays the tracking numbers of all cast ballots in this election." %}
-  </p>
+<p class="page-lead">{% translate "This is the ballot tracking center, which displays the tracking numbers of all cast ballots in this election." %}</p>
 
-<p>
-  {% blocktranslate trimmed with num=election.num_cast_votes %}<b>{{ num }}</b> cast votes.{% endblocktranslate %}
-</p>
+<p>{% blocktranslate trimmed with num=election.num_cast_votes %}<b>{{ num }}</b> cast votes.{% endblocktranslate %}</p>
 
-{% blocktranslate trimmed %}Voters {{ offset_plus_one }} - {{ offset_plus_limit }}{% endblocktranslate %} &nbsp;&nbsp;
+<nav class="pager" aria-label="{% translate "Pages" %}">
+<span>{% blocktranslate trimmed %}Voters {{ offset_plus_one }} - {{ offset_plus_limit }}{% endblocktranslate %}</span>
+{% if offset != 0 %}<a href="{% url "election@bboard" election.uuid %}?limit={{limit}}">{% translate "back to start" %}</a>{% endif %}
+{% if next_after %}<a href="{% url "election@bboard" election.uuid %}?after={{next_after}}&offset={{offset_plus_limit}}&limit={{limit}}">{% blocktranslate trimmed %}next {{ limit }}{% endblocktranslate %}</a>{% endif %}
+<span>{% translate "Show:" %}
+{% for allowed_limit in allowed_limits %}{% if allowed_limit == limit %}<strong aria-current="true">{{allowed_limit}}</strong>{% else %}<a href="{% url "election@bboard" election.uuid %}?limit={{allowed_limit}}">{{allowed_limit}}</a>{% endif %}{% if not forloop.last %} | {% endif %}{% endfor %}
+{% translate "per page" %}</span>
+</nav>
 
-{% if next_after %}
-<a href="{% url "election@bboard" election.uuid %}?after={{next_after}}&offset={{offset_plus_limit}}&limit={{limit}}">{% blocktranslate trimmed %}next {{ limit }}{% endblocktranslate %}</a> &nbsp;&nbsp;
-{% endif %}
-
-{% if offset == 0 %}
-{% else %}
-<a href="{% url "election@bboard" election.uuid %}?limit={{limit}}">{% translate "back to start" %}</a> &nbsp;&nbsp;
-{% endif %}
-
-<span style="margin-left: 20px;">
-{% translate "Show:" %}
-{% for allowed_limit in allowed_limits %}
-{% if allowed_limit == limit %}
-<strong>{{allowed_limit}}</strong>{% else %}<a href="{% url "election@bboard" election.uuid %}?limit={{allowed_limit}}">{{allowed_limit}}</a>{% endif %}{% if not forloop.last %} | {% endif %}
-{% endfor %}
-{% translate "per page" %}
-</span>
-<table class="pretty">
-<tr><th>
-{% if election.use_voter_aliases %}
-{% translate "Alias" %}
-{% else %}
-{% translate "Name" %}
-{% endif %}
-</th><th>{% translate "Smart Ballot Tracker" %}</th></tr>
+<div class="table-scroll">
+<table class="voters-table">
+<thead><tr><th scope="col">{% if election.use_voter_aliases %}{% translate "Alias" %}{% else %}{% translate "Name" %}{% endif %}</th><th scope="col">{% translate "Smart Ballot Tracker" %}</th></tr></thead>
+<tbody>
 {% for voter in voters %}
 <tr><td>
 {% if election.use_voter_aliases %}
 {{voter.alias}}
 {% else %}
-<img border="0" height="20" src="{{ voter.voter_type|login_icon }}" alt="{{voter.voter_type}}" /> {% if voter.name %}{{voter.name}}{% else %}{{voter.voter_id}}{% endif %}
-{% endif %}</td><td><tt style="font-size: 1.4em;;">{% if voter.vote_hash %}{{voter.vote_hash}} <span style="font-size:0.8em;">[<a href="{% url "election@ballots@voter@last" election_uuid=election.uuid voter_uuid=voter.uuid %}">{% translate "view" %}</a>]</span>{% else %}&mdash;{% endif %}</tt></td></tr>
+<img class="small-logo" src="{{ voter.voter_type|login_icon }}" alt="{{voter.voter_type}}" /> {% if voter.name %}{{voter.name}}{% else %}{{voter.voter_id}}{% endif %}
+{% endif %}</td><td>{% if voter.vote_hash %}<tt class="tracker-inline" translate="no">{{voter.vote_hash|tracker_groups}}</tt> <a href="{% url "election@ballots@voter@last" election_uuid=election.uuid voter_uuid=voter.uuid %}">{% translate "view" %}</a>{% else %}<span class="muted" aria-label="{% translate "no vote yet" %}">&mdash;</span>{% endif %}</td></tr>
 {% endfor %}
+</tbody>
 </table>
+</div>
 
 {% endblock %}

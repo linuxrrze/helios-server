@@ -3,6 +3,7 @@ Yahoo Authentication
 
 """
 
+from django.utils.translation import gettext_lazy
 from django.conf import settings
 from django.core.mail import send_mail
 
@@ -13,7 +14,7 @@ from .openid import view_helpers
 STATUS_UPDATES = False
 
 # display tweaks
-LOGIN_MESSAGE = "Log in with my Yahoo Account"
+LOGIN_MESSAGE = gettext_lazy("Log in with my Yahoo Account")
 OPENID_ENDPOINT = 'yahoo.com'
 
 def get_auth_url(request, redirect_url):
