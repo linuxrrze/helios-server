@@ -1,0 +1,19 @@
+{% load i18n %}{% if steps %}{% if part == "pager" %}
+<nav class="setup-pager" aria-label="{% translate "Election setup" %}">
+  {% if next %}<a class="button" href="{{ next.url }}">{% blocktranslate trimmed with title=next.title %}Next: {{ title }}{% endblocktranslate %}</a>{% endif %}
+  {% if previous %}<a class="button secondary" href="{{ previous.url }}">{% blocktranslate trimmed with title=previous.title %}Back: {{ title }}{% endblocktranslate %}</a>{% endif %}
+</nav>
+{% else %}
+<nav class="setup-nav" aria-labelledby="setup-nav-title">
+  <p class="step-indicator" id="setup-nav-title">{% blocktranslate trimmed with number=number total=total %}Election setup &ndash; step {{ number }} of {{ total }}{% endblocktranslate %}</p>
+  <ol class="wizard-steps">
+  {% for s in steps %}
+    <li class="wizard-step {% if s.current %}wizard-step-current{% elif s.done %}wizard-step-done{% else %}wizard-step-todo{% endif %}"{% if s.current %} aria-current="step"{% endif %}>
+      <span class="wizard-step-number" aria-hidden="true">{% if s.done and not s.current %}&#10003;{% else %}{{ s.number }}{% endif %}</span>
+      {% if s.current %}<span>{{ s.title }}</span>{% else %}<a href="{{ s.url }}">{{ s.title }}</a>{% endif %}
+      {% if s.done %}<span class="screen-reader-text">({% translate "done" %})</span>{% endif %}
+    </li>
+  {% endfor %}
+  </ol>
+</nav>
+{% endif %}{% endif %}

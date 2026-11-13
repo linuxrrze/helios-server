@@ -1,11 +1,12 @@
 {% extends "helios/templates/cryptobase.html" %}
-{% load i18n %}
+{% load i18n election_tags %}
 
 {% block extra-head %}<link rel="stylesheet" href="/static/helios/question-editor.css">{% endblock %}
 {% block title %}{% blocktranslate trimmed with name=election.name %}Questions for {{name}}{% endblocktranslate %}{% endblock %}
 {% block content %}
   <a class="back-link" href="{% url "election@view" election.uuid %}">{% translate "back to election" %}</a>
   <h1 class="title">{{election.name}} &mdash; {% translate "Questions" %}</h1>
+{% if admin_p %}{% setup_nav election "questions" %}{% endif %}
   {% if admin_p and not election.frozen_at %}
   <p class="page-lead">{% translate "Each question appears on its own page in the voting booth. Voters can choose between the minimum and maximum number of answers you set; choosing fewer than the maximum, or none if the minimum is 0, is allowed." %}</p>
   {% elif election.frozen_at %}
@@ -239,4 +240,5 @@
   </div>
 					
 			<!-- end #content -->
+{% if admin_p %}{% setup_nav election "questions" "pager" %}{% endif %}
 {% endblock %}

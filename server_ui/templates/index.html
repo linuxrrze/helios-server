@@ -31,7 +31,7 @@
   <p class="muted">{% translate "You don't administer any elections yet. Create one: you add questions and voters next, and nothing is sent to anyone until you decide to." %}</p>
   {% endif %}
   <p class="actions">
-    <a class="button" href="{% url "elections@new" %}">{% translate "Create election" %}</a>
+    <a class="button" href="{% url "elections@new@guided" %}">{% translate "Create election" %}</a>
     {% if elections_administered %}<a class="button secondary" href="{% url "elections@administered" %}">{% translate "See all elections" %}</a>{% endif %}
   </p>
 </section>

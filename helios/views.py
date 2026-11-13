@@ -207,29 +207,36 @@ def election_new(request):
     election_form = forms.ElectionForm(request.POST)
     
     if election_form.is_valid():
-      # create the election obj
-      election_params = dict(election_form.cleaned_data)
-      
-      # is the short name valid
-      if utils.urlencode(election_params['short_name']) == election_params['short_name']:
-        election_params['uuid'] = str(uuid.uuid4())
-        election_params['cast_url'] = settings.SECURE_URL_HOST + reverse(one_election_cast, args=[election_params['uuid']])
-      
-        # registration starts closed
-        election_params['openreg'] = False
-
-        user = get_user(request)
-        election_params['admin'] = user
-        try:
-          election = Election.objects.create(**election_params)
-          election.generate_trustee(ELGAMAL_PARAMS)
-          return HttpResponseRedirect(settings.SECURE_URL_HOST + reverse(url_names.election.ELECTION_VIEW, args=[election.uuid]))
-        except IntegrityError:
-          error = _("An election with short name %(short_name)s already exists") % {'short_name': election_params['short_name']}
-      else:
-        error = _("No special characters allowed in the short name.")
+      election, error = create_election(user, election_form.cleaned_data)
+      if election:
+        return HttpResponseRedirect(settings.SECURE_URL_HOST + reverse(url_names.election.ELECTION_VIEW, args=[election.uuid]))
     
   return render_template(request, "election_new", {'election_form': election_form, 'error': error})
+
+def create_election(user, cleaned_data):
+  """
+  Create an election from the cleaned data of an ElectionForm, with user as its
+  administrator and Helios as its trustee. Returns (election, None) or
+  (None, error message).
+  """
+  election_params = dict(cleaned_data)
+
+  # is the short name valid
+  if utils.urlencode(election_params['short_name']) != election_params['short_name']:
+    return None, _("No special characters allowed in the short name.")
+
+  election_params['uuid'] = str(uuid.uuid4())
+  election_params['cast_url'] = settings.SECURE_URL_HOST + reverse(one_election_cast, args=[election_params['uuid']])
+
+  # registration starts closed
+  election_params['openreg'] = False
+  election_params['admin'] = user
+  try:
+    election = Election.objects.create(**election_params)
+  except IntegrityError:
+    return None, _("An election with short name %(short_name)s already exists") % {'short_name': election_params['short_name']}
+  election.generate_trustee(ELGAMAL_PARAMS)
+  return election, None
   
 @election_admin(frozen=False)
 def one_election_edit(request, election):

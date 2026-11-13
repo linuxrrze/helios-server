@@ -1,11 +1,12 @@
 {% extends "helios/templates/cryptobase.html" %}
-{% load i18n %}
+{% load i18n election_tags %}
 
 {% block title %}{% blocktranslate trimmed with name=election.name %}Trustees for {{name}}{% endblocktranslate %}{% endblock %}
 
 {% block content %}
 <a class="back-link" href="{% url "election@view" election.uuid %}">{% translate "back to election" %}</a>
 <h1 class="title">{{election.name}} &mdash; {% translate "Trustees" %}</h1>
+{% if admin_p %}{% setup_nav election "trustees" %}{% endif %}
 
 <div class="page-lead">
 <p>
@@ -87,4 +88,5 @@
 
 {% endif %}
 
+{% if admin_p %}{% setup_nav election "trustees" "pager" %}{% endif %}
 {% endblock %}

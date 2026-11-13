@@ -1,10 +1,11 @@
 {% extends TEMPLATE_BASE %}
-{% load i18n timezone_tags %}
+{% load i18n timezone_tags election_tags %}
 
 {% block title %}{% translate "Freeze Ballot" %} &mdash; {{election.name}}{% endblock %}
 {% block content %}
 <a class="back-link" href="{% url "election@view" election.uuid %}">{% translate "back to election" %}</a>
 <h1 class="title">{{election.name}} &mdash; {% translate "Freeze Ballot" %}</h1>
+{% setup_nav election "freeze" %}
 
 {% if issues_p %}
 <div class="callout callout-warning">
@@ -56,4 +57,5 @@
 </div>
 </form>
 {% endif %}
+{% setup_nav election "freeze" "pager" %}
 {% endblock %}

@@ -351,3 +351,29 @@ table.pretty .helptext { margin-top: 4px; }
 @media only screen and (max-width: 40em) {
   .meta-header .login-info { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0 4px; }
 }
+
+/* --- guided setup: steps to create an election, and the setup pages ------ */
+.wizard-steps { display: flex; flex-wrap: wrap; gap: 6px 20px; margin: .75em 0 1.5em; padding: 0; list-style: none; counter-reset: none; }
+.wizard-step { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.wizard-step-number { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 28px; height: 28px;
+  border: 2px solid var(--border-color); border-radius: 50%; background: var(--main-bg-color); color: var(--muted-color); font-size: .9rem; }
+.wizard-step-done .wizard-step-number { border-color: var(--success-color); background: var(--success-color); color: #fff; }
+.wizard-step-current .wizard-step-number { border-color: var(--primary-color); background: var(--primary-color); color: #fff; }
+.wizard-step-current > span:not(.wizard-step-number) { color: var(--text-color); }
+.wizard-step-todo { color: var(--muted-color); font-weight: 400; }
+.setup-nav { margin: 0 0 1.5em; padding: 10px 16px 2px; border: 1px solid var(--border-color); border-radius: var(--radius); background: var(--surface-color); }
+.setup-nav .wizard-steps { margin: .4em 0 .6em; }
+.setup-pager { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px;
+  margin: 2em 0 1em; padding-top: 1em; border-top: 1px solid var(--border-color); }
+.setup-pager .button { margin: 0; }
+/* "check answers": label, value and a change link per row */
+.summary-list { max-width: 48rem; margin: 0 0 1.5em; }
+.summary-row { display: grid; grid-template-columns: minmax(10rem, 1fr) 2fr auto; gap: 4px 16px; padding: 10px 0; border-bottom: 1px solid var(--border-color); }
+.summary-row dt { font-weight: 600; }
+.summary-row dd { margin: 0; overflow-wrap: anywhere; white-space: pre-line; }
+@media only screen and (max-width: 40em) {
+  .summary-row { grid-template-columns: 1fr auto; }
+  .summary-row dt { grid-column: 1 / -1; }
+  .setup-pager { flex-direction: column; align-items: stretch; }
+  .setup-pager .button { width: 100%; }
+}

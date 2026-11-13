@@ -19,4 +19,5 @@
     <a href="/">{% translate "cancel" %}</a>
   </div>
 </form>
+<p class="muted">{% url "elections@new@guided" as guided_url %}{% blocktranslate trimmed %}Prefer to be guided step by step? Use the <a href="{{ guided_url }}">guided setup</a>.{% endblocktranslate %}</p>
 {% endblock %}

@@ -4777,3 +4777,108 @@ class ElectionTimeZoneTests(WebTest):
         self.login()
         response = self.client.get(f'/helios/elections/{self.election.uuid}/view')
         self.assertContains(response, '18:00 CET')
+
+
+@override_settings(ELECTION_TIME_ZONE='Europe/Berlin')
+class ElectionWizardTests(WebTest):
+    """Guided creation of an election (helios/wizard_views.py)"""
+    fixtures = ['users.json', 'election.json']
+    allow_database_queries = True
+    URL = '/helios/elections/new/guided'
+
+    def setUp(self):
+        self.user = auth_models.User.objects.get(user_id='ben@adida.net', user_type='google')
+        self.client.get("/")
+        session = self.client.session
+        session['user'] = {'type': self.user.user_type, 'user_id': self.user.user_id}
+        session.save()
+
+    def post(self, data):
+        data = dict(data, csrf_token=self.client.session['csrf_token'])
+        return self.client.post(self.URL, data)
+
+    def test_requires_login(self):
+        self.client.session.flush()
+        self.client.logout()
+        response = self.client.get(self.URL)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/auth/', response['location'])
+
+    def test_first_step(self):
+        response = self.client.get(self.URL)
+        self.assertContains(response, 'step 1 of 4')
+        self.assertContains(response, 'name="name"')
+        self.assertNotContains(response, 'name="voting_starts_at"')
+        # an untouched step shows no errors
+        self.assertNotContains(response, 'error-summary')
+
+    def test_full_flow(self):
+        response = self.post({'step': 'basics', 'name': 'Board Election 2027', 'short_name': '', 'description': 'Who leads the board.'})
+        self.assertRedirects(response, self.URL + '?step=schedule')
+        self.assertEqual(self.client.session['election_wizard']['short_name'], 'board-election-2027')
+
+        response = self.post({'step': 'schedule', 'voting_starts_at': '2027-01-10T09:00', 'voting_ends_at': '2027-01-17T18:00'})
+        self.assertRedirects(response, self.URL + '?step=options')
+
+        response = self.client.get(self.URL + '?step=options')
+        self.assertContains(response, 'name="election_type"')
+        response = self.post({'step': 'options', 'election_type': 'election', 'randomize_answer_order': 'on', 'help_email': 'help@example.org'})
+        self.assertRedirects(response, self.URL + '?step=review')
+
+        response = self.client.get(self.URL + '?step=review')
+        self.assertContains(response, 'Board Election 2027')
+        self.assertContains(response, '09:00 CET')
+        self.assertContains(response, '?step=schedule')
+
+        response = self.post({'step': 'review'})
+        election = models.Election.objects.get(short_name='board-election-2027')
+        self.assertRedirects(response, f'/helios/elections/{election.uuid}/questions')
+        self.assertEqual(election.admin, self.user)
+        self.assertEqual(election.voting_starts_at, datetime.datetime(2027, 1, 10, 8, 0))
+        self.assertEqual(election.voting_ends_at, datetime.datetime(2027, 1, 17, 17, 0))
+        self.assertTrue(election.randomize_answer_order)
+        self.assertFalse(election.use_voter_aliases)
+        self.assertEqual(election.help_email, 'help@example.org')
+        self.assertIsNotNone(election.get_helios_trustee())
+        self.assertNotIn('election_wizard', self.client.session)
+
+        # the setup pages then show where the administrator is
+        response = self.client.get(f'/helios/elections/{election.uuid}/questions')
+        self.assertContains(response, 'Election setup')
+        self.assertContains(response, f'/helios/elections/{election.uuid}/voters/list')
+
+    def test_derived_short_name_is_unique(self):
+        self.post({'step': 'basics', 'name': 'Test', 'short_name': ''})
+        # the fixture election already uses "test"
+        self.assertEqual(self.client.session['election_wizard']['short_name'], 'test-2')
+
+    def test_taken_short_name(self):
+        response = self.post({'step': 'basics', 'name': 'Another', 'short_name': 'test'})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'already exists')
+
+    def test_missing_name(self):
+        response = self.post({'step': 'basics', 'name': '', 'short_name': ''})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'error-summary')
+
+    def test_review_without_data_goes_to_first_step(self):
+        response = self.client.get(self.URL + '?step=review')
+        self.assertRedirects(response, self.URL + '?step=basics')
+
+    def test_unknown_step(self):
+        response = self.client.get(self.URL + '?step=nonsense')
+        self.assertContains(response, 'step 1 of 4')
+
+    def test_restart(self):
+        self.post({'step': 'basics', 'name': 'To be discarded', 'short_name': ''})
+        response = self.client.get(self.URL + '?restart=1')
+        self.assertRedirects(response, self.URL)
+        self.assertNotIn('election_wizard', self.client.session)
+
+    def test_no_setup_nav_after_freeze(self):
+        election = models.Election.objects.get(short_name='test')
+        election.frozen_at = datetime.datetime.utcnow()
+        election.save()
+        response = self.client.get(f'/helios/elections/{election.uuid}/trustees/view')
+        self.assertNotContains(response, 'Election setup')
