@@ -1,0 +1,157 @@
+# Container image: build it from the Dockerfile (with the SAML extra), scan it with Trivy and
+# publish it to the GitHub Container Registry as ghcr.io/<owner>/<repo>.
+#
+#   push to master   build, scan, push   :<full commit SHA>, :master, :latest
+#   tag v1.2.3       build, scan, push   :<full commit SHA>, :1.2.3, :1.2
+#   pull request     build, scan         (nothing is pushed)
+#   weekly schedule  scan :latest again, to find vulnerabilities published since the build
+#
+# The tests run in ci.yml. Findings appear under Security > Code scanning. The job fails only
+# for critical vulnerabilities that have a fix: those mean updating a dependency or rebuilding
+# on a newer base image.
+#
+# Actions and the Trivy image are pinned by commit SHA / digest (Trivy's release artifacts have
+# been the target of a supply-chain attack before). Dependabot or Renovate can update the pins.
+
+name: Container image
+
+on:
+  push:
+    branches: [master]
+    tags: ['v*']
+  pull_request:
+    branches: [master]
+  schedule:
+    - cron: '23 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  TRIVY_IMAGE: aquasec/trivy:0.75.0@sha256:af6acf9a6b85dfe389a1941505c0ce9efef52a4719635e1a962f022a3d855daa
+  # local tag of the image under test
+  SCAN_TAG: helios-server:scan
+
+jobs:
+  build:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Image name and tags
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=sha,format=long,prefix=
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          build-args: UV_EXTRAS=--extra saml
+          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ env.SCAN_TAG }}
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Trivy database cache key
+        id: week
+        run: echo "key=trivy-$(date -u +%G-%V)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .trivycache
+          key: ${{ steps.week.outputs.key }}
+          restore-keys: trivy-
+
+      - name: Scan (all findings, SARIF)
+        run: |
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD:/work" -w /work \
+            -e TRIVY_CACHE_DIR=/work/.trivycache "$TRIVY_IMAGE" image --scanners vuln --no-progress \
+            --format sarif --output trivy.sarif "$SCAN_TAG"
+
+      - name: Upload findings to code scanning
+        # not available for pull requests from forks (read-only token)
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        with:
+          sarif_file: trivy.sarif
+          category: container-image
+
+      - name: Scan (summary, fail on fixable critical findings)
+        run: |
+          trivy() {
+            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD:/work" -w /work \
+              -e TRIVY_CACHE_DIR=/work/.trivycache "$TRIVY_IMAGE" image --scanners vuln --no-progress \
+              --skip-db-update "$@" "$SCAN_TAG"
+          }
+          trivy --severity HIGH,CRITICAL
+          trivy --exit-code 1 --severity CRITICAL --ignore-unfixed --format table > /dev/null
+
+      - name: Log in to the GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push
+        # same build as above, taken from the cache
+        if: github.event_name != 'pull_request'
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          build-args: UV_EXTRAS=--extra saml
+          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta.outputs.tags }}
+          push: true
+          cache-from: type=gha
+
+  rescan:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+      security-events: write
+    env:
+      IMAGE: ghcr.io/${{ github.repository }}:latest
+    steps:
+      - name: Scan the published image
+        env:
+          TRIVY_USERNAME: ${{ github.actor }}
+          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          docker run --rm -v "$PWD:/work" -w /work -e TRIVY_USERNAME -e TRIVY_PASSWORD \
+            "$TRIVY_IMAGE" image --scanners vuln --no-progress \
+            --format sarif --output trivy.sarif "${IMAGE,,}"
+
+      - name: Upload findings to code scanning
+        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        with:
+          sarif_file: trivy.sarif
+          category: container-image
+
+      - name: Fail on fixable critical findings (GitHub notifies about the failed run)
+        env:
+          TRIVY_USERNAME: ${{ github.actor }}
+          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          docker run --rm -e TRIVY_USERNAME -e TRIVY_PASSWORD "$TRIVY_IMAGE" image --scanners vuln \
+            --no-progress --exit-code 1 --severity CRITICAL --ignore-unfixed "${IMAGE,,}"

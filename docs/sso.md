@@ -60,8 +60,8 @@ Helios is a SAML service provider (SP). It uses SP-initiated login (HTTP-Redirec
 HTTP-POST back) and requires signed assertions with SHA-256 or stronger. SAML single logout is
 not supported: logging out of Helios ends only the Helios session.
 
-**Install** the extra: `uv sync --frozen --no-dev --extra saml`. The container image built by
-GitLab CI contains it; when building yourself, use
+**Install** the extra: `uv sync --frozen --no-dev --extra saml`. The published container image
+(`ghcr.io/linuxrrze/helios-server`) contains it; when building yourself, use
 `docker build --build-arg UV_EXTRAS="--extra saml" .`.
 
 **Registration at the IdP.** Ask your identity provider team to register Helios as an SP:

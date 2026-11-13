@@ -34,7 +34,10 @@ settings_ci.py
 fly.toml
 *.md
 
-# GitLab CI: config and job caches
-.gitlab-ci.yml
+# CI config, caches and scan results (the image is rebuilt after the scan and must not
+# change because of them)
+.github/
 .uv-cache
 .trivycache
+trivy.sarif
+deploy/

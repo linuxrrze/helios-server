@@ -186,7 +186,7 @@ switch-over checklist are in [sso.md](sso.md).
 | `OIDC_LOGIN_MESSAGE` | translated default | Text on the login button. Per language. |
 
 **SAML** (enabled when `SAML_IDP_METADATA_URL` or `SAML_IDP_METADATA_FILE` is set; requires the
-`saml` extra, which the image built in GitLab CI contains). See [sso.md](sso.md).
+`saml` extra, which the published container image contains). See [sso.md](sso.md).
 
 | Variable | Default | Meaning |
 |---|---|---|
@@ -243,9 +243,11 @@ container: it sets `DATABASE_URL` itself and reads everything else from `.env`. 
 topic. In a container, `EMAIL_HOST=localhost` is the container itself: use a relay with login
 (section 4) or `EMAIL_HOST=host.docker.internal` for an MTA on the host.
 
-The image is built by GitLab CI (`.gitlab-ci.yml` builds it with the SAML extra and pushes it
-to the project's container registry as `<registry>/<namespace>/helios-server:<commit SHA>`),
-or by yourself:
+The image is built with the SAML extra by the GitHub workflow
+`.github/workflows/container.yml`, scanned with Trivy and published as
+`ghcr.io/linuxrrze/helios-server` (forks: `ghcr.io/<owner>/<repo>`) with these tags:
+`:<full commit SHA>` and `:master`/`:latest` for each push to master, `:1.2.3` and `:1.2` for a
+tag `v1.2.3`. Pin the commit SHA or a version in production. Or build it yourself:
 
 ```sh
 docker build -t helios-server --build-arg UV_EXTRAS="--extra saml" .

@@ -11,3 +11,5 @@ env.sh
 # real configuration with secrets (deploy/docker-compose.yml)
 .env
 deploy/.env
+.trivycache/
+trivy.sarif

@@ -1,8 +1,8 @@
 # Helios with Docker Compose: PostgreSQL, schema migration, web server and task worker,
 # all from one helios-server image. A reverse proxy on the host (e.g. nginx) terminates TLS.
 #
-# Image: GitLab CI (.gitlab-ci.yml) builds it from the Dockerfile with the SAML extra and pushes
-# it to the project's container registry as <registry>/<namespace>/helios-server:<commit SHA>.
+# Image: published by .github/workflows/container.yml (with the SAML extra, scanned with Trivy)
+# as ghcr.io/linuxrrze/helios-server:<full commit SHA> (also :latest, and :1.2.3 for releases).
 # Or build it yourself in the repository root:
 #   docker build -t helios-server --build-arg UV_EXTRAS="--extra saml" .
 # and set HELIOS_IMAGE=helios-server.
@@ -11,9 +11,8 @@
 # It holds HELIOS_IMAGE and POSTGRES_PASSWORD for this file and every Helios setting, grouped
 # by topic; ../docs/configuration.md explains each variable. DATABASE_URL and
 # DATABASE_SSL_REQUIRE are set below and override .env.
-#   HELIOS_IMAGE: use a commit SHA rather than a branch tag, so an update happens only when you
-#                 change it. For a private registry, log in first with a deploy token
-#                 (read_registry): docker login <registry>
+#   HELIOS_IMAGE: use a commit SHA or version rather than :latest, so an update happens only
+#                 when you change it. For a private registry, log in first: docker login <registry>
 #   Mail: EMAIL_HOST=localhost is the container itself, not the host. Use a relay with login
 #         (as in .env.example), or a host MTA that accepts mail from the Docker network, with
 #         EMAIL_HOST=host.docker.internal.
