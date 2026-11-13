@@ -392,6 +392,14 @@ const r = {};
     self.assertIn('<div id="questions" data-preserve-custom>', text)
     self.assertIn("HeliosFormState.register('questions'", text)
 
+  def test_cast_confirmation_does_not_warn_on_language_switch(self):
+    # the ballot stays in the session while the page is reloaded in the other language
+    from django.conf import settings
+    with open(settings.ROOT_PATH + '/helios/templates/election_cast_confirm.html') as f:
+      text = f.read()
+    self.assertIn("$('form.language-switcher')", text)
+    self.assertIn('if (!evt.defaultPrevented) ready_to_unload = true;', text)
+
   def test_booth_has_no_switcher(self):
     # the voting booth is a static page without the switcher: switching the language
     # there cannot lose a ballot, and no ballot choice is ever written to storage

@@ -17,6 +17,12 @@ $(document).ready(function() {
     ready_to_unload = false;
     $('#all_forms form').submit(function() { ready_to_unload = true; });
     $('#all_forms a').not('[target=_blank]').click(function() { ready_to_unload = true; });
+    // switching the language reloads this page; the ballot stays in the session
+    $('form.language-switcher').each(function() {
+      this.addEventListener('submit', function(evt) {
+        if (!evt.defaultPrevented) ready_to_unload = true;
+      });
+    });
   }
 });
 
