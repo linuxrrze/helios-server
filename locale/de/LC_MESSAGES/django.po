@@ -69,6 +69,7 @@ msgid "No voters yet"
 msgstr "Noch keine Wahlberechtigten"
 
 #: helios/election_progress.py:63 helios/templates/votergroup_prepareelection.html:14 helios/templatetags/election_tags.py:43
+#: helios/templatetags/navigation_tags.py:47
 msgid "Voters"
 msgstr "Wahlberechtigte"
 
@@ -95,7 +96,7 @@ msgstr[0] "%(count)d Treuhänder*in, Schlüssel bereit"
 msgstr[1] "%(count)d Treuhänder*innen, Schlüssel bereit"
 
 #: helios/election_progress.py:75 helios/templates/list_trustees.html:8 helios/templates/new_trustee.html:6
-#: helios/templatetags/election_tags.py:44
+#: helios/templatetags/election_tags.py:44 helios/templatetags/navigation_tags.py:52
 msgid "Trustees"
 msgstr "Treuhänder*innen"
 
@@ -649,7 +650,7 @@ msgstr "erledigt"
 msgid "Confirm Vote"
 msgstr "Stimmabgabe bestätigen"
 
-#: helios/templates/cast_done.html:7
+#: helios/templates/cast_done.html:7 helios/templatetags/navigation_tags.py:39
 msgid "Vote Successfully Cast!"
 msgstr "Stimme erfolgreich abgegeben!"
 
@@ -740,7 +741,8 @@ msgstr "Fingerabdruck als eine Zeichenfolge, z. B. zum Einfügen in einen Verifi
 msgid "The encrypted ballot (JSON)"
 msgstr "Der verschlüsselte Stimmzettel (JSON)"
 
-#: helios/templates/combine_decryptions.html:4 helios/templates/combine_decryptions.html:7
+#: helios/templates/combine_decryptions.html:4 helios/templates/combine_decryptions.html:7 helios/templatetags/navigation_tags.py:30
+#: helios/templatetags/navigation_tags.py:31
 msgid "Compute Tally"
 msgstr "Auszählung berechnen"
 
@@ -821,7 +823,7 @@ msgstr "Abbrechen"
 msgid "Administrators for %(name)s"
 msgstr "Wahlleitung für %(name)s"
 
-#: helios/templates/election_admins.html:7
+#: helios/templates/election_admins.html:7 helios/templatetags/navigation_tags.py:43
 msgid "Administrators"
 msgstr "Wahlleitung"
 
@@ -863,7 +865,7 @@ msgstr "Es wurden keine weiteren Mitglieder der Wahlleitung hinzugefügt."
 msgid "Audited Ballots for %(election_name)s"
 msgstr "Geprüfte Stimmzettel für %(election_name)s"
 
-#: helios/templates/election_audited_ballots.html:7 helios/templates/election_view.html:312
+#: helios/templates/election_audited_ballots.html:7 helios/templates/election_view.html:312 helios/templatetags/navigation_tags.py:33
 msgid "Audited Ballots"
 msgstr "Geprüfte Stimmzettel"
 
@@ -948,6 +950,7 @@ msgid "Smart Ballot Tracker"
 msgstr "Stimmzettel-Tracker"
 
 #: helios/templates/election_build.html:5 helios/templates/election_questions.html:8 helios/templatetags/election_tags.py:42
+#: helios/templatetags/navigation_tags.py:28
 msgid "Questions"
 msgstr "Fragen"
 
@@ -1081,7 +1084,7 @@ msgstr "doch nicht"
 msgid "No votes have been cast in this election. At least one vote must be cast before you compute the tally."
 msgstr "In dieser Wahl wurden noch keine Stimmen abgegeben. Vor der Auszählung muss mindestens eine Stimme abgegeben worden sein."
 
-#: helios/templates/election_edit.html:4 helios/templates/election_edit.html:7
+#: helios/templates/election_edit.html:4 helios/templates/election_edit.html:7 helios/templatetags/navigation_tags.py:26
 msgid "Update"
 msgstr "Aktualisieren"
 
@@ -1090,6 +1093,7 @@ msgid "Save changes"
 msgstr "Änderungen speichern"
 
 #: helios/templates/election_extend.html:4 helios/templates/election_extend.html:7 helios/templates/election_extend.html:16
+#: helios/templatetags/navigation_tags.py:27
 msgid "Extend Voting"
 msgstr "Stimmabgabe verlängern"
 
@@ -1098,7 +1102,7 @@ msgstr "Stimmabgabe verlängern"
 msgid "Voting is scheduled to end at %(end)s."
 msgstr "Die Stimmabgabe endet planmäßig am %(end)s."
 
-#: helios/templates/election_freeze.html:4 helios/templates/election_freeze.html:7
+#: helios/templates/election_freeze.html:4 helios/templates/election_freeze.html:7 helios/templatetags/navigation_tags.py:29
 msgid "Freeze Ballot"
 msgstr "Stimmzettel einfrieren"
 
@@ -1166,11 +1170,12 @@ msgstr "noch NICHT einfrieren"
 msgid "back to trustee home"
 msgstr "zurück zur Treuhänder*innen-Startseite"
 
-#: helios/templates/election_keygenerator.html:104
+#: helios/templates/election_keygenerator.html:104 helios/templatetags/navigation_tags.py:56
 msgid "Key Setup"
 msgstr "Schlüssel einrichten"
 
 #: helios/templates/election_keygenerator.html:104 helios/templates/trustee_check_sk.html:56 helios/templates/trustee_decrypt_and_prove.html:136
+#: helios/templatetags/navigation_tags.py:104
 #, python-format
 msgid "Trustee %(name)s"
 msgstr "Treuhänder*in %(name)s"
@@ -1273,7 +1278,8 @@ msgstr "Öffentlichen Schlüssel hochladen"
 msgid "Create a New Election"
 msgstr "Neue Wahl erstellen"
 
-#: helios/templates/election_new.html:6 helios/templates/election_new_guided.html:6
+#: helios/templates/election_new.html:6 helios/templates/election_new_guided.html:6 helios/templatetags/navigation_tags.py:152
+#: helios/templatetags/navigation_tags.py:164
 msgid "Home"
 msgstr "Startseite"
 
@@ -1365,7 +1371,8 @@ msgstr "Prüfen Sie Ihre Einstellungen. Nach dem Erstellen der Wahl fügen Sie d
 msgid "Change"
 msgstr "Ändern"
 
-#: helios/templates/election_new_guided.html:50 helios/templates/elections_administered.html:9 server_ui/templates/index.html:34
+#: helios/templates/election_new_guided.html:50 helios/templates/elections_administered.html:9 helios/templatetags/navigation_tags.py:65
+#: helios/templatetags/navigation_tags.py:71 helios/templatetags/navigation_tags.py:170 server_ui/templates/index.html:34
 msgid "Create election"
 msgstr "Wahl erstellen"
 
@@ -1501,7 +1508,7 @@ msgstr "Die Fragen wurden gespeichert."
 msgid "The questions could not be saved. Please check that the URLs you entered are either http:// or https://"
 msgstr "Die Fragen konnten nicht gespeichert werden. Bitte prüfen Sie, dass die eingegebenen URLs mit http:// oder https:// beginnen."
 
-#: helios/templates/election_register.html:5
+#: helios/templates/election_register.html:5 helios/templatetags/navigation_tags.py:34
 msgid "Register"
 msgstr "Registrieren"
 
@@ -1875,7 +1882,7 @@ msgstr "Die Auszählung konnte nicht entschlüsselt werden, daher gibt es kein E
 msgid "Election closed. Results will be released soon."
 msgstr "Die Wahl ist geschlossen. Die Ergebnisse werden in Kürze freigegeben."
 
-#: helios/templates/election_view.html:233 helios/templates/election_view.html:253
+#: helios/templates/election_view.html:233 helios/templates/election_view.html:253 helios/templatetags/navigation_tags.py:35
 msgid "Vote"
 msgstr "Abstimmen"
 
@@ -1937,7 +1944,7 @@ msgid "This election is open to: %(eligibility)s"
 msgstr "Diese Wahl steht offen für: %(eligibility)s"
 
 #: helios/templates/election_view.html:281 helios_auth/templates/login_box.html:3 helios_auth/templates/auth/devlogin.html:21
-#: server_ui/templates/base.html:50 server_ui/templates/index.html:91
+#: server_ui/templates/base.html:51 server_ui/templates/index.html:91
 msgid "Log in"
 msgstr "Anmelden"
 
@@ -2185,7 +2192,7 @@ msgstr "Auszählung für diese*n Treuhänder*in erfasst."
 msgid "waiting for this trustee's tally"
 msgstr "warte auf die Auszählung dieser*dieses Treuhänder*in"
 
-#: helios/templates/new_trustee.html:4 helios/templates/new_trustee.html:7
+#: helios/templates/new_trustee.html:4 helios/templates/new_trustee.html:7 helios/templatetags/navigation_tags.py:53
 msgid "New Trustee"
 msgstr "Neue*r Treuhänder*in"
 
@@ -2416,7 +2423,7 @@ msgstr "Passwort vergessen? Geben Sie unten Ihre Wähler-ID ein, und wir senden 
 msgid "Resend Credentials"
 msgstr "Zugangsdaten erneut senden"
 
-#: helios/templates/release_result.html:4 helios/templates/release_result.html:7
+#: helios/templates/release_result.html:4 helios/templates/release_result.html:7 helios/templatetags/navigation_tags.py:32
 msgid "Release Result"
 msgstr "Ergebnis freigeben"
 
@@ -2441,7 +2448,7 @@ msgstr "Ergebnis freigeben!"
 msgid "Statistics"
 msgstr "Statistiken"
 
-#: helios/templates/stats.html:6
+#: helios/templates/stats.html:6 helios/templatetags/navigation_tags.py:72
 msgid "Admin"
 msgstr "Administration"
 
@@ -2487,7 +2494,7 @@ msgstr "Ankündigungsbanner auf jeder Seite (leer lassen für keines):"
 msgid "Save"
 msgstr "Speichern"
 
-#: helios/templates/stats_deleted_elections.html:4 helios/templates/stats_deleted_elections.html:7
+#: helios/templates/stats_deleted_elections.html:4 helios/templates/stats_deleted_elections.html:7 helios/templatetags/navigation_tags.py:77
 msgid "Deleted Elections"
 msgstr "Gelöschte Wahlen"
 
@@ -2533,7 +2540,7 @@ msgstr "wiederherstellen"
 msgid "No deleted elections found."
 msgstr "Keine gelöschten Wahlen gefunden."
 
-#: helios/templates/stats_elections.html:6
+#: helios/templates/stats_elections.html:6 helios/templatetags/navigation_tags.py:73
 msgid "Elections"
 msgstr "Wahlen"
 
@@ -2542,7 +2549,7 @@ msgstr "Wahlen"
 msgid "<b><a href=\"%(url)s\">%(name)s</a></b> by <a href=\"mailto:%(email)s\">%(admin_name)s</a>"
 msgstr "<b><a href=\"%(url)s\">%(name)s</a></b> von <a href=\"mailto:%(email)s\">%(admin_name)s</a>"
 
-#: helios/templates/stats_problem_elections.html:6
+#: helios/templates/stats_problem_elections.html:6 helios/templatetags/navigation_tags.py:74
 msgid "Problematic Elections"
 msgstr "Problematische Wahlen"
 
@@ -2555,7 +2562,7 @@ msgstr "Seit über einem Tag nicht eingefroren."
 msgid "%(num_voters)s voters"
 msgstr "%(num_voters)s Wahlberechtigte"
 
-#: helios/templates/stats_recent_votes.html:6
+#: helios/templates/stats_recent_votes.html:6 helios/templatetags/navigation_tags.py:75
 msgid "Recent Votes"
 msgstr "Aktuelle Stimmabgaben"
 
@@ -2568,7 +2575,7 @@ msgstr "Letzte 24 Stunden"
 msgid "%(num)s recently cast votes"
 msgstr "%(num)s kürzlich abgegebene Stimmen"
 
-#: helios/templates/stats_user_search.html:3 helios/templates/stats_user_search.html:6
+#: helios/templates/stats_user_search.html:3 helios/templates/stats_user_search.html:6 helios/templatetags/navigation_tags.py:76
 msgid "User Search"
 msgstr "Benutzersuche"
 
@@ -2641,7 +2648,7 @@ msgstr "Ihr geheimer Schlüssel passt!"
 msgid "This is not the right secret key: it does not match your public key fingerprint."
 msgstr "Das ist nicht der richtige geheime Schlüssel: Er passt nicht zum Fingerabdruck Ihres öffentlichen Schlüssels."
 
-#: helios/templates/trustee_check_sk.html:56
+#: helios/templates/trustee_check_sk.html:56 helios/templatetags/navigation_tags.py:57
 msgid "Check Secret Key"
 msgstr "Geheimen Schlüssel überprüfen"
 
@@ -2834,7 +2841,7 @@ msgstr "Sobald die Auszählung berechnet ist, kehren Sie hierher zurück, um Ihr
 msgid "You should keep the email with your trustee homepage link, which contains the credentials needed to get back here."
 msgstr "Bewahren Sie die E-Mail mit dem Link zu Ihrer Treuhänder*innen-Seite auf; sie enthält die Zugangsdaten, um hierher zurückzukehren."
 
-#: helios/templates/votergroup_administered.html:3
+#: helios/templates/votergroup_administered.html:3 helios/templatetags/navigation_tags.py:66 helios/templatetags/navigation_tags.py:171
 msgid "Voter groups"
 msgstr "Wählergruppen"
 
@@ -2871,7 +2878,7 @@ msgstr "Zurück zur Gruppe"
 msgid "New voter group"
 msgstr "Neue Wählergruppe"
 
-#: helios/templates/votergroup_new.html:5
+#: helios/templates/votergroup_new.html:5 helios/templatetags/navigation_tags.py:67
 msgid "Create a new voter group"
 msgstr "Neue Wählergruppe erstellen"
 
@@ -2950,7 +2957,7 @@ msgstr "Alle Wählergruppen"
 msgid "Voter Eligibility for %(name)s"
 msgstr "Wahlberechtigung für %(name)s"
 
-#: helios/templates/voters_eligibility.html:6
+#: helios/templates/voters_eligibility.html:6 helios/templatetags/navigation_tags.py:49
 msgid "Voter Eligibility"
 msgstr "Wahlberechtigung"
 
@@ -2976,7 +2983,7 @@ msgstr "Wahlberechtigung festlegen"
 msgid "Contact Voters for %(name)s"
 msgstr "Wahlberechtigte von %(name)s kontaktieren"
 
-#: helios/templates/voters_email.html:14
+#: helios/templates/voters_email.html:14 helios/templatetags/navigation_tags.py:50
 msgid "Contact Voters"
 msgstr "Wahlberechtigte kontaktieren"
 
@@ -3215,7 +3222,7 @@ msgid "no such voter found"
 msgstr "keine solche wahlberechtigte Person gefunden"
 
 #: helios/templates/voters_upload.html:4 helios/templates/voters_upload.html:7 helios/templates/voters_upload_confirm.html:4
-#: helios/templates/voters_upload_confirm.html:7
+#: helios/templates/voters_upload_confirm.html:7 helios/templatetags/navigation_tags.py:48
 msgid "Bulk Upload Voters"
 msgstr "Wählerliste hochladen"
 
@@ -3302,6 +3309,42 @@ msgstr "Einstellungen"
 #: helios/templatetags/election_tags.py:45
 msgid "Check and open"
 msgstr "Prüfen und öffnen"
+
+#: helios/templatetags/navigation_tags.py:36 helios/templatetags/navigation_tags.py:37
+msgid "Cast your ballot"
+msgstr "Stimmzettel abgeben"
+
+#: helios/templatetags/navigation_tags.py:38
+msgid "Resend voting credentials"
+msgstr "Zugangsdaten erneut senden"
+
+#: helios/templatetags/navigation_tags.py:40 helios/templatetags/navigation_tags.py:41
+msgid "Ballot"
+msgstr "Stimmzettel"
+
+#: helios/templatetags/navigation_tags.py:44
+msgid "Add administrator"
+msgstr "Wahlleitung hinzufügen"
+
+#: helios/templatetags/navigation_tags.py:45
+msgid "Remove administrator"
+msgstr "Wahlleitung entfernen"
+
+#: helios/templatetags/navigation_tags.py:58
+msgid "Partial decryption"
+msgstr "Teilentschlüsselung"
+
+#: helios/templatetags/navigation_tags.py:63 helios/templatetags/navigation_tags.py:169
+msgid "My elections"
+msgstr "Meine Wahlen"
+
+#: helios/templatetags/navigation_tags.py:64 helios/templatetags/navigation_tags.py:173
+msgid "My votes"
+msgstr "Meine Stimmabgaben"
+
+#: helios/templatetags/navigation_tags.py:70
+msgid "Add a member"
+msgstr "Mitglied hinzufügen"
 
 #: helios/templatetags/tracker_tags.py:57
 msgid "QR code with the link to your ballot tracker"
@@ -3876,9 +3919,21 @@ msgstr "bei der Verbindung zu %(system_name)s ist ein Fehler aufgetreten, bitte 
 msgid "%(election_name)s - vote cast"
 msgstr "%(election_name)s – Stimme abgegeben"
 
+#: server_ui/templates/_breadcrumbs.html:2
+msgid "Breadcrumb"
+msgstr "Brotkrümelnavigation"
+
 #: server_ui/templates/_language_switcher.html:28
 msgid "Unsaved input on this page will be lost. Switch the language anyway?"
 msgstr "Ungespeicherte Eingaben auf dieser Seite gehen verloren. Sprache trotzdem wechseln?"
+
+#: server_ui/templates/_site_nav.html:6
+msgid "Main navigation"
+msgstr "Hauptnavigation"
+
+#: server_ui/templates/_site_nav.html:13
+msgid "Menu"
+msgstr "Menü"
 
 #: server_ui/templates/about.html:12
 msgid "About Helios Voting"
@@ -3929,49 +3984,49 @@ msgstr "Olivier Pereira ist Forschungsmitarbeiter der belgischen Wissenschaftsst
 msgid "Dan Wallach is an associate professor in the Department of Computer Science at Rice University in Houston, Texas and is the director of NSF’s ACCURATE (A Center for Correct, Usable, Reliable, Auditable and Transparent Elections). His research involves computer security and the issues of building secure and robust software systems for the Internet. He has testified about voting security issues before government bodies in the U.S., Mexico, and the European Union, has served as an expert witness in a number of voting technology lawsuits, and participated in California’s “top-to-bottom” audit of its voting systems."
 msgstr "Dan Wallach ist außerordentlicher Professor am Department of Computer Science der Rice University in Houston, Texas, und Direktor von ACCURATE (A Center for Correct, Usable, Reliable, Auditable and Transparent Elections) der NSF. Seine Forschung befasst sich mit Computersicherheit und dem Bau sicherer und robuster Softwaresysteme für das Internet. Er hat vor Regierungsstellen in den USA, in Mexiko und in der Europäischen Union zu Sicherheitsfragen bei Wahlen ausgesagt, war Sachverständiger in mehreren Gerichtsverfahren zu Wahltechnik und nahm am „Top-to-Bottom“-Audit der Wahlsysteme Kaliforniens teil."
 
-#: server_ui/templates/base.html:21
+#: server_ui/templates/base.html:22
 msgid "Skip to main content"
 msgstr "Zum Hauptinhalt springen"
 
-#: server_ui/templates/base.html:27
+#: server_ui/templates/base.html:28
 msgid "Meta navigation"
 msgstr "Meta-Navigation"
 
-#: server_ui/templates/base.html:37
+#: server_ui/templates/base.html:38
 #, python-format
 msgid "Logged in as <strong>%(name)s</strong>"
 msgstr "Angemeldet als <strong>%(name)s</strong>"
 
-#: server_ui/templates/base.html:42 server_ui/templates/base.html:47
+#: server_ui/templates/base.html:43 server_ui/templates/base.html:48
 msgid "Log out"
 msgstr "Abmelden"
 
-#: server_ui/templates/base.html:46 server_ui/templates/base.html:46
+#: server_ui/templates/base.html:47 server_ui/templates/base.html:47
 #, python-format
 msgid "Logged in as <strong>%(name)s</strong> for the election <em>%(election)s</em>."
 msgstr "Angemeldet als <strong>%(name)s</strong> für die Wahl <em>%(election)s</em>."
 
-#: server_ui/templates/base.html:86
+#: server_ui/templates/base.html:89
 msgid "Contact, imprint and further information"
 msgstr "Kontakt, Impressum und Zusatzinformationen"
 
-#: server_ui/templates/base.html:88
+#: server_ui/templates/base.html:91
 msgid "About Helios"
 msgstr "Über Helios"
 
-#: server_ui/templates/base.html:89
+#: server_ui/templates/base.html:92
 msgid "Imprint"
 msgstr "Impressum"
 
-#: server_ui/templates/base.html:90
+#: server_ui/templates/base.html:93
 msgid "Privacy"
 msgstr "Datenschutz"
 
-#: server_ui/templates/base.html:91
+#: server_ui/templates/base.html:94
 msgid "Accessibility"
 msgstr "Barrierefreiheit"
 
-#: server_ui/templates/base.html:93
+#: server_ui/templates/base.html:96
 msgid "Contact"
 msgstr "Kontakt"
 

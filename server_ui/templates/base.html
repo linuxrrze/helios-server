@@ -1,4 +1,4 @@
-{% load announcement_tags i18n localized_settings %}<!DOCTYPE html>
+{% load announcement_tags i18n localized_settings navigation_tags %}<!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}<html lang="{{ LANGUAGE_CODE }}" class="no-js">
     <head>
     <title>{% block title %}{% endblock %}</title>  
@@ -7,6 +7,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="description" content="{% localized_setting "SITE_TITLE" %}">
     <link rel="stylesheet" href="/static/layout.css">
+    <link rel="stylesheet" href="/static/navigation.css">
     {% if settings.SITE_CSS_URL %}<link rel="stylesheet" href="{{ settings.SITE_CSS_URL }}">{% endif %}
     <link rel="stylesheet" href="/static/helios/timezone-display.css">
     <script src="/static/20140302-helios-combined.js"></script>
@@ -55,6 +56,7 @@
 
 	    </div>
 	 </div>     	 
+	 {% block site_nav %}{% site_nav %}{% endblock %}
     </header>
 
     {% site_announcement as announcement %}
@@ -71,6 +73,7 @@
 	    <p class="logo">
 		<a href="/"><img src="{{ settings.MAIN_LOGO_URL }}" class="helios-logo" alt="{% localized_setting "SITE_TITLE" %}"></a> 
 	    </p>
+	    {% block breadcrumbs %}{% breadcrumbs %}{% endblock %}
       {% block content %}{% endblock %}
        </div>
      </div>
