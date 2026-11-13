@@ -168,6 +168,40 @@ class EmailSettingsFromEnvironmentTests(TestCase):
         self.assertIn('EMAIL_USE_TLS', result.stderr)
 
 
+class DockerEntrypointTests(TestCase):
+    """docker-entrypoint.py reports configuration errors in one line, without a
+    stack trace, and otherwise runs the command."""
+
+    GOOD_SECRET = 'k' * 50
+
+    def _run(self, command, **env):
+        import os
+        import subprocess
+        import sys
+        root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        environ = {k: v for k, v in os.environ.items() if k not in ('SECRET_KEY', 'EMAIL_OPTOUT_SECRET')}
+        environ['DEBUG'] = '0'
+        environ.update(env)
+        return subprocess.run([sys.executable, os.path.join(root, 'docker-entrypoint.py')] + command,
+                              env=environ, capture_output=True, text=True, cwd=root)
+
+    def test_configuration_error_in_one_line(self):
+        import sys
+        result = self._run([sys.executable, '-c', 'print("started")'], EMAIL_OPTOUT_SECRET=self.GOOD_SECRET)
+        self.assertEqual(result.returncode, 1)
+        self.assertNotIn('started', result.stdout)
+        self.assertNotIn('Traceback', result.stderr)
+        self.assertEqual(len(result.stderr.strip().splitlines()), 1, result.stderr)
+        self.assertTrue(result.stderr.startswith('Helios configuration error: SECRET_KEY is not set'), result.stderr)
+
+    def test_runs_command_when_configuration_is_valid(self):
+        import sys
+        result = self._run([sys.executable, '-c', 'print("started")'],
+                           SECRET_KEY=self.GOOD_SECRET, EMAIL_OPTOUT_SECRET=self.GOOD_SECRET)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout.strip(), 'started')
+
+
 class SecretSettingsFromEnvironmentTests(TestCase):
     """
     With DEBUG=0, settings.py refuses missing, placeholder and short secrets

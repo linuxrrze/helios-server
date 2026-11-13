@@ -32,7 +32,7 @@ ENV PATH="/app/.venv/bin:$PATH" \
 # settings.py defaults to DEBUG=1, which also enables "devlogin" (log in as
 # anyone). A container must never run like that by accident; set DEBUG=1
 # explicitly for development. With DEBUG=0, Helios refuses to start without
-# SECRET_KEY and EMAIL_OPTOUT_SECRET.
+# SECRET_KEY and EMAIL_OPTOUT_SECRET (see docker-entrypoint.py).
 ENV DEBUG=0
 
 # Helios stores uploads in the database, so the app never writes to disk
@@ -40,6 +40,11 @@ RUN useradd --system --no-create-home helios
 USER helios
 
 EXPOSE 8080
+
+# checks the configuration (e.g. missing secrets) and reports problems as one line
+# instead of a stack trace, then runs the command below or the one given by
+# docker-compose.yml / fly.toml
+ENTRYPOINT ["python", "/app/docker-entrypoint.py"]
 
 # fly.toml overrides this per process; this default runs the web server
 CMD ["sh", "-c", "exec gunicorn wsgi:application -b 0.0.0.0:${PORT} -w 4"]
