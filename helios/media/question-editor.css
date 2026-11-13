@@ -290,7 +290,7 @@
 .content-body .question-title { font-size: 1.25rem; }
 .content-body .question-card .question-actions { display: flex; gap: 12px; align-items: center; margin: 0 0 0 16px; }
 .content-body .question-actions .link-button { font-size: 1rem; }
-.content-body .question-actions .link-button.danger { font-size: 1.3rem; line-height: 1; }
+.content-body .question-actions .link-button.danger { font-size: 1rem; }
 .content-body .form-row-compact { margin: 0 0 20px; padding: 12px 16px; border: 1px solid #e0e0e0; border-radius: 6px; line-height: 2.6; }
 .content-body .form-label-inline { font-size: .95rem; font-weight: 600; }
 .content-body .answers-section { border: 1px solid #e0e0e0; }
@@ -308,3 +308,11 @@
   .content-body .answer-row .answer-inputs { grid-column: 1 / -1; grid-row: 2; }
   .content-body .answer-remove { grid-column: 2; grid-row: 1; }
 }
+
+/* rules of a question: four labelled selects */
+.content-body .question-rules { margin: 0 0 20px; padding: 12px 16px 4px; border: 1px solid var(--border-color, #e0e0e0); border-radius: 6px; }
+.rules-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 12px 20px; }
+.rule-field label { display: block; margin-bottom: 4px; font-size: .95rem; }
+.rule-field select { width: 100%; }
+.content-body .question-rules .field-hint { margin-top: 10px; line-height: 1.45; }
+.content-body .question-card .question-actions .link-button { white-space: nowrap; }

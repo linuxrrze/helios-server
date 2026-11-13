@@ -6,9 +6,10 @@
     </h2>
     {#if $T.admin_p}
     <span class="question-actions">
-      {#if $T.question$index > 0}<button type="button" class="link-button" onclick="question_move_up({$T.question$index});" aria-label="{gettext("Move question up")}" title="{gettext("Move question up")}">↑</button>{#/if}
-      <button type="button" class="link-button" onclick="question_edit({$T.question$index});">{gettext("edit")}</button>
-      <button type="button" class="link-button danger" onclick="if (confirm(gettext('Are you sure you want to remove this question?'))) question_remove({$T.question$index});" aria-label="{gettext("Remove question")}" title="{gettext("Remove question")}">×</button>
+      {#if $T.question$index > 0}<button type="button" class="link-button" onclick="question_move_up({$T.question$index});" aria-label="{QFMT(gettext("Move question %(num)s up"), $T.question$index + 1)}" title="{gettext("Move question up")}">↑</button>{#/if}
+      {#if !$T.question$last}<button type="button" class="link-button" onclick="question_move_up({$T.question$index + 1});" aria-label="{QFMT(gettext("Move question %(num)s down"), $T.question$index + 1)}" title="{gettext("Move question down")}">↓</button>{#/if}
+      <button type="button" class="link-button" onclick="question_edit({$T.question$index});">{gettext("edit")}<span class="screen-reader-text"> {QFMT(gettext("question %(num)s"), $T.question$index + 1)}</span></button>
+      <button type="button" class="link-button danger" onclick="if (confirm(gettext('Are you sure you want to remove this question?'))) question_remove({$T.question$index});">{gettext("remove")}<span class="screen-reader-text"> {QFMT(gettext("question %(num)s"), $T.question$index + 1)}</span></button>
     </span>
     {#/if}
   </div>
@@ -54,36 +55,44 @@
       <input type="text" id="q{$T.question$index}_text" name="question" class="form-control question-input" placeholder="{gettext("Enter your question here")}" />
     </div>
 
-    <fieldset class="form-row-compact">
-      <legend class="screen-reader-text">{gettext("Rules for this question")}</legend>
-      <span class="form-label-inline" id="q{$T.question$index}_between">{gettext("Select between")}</span>
-      <select name="min" class="form-control-inline" aria-label="{gettext("Minimum number of answers")}">
-        <option selected>0</option>
-        {#for option_index = 1 to 20}
-        <option>{$T.option_index}</option>
-        {#/for}
-      </select>
-      <span class="form-label-inline">{gettext("and")}</span>
-      <select name="max" class="form-control-inline" aria-label="{gettext("Maximum number of answers")}">
-        <option>0</option>
-        <option selected>1</option>
-        {#for option_index = 2 to 50}
-        <option>{$T.option_index}</option>
-        {#/for}
-        <option value="">{gettext("unlimited")}</option>
-      </select>
-      <span class="form-label-inline">{gettext("answers.")}</span>
-      <label class="form-label-inline" for="q{$T.question$index}_result_type">{gettext("Result type:")}</label>
-      <select name="result_type" id="q{$T.question$index}_result_type" class="form-control-inline" aria-describedby="q{$T.question$index}_result_hint">
-        <option value="absolute" selected>{gettext("absolute")}</option>
-        <option value="relative">{gettext("relative")}</option>
-      </select>
-      <label class="form-label-inline" for="q{$T.question$index}_random">{gettext("Random order:")}</label>
-      <select name="randomize_answer_order" id="q{$T.question$index}_random" class="form-control-inline">
-        <option selected value="0">{gettext("No")}</option>
-        <option value="1">{gettext("Yes")}</option>
-      </select>
-      <span class="field-hint" id="q{$T.question$index}_result_hint">{gettext("Absolute: if only one answer can be chosen, it wins only with more than half of all ballots cast. Relative: the answers with the most votes win.")}</span>
+    <fieldset class="question-rules">
+      <legend class="section-title">{gettext("How voters answer")}</legend>
+      <div class="rules-grid">
+        <div class="rule-field">
+          <label for="q{$T.question$index}_min">{gettext("Minimum number of answers")}</label>
+          <select name="min" id="q{$T.question$index}_min" class="form-control-inline">
+            <option selected>0</option>
+            {#for option_index = 1 to 20}
+            <option>{$T.option_index}</option>
+            {#/for}
+          </select>
+        </div>
+        <div class="rule-field">
+          <label for="q{$T.question$index}_max">{gettext("Maximum number of answers")}</label>
+          <select name="max" id="q{$T.question$index}_max" class="form-control-inline">
+            <option selected>1</option>
+            {#for option_index = 2 to 50}
+            <option>{$T.option_index}</option>
+            {#/for}
+            <option value="">{gettext("unlimited")}</option>
+          </select>
+        </div>
+        <div class="rule-field">
+          <label for="q{$T.question$index}_result_type">{gettext("Result type")}</label>
+          <select name="result_type" id="q{$T.question$index}_result_type" class="form-control-inline" aria-describedby="q{$T.question$index}_result_hint">
+            <option value="absolute" selected>{gettext("absolute")}</option>
+            <option value="relative">{gettext("relative")}</option>
+          </select>
+        </div>
+        <div class="rule-field">
+          <label for="q{$T.question$index}_random">{gettext("Answer order in the booth")}</label>
+          <select name="randomize_answer_order" id="q{$T.question$index}_random" class="form-control-inline">
+            <option selected value="0">{gettext("as entered")}</option>
+            <option value="1">{gettext("random for each voter")}</option>
+          </select>
+        </div>
+      </div>
+      <p class="field-hint" id="q{$T.question$index}_result_hint">{gettext("Voters may choose fewer than the maximum, or none if the minimum is 0. Absolute: if only one answer can be chosen, it wins only with more than half of all ballots cast. Relative: the answers with the most votes win.")}</p>
     </fieldset>
 
     <fieldset class="answers-section">
@@ -121,36 +130,44 @@
       <input type="text" id="new_question_text" name="question" class="form-control question-input" placeholder="{gettext("Enter your question here")}" required />
     </div>
 
-    <fieldset class="form-row-compact">
-      <legend class="screen-reader-text">{gettext("Rules for this question")}</legend>
-      <span class="form-label-inline" id="new_question_between">{gettext("Select between")}</span>
-      <select name="min" class="form-control-inline" aria-label="{gettext("Minimum number of answers")}">
-        <option selected>0</option>
-        {#for option_index = 1 to 20}
-        <option>{$T.option_index}</option>
-        {#/for}
-      </select>
-      <span class="form-label-inline">{gettext("and")}</span>
-      <select name="max" class="form-control-inline" aria-label="{gettext("Maximum number of answers")}">
-        <option>0</option>
-        <option selected>1</option>
-        {#for option_index = 2 to 50}
-        <option>{$T.option_index}</option>
-        {#/for}
-        <option value="">{gettext("unlimited")}</option>
-      </select>
-      <span class="form-label-inline">{gettext("answers.")}</span>
-      <label class="form-label-inline" for="new_question_result_type">{gettext("Result type:")}</label>
-      <select name="result_type" id="new_question_result_type" class="form-control-inline" aria-describedby="new_question_result_hint">
-        <option value="absolute" selected>{gettext("absolute")}</option>
-        <option value="relative">{gettext("relative")}</option>
-      </select>
-      <label class="form-label-inline" for="new_question_random">{gettext("Random order:")}</label>
-      <select name="randomize_answer_order" id="new_question_random" class="form-control-inline">
-        <option selected value="0">{gettext("No")}</option>
-        <option value="1">{gettext("Yes")}</option>
-      </select>
-      <span class="field-hint" id="new_question_result_hint">{gettext("Absolute: if only one answer can be chosen, it wins only with more than half of all ballots cast. Relative: the answers with the most votes win.")}</span>
+    <fieldset class="question-rules">
+      <legend class="section-title">{gettext("How voters answer")}</legend>
+      <div class="rules-grid">
+        <div class="rule-field">
+          <label for="new_question_min">{gettext("Minimum number of answers")}</label>
+          <select name="min" id="new_question_min" class="form-control-inline">
+            <option selected>0</option>
+            {#for option_index = 1 to 20}
+            <option>{$T.option_index}</option>
+            {#/for}
+          </select>
+        </div>
+        <div class="rule-field">
+          <label for="new_question_max">{gettext("Maximum number of answers")}</label>
+          <select name="max" id="new_question_max" class="form-control-inline">
+            <option selected>1</option>
+            {#for option_index = 2 to 50}
+            <option>{$T.option_index}</option>
+            {#/for}
+            <option value="">{gettext("unlimited")}</option>
+          </select>
+        </div>
+        <div class="rule-field">
+          <label for="new_question_result_type">{gettext("Result type")}</label>
+          <select name="result_type" id="new_question_result_type" class="form-control-inline" aria-describedby="new_question_result_hint">
+            <option value="absolute" selected>{gettext("absolute")}</option>
+            <option value="relative">{gettext("relative")}</option>
+          </select>
+        </div>
+        <div class="rule-field">
+          <label for="new_question_random">{gettext("Answer order in the booth")}</label>
+          <select name="randomize_answer_order" id="new_question_random" class="form-control-inline">
+            <option selected value="0">{gettext("as entered")}</option>
+            <option value="1">{gettext("random for each voter")}</option>
+          </select>
+        </div>
+      </div>
+      <p class="field-hint" id="new_question_result_hint">{gettext("Voters may choose fewer than the maximum, or none if the minimum is 0. Absolute: if only one answer can be chosen, it wins only with more than half of all ballots cast. Relative: the answers with the most votes win.")}</p>
     </fieldset>
 
     <fieldset class="answers-section">

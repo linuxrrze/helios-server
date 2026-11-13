@@ -1494,6 +1494,10 @@ msgid "The maximum of %(max)s answers is more than the %(count)s answers of this
 msgstr "Die Höchstzahl von %(max)s Antworten ist größer als die %(count)s Antworten dieser Frage. Senken Sie die Höchstzahl oder wählen Sie „unbegrenzt“."
 
 #: helios/templates/election_questions.html:51
+msgid "The questions have been saved."
+msgstr "Die Fragen wurden gespeichert."
+
+#: helios/templates/election_questions.html:52
 msgid "The questions could not be saved. Please check that the URLs you entered are either http:// or https://"
 msgstr "Die Fragen konnten nicht gespeichert werden. Bitte prüfen Sie, dass die eingegebenen URLs mit http:// oder https:// beginnen."
 

@@ -48,8 +48,14 @@
     min_above_max: '{% filter escapejs %}{% translate "The minimum number of answers cannot be more than the maximum." %}{% endfilter %}',
     min_above_count: '{% filter escapejs %}{% blocktranslate with min="__MIN__" count="__COUNT__" %}Voters cannot choose at least {{min}} answers: the question has only {{count}}. Add answers or lower the minimum.{% endblocktranslate %}{% endfilter %}',
     max_above_count: '{% filter escapejs %}{% blocktranslate with max="__MAX__" count="__COUNT__" %}The maximum of {{max}} answers is more than the {{count}} answers of this question. Lower the maximum or choose "unlimited".{% endblocktranslate %}{% endfilter %}',
+    saved: '{% filter escapejs %}{% translate "The questions have been saved." %}{% endfilter %}',
     save_failed: '{% filter escapejs %}{% translate "The questions could not be saved. Please check that the URLs you entered are either http:// or https://" %}{% endfilter %}'
   };
+
+  // gettext text with %(num)s, usable in the jTemplate (no braces there)
+  function QFMT(text, num) {
+    return interpolate(text, {'num': num}, true);
+  }
 
   function fill(text, values) {
     for (var key in values)
@@ -184,6 +190,7 @@
               alert(TEXTS.save_failed);
           } else {
             callback();
+            announce(TEXTS.saved);
           }
       });
   }
