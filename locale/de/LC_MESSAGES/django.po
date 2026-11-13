@@ -344,53 +344,92 @@ msgstr "Wahl"
 msgid "Referendum"
 msgstr "Abstimmung"
 
-#: helios/models.py:399
+#: helios/models.py:322
+msgid "The questions could not be saved: they are not in the expected format."
+msgstr "Die Fragen konnten nicht gespeichert werden: Die Daten haben nicht das erwartete Format."
+
+#: helios/models.py:343 helios/templates/election_questions.html:45
+msgid "Please enter at least one answer option."
+msgstr "Bitte geben Sie mindestens eine Antwortmöglichkeit ein."
+
+#: helios/models.py:345
+msgid "The minimum number of answers cannot be less than 0."
+msgstr "Die Mindestzahl der Antworten kann nicht kleiner als 0 sein."
+
+#: helios/models.py:347 helios/templates/election_questions.html:46
+msgid "The maximum number of answers must be at least 1."
+msgstr "Die Höchstzahl der Antworten muss mindestens 1 sein."
+
+#: helios/models.py:349 helios/templates/election_questions.html:47
+msgid "The minimum number of answers cannot be more than the maximum."
+msgstr "Die Mindestzahl der Antworten darf nicht größer als die Höchstzahl sein."
+
+#: helios/models.py:351 helios/templates/election_questions.html:48
+#, python-format
+msgid "Voters cannot choose at least %(min)s answers: the question has only %(count)s. Add answers or lower the minimum."
+msgstr "Wahlberechtigte können nicht mindestens %(min)s Antworten wählen: Die Frage hat nur %(count)s. Fügen Sie Antworten hinzu oder senken Sie die Mindestzahl."
+
+#: helios/models.py:353 helios/templates/election_questions.html:49
+#, python-format
+msgid "The maximum of %(max)s answers is more than the %(count)s answers of this question. Lower the maximum or choose \"unlimited\"."
+msgstr "Die Höchstzahl von %(max)s Antworten ist größer als die %(count)s Antworten dieser Frage. Senken Sie die Höchstzahl oder wählen Sie „unbegrenzt“."
+
+#: helios/models.py:355
+msgid "Links for answers must start with http:// or https://."
+msgstr "Links zu Antworten müssen mit http:// oder https:// beginnen."
+
+#: helios/models.py:358
+#, python-format
+msgid "Question %(num)s: %(problem)s"
+msgstr "Frage %(num)s: %(problem)s"
+
+#: helios/models.py:440
 msgid "Anyone can vote."
 msgstr "Alle können abstimmen."
 
-#: helios/models.py:408
+#: helios/models.py:449
 #, python-format
 msgid "any %(auth_system)s user"
 msgstr "alle Personen mit %(auth_system)s-Konto"
 
-#: helios/models.py:448
+#: helios/models.py:489
 msgid "add questions to the ballot"
 msgstr "Fragen zum Stimmzettel hinzufügen"
 
-#: helios/models.py:455
+#: helios/models.py:496
 msgid "add at least one trustee"
 msgstr "mindestens eine*n Treuhänder*in hinzufügen"
 
-#: helios/models.py:462
+#: helios/models.py:503
 #, python-format
 msgid "have trustee %(name)s generate a keypair"
 msgstr "Treuhänder*in %(name)s ein Schlüsselpaar erzeugen lassen"
 
-#: helios/models.py:468
+#: helios/models.py:509
 msgid "enter your voter list (or open registration to the public)"
 msgstr "Wählerverzeichnis eingeben (oder die Registrierung öffentlich freigeben)"
 
-#: helios/models.py:486
+#: helios/models.py:527
 #, python-format
 msgid "Election was tallied more than %(weeks)s week ago"
 msgid_plural "Election was tallied more than %(weeks)s weeks ago"
 msgstr[0] "Die Wahl wurde vor mehr als %(weeks)s Woche ausgezählt"
 msgstr[1] "Die Wahl wurde vor mehr als %(weeks)s Wochen ausgezählt"
 
-#: helios/models.py:502
+#: helios/models.py:543
 msgid "Election has been tallied"
 msgstr "Die Wahl wurde ausgezählt"
 
-#: helios/models.py:505
+#: helios/models.py:546
 msgid "Tallying has started"
 msgstr "Die Auszählung hat begonnen"
 
-#: helios/models.py:847
+#: helios/models.py:888
 #, python-format
 msgid "invalid voter type '%(voter_type)s' for voter id '%(voter_id)s', available voter types are %(voter_types)s"
 msgstr "ungültige Wählerart „%(voter_type)s“ für die Wähler-ID „%(voter_id)s“, verfügbare Wählerarten sind %(voter_types)s"
 
-#: helios/models.py:856
+#: helios/models.py:897
 #, python-format
 msgid "invalid voter email '%(voter_email)s' for voter id '%(voter_id)s'"
 msgstr "ungültige E-Mail-Adresse „%(voter_email)s“ für die Wähler-ID „%(voter_id)s“"
@@ -1483,35 +1522,13 @@ msgstr "+ Link hinzufügen"
 msgid "- Hide link"
 msgstr "- Link ausblenden"
 
-#: helios/templates/election_questions.html:45
-msgid "Please enter at least one answer option."
-msgstr "Bitte geben Sie mindestens eine Antwortmöglichkeit ein."
-
-#: helios/templates/election_questions.html:46
-msgid "The maximum number of answers must be at least 1."
-msgstr "Die Höchstzahl der Antworten muss mindestens 1 sein."
-
-#: helios/templates/election_questions.html:47
-msgid "The minimum number of answers cannot be more than the maximum."
-msgstr "Die Mindestzahl der Antworten darf nicht größer als die Höchstzahl sein."
-
-#: helios/templates/election_questions.html:48
-#, python-format
-msgid "Voters cannot choose at least %(min)s answers: the question has only %(count)s. Add answers or lower the minimum."
-msgstr "Wahlberechtigte können nicht mindestens %(min)s Antworten wählen: Die Frage hat nur %(count)s. Fügen Sie Antworten hinzu oder senken Sie die Mindestzahl."
-
-#: helios/templates/election_questions.html:49
-#, python-format
-msgid "The maximum of %(max)s answers is more than the %(count)s answers of this question. Lower the maximum or choose \"unlimited\"."
-msgstr "Die Höchstzahl von %(max)s Antworten ist größer als die %(count)s Antworten dieser Frage. Senken Sie die Höchstzahl oder wählen Sie „unbegrenzt“."
-
 #: helios/templates/election_questions.html:50
 msgid "The questions have been saved."
 msgstr "Die Fragen wurden gespeichert."
 
 #: helios/templates/election_questions.html:51
-msgid "The questions could not be saved. Please check that the URLs you entered are either http:// or https://"
-msgstr "Die Fragen konnten nicht gespeichert werden. Bitte prüfen Sie, dass die eingegebenen URLs mit http:// oder https:// beginnen."
+msgid "The questions could not be saved. Please try again."
+msgstr "Die Fragen konnten nicht gespeichert werden. Bitte versuchen Sie es erneut."
 
 #: helios/templates/election_register.html:5 helios/templatetags/navigation_tags.py:34
 msgid "Register"
@@ -3482,72 +3499,72 @@ msgstr ""
 msgid "registration is closed for this election"
 msgstr "die Registrierung für diese Wahl ist geschlossen"
 
-#: helios/views.py:1471
+#: helios/views.py:1477
 #, python-format
 msgid "%(election)s - trustee partial decryption"
 msgstr "%(election)s – Teilentschlüsselung von Treuhänder*in"
 
-#: helios/views.py:1471
+#: helios/views.py:1477
 #, python-format
 msgid "trustee %(name)s (%(email)s) did their partial decryption."
 msgstr "Treuhänder*in %(name)s (%(email)s) hat die Teilentschlüsselung durchgeführt."
 
-#: helios/views.py:1815
+#: helios/views.py:1821
 msgid "no valid lines found in voter file"
 msgstr "keine gültigen Zeilen in der Wählerliste gefunden"
 
-#: helios/views.py:1818
+#: helios/views.py:1824
 #, python-format
 msgid "your CSV file could not be processed because %(reason)s"
 msgstr "Ihre CSV-Datei konnte nicht verarbeitet werden: %(reason)s"
 
-#: helios/views.py:1822
+#: helios/views.py:1828
 msgid "no voter file specified, try again"
 msgstr "keine Wählerliste angegeben, bitte versuchen Sie es erneut"
 
-#: helios/views.py:1870
+#: helios/views.py:1876
 msgid "Time to Vote"
 msgstr "Zeit zu wählen"
 
-#: helios/views.py:1871
+#: helios/views.py:1877
 msgid "Simple"
 msgstr "Einfach"
 
-#: helios/views.py:1872
+#: helios/views.py:1878
 msgid "Additional Info"
 msgstr "Zusätzliche Informationen"
 
-#: helios/views.py:1873
+#: helios/views.py:1879
 msgid "Election Result"
 msgstr "Wahlergebnis"
 
-#: helios/views.py:1937
+#: helios/views.py:1943
 msgid "None of the voters match this choice, so no email would be sent."
 msgstr "Auf diese Auswahl trifft keine wahlberechtigte Person zu, daher würde keine E-Mail gesendet."
 
-#: helios/views.py:2078 helios/views.py:2088 helios/views.py:2096
-#: helios/views.py:2132
+#: helios/views.py:2084 helios/views.py:2094 helios/views.py:2102
+#: helios/views.py:2138
 msgid "Opt Out of Helios Emails"
 msgstr "Helios-E-Mails abbestellen"
 
-#: helios/views.py:2079 helios/views.py:2089 helios/views.py:2097
-#: helios/views.py:2133
+#: helios/views.py:2085 helios/views.py:2095 helios/views.py:2103
+#: helios/views.py:2139
 msgid "Enter your email address to stop receiving all emails from Helios voting system."
 msgstr "Geben Sie Ihre E-Mail-Adresse ein, um keine E-Mails des Wahlsystems Helios mehr zu erhalten."
 
-#: helios/views.py:2090 helios/views.py:2198
+#: helios/views.py:2096 helios/views.py:2204
 msgid "Email address is required"
 msgstr "E-Mail-Adresse ist erforderlich"
 
-#: helios/views.py:2098 helios/views.py:2206
+#: helios/views.py:2104 helios/views.py:2212
 msgid "Invalid email address"
 msgstr "Ungültige E-Mail-Adresse"
 
-#: helios/views.py:2105
+#: helios/views.py:2111
 msgid "Confirm your opt-out from Helios emails"
 msgstr "Bestätigen Sie die Abbestellung der Helios-E-Mails"
 
-#: helios/views.py:2109
+#: helios/views.py:2115
 #, python-format
 msgid ""
 "\n"
@@ -3570,51 +3587,51 @@ msgstr ""
 "--\n"
 "Wahlsystem Helios\n"
 
-#: helios/views.py:2134 helios/views.py:2246
+#: helios/views.py:2140 helios/views.py:2252
 #, python-format
 msgid "Failed to send confirmation email: %(error)s"
 msgstr "Die Bestätigungs-E-Mail konnte nicht gesendet werden: %(error)s"
 
-#: helios/views.py:2143
+#: helios/views.py:2149
 msgid "Opt-Out Confirmation Sent"
 msgstr "Bestätigung der Abbestellung gesendet"
 
-#: helios/views.py:2144
+#: helios/views.py:2150
 msgid "We have sent you a confirmation email. Please click the link in the email to complete your opt-out request."
 msgstr "Wir haben Ihnen eine Bestätigungs-E-Mail gesendet. Bitte klicken Sie auf den Link in der E-Mail, um die Abbestellung abzuschließen."
 
-#: helios/views.py:2158 helios/templates/optout_confirm_form.html:44
+#: helios/views.py:2164 helios/templates/optout_confirm_form.html:44
 msgid "Confirm Opt-Out"
 msgstr "Abbestellung bestätigen"
 
-#: helios/views.py:2159
+#: helios/views.py:2165
 msgid "Please confirm that you want to opt out of all Helios voting system emails."
 msgstr "Bitte bestätigen Sie, dass Sie keine E-Mails des Wahlsystems Helios mehr erhalten möchten."
 
-#: helios/views.py:2174
+#: helios/views.py:2180
 msgid "Successfully Opted Out"
 msgstr "Erfolgreich abbestellt"
 
-#: helios/views.py:2175
+#: helios/views.py:2181
 #, python-format
 msgid "The email address %(email)s has been successfully opted out of all Helios emails."
 msgstr "Die E-Mail-Adresse %(email)s erhält keine Helios-E-Mails mehr."
 
-#: helios/views.py:2186 helios/views.py:2196 helios/views.py:2204
-#: helios/views.py:2244
+#: helios/views.py:2192 helios/views.py:2202 helios/views.py:2210
+#: helios/views.py:2250
 msgid "Opt Back Into Helios Emails"
 msgstr "Helios-E-Mails wieder erhalten"
 
-#: helios/views.py:2187 helios/views.py:2197 helios/views.py:2205
-#: helios/views.py:2245
+#: helios/views.py:2193 helios/views.py:2203 helios/views.py:2211
+#: helios/views.py:2251
 msgid "Enter your email address to resume receiving emails from Helios voting system."
 msgstr "Geben Sie Ihre E-Mail-Adresse ein, um wieder E-Mails des Wahlsystems Helios zu erhalten."
 
-#: helios/views.py:2217
+#: helios/views.py:2223
 msgid "Confirm your opt-in to Helios emails"
 msgstr "Bestätigen Sie, dass Sie wieder Helios-E-Mails erhalten möchten"
 
-#: helios/views.py:2221
+#: helios/views.py:2227
 #, python-format
 msgid ""
 "\n"
@@ -3637,27 +3654,27 @@ msgstr ""
 "--\n"
 "Wahlsystem Helios\n"
 
-#: helios/views.py:2255
+#: helios/views.py:2261
 msgid "Opt-In Confirmation Sent"
 msgstr "Bestätigung gesendet"
 
-#: helios/views.py:2256
+#: helios/views.py:2262
 msgid "We have sent you a confirmation email. Please click the link in the email to complete your opt-in request."
 msgstr "Wir haben Ihnen eine Bestätigungs-E-Mail gesendet. Bitte klicken Sie auf den Link in der E-Mail, um den erneuten Empfang zu bestätigen."
 
-#: helios/views.py:2274 helios/templates/optout_confirm_form.html:44
+#: helios/views.py:2280 helios/templates/optout_confirm_form.html:44
 msgid "Confirm Opt-In"
 msgstr "E-Mail-Empfang bestätigen"
 
-#: helios/views.py:2275
+#: helios/views.py:2281
 msgid "Please confirm that you want to resume receiving emails from Helios voting system."
 msgstr "Bitte bestätigen Sie, dass Sie wieder E-Mails des Wahlsystems Helios erhalten möchten."
 
-#: helios/views.py:2290
+#: helios/views.py:2296
 msgid "Successfully Opted Back In"
 msgstr "Empfang erfolgreich wieder aktiviert"
 
-#: helios/views.py:2291
+#: helios/views.py:2297
 #, python-format
 msgid "The email address %(email)s has been successfully opted back in to Helios emails."
 msgstr "Die E-Mail-Adresse %(email)s erhält wieder Helios-E-Mails."

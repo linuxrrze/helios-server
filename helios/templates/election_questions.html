@@ -48,7 +48,7 @@
     min_above_count: '{% filter escapejs %}{% blocktranslate with min="__MIN__" count="__COUNT__" %}Voters cannot choose at least {{min}} answers: the question has only {{count}}. Add answers or lower the minimum.{% endblocktranslate %}{% endfilter %}',
     max_above_count: '{% filter escapejs %}{% blocktranslate with max="__MAX__" count="__COUNT__" %}The maximum of {{max}} answers is more than the {{count}} answers of this question. Lower the maximum or choose "unlimited".{% endblocktranslate %}{% endfilter %}',
     saved: '{% filter escapejs %}{% translate "The questions have been saved." %}{% endfilter %}',
-    save_failed: '{% filter escapejs %}{% translate "The questions could not be saved. Please check that the URLs you entered are either http:// or https://" %}{% endfilter %}'
+    save_failed: '{% filter escapejs %}{% translate "The questions could not be saved. Please try again." %}{% endfilter %}'
   };
 
   // gettext text with %(num)s, usable in the jTemplate (no braces there)
@@ -180,18 +180,43 @@
     if (message) box.removeAttr('hidden'); else box.attr('hidden', 'hidden');
   }
 
-  function save_questions(callback, form) {
-      $.post('./save_questions', {'questions_json' : $.toJSON(QUESTIONS), 'csrf_token': CSRF_TOKEN}, function(result) {
-          if (result == "FAILURE") {
-            if (form)
-              show_form_error(form, TEXTS.save_failed);
-            else
-              alert(TEXTS.save_failed);
-          } else {
-            callback();
-            announce(TEXTS.saved);
-          }
-      });
+  // a save that doesn't come from a form (remove, move) shows its error above the questions
+  function show_editor_error(message) {
+    var box = $('#question_editor_error');
+    box.text(message || '');
+    if (message) {
+      box.removeAttr('hidden');
+      box[0].scrollIntoView({block: 'nearest'});
+    } else {
+      box.attr('hidden', 'hidden');
+    }
+  }
+
+  // save the new list of questions; QUESTIONS changes only once the server has
+  // accepted it. The server checks the questions too and says what is wrong.
+  function save_questions(new_questions, callback, form) {
+      show_editor_error('');
+      var failed = function(message) {
+        message = message || TEXTS.save_failed;
+        if (form)
+          show_form_error(form, message);
+        else
+          show_editor_error(message);
+      };
+      $.ajax({url: './save_questions', type: 'POST', dataType: 'text',
+              data: {'questions_json' : $.toJSON(new_questions), 'csrf_token': CSRF_TOKEN},
+              success: function(result) {
+                if (result == "FAILURE")
+                  return failed(null);
+                QUESTIONS = new_questions;
+                callback();
+                announce(TEXTS.saved);
+              },
+              error: function(xhr) {
+                var message = null;
+                try { message = JSON.parse(xhr.responseText).error; } catch (e) {}
+                failed(message);
+              }});
   }
 
   // the question in a form, or null (with the reason shown in the form)
@@ -235,10 +260,8 @@
 
   function question_add(form) {
       var new_q = get_question_from_form(form);
-      if (new_q) {
-        QUESTIONS.push(new_q);
-        save_questions(refresh, form);
-      }
+      if (new_q)
+        save_questions(QUESTIONS.concat([new_q]), refresh, form);
   }
 
   function question_remove(q_num) {
@@ -248,8 +271,7 @@
             return;
           new_questions.push(q);
       });
-      QUESTIONS = new_questions;
-      save_questions(refresh);
+      save_questions(new_questions, refresh);
   }
 
   function question_edit(q_num) {
@@ -285,16 +307,17 @@
   function question_update(q_num, form) {
       var new_q = get_question_from_form(form);
       if (new_q) {
-        QUESTIONS[q_num] = new_q;
-        save_questions(refresh, form);
+        var new_questions = QUESTIONS.slice();
+        new_questions[q_num] = new_q;
+        save_questions(new_questions, refresh, form);
       }
   }
 
   function question_move_up(num) {
-    var temp_q = QUESTIONS[num];
-    QUESTIONS[num] = QUESTIONS[num-1];
-    QUESTIONS[num-1] = temp_q;
-    save_questions(refresh);
+    var new_questions = QUESTIONS.slice();
+    new_questions[num] = QUESTIONS[num-1];
+    new_questions[num-1] = QUESTIONS[num];
+    save_questions(new_questions, refresh);
   }
 
   // Switching the language reloads the page: keep the question being added and
@@ -378,6 +401,7 @@
   </script>
 
   {# the forms in here are kept by the "questions" hook when the language is switched #}
+  <div id="question_editor_error" class="callout callout-danger" role="alert" hidden></div>
   <div id="questions" data-preserve-custom>
   </div>
   <div id="question_editor_status" class="screen-reader-text" role="status" aria-live="polite"></div>

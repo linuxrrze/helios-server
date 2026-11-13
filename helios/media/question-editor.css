@@ -302,7 +302,7 @@
 .content-body .answer-label { font-weight: 600; color: var(--text-color, #1f2933); }
 .content-body .answer-remove { align-self: center; font-size: .95rem; }
 .content-body .add-answer { margin-top: 4px; }
-.content-body .form-error[hidden] { display: none; }
+.content-body .form-error[hidden], .content-body #question_editor_error[hidden] { display: none; }
 @media only screen and (max-width: 40em) {
   .content-body .answer-row { grid-template-columns: 1fr auto; }
   .content-body .answer-row .answer-inputs { grid-column: 1 / -1; grid-row: 2; }

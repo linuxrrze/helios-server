@@ -1361,14 +1361,20 @@ def one_election_register(request, election):
 def one_election_save_questions(request, election):
   check_csrf(request)
   
-  questions = utils.from_json(request.POST['questions_json'])
-  questions_saved = election.save_questions_safely(questions)
-  
-  if questions_saved:
-    election.save()
-    return success()
-  else:
-    return failure()
+  try:
+    questions = utils.from_json(request.POST.get('questions_json', ''))
+  except Exception:  # not JSON
+    questions = None
+
+  # the editor checks the same in the browser; this is for anything else that
+  # reaches the server. The message is shown in the editor's error box.
+  problem = election.questions_problem(questions)
+  if problem:
+    return HttpResponse(utils.to_json({'result': 'FAILURE', 'error': problem}), status=400, content_type="application/json")
+
+  election.save_questions_safely(questions)
+  election.save()
+  return success()
 
 @transaction.atomic
 @election_admin(frozen=False)

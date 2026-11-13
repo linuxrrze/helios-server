@@ -310,19 +310,60 @@ class Election(HeliosModel):
     except cls.DoesNotExist:
       return None
 
+  @staticmethod
+  def questions_problem(questions):
+    """
+    What is wrong with questions sent by the question editor, as a message for
+    the administrator, or None if they can be saved. The editor checks the same
+    in the browser; this is what the booth, the proofs and the tally rely on.
+    Accepted as before: max None ("unlimited"), a missing min (taken as 0),
+    any choice_type/tally_type, answer_urls entries None or "".
+    """
+    bad_format = _("The questions could not be saved: they are not in the expected format.")
+    if not isinstance(questions, list):
+      return bad_format
+
+    def whole_number(value):
+      return isinstance(value, int) and not isinstance(value, bool)
+
+    for num, q in enumerate(questions, 1):
+      if not isinstance(q, dict) or not isinstance(q.get('answers'), list) or not isinstance(q.get('answer_urls'), list) \
+          or 'max' not in q or not all(isinstance(a, str) for a in q['answers']) \
+          or not all(u is None or isinstance(u, str) for u in q['answer_urls']) \
+          or q.get('result_type', 'absolute') not in ('absolute', 'relative'):
+        return bad_format
+
+      count = len(q['answers'])
+      min_answers, max_answers = q.get('min', 0), q['max']
+      if not whole_number(min_answers) or not (max_answers is None or whole_number(max_answers)):
+        return bad_format
+
+      problem = None
+      if not any(a.strip() for a in q['answers']):
+        problem = _("Please enter at least one answer option.")
+      elif min_answers < 0:
+        problem = _("The minimum number of answers cannot be less than 0.")
+      elif max_answers is not None and max_answers < 1:
+        problem = _("The maximum number of answers must be at least 1.")
+      elif max_answers is not None and min_answers > max_answers:
+        problem = _("The minimum number of answers cannot be more than the maximum.")
+      elif min_answers > count:
+        problem = _("Voters cannot choose at least %(min)s answers: the question has only %(count)s. Add answers or lower the minimum.") % {'min': min_answers, 'count': count}
+      elif max_answers is not None and max_answers > count:
+        problem = _("The maximum of %(max)s answers is more than the %(count)s answers of this question. Lower the maximum or choose \"unlimited\".") % {'max': max_answers, 'count': count}
+      elif any(u and not u.startswith(("http://", "https://")) for u in q['answer_urls']):
+        problem = _("Links for answers must start with http:// or https://.")
+
+      if problem:
+        return _("Question %(num)s: %(problem)s") % {'num': num, 'problem': problem}
+    return None
+
   def save_questions_safely(self, questions):
     """
     Because Django doesn't let us override properties in a Pythonic way... doing the brute-force thing.
     """
-    # verify all the answer_urls
-    for q in questions:
-      for answer_url in q['answer_urls']:
-        if not answer_url or answer_url == "":
-          continue
-
-        # abort saving if bad URL
-        if not (answer_url[:7] == "http://" or answer_url[:8]== "https://"):
-          return False
+    if self.questions_problem(questions):
+      return False
 
     self.questions = questions
     return True
