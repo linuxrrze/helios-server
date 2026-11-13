@@ -74,7 +74,8 @@ class NavigationTests(TestCase):
     self.assertIn('<a href="/">Home</a>', nav)
     # listed twice: as a row and in the phone menu
     self.assertEqual(nav.count('href="/helios/elections/administered" aria-current="page">My elections</a>'), 2)
-    self.assertIn('href="/helios/elections/new">Create election</a>', nav)
+    # the guided setup; it links to the single form
+    self.assertIn('href="/helios/elections/new/guided">Create election</a>', nav)
     self.assertIn('href="/helios/elections/voted">My votes</a>', nav)
     self.assertIn('<details class="site-nav-menu">', nav)
     self.assertIn('<summary>Menu</summary>', nav)
@@ -147,4 +148,23 @@ class ErrorPageTests(TestCase):
   def test_not_found_page_links_to_the_start_page(self):
     response = self.client.get('/no/such/page')
     self.assertEqual(response.status_code, 404)
-    self.assertIn('<a href="/">Go to the start page</a>', response.content.decode())
+    self.assertRegex(response.content.decode(), r'<a [^>]*href="/"[^>]*>Go to the start page</a>')
+
+
+class SetupPagesBreadcrumbTests(TestCase):
+  """Breadcrumbs of the pages added with the guided setup"""
+  fixtures = ['users.json', 'election.json']
+
+  def setUp(self):
+    from helios_auth.models import User
+    user = User.objects.get(user_id='ben@adida.net', user_type='google')
+    self.client.get('/')
+    session = self.client.session
+    session['user'] = {'type': user.user_type, 'user_id': user.user_id}
+    session.save()
+
+  def test_guided_setup(self):
+    html = self.client.get('/helios/elections/new/guided').content.decode()
+    self.assertIn('class="breadcrumbs"', html)
+    self.assertIn('<span aria-current="page">Create election</span>', html)
+    self.assertNotIn('class="back-link"', html)

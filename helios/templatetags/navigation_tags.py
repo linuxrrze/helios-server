@@ -63,6 +63,7 @@ OTHER_PAGES = {
   names.ELECTIONS_ADMINISTERED: (gettext_lazy('My elections'), None),
   names.ELECTIONS_VOTED: (gettext_lazy('My votes'), None),
   names.ELECTIONS_NEW: (gettext_lazy('Create election'), None),
+  names.ELECTIONS_NEW_GUIDED: (gettext_lazy('Create election'), None),
   names.VOTERGROUP_ADMINISTERED: (gettext_lazy('Voter groups'), None),
   names.VOTERGROUP_NEW: (gettext_lazy('Create a new voter group'), names.VOTERGROUP_ADMINISTERED),
   # a group's page; its label is the group's name
@@ -167,7 +168,7 @@ def build_site_nav(context):
     if can_create_election(request):
       items += [
         (_('My elections'), _reverse(names.ELECTIONS_ADMINISTERED)),
-        (_('Create election'), _reverse(names.ELECTIONS_NEW)),
+        (_('Create election'), _reverse(names.ELECTIONS_NEW_GUIDED)),
         (_('Voter groups'), _reverse(names.VOTERGROUP_ADMINISTERED)),
       ]
     items.append((_('My votes'), _reverse(names.ELECTIONS_VOTED)))

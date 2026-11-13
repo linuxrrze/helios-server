@@ -132,7 +132,6 @@ function reset() {
 }
 
 </script>
-  <a class="back-link" href="{% url "election@trustee" election_uuid=election.uuid trustee_uuid=trustee.uuid %}">{% translate "back to trustee home" %}</a>
   <h1 class="title">{% blocktranslate trimmed with name=trustee.name %}Trustee {{name}}{% endblocktranslate %} &mdash; {% blocktranslate trimmed with name=election.name %}Decrypt Result for {{name}}{% endblocktranslate %}</h1>
 
 <p>

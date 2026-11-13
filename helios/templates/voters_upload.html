@@ -3,7 +3,6 @@
 
 {% block title %}{% translate "Bulk Upload Voters" %} &mdash; {{election.name}}{% endblock %}
 {% block content %}
-<a class="back-link" href="{% url "election@voters@list-pretty" election.uuid %}">{% translate "Voters and Ballot Tracking Center" %}</a>
 <h1 class="title">{{election.name}} &mdash; {% translate "Bulk Upload Voters" %}</h1>
 
 <form method="post" action="" id="upload_form" enctype="multipart/form-data" class="form-narrow">

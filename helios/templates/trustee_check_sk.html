@@ -52,7 +52,6 @@ function check_sk(sk_value) {
     }
 }
 </script>
-  <a class="back-link" href="{% url "election@trustee" election_uuid=election.uuid trustee_uuid=trustee.uuid %}">{% translate "back to trustee home" %}</a>
   <h1 class="title">{{election.name}} &mdash; {% blocktranslate trimmed with name=trustee.name %}Trustee {{name}}{% endblocktranslate %} &mdash; {% translate "Check Secret Key" %}</h1>
 
 <p>

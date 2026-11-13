@@ -3,7 +3,6 @@
 {% block title %}{{cast_vote.vote_tinyhash}} &mdash; {{election.name}}{% endblock %}
 {% block content %}
 {% url "election@view" election.uuid as election_view_url %}
-<a class="back-link" href="{% url "election@voters@list-pretty" election.uuid %}">{% translate "Ballot Tracking Center" %}</a>
 <h1 class="title">{% blocktranslate trimmed with hash=cast_vote.vote_tinyhash %}Cast Vote {{ hash }}{% endblocktranslate %}</h1>
 <p class="page-lead">{% blocktranslate trimmed with election_name=election.name %}cast in <a href="{{ election_view_url }}">{{ election_name }}</a>{% endblocktranslate %}</p>
 

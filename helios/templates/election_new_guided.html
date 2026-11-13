@@ -3,7 +3,6 @@
 
 {% block title %}{{ step_title }} &mdash; {% translate "Create a New Election" %}{% endblock %}
 {% block content %}
-{% if previous_url %}<a class="back-link" href="{{ previous_url }}">{% translate "Back" %}</a>{% else %}<a class="back-link" href="/">{% translate "Home" %}</a>{% endif %}
 <p class="step-indicator">{% blocktranslate trimmed with number=step_number total=num_steps %}Create a new election &ndash; step {{ number }} of {{ total }}{% endblocktranslate %}</p>
 <h1 class="title">{{ step_title }}</h1>
 

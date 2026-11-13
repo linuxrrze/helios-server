@@ -3,7 +3,6 @@
 
 {% block title %}{% translate "Release Result" %} &mdash; {{election.name}}{% endblock %}
 {% block content %}
-<a class="back-link" href="{% url "election@view" election.uuid %}">{% translate "back to election" %}</a>
 <h1 class="title">{{election.name}} &mdash; {% translate "Release Result" %}</h1>
 
 <p>{% translate "You are about to release the result for this election." %}</p>
