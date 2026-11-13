@@ -70,7 +70,7 @@
         {#for option_index = 2 to 50}
         <option>{$T.option_index}</option>
         {#/for}
-        <option value="">∞</option>
+        <option value="">{gettext("unlimited")}</option>
       </select>
       <span class="form-label-inline">{gettext("answers.")}</span>
       <label class="form-label-inline" for="q{$T.question$index}_result_type">{gettext("Result type:")}</label>
@@ -91,10 +91,12 @@
       <div id="answer_table_{$T.question$index}" class="answers-container">
         <!-- Answers will be dynamically added here -->
       </div>
-      <button type="button" class="btn-secondary" onclick="add_answers($('#answer_table_{$T.question$index}'), 5)">
-        + {gettext("Add 5 More Answers")}
+      <button type="button" class="btn-secondary add-answer" onclick="add_answer($('#answer_table_{$T.question$index}'), true)">
+        + {gettext("Add answer")}
       </button>
     </fieldset>
+
+    <div class="callout callout-danger form-error" role="alert" hidden></div>
 
     <div class="form-actions">
       <button type="submit" class="btn-primary">{gettext("Update Question")}</button>
@@ -135,7 +137,7 @@
         {#for option_index = 2 to 50}
         <option>{$T.option_index}</option>
         {#/for}
-        <option value="">∞</option>
+        <option value="">{gettext("unlimited")}</option>
       </select>
       <span class="form-label-inline">{gettext("answers.")}</span>
       <label class="form-label-inline" for="new_question_result_type">{gettext("Result type:")}</label>
@@ -156,10 +158,12 @@
       <div id="answer_table" class="answers-container">
         <!-- Answers will be dynamically added here -->
       </div>
-      <button type="button" class="btn-secondary" onclick="add_answers($('#answer_table'), 5)">
-        + {gettext("Add 5 More Answers")}
+      <button type="button" class="btn-secondary add-answer" onclick="add_answer($('#answer_table'), true)">
+        + {gettext("Add answer")}
       </button>
     </fieldset>
+
+    <div class="callout callout-danger form-error" role="alert" hidden></div>
 
     <div class="form-actions">
       <button type="submit" class="btn-primary">{gettext("Add Question")}</button>

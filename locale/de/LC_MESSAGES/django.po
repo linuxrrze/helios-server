@@ -1422,44 +1422,80 @@ msgstr "Der Stimmzettel ist eingefroren; die Fragen können nicht mehr geändert
 msgid "The question editor needs JavaScript."
 msgstr "Der Fragen-Editor benötigt JavaScript."
 
-#: helios/templates/election_questions.html:48
-msgid "Enter answer option"
-msgstr "Antwortmöglichkeit eingeben"
-
-#: helios/templates/election_questions.html:48
-msgid "Enter answer option (optional)"
-msgstr "Antwortmöglichkeit eingeben (optional)"
-
-#: helios/templates/election_questions.html:53 helios/templates/election_questions.html:208
-msgid "+ Add link"
-msgstr "+ Link hinzufügen"
-
-#: helios/templates/election_questions.html:53 helios/templates/election_questions.html:212
-msgid "- Hide link"
-msgstr "- Link ausblenden"
-
-#: helios/templates/election_questions.html:55
+#: helios/templates/election_questions.html:35
 #, python-format
 msgid "Answer #%(num)s"
 msgstr "Antwort Nr. %(num)s"
 
-#: helios/templates/election_questions.html:56
+#: helios/templates/election_questions.html:36
 #, python-format
 msgid "Link for answer #%(num)s"
 msgstr "Link zu Antwort Nr. %(num)s"
 
-#: helios/templates/election_questions.html:83
-msgid "The questions could not be saved. Please check that the URLs you entered are either http:// or https://"
-msgstr "Die Fragen konnten nicht gespeichert werden. Bitte prüfen Sie, dass die eingegebenen URLs mit http:// oder https:// beginnen."
-
-#: helios/templates/election_questions.html:119
+#: helios/templates/election_questions.html:37
 #, python-format
-msgid "Please fill in all answer fields up to answer #%(last)s. You cannot skip answer #%(skipped)s."
-msgstr "Bitte füllen Sie alle Antwortfelder bis Antwort Nr. %(last)s aus. Antwort Nr. %(skipped)s darf nicht übersprungen werden."
+msgid "Remove answer #%(num)s"
+msgstr "Antwort Nr. %(num)s entfernen"
 
-#: helios/templates/election_questions.html:131
+#: helios/templates/election_questions.html:38
+msgid "Remove"
+msgstr "Entfernen"
+
+#: helios/templates/election_questions.html:39
+#, python-format
+msgid "Answer #%(num)s added."
+msgstr "Antwort Nr. %(num)s hinzugefügt."
+
+#: helios/templates/election_questions.html:40
+#, python-format
+msgid "Answer #%(num)s removed. Answers left: %(count)s."
+msgstr "Antwort Nr. %(num)s entfernt. Verbleibende Antworten: %(count)s."
+
+#: helios/templates/election_questions.html:41
+msgid "The answer was cleared. A question needs at least one answer field."
+msgstr "Die Antwort wurde geleert. Eine Frage braucht mindestens ein Antwortfeld."
+
+#: helios/templates/election_questions.html:42
+msgid "Enter answer option"
+msgstr "Antwortmöglichkeit eingeben"
+
+#: helios/templates/election_questions.html:43
+msgid "Enter answer option (optional)"
+msgstr "Antwortmöglichkeit eingeben (optional)"
+
+#: helios/templates/election_questions.html:44
+msgid "+ Add link"
+msgstr "+ Link hinzufügen"
+
+#: helios/templates/election_questions.html:45
+msgid "- Hide link"
+msgstr "- Link ausblenden"
+
+#: helios/templates/election_questions.html:46
 msgid "Please enter at least one answer option."
 msgstr "Bitte geben Sie mindestens eine Antwortmöglichkeit ein."
+
+#: helios/templates/election_questions.html:47
+msgid "The maximum number of answers must be at least 1."
+msgstr "Die Höchstzahl der Antworten muss mindestens 1 sein."
+
+#: helios/templates/election_questions.html:48
+msgid "The minimum number of answers cannot be more than the maximum."
+msgstr "Die Mindestzahl der Antworten darf nicht größer als die Höchstzahl sein."
+
+#: helios/templates/election_questions.html:49
+#, python-format
+msgid "Voters cannot choose at least %(min)s answers: the question has only %(count)s. Add answers or lower the minimum."
+msgstr "Wahlberechtigte können nicht mindestens %(min)s Antworten wählen: Die Frage hat nur %(count)s. Fügen Sie Antworten hinzu oder senken Sie die Mindestzahl."
+
+#: helios/templates/election_questions.html:50
+#, python-format
+msgid "The maximum of %(max)s answers is more than the %(count)s answers of this question. Lower the maximum or choose \"unlimited\"."
+msgstr "Die Höchstzahl von %(max)s Antworten ist größer als die %(count)s Antworten dieser Frage. Senken Sie die Höchstzahl oder wählen Sie „unbegrenzt“."
+
+#: helios/templates/election_questions.html:51
+msgid "The questions could not be saved. Please check that the URLs you entered are either http:// or https://"
+msgstr "Die Fragen konnten nicht gespeichert werden. Bitte prüfen Sie, dass die eingegebenen URLs mit http:// oder https:// beginnen."
 
 #: helios/templates/election_register.html:5
 msgid "Register"

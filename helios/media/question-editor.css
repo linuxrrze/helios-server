@@ -296,3 +296,15 @@
 .content-body .answers-section { border: 1px solid #e0e0e0; }
 .content-body .answers-section legend { padding: 0 6px; }
 .content-body .url-toggle { margin-left: 6px; font-size: .9rem; }
+
+/* answers: number and link toggle, the fields, a remove button */
+.content-body .answer-row { grid-template-columns: minmax(7.5rem, auto) 1fr auto; align-items: start; }
+.content-body .answer-label { font-weight: 600; color: var(--text-color, #1f2933); }
+.content-body .answer-remove { align-self: center; font-size: .95rem; }
+.content-body .add-answer { margin-top: 4px; }
+.content-body .form-error[hidden] { display: none; }
+@media only screen and (max-width: 40em) {
+  .content-body .answer-row { grid-template-columns: 1fr auto; }
+  .content-body .answer-row .answer-inputs { grid-column: 1 / -1; grid-row: 2; }
+  .content-body .answer-remove { grid-column: 2; grid-row: 1; }
+}

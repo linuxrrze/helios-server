@@ -30,108 +30,200 @@
 
   CSRF_TOKEN = '{{csrf_token}}';
 
+  // texts with a number in them; __NUM__ etc. are replaced in JavaScript
+  var TEXTS = {
+    answer_label: '{% filter escapejs %}{% blocktranslate with num="__NUM__" %}Answer #{{num}}{% endblocktranslate %}{% endfilter %}',
+    url_label: '{% filter escapejs %}{% blocktranslate with num="__NUM__" %}Link for answer #{{num}}{% endblocktranslate %}{% endfilter %}',
+    remove_label: '{% filter escapejs %}{% blocktranslate with num="__NUM__" %}Remove answer #{{num}}{% endblocktranslate %}{% endfilter %}',
+    remove: '{% filter escapejs %}{% translate "Remove" %}{% endfilter %}',
+    added: '{% filter escapejs %}{% blocktranslate with num="__NUM__" %}Answer #{{num}} added.{% endblocktranslate %}{% endfilter %}',
+    removed: '{% filter escapejs %}{% blocktranslate with num="__NUM__" count="__COUNT__" %}Answer #{{num}} removed. Answers left: {{count}}.{% endblocktranslate %}{% endfilter %}',
+    cleared: '{% filter escapejs %}{% translate "The answer was cleared. A question needs at least one answer field." %}{% endfilter %}',
+    placeholder_first: '{% filter escapejs %}{% translate "Enter answer option" %}{% endfilter %}',
+    placeholder: '{% filter escapejs %}{% translate "Enter answer option (optional)" %}{% endfilter %}',
+    add_link: '{% filter escapejs %}{% translate "+ Add link" %}{% endfilter %}',
+    hide_link: '{% filter escapejs %}{% translate "- Hide link" %}{% endfilter %}',
+    no_answers: '{% filter escapejs %}{% translate "Please enter at least one answer option." %}{% endfilter %}',
+    max_zero: '{% filter escapejs %}{% translate "The maximum number of answers must be at least 1." %}{% endfilter %}',
+    min_above_max: '{% filter escapejs %}{% translate "The minimum number of answers cannot be more than the maximum." %}{% endfilter %}',
+    min_above_count: '{% filter escapejs %}{% blocktranslate with min="__MIN__" count="__COUNT__" %}Voters cannot choose at least {{min}} answers: the question has only {{count}}. Add answers or lower the minimum.{% endblocktranslate %}{% endfilter %}',
+    max_above_count: '{% filter escapejs %}{% blocktranslate with max="__MAX__" count="__COUNT__" %}The maximum of {{max}} answers is more than the {{count}} answers of this question. Lower the maximum or choose "unlimited".{% endblocktranslate %}{% endfilter %}',
+    save_failed: '{% filter escapejs %}{% translate "The questions could not be saved. Please check that the URLs you entered are either http:// or https://" %}{% endfilter %}'
+  };
+
+  function fill(text, values) {
+    for (var key in values)
+      text = text.replace('__' + key + '__', values[key]);
+    return text;
+  }
+
   // Utility function for escaping HTML attribute values
   function escapeAttr(text) {
-    return text.replace(/&/g, '&amp;')
+    return String(text).replace(/&/g, '&amp;')
                .replace(/"/g, '&quot;')
                .replace(/'/g, '&#39;')
                .replace(/</g, '&lt;')
                .replace(/>/g, '&gt;');
   }
 
-  // Unified function to create answer row HTML
-  function createAnswerRowHTML(answer_num, answer_text, answer_url) {
+  // announce a change to screen reader users (live region below the editor)
+  function announce(text) {
+    var status = document.getElementById('question_editor_status');
+    status.textContent = '';
+    setTimeout(function() { status.textContent = text; }, 50);
+  }
+
+  var ANSWER_ROW_COUNTER = 0;
+
+  // one answer row; its number, names and labels are set by renumber_answers()
+  function createAnswerRowHTML(answer_text, answer_url) {
     answer_text = answer_text || '';
     answer_url = answer_url || '';
-    
-    var required_attr = answer_num === 1 ? 'required' : '';
-    var placeholder = answer_num === 1 ? '{% filter escapejs %}{% translate "Enter answer option" %}{% endfilter %}' : '{% filter escapejs %}{% translate "Enter answer option (optional)" %}{% endfilter %}';
-    var escaped_answer = escapeAttr(answer_text);
-    var escaped_url = escapeAttr(answer_url);
+    var n = ++ANSWER_ROW_COUNTER;
     var has_url = answer_url.length > 0;
-    var url_display = has_url ? 'flex' : 'none';
-    var toggle_text = has_url ? '{% filter escapejs %}{% translate "- Hide link" %}{% endfilter %}' : '{% filter escapejs %}{% translate "+ Add link" %}{% endfilter %}';
-    
-    var label = '{% filter escapejs %}{% blocktranslate with num="__NUM__" %}Answer #{{num}}{% endblocktranslate %}{% endfilter %}'.replace('__NUM__', answer_num);
-    var url_label = '{% filter escapejs %}{% blocktranslate with num="__NUM__" %}Link for answer #{{num}}{% endblocktranslate %}{% endfilter %}'.replace('__NUM__', answer_num);
-    var wrapper_id = 'url_wrapper_' + answer_num + '_' + (++ANSWER_ROW_COUNTER);
-
     return '<div class="answer-row">' +
-      '<div class="answer-number">' + label +
-        ' <button type="button" class="link-button url-toggle" aria-expanded="' + (has_url ? 'true' : 'false') + '" aria-controls="' + wrapper_id + '" onclick="toggle_url(this)">' +
-          '<span>' + toggle_text + '</span>' +
+      '<div class="answer-number">' +
+        '<label class="answer-label" for="answer_input_' + n + '"></label>' +
+        ' <button type="button" class="link-button url-toggle" aria-expanded="' + (has_url ? 'true' : 'false') + '" aria-controls="url_wrapper_' + n + '" onclick="toggle_url(this)">' +
+          '<span>' + (has_url ? TEXTS.hide_link : TEXTS.add_link) + '</span>' +
         '</button>' +
       '</div>' +
       '<div class="answer-inputs">' +
-        '<input type="text" class="form-control answer-input answer" name="answer_' + answer_num + '" value="' + escaped_answer + '" placeholder="' + placeholder + '" aria-label="' + escapeAttr(label) + '" ' + required_attr + ' />' +
-        '<div class="url-input-wrapper" id="' + wrapper_id + '" style="display:' + url_display + ';">' +
-          '<input type="url" class="form-control url-input" name="answer_url_' + answer_num + '" value="' + escaped_url + '" placeholder="https://example.com" aria-label="' + escapeAttr(url_label) + '" />' +
+        '<input type="text" id="answer_input_' + n + '" class="form-control answer-input answer" value="' + escapeAttr(answer_text) + '" />' +
+        '<div class="url-input-wrapper" id="url_wrapper_' + n + '" style="display:' + (has_url ? 'flex' : 'none') + ';">' +
+          '<input type="url" class="form-control url-input" value="' + escapeAttr(answer_url) + '" placeholder="https://example.com" />' +
         '</div>' +
       '</div>' +
+      '<button type="button" class="link-button danger answer-remove" onclick="remove_answer(this)">' + TEXTS.remove + '</button>' +
     '</div>';
   }
 
-  function refresh() {
-      $('#questions').processTemplate({'questions' : QUESTIONS, 'admin_p' : ADMIN_P}); 
+  // number the rows 1, 2, 3, ... without gaps: labels, field names (answer_1,
+  // answer_url_1, ...) as get_question_from_form() reads them, and button names
+  function renumber_answers(container) {
+    $(container).find('.answer-row').each(function(i, row) {
+      var num = i + 1;
+      row = $(row);
+      row.find('.answer-label').text(fill(TEXTS.answer_label, {NUM: num}));
+      row.find('input.answer').attr('name', 'answer_' + num)
+        .attr('placeholder', num === 1 ? TEXTS.placeholder_first : TEXTS.placeholder);
+      row.find('input.url-input').attr('name', 'answer_url_' + num).attr('aria-label', fill(TEXTS.url_label, {NUM: num}));
+      row.find('.answer-remove').attr('aria-label', fill(TEXTS.remove_label, {NUM: num}));
+    });
+  }
 
-      add_answers($('#answer_table'),DEFAULT_NUM_ANSWERS);
+  function add_answer(el, focus) {
+    el = $(el);
+    el.append(createAnswerRowHTML());
+    renumber_answers(el);
+    var count = el.find('.answer-row').length;
+    if (focus) {
+      el.find('.answer-row').last().find('input.answer').focus();
+      announce(fill(TEXTS.added, {NUM: count}));
+    }
+  }
+
+  function add_answers(el, num) {
+    for (var i = 0; i < num; i++)
+      add_answer(el, false);
+  }
+
+  // remove an answer row; the last remaining row is only cleared
+  function remove_answer(button) {
+    var row = $(button).closest('.answer-row');
+    var container = row.closest('.answers-container');
+    var rows = container.find('.answer-row');
+    var index = rows.index(row);
+    if (rows.length <= 1) {
+      row.find('input').val('');
+      row.find('input.answer').focus();
+      announce(TEXTS.cleared);
+      return;
+    }
+    row.remove();
+    renumber_answers(container);
+    rows = container.find('.answer-row');
+    rows.eq(Math.min(index, rows.length - 1)).find('input.answer').focus();
+    announce(fill(TEXTS.removed, {NUM: index + 1, COUNT: rows.length}));
+  }
+
+  function toggle_url(button) {
+    var wrapper = $('#' + $(button).attr('aria-controls'));
+    if (wrapper.is(':visible')) {
+      wrapper.hide();
+      $(button).attr('aria-expanded', 'false');
+      $(button).find('span').text(TEXTS.add_link);
+    } else {
+      wrapper.show();
+      $(button).attr('aria-expanded', 'true');
+      $(button).find('span').text(TEXTS.hide_link);
+      wrapper.find('input').focus();
+    }
+  }
+
+  function refresh() {
+      $('#questions').processTemplate({'questions' : QUESTIONS, 'admin_p' : ADMIN_P});
+
+      // the new question starts with one answer field; "Add answer" adds more
+      add_answers($('#answer_table'), 1);
  }
-  
-  function save_questions(callback) {
+
+  // an error shown in the form (instead of a popup), announced by role=alert
+  function show_form_error(form, message) {
+    var box = $(form).find('.form-error');
+    box.text(message || '');
+    if (message) box.removeAttr('hidden'); else box.attr('hidden', 'hidden');
+  }
+
+  function save_questions(callback, form) {
       $.post('./save_questions', {'questions_json' : $.toJSON(QUESTIONS), 'csrf_token': CSRF_TOKEN}, function(result) {
           if (result == "FAILURE") {
-            alert("{% filter escapejs %}{% translate "The questions could not be saved. Please check that the URLs you entered are either http:// or https://" %}{% endfilter %}");
+            if (form)
+              show_form_error(form, TEXTS.save_failed);
+            else
+              alert(TEXTS.save_failed);
           } else {
             callback();
           }
-      });      
+      });
   }
-  
+
+  // the question in a form, or null (with the reason shown in the form)
   function get_question_from_form(form) {
+      show_form_error(form, '');
       var max = null;
       if (form.max.value != "")
         max = parseInt(form.max.value);
-        
-      var new_q = {'question' : form.question.value, 'min': parseInt(form.min.value), 'max': max, 'short_name': form.question.value, 'answers': [], 'answer_urls': [], 'choice_type': form.choice_type.value, 'tally_type': 'homomorphic', 'result_type': form.result_type.value, 'randomize_answer_order': form.randomize_answer_order.value == "1"};
-      
-      // Process answers in a single pass
-      var all_answers = [];
-      var all_urls = [];
-      var last_valid_index = -1;
-      var i = 1;
-      
-      // Collect all answers and find the last valid one
-      while(form['answer_' + i]) {
+      var min = parseInt(form.min.value);
+
+      var new_q = {'question' : form.question.value, 'min': min, 'max': max, 'short_name': form.question.value, 'answers': [], 'answer_urls': [], 'choice_type': form.choice_type.value, 'tally_type': 'homomorphic', 'result_type': form.result_type.value, 'randomize_answer_order': form.randomize_answer_order.value == "1"};
+
+      // the answers in order; empty fields are left out, so there are no gaps
+      for (var i = 1; form['answer_' + i]; i++) {
           var answer_text = form['answer_' + i].value.trim();
-          var answer_url = form['answer_url_' + i] ? form['answer_url_' + i].value.trim() : '';
-          all_answers.push(answer_text);
-          all_urls.push(answer_url);
-          
-          if (answer_text !== '') {
-              last_valid_index = i - 1; // Convert to 0-based index
-          }
-          i++;
+          if (answer_text === '')
+            continue;
+          new_q.answers.push(answer_text);
+          new_q.answer_urls.push(form['answer_url_' + i] ? form['answer_url_' + i].value.trim() : '');
       }
-      
-      // Check for gaps in answers (empty answers before the last valid one)
-      for (var k = 0; k <= last_valid_index; k++) {
-          if (all_answers[k] === '') {
-              alert('{% filter escapejs %}{% blocktranslate with last="__LAST__" skipped="__SKIPPED__" %}Please fill in all answer fields up to answer #{{last}}. You cannot skip answer #{{skipped}}.{% endblocktranslate %}{% endfilter %}'.replace('__LAST__', last_valid_index + 1).replace('__SKIPPED__', k + 1));
-              return null;
-          }
-      }
-      
-      // Build the final arrays with only the valid answers
-      if (last_valid_index >= 0) {
-          new_q.answers = all_answers.slice(0, last_valid_index + 1);
-          new_q.answer_urls = all_urls.slice(0, last_valid_index + 1);
-      }
-      
-      if (new_q.answers.length == 0) {
-        alert('{% filter escapejs %}{% translate "Please enter at least one answer option." %}{% endfilter %}');
+
+      var count = new_q.answers.length;
+      var error = null;
+      if (count == 0)
+        error = TEXTS.no_answers;
+      else if (max !== null && max < 1)
+        error = TEXTS.max_zero;
+      else if (max !== null && min > max)
+        error = TEXTS.min_above_max;
+      else if (min > count)
+        error = fill(TEXTS.min_above_count, {MIN: min, COUNT: count});
+      else if (max !== null && max > count)
+        error = fill(TEXTS.max_above_count, {MAX: max, COUNT: count});
+
+      if (error) {
+        show_form_error(form, error);
         return null;
       }
-      
       return new_q;
   }
 
@@ -139,10 +231,10 @@
       var new_q = get_question_from_form(form);
       if (new_q) {
         QUESTIONS.push(new_q);
-        save_questions(refresh);
+        save_questions(refresh, form);
       }
   }
-  
+
   function question_remove(q_num) {
       var new_questions = [];
       $(QUESTIONS).each(function(i, q) {
@@ -162,21 +254,21 @@
     var form = $('#question_edit_' + q_num + '_form');
     var q_data = QUESTIONS[q_num];
     form[0].min.value = q_data.min;
-    form[0].max.value = q_data.max;
+    form[0].max.value = q_data.max === null ? '' : q_data.max;
     form[0].question.value = q_data.question;
     form[0].result_type.value = q_data.result_type;
     form[0].randomize_answer_order.value = q_data.randomize_answer_order ? "1" : "0";
 
-    // add the answers
+    // exactly one field per answer
     var answer_table = $('#answer_table_' + q_num);
-    answer_table.empty(); // Clear existing answers
-    
-    // Create answer inputs using the unified function
+    answer_table.empty();
     $(q_data.answers).each(function(i, a) {
-      var num = i + 1;
-      var answer_html = createAnswerRowHTML(num, a, q_data.answer_urls[i]);
-      answer_table.append(answer_html);
+      answer_table.append(createAnswerRowHTML(a, (q_data.answer_urls || [])[i]));
     });
+    if (!q_data.answers.length)
+      answer_table.append(createAnswerRowHTML());
+    renumber_answers(answer_table);
+    form.find('input[name=question]').focus();
 }
 
   function question_edit_cancel(q_num) {
@@ -186,38 +278,10 @@
 
   function question_update(q_num, form) {
       var new_q = get_question_from_form(form);
-      QUESTIONS[q_num] = new_q;
-      save_questions(refresh);
-  }
-
-  var DEFAULT_NUM_ANSWERS = 5;
-  var ANSWER_ROW_COUNTER = 0;
-
-  function add_answer(el) {
-    el = $(el);
-    var num_answers = el.find('.answer-row').length + 1;
-    var answer_html = createAnswerRowHTML(num_answers); // No text or URL for new answers
-    el.append(answer_html);
-  }
-
-  function toggle_url(button) {
-    var wrapper = $('#' + $(button).attr('aria-controls'));
-    if (wrapper.is(':visible')) {
-      wrapper.hide();
-      $(button).attr('aria-expanded', 'false');
-      $(button).find('span').text('{% filter escapejs %}{% translate "+ Add link" %}{% endfilter %}');
-    } else {
-      wrapper.show();
-      $(button).attr('aria-expanded', 'true');
-      $(button).find('span').text('{% filter escapejs %}{% translate "- Hide link" %}{% endfilter %}');
-      wrapper.find('input').focus();
-    }
-  }
-
-
-  function add_answers(el, num) {
-    for (var i=0; i<num; i++)
-      add_answer(el);
+      if (new_q) {
+        QUESTIONS[q_num] = new_q;
+        save_questions(refresh, form);
+      }
   }
 
   function question_move_up(num) {
@@ -232,12 +296,13 @@
 
       refresh();
   });
-  
+
 
   </script>
 
   <div id="questions">
   </div>
+  <div id="question_editor_status" class="screen-reader-text" role="status" aria-live="polite"></div>
 					
 			<!-- end #content -->
 {% if admin_p %}{% setup_nav election "questions" "pager" %}{% endif %}
