@@ -200,14 +200,16 @@
 {% endif %}
 
 <h2>{% translate "Tally" %}</h2>
+{% with total_ballots=election.num_cast_votes %}
+{% if total_ballots %}<p class="muted">{% blocktranslate trimmed count counter=total_ballots %}{{ counter }} ballot was counted. Where several answers could be chosen, the shares can add up to more than 100 percent.{% plural %}{{ counter }} ballots were counted. Where several answers could be chosen, the shares can add up to more than 100 percent.{% endblocktranslate %}</p>{% endif %}
 {% for question in election.pretty_result %}
 <div class="result-question">
 <h3><span class="muted result-number">{% blocktranslate trimmed with num=forloop.counter %}Question #{{ num }}{% endblocktranslate %}</span><br />{{question.question}}</h3>
 <table class="pretty result-table">
-<thead><tr><th scope="col">{% translate "Answer" %}</th><th scope="col" class="num">{% translate "Votes" %}</th></tr></thead>
+<thead><tr><th scope="col">{% translate "Answer" %}</th><th scope="col" class="num">{% translate "Votes" %}</th>{% if total_ballots %}<th scope="col" class="share">{% translate "Share of ballots" %}</th>{% endif %}</tr></thead>
 <tbody>
 {% for answer in question.answers %}
-<tr{% if answer.winner %} class="winner"{% endif %}><td>{{answer.answer}}{% if answer.tied %} <em>{% translate "(tied)" %}</em>{% endif %}{% if answer.winner %} <span class="screen-reader-text">({% translate "elected" %})</span>{% endif %}</td><td class="num">{{answer.count}}</td></tr>
+<tr{% if answer.winner %} class="winner"{% endif %}><td>{{answer.answer}}{% if answer.tied %} <em>{% translate "(tied)" %}</em>{% endif %}{% if answer.winner %} <span class="screen-reader-text">({% translate "elected" %})</span>{% endif %}</td><td class="num">{{answer.count}}</td>{% if total_ballots %}<td class="share">{% widthratio answer.count total_ballots 100 as share %}<span class="share-bar" aria-hidden="true"><span style="width: {{ share }}%"></span></span> {{ share }}&nbsp;%</td>{% endif %}</tr>
 {% endfor %}
 </tbody>
 </table>
@@ -218,6 +220,7 @@
 {% empty %}
 <p><em>{% translate "The tally could not be decrypted, so there is no result to show." %}</em></p>
 {% endfor %}
+{% endwith %}
 
 {% else %}
 
