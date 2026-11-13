@@ -11,9 +11,11 @@
 
   <form method="POST" action="">
     <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
+    {% if election.num_voters %}
     <p>
     <input type="checkbox" name="send_email" value="send_email" checked="checked"/> {% translate "Send email to voters reporting release of result." %}
     </p>
+    {% endif %}
     <input type="submit" class="button" value="{% translate "release result!" %}" />
   </form>
 

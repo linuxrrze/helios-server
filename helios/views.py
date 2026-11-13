@@ -1543,6 +1543,14 @@ def voters_list_pretty(request, election):
   # Check if voter emails can be sent
   can_send_emails, email_disabled_reason = election.can_send_voter_emails()
 
+  # with open registration the voter list stays empty until someone logs in to vote
+  if can_send_emails and not election.voter_set.exists():
+    can_send_emails = False
+    if election.openreg:
+      email_disabled_reason = _("no one has registered yet; with open registration, voters are only added when they log in to vote")
+    else:
+      email_disabled_reason = _("there are no voters yet")
+
   # Check if voter modifications (uploads, deletions) are allowed
   can_modify_voters, modify_voters_disabled_reason = election.can_modify_voters()
 
@@ -1770,6 +1778,26 @@ def voters_upload_cancel(request, election):
 
   return HttpResponseRedirect(settings.SECURE_URL_HOST + reverse(url_names.election.ELECTION_VIEW, args=[election.uuid]))
 
+# send_to choice of the voters email form -> (include, exclude) constraints on the
+# voter list, as passed to tasks.voters_email
+VOTERS_EMAIL_CONSTRAINTS = {
+  'all': (None, None),
+  # only those who have voted
+  'voted': (None, {'vote_hash': None}),
+  # only those who have not voted
+  'not-voted': ({'vote_hash': None}, None),
+}
+
+def _voters_email_recipients(election, send_to):
+  """The voters a bulk email to `send_to` reaches (same selection as tasks.voters_email)."""
+  include, exclude = VOTERS_EMAIL_CONSTRAINTS.get(send_to, (None, None))
+  voters = election.voter_set.all()
+  if include:
+    voters = voters.filter(**include)
+  if exclude:
+    voters = voters.exclude(**exclude)
+  return voters
+
 @election_admin(frozen=True)
 def voters_email(request, election):
   if not VOTERS_EMAIL:
@@ -1803,6 +1831,14 @@ def voters_email(request, election):
   election_url = get_election_url(election)
   election_vote_url = get_election_govote_url(election)
 
+  # with open registration, voters are only added to the list when they log in
+  # to cast a ballot, so the list can be empty even after the election is frozen
+  num_voters = 1 if voter else election.voter_set.count()
+
+  # the preview shows the login instructions of the voter being emailed, or of
+  # the first voter on the list (there may be none, see above)
+  preview_voter = voter or election.voter_set.first()
+
   default_subject = render_text_template('email/%s_subject.txt' % template, {
       'custom_subject': "<SUBJECT>"
 })
@@ -1816,19 +1852,29 @@ def voters_email(request, election):
                 'name': '<VOTER_NAME>',
                 'voter_login_id': '<VOTER_LOGIN_ID>',
                 'voter_password': '<VOTER_PASSWORD>',
-                'voter_type' : election.voter_set.all()[0].voter_type,
+                'voter_type' : preview_voter.voter_type if preview_voter else None,
                 'election' : election}
       })
 
   if request.method == "GET":
     email_form = forms.EmailVotersForm(initial={'subject': election.name, 'body': ' '})
-    if voter:
-      email_form.fields['send_to'].widget = email_form.fields['send_to'].hidden_widget()
   else:
     check_csrf(request)
 
     email_form = forms.EmailVotersForm(request.POST)
-    
+
+  if voter:
+    email_form.fields['send_to'].widget = email_form.fields['send_to'].hidden_widget()
+  else:
+    # show the admin how many voters each choice reaches
+    email_form.fields['send_to'].choices = [
+      (value, "%s (%d)" % (label, _voters_email_recipients(election, value).count()))
+      for value, label in email_form.fields['send_to'].choices]
+
+  if request.method == "POST" and num_voters > 0:
+    if email_form.is_valid() and not voter and not _voters_email_recipients(election, email_form.cleaned_data['send_to']).exists():
+      email_form.add_error('send_to', _("None of the voters match this choice, so no email would be sent."))
+
     if email_form.is_valid():
       
       # the client knows to submit only once with a specific voter_id
@@ -1842,20 +1888,10 @@ def voters_email(request, election):
         'election_url' : election_url
         }
         
-      voter_constraints_include = None
-      voter_constraints_exclude = None
-
       if voter:
         tasks.single_voter_email.enqueue(voter_uuid = voter.uuid, subject_template = subject_template, body_template = body_template, extra_vars = extra_vars, language = translation.get_language())
       else:
-        # exclude those who have not voted
-        if email_form.cleaned_data['send_to'] == 'voted':
-          voter_constraints_exclude = {'vote_hash' : None}
-          
-        # include only those who have not voted
-        if email_form.cleaned_data['send_to'] == 'not-voted':
-          voter_constraints_include = {'vote_hash': None}
-
+        voter_constraints_include, voter_constraints_exclude = VOTERS_EMAIL_CONSTRAINTS[email_form.cleaned_data['send_to']]
         tasks.voters_email.enqueue(election_id = election.id, subject_template = subject_template, body_template = body_template, extra_vars = extra_vars, voter_constraints_include = voter_constraints_include, voter_constraints_exclude = voter_constraints_exclude, language = translation.get_language())
 
       # this batch process is all async, so we can return a nice note
@@ -1864,6 +1900,8 @@ def voters_email(request, election):
   return render_template(request, "voters_email", {
       'email_form': email_form, 'election': election,
       'voter': voter,
+      'num_voters': num_voters,
+      'election_vote_url': election_vote_url,
       'default_subject': default_subject,
       'default_body' : default_body,
       'template' : template,

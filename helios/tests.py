@@ -3340,6 +3340,137 @@ class VoterEmailCutoffViewTests(WebTest):
         self.assertContains(response, 'cursor: not-allowed')
 
 
+class VotersEmailOpenRegTests(WebTest):
+    """
+    With open registration, voters are only added to the list when they log in
+    to vote, so a frozen election can have no voters at all. Contacting voters
+    then used to fail with an IndexError (500) instead of saying so.
+    """
+    fixtures = ['users.json']
+    allow_database_queries = True
+
+    def setUp(self):
+        self.user = auth_models.User.objects.get(user_id='ben@adida.net', user_type='google')
+        self.election, _ = models.Election.get_or_create(
+            short_name='test-email-openreg',
+            name='Open Registration Election',
+            description='Anyone who can log in may vote',
+            admin=self.user
+        )
+        if not self.election.uuid:
+            self.election.uuid = str(uuid.uuid4())
+            self.election.save()
+        self.election.questions = [{"answer_urls": [None, None], "answers": ["Yes", "No"], "choice_type": "approval", "max": 1, "min": 0, "question": "Test?", "result_type": "absolute", "short_name": "Test?", "tally_type": "homomorphic"}]
+        self.election.generate_trustee(views.ELGAMAL_PARAMS)
+        self.election.openreg = True
+        self.election.freeze()
+        self.assertEqual(self.election.voter_set.count(), 0)
+
+        self.client.get("/")
+        session = self.client.session
+        session['user'] = {'type': self.user.user_type, 'user_id': self.user.user_id}
+        session.save()
+
+    def email_url(self, query=''):
+        return f'/helios/elections/{self.election.uuid}/voters/email{query}'
+
+    def post_email(self, send_to='all', query=''):
+        return self.client.post(self.email_url(query), {
+            'csrf_token': self.client.session['csrf_token'],
+            'subject': 'Vote now',
+            'body': 'Polls close Friday.',
+            'send_to': send_to
+        })
+
+    def register_voter(self):
+        return models.Voter.register_user_in_election(self.user, self.election)
+
+    def test_get_without_voters_explains_instead_of_failing(self):
+        for template in ['vote', 'simple', 'info', 'result']:
+            response = self.client.get(self.email_url(f'?template={template}'))
+            self.assertStatusCode(response, 200)
+            self.assertContains(response, 'id="no-voters"')
+            self.assertContains(response, 'open registration')
+            self.assertNotContains(response, 'id="email_form"')
+
+    def test_get_without_voters_closed_registration(self):
+        self.election.openreg = False
+        self.election.save()
+        response = self.client.get(self.email_url())
+        self.assertStatusCode(response, 200)
+        self.assertContains(response, 'This election has no voters yet')
+        self.assertNotContains(response, 'id="email_form"')
+
+    def test_get_without_voters_in_german(self):
+        response = self.client.get(self.email_url(), HTTP_ACCEPT_LANGUAGE='de')
+        self.assertStatusCode(response, 200)
+        self.assertContains(response, 'offene Registrierung')
+
+    def test_post_without_voters_sends_nothing(self):
+        with mock.patch('helios.views.tasks.voters_email') as voters_email:
+            response = self.post_email()
+        self.assertStatusCode(response, 200)
+        self.assertContains(response, 'id="no-voters"')
+        voters_email.enqueue.assert_not_called()
+
+    def test_voters_list_disables_email_button_without_voters(self):
+        response = self.client.get(f'/helios/elections/{self.election.uuid}/voters/list')
+        self.assertStatusCode(response, 200)
+        self.assertContains(response, 'email voters (disabled:')
+        self.assertContains(response, 'no one has registered yet')
+        self.assertNotContains(response, f'href="/helios/elections/{self.election.uuid}/voters/email"')
+
+    def test_release_result_does_not_offer_email_without_voters(self):
+        response = self.client.get(f'/helios/elections/{self.election.uuid}/release_result')
+        self.assertStatusCode(response, 200)
+        self.assertNotContains(response, 'name="send_email"')
+
+    def test_get_with_registered_voter(self):
+        self.register_voter()
+        response = self.client.get(self.email_url())
+        self.assertStatusCode(response, 200)
+        self.assertContains(response, 'id="email_form"')
+        self.assertNotContains(response, 'id="no-voters"')
+        # the preview uses the login type of a voter on the list
+        self.assertContains(response, 'Log in with your google account.')
+        # each recipient choice says how many voters it reaches
+        self.assertContains(response, 'all voters (1)')
+        self.assertContains(response, 'voters who have cast a ballot (0)')
+        self.assertContains(response, 'only people who have already logged in to cast a ballot')
+
+        response = self.client.get(f'/helios/elections/{self.election.uuid}/voters/list')
+        self.assertContains(response, f'href="/helios/elections/{self.election.uuid}/voters/email"')
+
+    def test_post_with_registered_voter_enqueues_email(self):
+        self.register_voter()
+        with mock.patch('helios.views.tasks.voters_email') as voters_email:
+            response = self.post_email('not-voted')
+        self.assertRedirects(response, f'/helios/elections/{self.election.uuid}/view')
+        kwargs = voters_email.enqueue.call_args.kwargs
+        self.assertEqual(kwargs['election_id'], self.election.id)
+        self.assertEqual(kwargs['voter_constraints_include'], {'vote_hash': None})
+        self.assertIsNone(kwargs['voter_constraints_exclude'])
+
+    def test_post_to_choice_without_recipients_is_rejected(self):
+        self.register_voter()
+        with mock.patch('helios.views.tasks.voters_email') as voters_email:
+            response = self.post_email('voted')
+        self.assertStatusCode(response, 200)
+        self.assertContains(response, 'None of the voters match this choice')
+        voters_email.enqueue.assert_not_called()
+
+    def test_single_voter_email(self):
+        voter = self.register_voter()
+        query = f'?voter_id={voter.voter_login_id}'
+        response = self.client.get(self.email_url(query))
+        self.assertStatusCode(response, 200)
+        self.assertContains(response, 'id="email_form"')
+        with mock.patch('helios.views.tasks.single_voter_email') as single_voter_email:
+            response = self.post_email(query=query)
+        self.assertRedirects(response, f'/helios/elections/{self.election.uuid}/view')
+        self.assertEqual(single_voter_email.enqueue.call_args.kwargs['voter_uuid'], voter.uuid)
+
+
 class DateTimeLocalWidgetTests(TestCase):
     """Unit tests for DateTimeLocalWidget"""
 
