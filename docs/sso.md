@@ -40,7 +40,8 @@ the landing page shows a single login button. The button text comes from `SAML_L
 `OIDC_LOGIN_MESSAGE`, with a `_DE` variant for the German interface. Where Helios lists users
 or login systems with an icon, it uses `login-icons/<name>.png` from `SITE_STATIC_DIR` (see
 [configuration.md](configuration.md#10-customizing-the-site)), else the built-in
-`helios_auth/media/login-icons/<name>.png`. Provide one for your name, or the image is missing.
+`helios_auth/media/login-icons/<name>.png`, and a neutral default icon if neither exists. `.svg`
+works as well as `.png`.
 
 ## 2. What Helios needs from the IdP
 

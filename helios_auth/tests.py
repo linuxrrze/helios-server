@@ -656,3 +656,21 @@ class LoginIconTests(TestCase):
                 self.assertEqual(login_icon_url('google'), '/static/auth/login-icons/google.png')
                 # names never leave the icon directory
                 self.assertEqual(login_icon_url('../campus'), '/static/site/login-icons/campus.png')
+
+    def test_default_icon_when_none_exists(self):
+        from helios_auth.utils import login_icon_url
+        # generic SSO systems and custom names have no built-in icon
+        for name in ('oidc', 'saml', 'campus'):
+            with self.subTest(name=name):
+                self.assertEqual(login_icon_url(name), '/static/auth/login-icons/default.svg')
+        response = self.client.get('/static/auth/login-icons/default.svg')
+        self.assertEqual(response.status_code, 200)
+
+    def test_site_svg_icon(self):
+        import os, tempfile
+        from helios_auth.utils import login_icon_url
+        with tempfile.TemporaryDirectory() as site_dir:
+            os.makedirs(os.path.join(site_dir, 'login-icons'))
+            open(os.path.join(site_dir, 'login-icons', 'campus.svg'), 'w').close()
+            with self.settings(SITE_STATIC_DIR=site_dir):
+                self.assertEqual(login_icon_url('campus'), '/static/site/login-icons/campus.svg')

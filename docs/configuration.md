@@ -161,7 +161,7 @@ and the built-in pages. See [section 10](#10-customizing-the-site) for a worked 
 | `ACCESSIBILITY_URL` | empty | Footer link "Accessibility". `/accessibility` renders `server_ui/templates/accessibility.html`, which only exists if the site provides it (otherwise 404); or link an external page. |
 | `FOOTER_LINKS` | `[]` | Further footer links, as JSON: `[{"url": "https://help.example.org", "text": "Help desk"}]`. Invalid JSON stops Helios from starting. |
 | `SITE_TEMPLATES_DIR` | empty | Directory searched before the built-in templates. It mirrors the repository layout: `<dir>/server_ui/templates/imprint.html` adds or replaces that template. Any template can be overridden this way. |
-| `SITE_STATIC_DIR` | empty | Directory served at `/static/site/` (logos, stylesheets, images). `login-icons/<name>.png` in it is the icon of the auth system `<name>`, e.g. for an SSO system registered as `campus`. |
+| `SITE_STATIC_DIR` | empty | Directory served at `/static/site/` (logos, stylesheets, images). `login-icons/<name>.png` (or `.svg`) in it is the icon of the auth system `<name>`, e.g. `oidc`, `saml` or a custom name such as `campus`; without one, a neutral default icon is shown. |
 
 Footer links appear only when their URL is set, in this order: imprint, privacy,
 accessibility, `FOOTER_LINKS`, and "Contact" (`mailto:` `HELP_EMAIL_ADDRESS`).

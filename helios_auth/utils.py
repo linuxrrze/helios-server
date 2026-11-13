@@ -85,10 +85,16 @@ def login_icon_url(auth_system_name):
   """
   URL of the icon shown next to users of an auth system. An installation can add
   icons for its own auth system names (e.g. "campus") as
-  SITE_STATIC_DIR/login-icons/<name>.png; otherwise the built-in icon is used.
+  SITE_STATIC_DIR/login-icons/<name>.png or .svg; otherwise the built-in icon is
+  used, and a neutral default icon for names without one (e.g. "oidc", "saml").
   """
   name = os.path.basename(str(auth_system_name))
   site_dir = getattr(settings, 'SITE_STATIC_DIR', '')
-  if site_dir and os.path.isfile(os.path.join(site_dir, 'login-icons', name + '.png')):
-    return '/static/site/login-icons/%s.png' % name
-  return '/static/auth/login-icons/%s.png' % name
+  builtin_dir = os.path.join(settings.ROOT_PATH, 'helios_auth', 'media', 'login-icons')
+  for ext in ('png', 'svg'):
+    if site_dir and os.path.isfile(os.path.join(site_dir, 'login-icons', '%s.%s' % (name, ext))):
+      return '/static/site/login-icons/%s.%s' % (name, ext)
+  for ext in ('png', 'svg'):
+    if os.path.isfile(os.path.join(builtin_dir, '%s.%s' % (name, ext))):
+      return '/static/auth/login-icons/%s.%s' % (name, ext)
+  return '/static/auth/login-icons/default.svg'
