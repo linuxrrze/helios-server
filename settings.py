@@ -30,6 +30,12 @@ else:
 
 MANAGERS = ADMINS
 
+# Subject prefix of the error mails to ADMINS (Django's default is "[Django] "). A space
+# is added after a non-empty prefix if missing, because .env files often lose trailing spaces.
+EMAIL_SUBJECT_PREFIX = get_from_env('EMAIL_SUBJECT_PREFIX', '[Helios]')
+if EMAIL_SUBJECT_PREFIX and not EMAIL_SUBJECT_PREFIX.endswith(' '):
+    EMAIL_SUBJECT_PREFIX += ' '
+
 # is this the master Helios web site?
 MASTER_HELIOS = (get_from_env('MASTER_HELIOS', '0') == '1')
 
