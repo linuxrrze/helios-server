@@ -42,6 +42,10 @@ x-helios: &helios
     DATABASE_URL: postgres://helios:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@db/helios
     # same host, private Docker network: no TLS to the database
     DATABASE_SSL_REQUIRE: "0"
+    # repeated from .env only so that `docker compose up` stops before starting anything when
+    # they are missing or empty (settings.py also refuses placeholders and short values)
+    SECRET_KEY: ${SECRET_KEY:?set SECRET_KEY in .env, at least 32 random characters (see .env.example)}
+    EMAIL_OPTOUT_SECRET: ${EMAIL_OPTOUT_SECRET:?set EMAIL_OPTOUT_SECRET in .env (see .env.example)}
   # site customization (see above); applies to migrate, web and worker
   # volumes:
   #   - ./site:/site:ro
@@ -83,6 +87,9 @@ services:
     environment:
       DATABASE_URL: postgres://helios:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@db/helios
       DATABASE_SSL_REQUIRE: "0"
+      # as in x-helios (this block replaces it, it does not add to it)
+      SECRET_KEY: ${SECRET_KEY:?set SECRET_KEY in .env, at least 32 random characters (see .env.example)}
+      EMAIL_OPTOUT_SECRET: ${EMAIL_OPTOUT_SECRET:?set EMAIL_OPTOUT_SECRET in .env (see .env.example)}
       # the proxy connects from the Docker network, not from 127.0.0.1. Trusting every address
       # is safe only because the port below is reachable from the host alone.
       FORWARDED_ALLOW_IPS: "*"

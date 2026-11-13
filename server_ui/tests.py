@@ -166,3 +166,59 @@ class EmailSettingsFromEnvironmentTests(TestCase):
         result, _ = self._settings(EMAIL_USE_TLS='1', EMAIL_USE_SSL='1')
         self.assertNotEqual(result.returncode, 0)
         self.assertIn('EMAIL_USE_TLS', result.stderr)
+
+
+class SecretSettingsFromEnvironmentTests(TestCase):
+    """
+    With DEBUG=0, settings.py refuses missing, placeholder and short secrets
+    and says why, without revealing the value. Loaded in a separate
+    interpreter like EmailSettingsFromEnvironmentTests.
+    """
+
+    GOOD_SECRET = 'k' * 50
+
+    def _load(self, **env):
+        import os
+        import subprocess
+        import sys
+        environ = {k: v for k, v in os.environ.items() if k not in ('SECRET_KEY', 'EMAIL_OPTOUT_SECRET')}
+        environ['DEBUG'] = '0'
+        environ.update({k: v for k, v in env.items() if v is not None})
+        return subprocess.run([sys.executable, '-c', 'import settings'], env=environ, capture_output=True, text=True,
+                              cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+    def assertRefused(self, result, *fragments):
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('ImproperlyConfigured', result.stderr)
+        for fragment in fragments:
+            self.assertIn(fragment, result.stderr)
+        self.assertIn('secrets.token_urlsafe(50)', result.stderr)
+
+    def test_good_secrets_accepted(self):
+        result = self._load(SECRET_KEY=self.GOOD_SECRET, EMAIL_OPTOUT_SECRET=self.GOOD_SECRET)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_missing_secret_key(self):
+        result = self._load(EMAIL_OPTOUT_SECRET=self.GOOD_SECRET)
+        self.assertRefused(result, 'SECRET_KEY is not set')
+
+    def test_empty_secret_key(self):
+        result = self._load(SECRET_KEY='', EMAIL_OPTOUT_SECRET=self.GOOD_SECRET)
+        self.assertRefused(result, 'SECRET_KEY is not set')
+
+    def test_placeholder_secret_key(self):
+        result = self._load(SECRET_KEY='CHANGE-ME', EMAIL_OPTOUT_SECRET=self.GOOD_SECRET)
+        self.assertRefused(result, 'SECRET_KEY is still the placeholder')
+
+    def test_short_secret_key_names_length_not_value(self):
+        result = self._load(SECRET_KEY='s3cr3t-but-short', EMAIL_OPTOUT_SECRET=self.GOOD_SECRET)
+        self.assertRefused(result, 'SECRET_KEY is only 16 characters long', 'at least 32', '$$')
+        self.assertNotIn('s3cr3t-but-short', result.stderr)
+
+    def test_missing_optout_secret(self):
+        result = self._load(SECRET_KEY=self.GOOD_SECRET)
+        self.assertRefused(result, 'EMAIL_OPTOUT_SECRET is not set')
+
+    def test_placeholder_optout_secret(self):
+        result = self._load(SECRET_KEY=self.GOOD_SECRET, EMAIL_OPTOUT_SECRET='CHANGE-ME')
+        self.assertRefused(result, 'EMAIL_OPTOUT_SECRET is still the placeholder')

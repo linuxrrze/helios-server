@@ -111,12 +111,27 @@ EMAIL_OPTOUT_SECRET = get_from_env('EMAIL_OPTOUT_SECRET', 'replace-with-secure-r
 # Refuse to run in production with placeholder secrets: Django's signing
 # (and anything added later that relies on it) assumes SECRET_KEY is secret,
 # and a known EMAIL_OPTOUT_SECRET lets anyone opt voters out of election mail.
+# The messages say what is wrong (never the value itself) and how to fix it.
+# CHANGE-ME is the placeholder of the example configurations (.env.example,
+# helios.env.example).
+def _secret_problem(var, value, min_length):
+  if var not in os.environ or not value.strip():
+    return "%s is not set (or empty)." % var
+  if value in ('replaceme', 'replace-with-secure-random-key') or 'change-me' in value.lower():
+    return "%s is still the placeholder from the example configuration." % var
+  if len(value) < min_length:
+    return ("%s is only %d characters long; it needs at least %d. With Docker Compose, a $ in .env "
+            "must be written as $$, otherwise Compose replaces it and what follows." % (var, len(value), min_length))
+  return None
+
 if not DEBUG and not TESTING:
   from django.core.exceptions import ImproperlyConfigured
-  if SECRET_KEY == 'replaceme' or len(SECRET_KEY) < 32:
-    raise ImproperlyConfigured("Set the SECRET_KEY environment variable to a long random value.")
-  if EMAIL_OPTOUT_SECRET == 'replace-with-secure-random-key':
-    raise ImproperlyConfigured("Set the EMAIL_OPTOUT_SECRET environment variable to a long random value.")
+  for _var, _value, _min_length in (('SECRET_KEY', SECRET_KEY, 32), ('EMAIL_OPTOUT_SECRET', EMAIL_OPTOUT_SECRET, 1)):
+    _problem = _secret_problem(_var, _value, _min_length)
+    if _problem:
+      raise ImproperlyConfigured(
+        "%s Set %s in the environment (Docker Compose: .env; systemd: the EnvironmentFile) to a long "
+        "random value, e.g. the output of: python3 -c \"import secrets; print(secrets.token_urlsafe(50))\"" % (_problem, _var))
 
 # If debug is set to false and ALLOWED_HOSTS is not declared, django raises  "CommandError: You must set settings.ALLOWED_HOSTS if DEBUG is False."
 # If in production, you got a bad request (400) error

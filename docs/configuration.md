@@ -52,8 +52,8 @@ Single sign-on is described in more detail in [sso.md](sso.md).
 | Variable | Default | Meaning |
 |---|---|---|
 | `DEBUG` | `1` ⚠ (image: `0`) | **Must be `0` in production.** With `1` (also when the variable is missing outside the container image), Django shows detailed error pages, the auth system `devlogin` is enabled (log in as *any* user without a password), and the checks for `SECRET_KEY` and `EMAIL_OPTOUT_SECRET` are skipped. |
-| `SECRET_KEY` | `replaceme` ⚠ | Signs sessions and other data. At least 32 random characters. With `DEBUG=0`, Helios refuses to start with the default or a shorter value. Changing it logs everybody out. |
-| `EMAIL_OPTOUT_SECRET` | placeholder ⚠ | Key for the confirmation codes in opt-out/opt-in links. Required with `DEBUG=0`. Changing it invalidates links in emails already sent. |
+| `SECRET_KEY` | `replaceme` ⚠ | Signs sessions and other data. At least 32 random characters. With `DEBUG=0`, Helios refuses to start if it is missing, empty, a placeholder (`replaceme`, `CHANGE-ME`) or shorter than 32 characters; the error says which, without showing the value. Generate one with `python3 -c "import secrets; print(secrets.token_urlsafe(50))"`. Changing it logs everybody out. |
+| `EMAIL_OPTOUT_SECRET` | placeholder ⚠ | Key for the confirmation codes in opt-out/opt-in links. Required with `DEBUG=0`: missing, empty or placeholder values (`CHANGE-ME`) are refused. Use a value different from `SECRET_KEY`. Changing it invalidates links in emails already sent. |
 | `ALLOWED_HOSTS` | `localhost` | Host names under which Helios answers, comma-separated, e.g. `vote.example.org`. Other host names get *400 Bad Request*. |
 | `SSL` | `0` | `1`: redirect HTTP to HTTPS, send the session cookie only over HTTPS, and trust the `X-Forwarded-Proto: https` header of the reverse proxy. The proxy must set this header (and overwrite one sent by the client). Without it, `SSL=1` causes an endless redirect. |
 | `HSTS` | `0` | `1`: send `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload`. This tells browsers to use only HTTPS for a year, **for all subdomains too**. |
