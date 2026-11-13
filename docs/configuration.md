@@ -131,6 +131,27 @@ EMAIL_HOST_PASSWORD=...
 | `MAILGUN_API_KEY` | – | Send via the Mailgun API instead of SMTP. |
 | `EMAIL_USE_AWS` | `0` | `1`: send via Amazon SES, even if `MAILGUN_API_KEY` is set. Credentials come from the usual AWS variables (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, read by boto3). The region is always `us-east-1`. |
 
+**Checking that mail goes out.** Mails are sent by the task worker, and each one is logged
+there, with the recipient masked:
+
+```
+INFO email sent: to=e***@example.org subject="Election XY - vote cast"
+ERROR email NOT sent: to=e***@example.org subject="..." error=SMTPRecipientsRefused: ...
+```
+
+"sent" means the mail server accepted the email; whatever happens afterwards (spam filter,
+bounce) is in the mail server's logs. No line at all means no mail was triggered: creating an
+election sends none, voters are only invited by "Email voters". The queue shows every task with
+its status (`READY` that never changes: the worker is not running):
+
+```sh
+python manage.py shell -c "
+from django_tasks_db.models import DBTaskResult as T
+for t in T.objects.order_by('-enqueued_at')[:20]:
+    print(t.enqueued_at, t.status, t.task_path.rsplit('.', 1)[-1], t.exception_class_path or '')
+"
+```
+
 ## 5. Site and interface
 
 Texts marked "per language" have variants for each interface language: `SITE_TITLE_DE` is used
