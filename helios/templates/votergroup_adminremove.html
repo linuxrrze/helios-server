@@ -1,0 +1,23 @@
+{% extends TEMPLATE_BASE %}
+{% load i18n %}
+{% block title %}{{group.short_name}} &mdash; {% if leaving %}{% translate "Leave group" %}{% else %}{% translate "Remove administrator" context "voter group" %}{% endif %}{% endblock %}
+{% block content %}
+{% if leaving %}
+<h1 class="title">{% blocktranslate trimmed with name=group.short_name %}Leave voter group {{name}}{% endblocktranslate %}</h1>
+<p>{% translate "You will no longer be an administrator of this voter group and will no longer see it. The owner or another administrator can add you again." %}</p>
+{% else %}
+<h1 class="title">{% translate "Remove administrator" context "voter group" %}</h1>
+<p>{% blocktranslate trimmed with admin_html=admin_to_remove.display_html_small|safe admin_id=admin_to_remove.user_id name=group.short_name %}Remove <strong>{{admin_html}}</strong> ({{admin_id}}) as an administrator of voter group {{name}}?{% endblocktranslate %}</p>
+<p>{% translate "Elections already prepared from the group are not affected." %}</p>
+{% endif %}
+
+<form class="prettyform" action="" method="POST" id="remove_admin_form">
+  <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
+  <input type="hidden" name="user_id" value="{{admin_to_remove.user_id}}" />
+  <input type="hidden" name="user_type" value="{{admin_to_remove.user_type}}" />
+  <div class="actions">
+    <button type="submit" class="button danger" id="next_button">{% if leaving %}{% translate "Leave group" %}{% else %}{% translate "Remove administrator" context "voter group" %}{% endif %}</button>
+    <a href="{% url "votergroup@admins" group.uuid %}">{% translate "cancel" %}</a>
+  </div>
+</form>
+{% endblock %}

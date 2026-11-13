@@ -10,7 +10,7 @@
 {% if votergroups %}
 <ul class="election-list">
 {% for group in votergroups %}
-  <li><a href="{% url "votergroup@view" group.uuid %}">{{group.short_name}}</a></li>
+  <li><a href="{% url "votergroup@view" group.uuid %}">{{group.short_name}}</a>{% if group.admin != user %} <span class="muted">{% blocktranslate trimmed with owner=group.admin.pretty_name %}(managed by {{owner}}){% endblocktranslate %}</span>{% endif %}</li>
 {% endfor %}
 </ul>
 {% else %}

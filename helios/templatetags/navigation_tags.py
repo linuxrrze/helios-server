@@ -12,7 +12,7 @@ replace the trail with its own {% block breadcrumbs %}.
 
 from django import template
 from django.urls import NoReverseMatch, reverse
-from django.utils.translation import gettext as _, gettext_lazy
+from django.utils.translation import gettext as _, gettext_lazy, pgettext_lazy
 
 from helios import election_url_names as election_names, stats_url_names as stats_names, url_names as names
 from helios.security import can_create_election
@@ -70,6 +70,9 @@ OTHER_PAGES = {
   names.VOTERGROUP_VIEW: (None, names.VOTERGROUP_ADMINISTERED),
   names.VOTERGROUP_MEMBERADD: (gettext_lazy('Add a member'), names.VOTERGROUP_VIEW),
   names.VOTERGROUP_PREPAREELECTION: (gettext_lazy('Create election'), names.VOTERGROUP_VIEW),
+  names.VOTERGROUP_ADMINS: (pgettext_lazy('voter group', 'Administrators'), names.VOTERGROUP_VIEW),
+  names.VOTERGROUP_ADMINS_ADD: (pgettext_lazy('voter group', 'Add administrator'), names.VOTERGROUP_ADMINS),
+  names.VOTERGROUP_ADMINS_REMOVE: (pgettext_lazy('voter group', 'Remove administrator'), names.VOTERGROUP_ADMINS),
   stats_names.STATS_HOME: (gettext_lazy('Admin'), None),
   stats_names.STATS_ELECTIONS: (gettext_lazy('Elections'), stats_names.STATS_HOME),
   stats_names.STATS_ELECTIONS_PROBLEMS: (gettext_lazy('Problematic Elections'), stats_names.STATS_HOME),
@@ -77,6 +80,10 @@ OTHER_PAGES = {
   stats_names.STATS_USER_SEARCH: (gettext_lazy('User Search'), stats_names.STATS_HOME),
   stats_names.STATS_DELETED_ELECTIONS: (gettext_lazy('Deleted Elections'), stats_names.STATS_HOME),
 }
+
+# pages of one voter group: their URLs take the group's uuid
+GROUP_PAGES = (names.VOTERGROUP_VIEW, names.VOTERGROUP_MEMBERADD, names.VOTERGROUP_PREPAREELECTION,
+               names.VOTERGROUP_ADMINS, names.VOTERGROUP_ADMINS_ADD, names.VOTERGROUP_ADMINS_REMOVE)
 
 
 def _url_name(context):
@@ -109,7 +116,7 @@ def _election_crumb(name, context, election):
 
 def _other_crumb(name, context):
   label, _parent = OTHER_PAGES[name]
-  if name in (names.VOTERGROUP_VIEW, names.VOTERGROUP_MEMBERADD, names.VOTERGROUP_PREPAREELECTION):
+  if name in GROUP_PAGES:
     group = context.get('group')
     if not getattr(group, 'uuid', None):
       return None

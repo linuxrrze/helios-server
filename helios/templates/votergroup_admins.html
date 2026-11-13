@@ -1,0 +1,38 @@
+{% extends TEMPLATE_BASE %}
+{% load i18n %}
+{% block title %}{{group.short_name}} &mdash; {% translate "Administrators" context "voter group" %}{% endblock %}
+{% block content %}
+<h1 class="title">{% blocktranslate trimmed with name=group.short_name %}Administrators of voter group {{name}}{% endblocktranslate %}</h1>
+<p class="page-lead">{% translate "Administrators of a voter group can change its members, prepare elections from it and add or remove administrators. The owner created the group and cannot be removed." %}</p>
+
+<p class="actions"><a class="button" href="{% url "votergroup@admins@add" group.uuid %}">{% translate "Add administrator" context "voter group" %}</a></p>
+
+<div class="table-scroll">
+<table class="voters-table">
+  <thead>
+  <tr><th scope="col">{% translate "Name" %}</th><th scope="col">{% translate "Account" %}</th><th scope="col">{% translate "Role" %}</th><th scope="col"><span class="screen-reader-text">{% translate "Actions" %}</span></th></tr>
+  </thead>
+  <tbody>
+  <tr>
+    <td>{{group.admin.display_html_small|safe}}{% if group.admin == user %} <em>{% translate "(you)" %}</em>{% endif %}</td>
+    <td>{{group.admin.user_id}}</td>
+    <td>{% translate "Owner" %}</td>
+    <td></td>
+  </tr>
+  {% for a in admins %}
+  <tr>
+    <td>{{a.display_html_small|safe}}{% if a == user %} <em>{% translate "(you)" %}</em>{% endif %}</td>
+    <td>{{a.user_id}}</td>
+    <td>{% translate "Administrator" context "voter group" %}</td>
+    <td class="row-actions"><a href="{% url "votergroup@admins@remove" group.uuid %}?user_id={{a.user_id|urlencode}}&amp;user_type={{a.user_type|urlencode}}">{% if a == user %}{% translate "Leave group" %}{% else %}{% translate "Remove" %}<span class="screen-reader-text"> {{a.pretty_name}}</span>{% endif %}</a></td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% if not admins %}
+<div class="callout empty-state"><p>{% translate "No additional administrators have been added." context "voter group" %}</p></div>
+{% endif %}
+
+<p><a href="{% url "votergroup@view" group.uuid %}">{% translate "Back to the voter group" %}</a></p>
+{% endblock %}

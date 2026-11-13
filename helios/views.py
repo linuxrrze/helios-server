@@ -40,7 +40,7 @@ from .security import (election_view, election_admin,
                        trustee_check, set_logged_in_trustee,
                        can_create_election, user_can_see_election, get_voter,
                        user_can_admin_election, user_can_feature_election)
-from .view_utils import success, failure, return_json, render_template, render_text_template
+from .view_utils import success, failure, return_json, render_template, render_text_template, find_user_to_add_as_admin
 from .workflows import homomorphic
 
 # Parameters for everything
@@ -541,39 +541,20 @@ def election_admin_add(request, election):
     check_csrf(request)
     email = request.POST.get('email', '').strip()
 
-    if not email:
+    # by email; with several auth systems, the admin chooses (auth_type)
+    new_admin, matching_users, error = find_user_to_add_as_admin(email, request.POST.get('auth_type', ''))
+    if error:
       return render_template(request, 'election_admin_add', {
         'election': election,
-        'error': _('Please enter an email address.')
+        'error': error
       })
 
-    # Check if a specific auth type was selected (when multiple users have same email)
-    selected_auth_type = request.POST.get('auth_type', '').strip()
-    if selected_auth_type:
-      try:
-        new_admin = User.objects.get(user_id=email, user_type=selected_auth_type)
-      except User.DoesNotExist:
-        raise Http404("User not found")
-    else:
-      # Find users by email - they must have logged in to Helios at least once
-      # Note: same email can exist across multiple auth systems (google, facebook, etc.)
-      matching_users = list(User.objects.filter(user_id=email))
-
-      if not matching_users:
-        return render_template(request, 'election_admin_add', {
-          'election': election,
-          'error': _('No user found with that email. They must log in to Helios at least once before being added as an administrator.')
-        })
-
-      if len(matching_users) > 1:
-        # Multiple users with same email - let admin choose
-        return render_template(request, 'election_admin_add', {
-          'election': election,
-          'matching_users': matching_users,
-          'email': email,
-        })
-
-      new_admin = matching_users[0]
+    if matching_users:
+      return render_template(request, 'election_admin_add', {
+        'election': election,
+        'matching_users': matching_users,
+        'email': email,
+      })
 
     # Check if already the creator
     if new_admin == election.admin:

@@ -25,6 +25,18 @@ class VoterGroupMemberForm(forms.Form):
   votes = forms.IntegerField(min_value=1, max_value=MAX_VOTES_PER_MEMBER, initial=1, label=_('Votes'))
 
 
+class VoterGroupAdminForm(forms.Form):
+  email = forms.CharField(max_length=100, label=_('Email'),
+                          help_text=_('The person must have logged in to Helios at least once before they can be added.'))
+
+
+class PrepareElectionAdminsForm(forms.Form):
+  add_group_admins = forms.BooleanField(
+    required=False, initial=True,
+    label=_('Also make the other administrators of the voter group administrators of the election'),
+    help_text=_('You become the creator of the election either way. Changes to the group later on do not change the election.'))
+
+
 class SeatForm(forms.Form):
   """One voter row of the election being prepared."""
   first_name = forms.CharField(max_length=100)

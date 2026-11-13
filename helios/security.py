@@ -139,6 +139,16 @@ def user_can_admin_election(user, election):
   # site administrator, election creator, or listed administrator
   return user.admin_p or election.admin == user or election.admins.filter(pk=user.pk).exists()
   
+def user_can_admin_votergroup(user, group):
+  """
+  Same rule as for elections: the site administrator, the group's owner or
+  one of its additional administrators.
+  """
+  if not user:
+    return False
+
+  return user.admin_p or group.is_admin(user)
+
 def user_can_see_election(request, election):
   user = get_user(request)
 
@@ -207,10 +217,12 @@ def trustee_check(func):
   return update_wrapper(trustee_check_wrapper, func)
 
 def can_create_election(request):
-  user = get_user(request)
+  return user_can_create_election(get_user(request))
+
+def user_can_create_election(user):
   if not user:
     return False
-    
+
   if helios.ADMIN_ONLY:
     return user.admin_p
   else:

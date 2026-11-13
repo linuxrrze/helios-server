@@ -3,7 +3,9 @@
 {% block title %}{{group.short_name}}{% endblock %}
 {% block content %}
 <h1 class="title">{{ group.short_name }}</h1>
-<p class="muted">{% blocktranslate trimmed with admin=group.admin.display_html_small|safe %}created by {{admin}}{% endblocktranslate %}</p>
+<p class="muted">{% blocktranslate trimmed with admin=group.admin.display_html_small|safe %}created by {{admin}}{% endblocktranslate %}{% if admins %}
+  &middot; {% blocktranslate trimmed count counter=admins|length %}{{counter}} more administrator{% plural %}{{counter}} more administrators{% endblocktranslate %}{% endif %}
+  &middot; <a href="{% url "votergroup@admins" group.uuid %}">{% translate "Manage administrators" %}</a></p>
 
 <p class="actions">
   {% if members %}<a class="button" href="{% url "votergroup@prepareelection" group.uuid %}">{% translate "Start election" %}</a>{% endif %}

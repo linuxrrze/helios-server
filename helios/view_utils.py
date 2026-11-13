@@ -5,14 +5,16 @@ Ben Adida (12-30-2008)
 """
 
 from django.conf import settings
-from django.http import HttpResponse
+from django.http import Http404, HttpResponse
 from django.shortcuts import render
 from django.template import Context, loader
+from django.utils.translation import gettext as _
 # nicely update the wrapper function
 from functools import update_wrapper
 
 import helios
 from . import utils
+from helios_auth.models import User
 from helios_auth.security import get_user
 
 ##
@@ -102,3 +104,39 @@ def return_json(func):
         raise e
 
     return update_wrapper(convert_to_json,func)
+
+
+##
+## adding an administrator (elections, voter groups)
+##
+
+def find_user_to_add_as_admin(email, auth_type='', not_found=None):
+  """
+  Look up the user an administrator wants to add by the email they entered.
+  Users are found by user_id, so they must have logged in to Helios at least
+  once, and the same email can exist in several auth systems (google, ldap,
+  ...); then the form asks which one is meant and sends it back as auth_type.
+
+  NOT_FOUND replaces the error message for an unknown email.
+
+  Returns (user, matching_users, error), exactly one of them set:
+  the user to add, the users to choose from, or an error message for the form.
+  Raises Http404 if the chosen auth_type has no such user.
+  """
+  email = (email or '').strip()
+  if not email:
+    return None, None, _('Please enter an email address.')
+
+  auth_type = (auth_type or '').strip()
+  if auth_type:
+    try:
+      return User.objects.get(user_id=email, user_type=auth_type), None, None
+    except User.DoesNotExist:
+      raise Http404("User not found")
+
+  matching_users = list(User.objects.filter(user_id=email))
+  if not matching_users:
+    return None, None, not_found or _('No user found with that email. They must log in to Helios at least once before being added as an administrator.')
+  if len(matching_users) > 1:
+    return None, matching_users, None
+  return matching_users[0], None, None
