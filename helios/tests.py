@@ -4933,3 +4933,93 @@ class BallotTrackerDisplayTests(TestCase):
             'settings': settings})
         self.assertIn(self.HASH, html)
         self.assertIn('tracker-group', html)
+
+
+@override_settings(USE_TZ=False, TIME_ZONE='Europe/Berlin', ELECTION_TIME_ZONE='Europe/Berlin')
+class ElectionTimeZoneBerlinNaiveTests(WebTest):
+    """
+    The configuration of a typical installation: USE_TZ=False (naive datetimes
+    meant as UTC) and TIME_ZONE=Europe/Berlin, so that the server process
+    itself runs in Berlin time. Entry, storage, display and the start/end
+    checks must agree, also around the change to and from summer time.
+    """
+    fixtures = ['users.json', 'election.json']
+    allow_database_queries = True
+
+    def setUp(self):
+        self.election = models.Election.objects.get(short_name='test')
+        self.user = auth_models.User.objects.get(user_id='ben@adida.net', user_type='google')
+        self.client.get("/")
+        session = self.client.session
+        session['user'] = {'type': self.user.user_type, 'user_id': self.user.user_id}
+        session.save()
+
+    def test_default_election_zone_follows_time_zone(self):
+        import os, runpy
+        env = {k: v for k, v in os.environ.items() if k != 'ELECTION_TIME_ZONE'}
+        env.update(TIME_ZONE='Europe/Berlin', DEBUG='1')
+        # settings.py ignores the environment while the tests run (TESTING)
+        with mock.patch.dict(os.environ, env, clear=True), mock.patch('sys.argv', ['manage.py', 'runserver']):
+            values = runpy.run_path(os.path.join(settings.ROOT_PATH, 'settings.py'))
+        self.assertEqual(values['ELECTION_TIME_ZONE'], 'Europe/Berlin')
+        self.assertFalse(values['USE_TZ'])
+
+    def save_dates(self, start, end):
+        response = self.client.post(f'/helios/elections/{self.election.uuid}/edit', {
+            'short_name': self.election.short_name, 'name': self.election.name,
+            'description': self.election.description, 'election_type': self.election.election_type,
+            'voting_starts_at': start, 'voting_ends_at': end,
+            'csrf_token': self.client.session['csrf_token']})
+        self.assertRedirects(response, f'/helios/elections/{self.election.uuid}/view')
+        return models.Election.objects.get(uuid=self.election.uuid)
+
+    def test_dst_edges_stored_as_utc(self):
+        cases = [
+            # the night summer time starts (2026-03-29, 02:00 CET -> 03:00 CEST)
+            ('2026-03-29T01:30', '2026-03-29T03:30', datetime.datetime(2026, 3, 29, 0, 30), datetime.datetime(2026, 3, 29, 1, 30)),
+            # the night summer time ends (2026-10-25, 03:00 CEST -> 02:00 CET)
+            ('2026-10-25T01:59', '2026-10-25T03:00', datetime.datetime(2026, 10, 24, 23, 59), datetime.datetime(2026, 10, 25, 2, 0)),
+            # plain winter and summer days
+            ('2026-01-15T08:00', '2026-07-15T18:00', datetime.datetime(2026, 1, 15, 7, 0), datetime.datetime(2026, 7, 15, 16, 0)),
+        ]
+        for start, end, start_utc, end_utc in cases:
+            election = self.save_dates(start, end)
+            self.assertEqual(election.voting_starts_at, start_utc, start)
+            self.assertEqual(election.voting_ends_at, end_utc, end)
+            # shown again as entered
+            response = self.client.get(f'/helios/elections/{self.election.uuid}/edit')
+            self.assertContains(response, 'value="%s"' % start)
+            self.assertContains(response, 'value="%s"' % end)
+
+    def test_skipped_hour_is_refused(self):
+        response = self.client.post(f'/helios/elections/{self.election.uuid}/edit', {
+            'short_name': self.election.short_name, 'name': self.election.name,
+            'description': self.election.description, 'election_type': self.election.election_type,
+            'voting_starts_at': '2026-03-29T02:30', 'voting_ends_at': '',
+            'csrf_token': self.client.session['csrf_token']})
+        self.assertContains(response, 'Europe/Berlin')
+        self.assertIsNone(models.Election.objects.get(uuid=self.election.uuid).voting_starts_at)
+
+    def test_display(self):
+        self.election.voting_starts_at = datetime.datetime(2026, 3, 29, 0, 30)
+        self.election.voting_ends_at = datetime.datetime(2026, 10, 25, 0, 30)
+        self.election.save()
+        response = self.client.get(f'/helios/elections/{self.election.uuid}/view')
+        self.assertContains(response, '01:30 CET')
+        self.assertContains(response, '02:30 CEST')
+
+    def test_start_and_end_checks_use_utc(self):
+        # local times entered half an hour around now (Berlin) open voting now,
+        # although the naive local clock of the process is one or two hours ahead of UTC
+        from helios import timezones
+        local_now = timezones.utc_to_local(datetime.datetime.utcnow()).replace(tzinfo=None, second=0, microsecond=0)
+        fmt = '%Y-%m-%dT%H:%M'
+        election = self.save_dates((local_now - datetime.timedelta(minutes=30)).strftime(fmt),
+                                   (local_now + datetime.timedelta(minutes=30)).strftime(fmt))
+        election.frozen_at = datetime.datetime.utcnow()
+        self.assertTrue(election.voting_has_started())
+        self.assertFalse(election.voting_has_stopped())
+        # and half an hour ahead has not started yet
+        election = self.save_dates((local_now + datetime.timedelta(minutes=30)).strftime(fmt), '')
+        election.frozen_at = datetime.datetime.utcnow()
+        self.assertFalse(election.voting_has_started())
