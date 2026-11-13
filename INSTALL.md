@@ -106,8 +106,19 @@ Older versions of Helios used Celery with RabbitMQ. To upgrade:
   the top of `fly.toml`. To move an existing Heroku deployment, see
   [docs/migrating-heroku-to-fly.md](docs/migrating-heroku-to-fly.md).
 
+* **Docker Compose** (own server, with PostgreSQL, task worker and schema migration):
+  see [deploy/docker-compose.yml](deploy/docker-compose.yml) and copy
+  [deploy/.env.example](deploy/.env.example) to `deploy/.env`.
+
 * Either way, set `DEBUG=0` in production: it defaults to on, which enables the
   `devlogin` auth system.
+
+## Configuration
+
+Helios is configured with environment variables. All of them, including the site's
+branding, footer links and imprint/privacy pages, are listed in
+[docs/configuration.md](docs/configuration.md). Single sign-on with SAML or OpenID Connect
+is described in [docs/sso.md](docs/sso.md).
 
 ## Google Auth Configuration
 

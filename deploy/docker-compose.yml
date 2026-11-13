@@ -1,0 +1,108 @@
+# Helios with Docker Compose: PostgreSQL, schema migration, web server and task worker,
+# all from one helios-server image. A reverse proxy on the host (e.g. nginx) terminates TLS.
+#
+# Image: GitLab CI (.gitlab-ci.yml) builds it from the Dockerfile with the SAML extra and pushes
+# it to the project's container registry as <registry>/<namespace>/helios-server:<commit SHA>.
+# Or build it yourself in the repository root:
+#   docker build -t helios-server --build-arg UV_EXTRAS="--extra saml" .
+# and set HELIOS_IMAGE=helios-server.
+#
+# Configuration: one file, .env next to this one, from .env.example (never commit it).
+# It holds HELIOS_IMAGE and POSTGRES_PASSWORD for this file and every Helios setting, grouped
+# by topic; ../docs/configuration.md explains each variable. DATABASE_URL and
+# DATABASE_SSL_REQUIRE are set below and override .env.
+#   HELIOS_IMAGE: use a commit SHA rather than a branch tag, so an update happens only when you
+#                 change it. For a private registry, log in first with a deploy token
+#                 (read_registry): docker login <registry>
+#   Mail: EMAIL_HOST=localhost is the container itself, not the host. Use a relay with login
+#         (as in .env.example), or a host MTA that accepts mail from the Docker network, with
+#         EMAIL_HOST=host.docker.internal.
+#   Site customization (logos, colors, imprint): put a site/ directory next to this file and
+#         enable the ./site:/site:ro volume below (x-helios) and SITE_TEMPLATES_DIR /
+#         SITE_STATIC_DIR in .env (see "Customizing the site" in ../docs/configuration.md).
+#
+# Start / update (don't update while an election is open):
+#   docker compose pull && docker compose up -d
+# migrate runs first on every `up`; web and worker start only once it has succeeded.
+#
+# Reverse proxy: forward to 127.0.0.1:8080 and set X-Forwarded-Proto (needed for SSL=1), e.g.
+#   location / {
+#       proxy_pass http://127.0.0.1:8080;
+#       proxy_set_header Host $host;
+#       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+#       proxy_set_header X-Forwarded-Proto $scheme;
+#   }
+# Static files are in the image and the app serves them; no separate location blocks needed.
+
+name: helios
+
+x-helios: &helios
+  image: ${HELIOS_IMAGE:?set HELIOS_IMAGE in .env}
+  env_file: .env
+  environment:
+    DATABASE_URL: postgres://helios:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@db/helios
+    # same host, private Docker network: no TLS to the database
+    DATABASE_SSL_REQUIRE: "0"
+  # site customization (see above); applies to migrate, web and worker
+  # volumes:
+  #   - ./site:/site:ro
+  extra_hosts:
+    # only needed for EMAIL_HOST=host.docker.internal
+    - host.docker.internal:host-gateway
+  restart: unless-stopped
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: helios
+      POSTGRES_DB: helios
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      # all election data; back it up (docker compose exec db pg_dump -U helios helios)
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "helios", "-d", "helios"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  migrate:
+    <<: *helios
+    command: ["python", "manage.py", "migrate", "--noinput"]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  web:
+    <<: *helios
+    # 8 workers, access log on stdout
+    command: ["gunicorn", "wsgi:application", "-b", "0.0.0.0:8080", "-w", "8",
+              "--timeout", "60", "--access-logfile", "-"]
+    environment:
+      DATABASE_URL: postgres://helios:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@db/helios
+      DATABASE_SSL_REQUIRE: "0"
+      # the proxy connects from the Docker network, not from 127.0.0.1. Trusting every address
+      # is safe only because the port below is reachable from the host alone.
+      FORWARDED_ALLOW_IPS: "*"
+    ports:
+      # host proxy only; never publish this port on a public interface
+      - 127.0.0.1:8080:8080
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  worker:
+    <<: *helios
+    # voter emails, voter file processing, tallying. Run exactly one.
+    command: ["python", "manage.py", "db_worker"]
+    # db_worker finishes the task it is running on SIGTERM
+    stop_grace_period: 300s
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  pgdata:
