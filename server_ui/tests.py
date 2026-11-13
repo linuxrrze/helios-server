@@ -287,6 +287,30 @@ class DarkModeTests(TestCase):
             self.assertNotIn('color-scheme-auto', html)
             self.assertNotIn('name="color-scheme"', html)
 
+    def test_booth_follows_dark_mode(self):
+        """The static booth links /booth-dark-mode.css, which has the dark colors only with DARK_MODE=auto"""
+        import os
+        from django.conf import settings
+        from django.test import override_settings
+        with open(os.path.join(settings.ROOT_PATH, 'heliosbooth', 'vote.html')) as f:
+            booth = f.read()
+        self.assertIn('<link rel="stylesheet" type="text/css" href="/booth-dark-mode.css" />', booth)
+        # after the booth's own stylesheets, so that it overrides their colors
+        self.assertGreater(booth.index('/booth-dark-mode.css'), booth.index('css/booth-ui.css'))
+        with override_settings(DARK_MODE='auto'):
+            response = self.client.get('/booth-dark-mode.css')
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response['Content-Type'], 'text/css; charset=utf-8')
+            self.assertEqual(response['Cache-Control'], 'no-cache')
+            css = response.content.decode()
+            self.assertIn('@media (prefers-color-scheme: dark)', css)
+            self.assertIn('color-scheme: dark', css)
+        with override_settings(DARK_MODE='off'):
+            response = self.client.get('/booth-dark-mode.css')
+            self.assertEqual(response.status_code, 200)
+            self.assertNotIn('prefers-color-scheme', response.content.decode())
+            self.assertNotIn('{', response.content.decode())
+
     def _dark_mode(self, **env):
         import os
         import subprocess

@@ -3,9 +3,10 @@ server_ui specific views
 """
 
 import copy
+import os
 
 from django.conf import settings
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.template import TemplateDoesNotExist
 from django.template.loader import get_template
 
@@ -79,3 +80,20 @@ def imprint(request):
 
 def accessibility(request):
   return _site_page(request, "accessibility")
+
+
+def booth_dark_mode_css(request):
+  """
+  The dark colors of the voting booth (heliosbooth/css/booth-dark.css) with
+  DARK_MODE=auto, an empty stylesheet otherwise: the booth is a static page
+  (usually served by the web server), so it gets the setting this way.
+  """
+  if getattr(settings, 'DARK_MODE', 'off') == 'auto':
+    with open(os.path.join(settings.ROOT_PATH, 'heliosbooth', 'css', 'booth-dark.css'), encoding='utf-8') as f:
+      css = f.read()
+  else:
+    css = "/* DARK_MODE is off: the voting booth stays light */\n"
+  response = HttpResponse(css, content_type='text/css; charset=utf-8')
+  # the setting can change with a restart; the file is small
+  response['Cache-Control'] = 'no-cache'
+  return response

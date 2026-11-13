@@ -4,6 +4,7 @@ from django.urls import include, path, re_path
 from django.views.i18n import JavaScriptCatalog
 from django.views.static import serve
 from helios import views as helios_views
+from server_ui import views as server_ui_views
 
 urlpatterns = [
     path('auth/', include('helios_auth.urls')),
@@ -13,6 +14,8 @@ urlpatterns = [
     # translation catalog for the voting booth and verifier
     path('i18n/', include('django.conf.urls.i18n')),
     path('jsi18n/', JavaScriptCatalog.as_view(), name='javascript-catalog'),
+    # the booth's dark colors, depending on DARK_MODE (the booth itself is static)
+    path('booth-dark-mode.css', server_ui_views.booth_dark_mode_css, name='booth-dark-mode'),
 
     # SHOULD BE REPLACED BY APACHE STATIC PATH
     re_path(r'booth/(?P<path>.*)$', serve, {'document_root' : settings.ROOT_PATH + '/heliosbooth'}),
