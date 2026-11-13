@@ -657,60 +657,88 @@ msgstr "Stimme erfolgreich abgegeben!"
 msgid "Your ballot has been recorded. Only your last ballot counts if you vote again."
 msgstr "Ihr Stimmzettel wurde gespeichert. Wenn Sie erneut abstimmen, zählt nur Ihr letzter Stimmzettel."
 
-#: helios/templates/cast_done.html:14 helios/templates/election_cast_confirm.html:59 server_ui/templates/email/cast_vote_body.txt:5
-msgid "Your ballot tracker is:"
-msgstr "Ihr Stimmzettel-Tracker lautet:"
+#: helios/templates/cast_done.html:15
+msgid "Your ballot tracker"
+msgstr "Ihr Stimmzettel-Tracker"
 
-#: helios/templates/cast_done.html:16
+#: helios/templates/cast_done.html:18
 msgid "Copy"
 msgstr "Kopieren"
 
-#: helios/templates/cast_done.html:20
+#: helios/templates/cast_done.html:21
+msgid "The tracker is shown in groups of four characters for easier reading; it is one string without spaces. Copying it, the link and the QR code below keep the whole tracker. When you check it, compare all groups."
+msgstr "Der Tracker wird zur besseren Lesbarkeit in Vierergruppen angezeigt; er ist eine Zeichenfolge ohne Leerzeichen. Beim Kopieren, im Link und im QR-Code unten bleibt der vollständige Tracker erhalten. Vergleichen Sie beim Prüfen alle Gruppen."
+
+#: helios/templates/cast_done.html:23
 msgid "This ballot tracker mathematically ensures that your ballot is counted."
 msgstr "Dieser Stimmzettel-Tracker stellt mathematisch sicher, dass Ihr Stimmzettel gezählt wird."
 
-#: helios/templates/cast_done.html:20
+#: helios/templates/cast_done.html:23
 #, python-format
 msgid "You can check all ballot trackers by viewing the <a href=\"%(voters_url)s\">voter list</a>, where your ballot tracker should appear within a few minutes."
 msgstr "Alle Stimmzettel-Tracker können Sie im <a href=\"%(voters_url)s\">Wählerverzeichnis</a> überprüfen, wo Ihr Stimmzettel-Tracker innerhalb weniger Minuten erscheinen sollte."
 
-#: helios/templates/cast_done.html:22
+#: helios/templates/cast_done.html:25
+msgid "Link to your ballot on this server"
+msgstr "Link zu Ihrem Stimmzettel auf diesem Server"
+
+#: helios/templates/cast_done.html:29
+msgid "Scan to open the link to your ballot on another device, e.g. to check it later."
+msgstr "Scannen Sie den Code, um den Link zu Ihrem Stimmzettel auf einem anderen Gerät zu öffnen, z. B. um ihn später zu prüfen."
+
+#: helios/templates/cast_done.html:32
 msgid "You will also receive a confirmation email with your ballot tracker, unless you have opted out of emails."
 msgstr "Sie erhalten außerdem eine Bestätigung mit Ihrem Stimmzettel-Tracker per E-Mail, sofern Sie E-Mails nicht abbestellt haben."
 
-#: helios/templates/cast_done.html:33
+#: helios/templates/cast_done.html:43
 msgid "Copied."
 msgstr "Kopiert."
 
-#: helios/templates/cast_done.html:41
+#: helios/templates/cast_done.html:51
 msgid "For your safety, we have logged you out."
 msgstr "Zu Ihrer Sicherheit wurden Sie abgemeldet."
 
-#: helios/templates/cast_done.html:47
+#: helios/templates/cast_done.html:57
 msgid "return to election info"
 msgstr "zurück zu den Informationen zur Wahl"
 
-#: helios/templates/castvote.html:5
+#: helios/templates/castvote.html:6 helios/templates/election_bboard.html:7 helios/templates/election_view.html:311
+msgid "Ballot Tracking Center"
+msgstr "Stimmzettel-Übersicht"
+
+#: helios/templates/castvote.html:7
 #, python-format
 msgid "Cast Vote %(hash)s"
 msgstr "Abgegebene Stimme %(hash)s"
 
-#: helios/templates/castvote.html:6
+#: helios/templates/castvote.html:8
 #, python-format
 msgid "cast in <a href=\"%(election_view_url)s\">%(election_name)s</a>"
 msgstr "abgegeben in <a href=\"%(election_view_url)s\">%(election_name)s</a>"
 
-#: helios/templates/castvote.html:7
+#: helios/templates/castvote.html:13
 msgid "Fingerprint:"
 msgstr "Fingerabdruck:"
 
-#: helios/templates/castvote.html:8
+#: helios/templates/castvote.html:17
 msgid "by"
 msgstr "von"
 
-#: helios/templates/castvote.html:16
+#: helios/templates/castvote.html:21
+msgid "Compare this fingerprint with the ballot tracker you received when you voted. If they are the same, this is your encrypted ballot as the server recorded it."
+msgstr "Vergleichen Sie diesen Fingerabdruck mit dem Stimmzettel-Tracker, den Sie bei der Stimmabgabe erhalten haben. Stimmen beide überein, ist dies Ihr verschlüsselter Stimmzettel, wie der Server ihn gespeichert hat."
+
+#: helios/templates/castvote.html:25
 msgid "details"
 msgstr "Details"
+
+#: helios/templates/castvote.html:27
+msgid "Fingerprint as one string, e.g. to paste into a verifier:"
+msgstr "Fingerabdruck als eine Zeichenfolge, z. B. zum Einfügen in einen Verifier:"
+
+#: helios/templates/castvote.html:28
+msgid "The encrypted ballot (JSON)"
+msgstr "Der verschlüsselte Stimmzettel (JSON)"
 
 #: helios/templates/combine_decryptions.html:4 helios/templates/combine_decryptions.html:7
 msgid "Compute Tally"
@@ -894,10 +922,6 @@ msgstr "bereitgestellt mit"
 msgid "Ballot Tracking Center for %(election_name)s"
 msgstr "Stimmzettel-Übersicht für %(election_name)s"
 
-#: helios/templates/election_bboard.html:7 helios/templates/election_view.html:311
-msgid "Ballot Tracking Center"
-msgstr "Stimmzettel-Übersicht"
-
 #: helios/templates/election_bboard.html:10
 msgid "This is the ballot tracking center, which displays the tracking numbers of all cast ballots in this election."
 msgstr "Dies ist die Stimmzettel-Übersicht, die die Tracker aller abgegebenen Stimmzettel dieser Wahl anzeigt."
@@ -946,6 +970,10 @@ msgstr "Ihr Stimmzettel wurde noch nicht abgegeben."
 #: helios/templates/election_cast_confirm.html:54
 msgid "Verifying and Casting your ballot"
 msgstr "Ihr Stimmzettel wird überprüft und abgegeben"
+
+#: helios/templates/election_cast_confirm.html:59 server_ui/templates/email/cast_vote_body.txt:5
+msgid "Your ballot tracker is:"
+msgstr "Ihr Stimmzettel-Tracker lautet:"
 
 #: helios/templates/election_cast_confirm.html:61
 msgid "Your ballot is encrypted; the tracker is a fingerprint of it. After casting, you can check that it is listed in the ballot tracking center."
@@ -3215,6 +3243,10 @@ msgstr "Einstellungen"
 msgid "Check and open"
 msgstr "Prüfen und öffnen"
 
+#: helios/templatetags/tracker_tags.py:57
+msgid "QR code with the link to your ballot tracker"
+msgstr "QR-Code mit dem Link zu Ihrem Stimmzettel-Tracker"
+
 #: helios/views.py:169 helios/views.py:644 helios/views.py:662
 msgid "the election is frozen, so trustee keys can no longer be changed"
 msgstr "die Wahl ist eingefroren, daher können die Schlüssel der Treuhänder*innen nicht mehr geändert werden"
@@ -3223,7 +3255,7 @@ msgstr "die Wahl ist eingefroren, daher können die Schlüssel der Treuhänder*i
 msgid "only an administrator has elections to administer"
 msgstr "nur Wahlleitungen haben Wahlen zu verwalten"
 
-#: helios/views.py:196 helios/votergroup_views.py:119 helios/wizard_views.py:101
+#: helios/views.py:196 helios/votergroup_views.py:119 helios/wizard_views.py:102
 msgid "only an administrator can create an election"
 msgstr "nur eine Wahlleitung kann eine Wahl anlegen"
 
@@ -3232,7 +3264,7 @@ msgid "No special characters allowed in the short name."
 msgstr "Im Kurznamen sind keine Sonderzeichen erlaubt."
 
 #: helios/views.py:237 helios/views.py:268 helios/votergroup_views.py:168
-#: helios/wizard_views.py:144
+#: helios/wizard_views.py:145
 #, python-format
 msgid "An election with short name %(short_name)s already exists"
 msgstr "Eine Wahl mit dem Kurznamen %(short_name)s existiert bereits"
@@ -3557,27 +3589,27 @@ msgstr "Optionen"
 msgid "Check and create"
 msgstr "Prüfen und erstellen"
 
-#: helios/wizard_views.py:60
+#: helios/wizard_views.py:61
 msgid "Letters, digits and hyphens, no spaces. It becomes part of the election's web address. Leave empty to derive it from the name."
 msgstr "Buchstaben, Ziffern und Bindestriche, keine Leerzeichen. Wird Teil der Webadresse der Wahl. Leer lassen, um ihn aus dem Namen abzuleiten."
 
-#: helios/wizard_views.py:85
+#: helios/wizard_views.py:86
 msgid "When you freeze the ballot"
 msgstr "Beim Einfrieren des Stimmzettels"
 
-#: helios/wizard_views.py:87
+#: helios/wizard_views.py:88
 msgid "When you compute the tally"
 msgstr "Beim Berechnen der Auszählung"
 
-#: helios/wizard_views.py:89 helios/templates/stats_user_search.html:25
+#: helios/wizard_views.py:90 helios/templates/stats_user_search.html:25
 msgid "No"
 msgstr "Nein"
 
-#: helios/wizard_views.py:89 helios/templates/stats_user_search.html:25
+#: helios/wizard_views.py:90 helios/templates/stats_user_search.html:25
 msgid "Yes"
 msgstr "Ja"
 
-#: helios/wizard_views.py:93
+#: helios/wizard_views.py:94
 msgid "(not set)"
 msgstr "(nicht angegeben)"
 

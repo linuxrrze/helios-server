@@ -377,3 +377,17 @@ table.pretty .helptext { margin-top: 4px; }
   .setup-pager { flex-direction: column; align-items: stretch; }
   .setup-pager .button { width: 100%; }
 }
+
+/* --- ballot tracker in groups of four, with a QR code -------------------- */
+.tracker-group { display: inline-block; }
+.tracker-group:not(:last-child) { margin-right: .35em; }
+.tracker-inline .tracker-group:not(:last-child) { margin-right: .25em; }
+.tracker-with-qr { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px 32px; }
+.tracker-text { flex: 1 1 22rem; min-width: 0; }
+.content-body .tracker-heading { margin: 0 0 .4em; font-size: 1.15rem; }
+.tracker-qr { flex: none; width: 168px; margin: 0; text-align: center; }
+.qr-code { display: block; width: 168px; height: 168px; border: 1px solid var(--border-color); }
+.tracker-qr figcaption { margin-top: 6px; font-size: .85rem; line-height: 1.35; }
+@media print { .copy-button { display: none; } }
+.content-body textarea.code-textarea { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .85rem; }
+.tracker-plain { overflow-wrap: anywhere; word-break: break-all; }

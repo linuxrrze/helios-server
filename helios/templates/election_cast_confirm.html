@@ -1,5 +1,5 @@
 {% extends TEMPLATE_BASE %}
-{% load i18n %}
+{% load i18n tracker_tags %}
 {% block title %}{% translate "Confirm Vote" %}{% endblock %}
 
 {% block content %}
@@ -57,7 +57,7 @@ window.onbeforeunload = function(evt) {
 
 <div class="card ballot-tracker-card">
 <p>{% translate "Your ballot tracker is:" %}<br>
-<span class="tracker">{{vote_fingerprint}}</span></p>
+<span class="tracker" translate="no">{{vote_fingerprint|tracker_groups}}</span></p>
 <p class="muted">{% translate "Your ballot is encrypted; the tracker is a fingerprint of it. After casting, you can check that it is listed in the ballot tracking center." %}</p>
 </div>
 

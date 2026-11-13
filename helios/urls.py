@@ -17,8 +17,8 @@ urlpatterns = [
   # vote shortcut
   path('v/<str:vote_tinyhash>', views.castvote_shortcut, name=names.CAST_VOTE_SHORTCUT),
 
-  # vote by hash
-  path('vh/<str:vote_hash>', views.castvote_fullhash_shortcut, name=names.CAST_VOTE_FULLHASH_SHORTCUT),
+  # vote by hash (the full ballot tracker, which is base64 and may contain "/")
+  path('vh/<path:vote_hash>', views.castvote_fullhash_shortcut, name=names.CAST_VOTE_FULLHASH_SHORTCUT),
   
   # trustee login
   path('t/<str:election_short_name>/<str:trustee_email>/<str:trustee_secret>', views.trustee_login,

@@ -4882,3 +4882,54 @@ class ElectionWizardTests(WebTest):
         election.save()
         response = self.client.get(f'/helios/elections/{election.uuid}/trustees/view')
         self.assertNotContains(response, 'Election setup')
+
+
+class BallotTrackerDisplayTests(TestCase):
+    """Trackers shown in groups, with a QR code of the link to the ballot"""
+    HASH = 'ab+/cdEFgh1234/xyz+9876543210abcdefghijklmnopq'
+
+    def test_groups_keep_the_exact_tracker(self):
+        from helios.templatetags.tracker_tags import tracker_groups
+        html = str(tracker_groups(self.HASH))
+        self.assertEqual(html.count('<span class="tracker-group">'), 12)
+        # no characters between the groups: the text content is the tracker
+        self.assertEqual(re.sub(r'<[^>]+>', '', html), html_escape(self.HASH))
+        self.assertEqual(tracker_groups(''), '')
+
+    def test_groups_escape(self):
+        from helios.templatetags.tracker_tags import tracker_groups
+        self.assertNotIn('<script', str(tracker_groups('<script>x</script>')))
+
+    def test_full_hash_url_with_slashes(self):
+        from django.urls import resolve
+        from helios.templatetags.tracker_tags import tracker_url
+        url = tracker_url(self.HASH)
+        self.assertTrue(url.endswith('/helios/vh/' + self.HASH))
+        match = resolve('/helios/vh/' + self.HASH)
+        self.assertEqual(match.kwargs['vote_hash'], self.HASH)
+
+    def test_qr_code_svg(self):
+        from helios.templatetags.tracker_tags import tracker_qr, tracker_url
+        from helios.vendor.qrcodegen import QrCode
+        svg = str(tracker_qr(self.HASH))
+        self.assertTrue(svg.startswith('<svg class="qr-code"'))
+        self.assertIn('role="img"', svg)
+        size = QrCode.encode_text(tracker_url(self.HASH), QrCode.Ecc.MEDIUM).get_size()
+        self.assertIn('viewBox="0 0 %d %d"' % (size + 8, size + 8), svg)
+        self.assertEqual(tracker_qr(None), '')
+
+    def test_unknown_full_hash_is_404(self):
+        response = self.client.get('/helios/vh/no/such+tracker')
+        self.assertEqual(response.status_code, 404)
+
+    def test_cast_vote_page_keeps_the_full_tracker(self):
+        # the page of a cast vote shows the tracker grouped and once as one string
+        from django.template.loader import render_to_string
+        voter = SimpleNamespace(alias=None, name='Voter')
+        html = render_to_string('helios/templates/castvote.html', {
+            'cast_vote': SimpleNamespace(vote_hash=self.HASH, vote_tinyhash='abcdEFgh'),
+            'the_voter': voter, 'vote_content': '{}', 'TEMPLATE_BASE': 'helios/templates/base.html',
+            'election': SimpleNamespace(uuid='00000000-0000-0000-0000-000000000000', name='E'),
+            'settings': settings})
+        self.assertIn(self.HASH, html)
+        self.assertIn('tracker-group', html)

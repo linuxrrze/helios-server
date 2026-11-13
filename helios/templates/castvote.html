@@ -1,27 +1,32 @@
 {% extends TEMPLATE_BASE %}
-{% load i18n %}
+{% load i18n tracker_tags %}
 {% block title %}{{cast_vote.vote_tinyhash}} &mdash; {{election.name}}{% endblock %}
 {% block content %}
-<h2 class="title">{% blocktranslate trimmed with hash=cast_vote.vote_tinyhash %}Cast Vote {{ hash }}{% endblocktranslate %}</h2>
-{% url "election@view" election.uuid as election_view_url %}{% blocktranslate trimmed with election_name=election.name %}cast in <a href="{{ election_view_url }}">{{ election_name }}</a>{% endblocktranslate %}<br />
-{% translate "Fingerprint:" %} <tt>{{cast_vote.vote_hash}}</tt><br />
-{% translate "by" %} <b><u>
-{% if the_voter.alias %}
-{{the_voter.alias}}
-{% else %}
-{{the_voter.name}}
-{% endif %}
-</u></b>
-<br /><br />
-<a href="#" onclick="$('#castvote_content').slideToggle(250); return false;">{% translate "details" %}</a><br /><br />
-<div style="display:none;" id="castvote_content">
-<textarea cols="100" rows="10">
-{{vote_content}}
-</textarea>
+{% url "election@view" election.uuid as election_view_url %}
+<a class="back-link" href="{% url "election@voters@list-pretty" election.uuid %}">{% translate "Ballot Tracking Center" %}</a>
+<h1 class="title">{% blocktranslate trimmed with hash=cast_vote.vote_tinyhash %}Cast Vote {{ hash }}{% endblocktranslate %}</h1>
+<p class="page-lead">{% blocktranslate trimmed with election_name=election.name %}cast in <a href="{{ election_view_url }}">{{ election_name }}</a>{% endblocktranslate %}</p>
+
+<div class="card ballot-tracker-card">
+<dl class="summary-list">
+  <div class="summary-row">
+    <dt id="fingerprint-label">{% translate "Fingerprint:" %}</dt>
+    <dd><span class="tracker" translate="no" aria-labelledby="fingerprint-label">{{cast_vote.vote_hash|tracker_groups}}</span></dd>
+  </div>
+  <div class="summary-row">
+    <dt>{% translate "by" %}</dt>
+    <dd>{% if the_voter.alias %}{{the_voter.alias}}{% else %}{{the_voter.name}}{% endif %}</dd>
+  </div>
+</dl>
+<p class="muted">{% translate "Compare this fingerprint with the ballot tracker you received when you voted. If they are the same, this is your encrypted ballot as the server recorded it." %}</p>
 </div>
-<br /><br />
 
-
-
-
+<details>
+<summary>{% translate "details" %}</summary>
+<div class="details-body">
+<p>{% translate "Fingerprint as one string, e.g. to paste into a verifier:" %}<br /><code class="tracker-plain" translate="no">{{cast_vote.vote_hash}}</code></p>
+<label for="castvote_content">{% translate "The encrypted ballot (JSON)" %}</label>
+<textarea id="castvote_content" class="code-textarea" rows="10" readonly>{{vote_content}}</textarea>
+</div>
+</details>
 {% endblock %}

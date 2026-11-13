@@ -1,5 +1,5 @@
 {% extends TEMPLATE_BASE %}
-{% load timezone_tags i18n login_icons election_tags %}
+{% load timezone_tags i18n login_icons election_tags tracker_tags %}
 
 {% block title %}{% blocktranslate trimmed with election_name=election.name %}Voters &amp; Ballot Tracking Center for {{ election_name }}{% endblocktranslate %}{% endblock %}
 {% block content %}
@@ -175,7 +175,7 @@
 {% if election.use_voter_aliases %}
 <td>{{voter.alias}}</td>
 {% endif %}
-<td>{% if voter.vote_hash %}<tt class="tracker-inline">{{voter.vote_hash}}</tt>{% else %}<span class="muted" aria-label="{% translate "no vote yet" %}">&mdash;</span>{% endif %}</td>
+<td>{% if voter.vote_hash %}<tt class="tracker-inline" translate="no">{{voter.vote_hash|tracker_groups}}</tt>{% else %}<span class="muted" aria-label="{% translate "no vote yet" %}">&mdash;</span>{% endif %}</td>
 </tr>
 {% endfor %}
 </tbody>

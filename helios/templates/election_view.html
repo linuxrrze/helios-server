@@ -1,5 +1,5 @@
 {% extends TEMPLATE_BASE %}
-{% load timezone_tags i18n %}
+{% load timezone_tags i18n tracker_tags %}
 {% block title %}{{election.name}}{% endblock %}
 {% block content %}
 {% if election.election_type == "referendum" %}{% translate "referendum" context "election type" as election_type_label %}{% else %}{% translate "election" context "election type" as election_type_label %}{% endif %}
@@ -299,11 +299,11 @@ but has been extended until {{ extended }}.{% endblocktranslate %}
 
 {% if election.frozen_at %}
 <p>{% translate "Election Fingerprint:" %}<br />
-<span class="tracker">{{election.hash}}</span></p>
+<span class="tracker" translate="no">{{election.hash|tracker_groups}}</span></p>
 
 {% if votes %}
 <p>{% translate "Your ballot tracker:" %}<br />
-<span class="tracker">{{votes.0.vote_hash}}</span>
+<span class="tracker" translate="no">{{votes.0.vote_hash|tracker_groups}}</span>
 </p>
 {% endif %}
 
