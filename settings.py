@@ -70,6 +70,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 # such as Election.created_at and the server process' local time.
 TIME_ZONE = get_from_env('TIME_ZONE', 'America/Los_Angeles')
 
+# Time zone in which administrators enter election dates (voting start, end,
+# extension) and in which the pages show them, always with the zone's name.
+# Helios still stores and compares these times in UTC; set it to UTC to enter
+# and show UTC as before. An IANA name such as Europe/Berlin.
+ELECTION_TIME_ZONE = get_from_env('ELECTION_TIME_ZONE', TIME_ZONE)
+
 USE_TZ = False
 
 # Interface languages. Each request uses the language the visitor chose with

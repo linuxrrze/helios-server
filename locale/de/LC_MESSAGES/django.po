@@ -180,150 +180,156 @@ msgstr "Erledigt: Das Ergebnis ist öffentlich"
 msgid "Makes the result visible to everyone and lets you notify the voters."
 msgstr "Macht das Ergebnis für alle sichtbar; danach können Sie die Wahlberechtigten benachrichtigen."
 
-#: helios/forms.py:14
+#: helios/fields.py:59
+#, python-format
+msgid "This time does not exist in the time zone %(zone)s, because the clocks are put forward then. Please choose another time."
+msgstr "Diese Uhrzeit gibt es in der Zeitzone %(zone)s nicht, weil die Uhren dann vorgestellt werden. Bitte wählen Sie eine andere Uhrzeit."
+
+#: helios/forms.py:22
+#, python-format
+msgid "Local time in %(zone)s (currently %(offset)s)."
+msgstr "Ortszeit in %(zone)s (derzeit %(offset)s)."
+
+#: helios/forms.py:31
 msgid "Letters, digits and hyphens, no spaces. It becomes part of the election's web address, e.g. board-2026."
 msgstr "Buchstaben, Ziffern und Bindestriche, keine Leerzeichen. Wird Teil der Webadresse der Wahl, z. B. vorstand-2026."
 
-#: helios/forms.py:14 helios/votergroup.py:18
+#: helios/forms.py:31 helios/votergroup.py:18
 msgid "Short name"
 msgstr "Kurzname"
 
-#: helios/forms.py:15 helios/templates/election_bboard.html:41 helios/templates/new_trustee.html:19
+#: helios/forms.py:32 helios/templates/election_bboard.html:41 helios/templates/new_trustee.html:19
 #: helios/templates/voters_list.html:145 helios/templates/voters_manage.html:28 helios/templates/voters_upload_confirm.html:15
 msgid "Name"
 msgstr "Name"
 
-#: helios/forms.py:15
+#: helios/forms.py:32
 msgid "The name voters see, e.g. Board Election 2026."
 msgstr "Der Name, den die Wahlberechtigten sehen, z. B. Vorstandswahl 2026."
 
-#: helios/forms.py:16
+#: helios/forms.py:33
 msgid "Description"
 msgstr "Beschreibung"
 
-#: helios/forms.py:16
+#: helios/forms.py:33
 msgid "Shown on the election page. Explain what is being decided and by whom."
 msgstr "Wird auf der Seite der Wahl angezeigt. Erläutern Sie, worüber wer entscheidet."
 
-#: helios/forms.py:17
+#: helios/forms.py:34
 msgid "Type"
 msgstr "Art"
 
-#: helios/forms.py:18
+#: helios/forms.py:35
 msgid "The public ballot tracking center then shows aliases such as \"V12\" instead of the voters' names."
 msgstr "Die öffentliche Stimmzettel-Übersicht zeigt dann Pseudonyme wie „V12“ statt der Namen der Wahlberechtigten."
 
-#: helios/forms.py:18
+#: helios/forms.py:35
 msgid "Use voter aliases"
 msgstr "Aliasse für Wahlberechtigte verwenden"
 
-#: helios/forms.py:20
+#: helios/forms.py:37
 msgid "Each voter sees the answers in a different random order, so that no answer profits from being listed first."
 msgstr "Alle Wahlberechtigten sehen die Antworten in einer anderen, zufälligen Reihenfolge, damit keine Antwort davon profitiert, oben zu stehen."
 
-#: helios/forms.py:20
+#: helios/forms.py:37
 msgid "Randomize answer order"
 msgstr "Antworten in zufälliger Reihenfolge"
 
-#: helios/forms.py:21
+#: helios/forms.py:38
 msgid "A private election is only visible to registered voters."
 msgstr "Eine nicht öffentliche Wahl ist nur für eingetragene Wahlberechtigte sichtbar."
 
-#: helios/forms.py:21
+#: helios/forms.py:38
 msgid "Private election"
 msgstr "Nicht öffentliche Wahl"
 
-#: helios/forms.py:22
+#: helios/forms.py:39
 msgid "An email address voters should contact if they need help."
 msgstr "Eine E-Mail-Adresse, an die sich Wahlberechtigte wenden können, wenn sie Hilfe benötigen."
 
-#: helios/forms.py:22
+#: helios/forms.py:39
 msgid "Help Email Address"
 msgstr "Hilfe-E-Mail-Adresse"
 
-#: helios/forms.py:25
+#: helios/forms.py:42
 msgid "Election Info Download URL"
 msgstr "Download-URL für Wahlinformationen"
 
-#: helios/forms.py:25
+#: helios/forms.py:42
 msgid "the URL of a PDF document that contains extra election information, e.g. candidate bios and statements"
 msgstr "die URL eines PDF-Dokuments mit zusätzlichen Informationen zur Wahl, z. B. Lebensläufe und Stellungnahmen der Kandidierenden"
 
-#: helios/forms.py:28
-msgid "Date and time in UTC. Leave empty to open voting as soon as you freeze the ballot."
-msgstr "Datum und Uhrzeit in UTC. Leer lassen, um die Stimmabgabe beim Einfrieren des Stimmzettels zu öffnen."
+#: helios/forms.py:45
+msgid "Leave empty to open voting as soon as you freeze the ballot."
+msgstr "Leer lassen, um die Stimmabgabe beim Einfrieren des Stimmzettels zu öffnen."
 
-#: helios/forms.py:28
+#: helios/forms.py:45
 msgid "Voting starts at"
 msgstr "Beginn der Stimmabgabe"
 
-#: helios/forms.py:30
-msgid "Date and time in UTC. Leave empty to end voting yourself, by computing the tally."
-msgstr "Datum und Uhrzeit in UTC. Leer lassen, um die Stimmabgabe selbst zu beenden, indem Sie die Auszählung berechnen."
+#: helios/forms.py:47
+msgid "Leave empty to end voting yourself, by computing the tally."
+msgstr "Leer lassen, um die Stimmabgabe selbst zu beenden, indem Sie die Auszählung berechnen."
 
-#: helios/forms.py:30
+#: helios/forms.py:47
 msgid "Voting ends at"
 msgstr "Ende der Stimmabgabe"
 
-#: helios/forms.py:34
-msgid "Date and time in UTC."
-msgstr "Datum und Uhrzeit in UTC."
-
-#: helios/forms.py:34
+#: helios/forms.py:51
 msgid "Voting extended until"
 msgstr "Stimmabgabe verlängert bis"
 
-#: helios/forms.py:38 helios/forms.py:54
+#: helios/forms.py:54 helios/forms.py:70
 msgid "Subject"
 msgstr "Betreff"
 
-#: helios/forms.py:39 helios/forms.py:55
+#: helios/forms.py:55 helios/forms.py:71
 msgid "Body"
 msgstr "Text"
 
-#: helios/forms.py:39
+#: helios/forms.py:55
 msgid "Your own message. It appears where <BODY> is shown in the preview."
 msgstr "Ihre eigene Nachricht. Sie erscheint dort, wo in der Vorschau <BODY> steht."
 
-#: helios/forms.py:40 helios/forms.py:56
+#: helios/forms.py:56 helios/forms.py:72
 msgid "Send To"
 msgstr "Senden an"
 
-#: helios/forms.py:40 helios/forms.py:56
+#: helios/forms.py:56 helios/forms.py:72
 msgid "all voters"
 msgstr "alle Wahlberechtigten"
 
-#: helios/forms.py:40
+#: helios/forms.py:56
 msgid "voters who have cast a ballot"
 msgstr "Wahlberechtigte, die ihre Stimme abgegeben haben"
 
-#: helios/forms.py:40
+#: helios/forms.py:56
 msgid "voters who have not yet cast a ballot"
 msgstr "Wahlberechtigte, die ihre Stimme noch nicht abgegeben haben"
 
-#: helios/forms.py:50
+#: helios/forms.py:66
 #, python-format
 msgid "Remove %(placeholders)s: it is only shown in the preview, and voters would receive it as is. Helios fills in each voter's details itself, so this box is only for your own message."
 msgstr "Entfernen Sie %(placeholders)s: Dies wird nur in der Vorschau angezeigt, und Wahlberechtigte würden es unverändert erhalten. Helios fügt die Angaben jeder wahlberechtigten Person selbst ein, dieses Feld ist also nur für Ihre eigene Nachricht."
 
-#: helios/forms.py:56
+#: helios/forms.py:72
 msgid "no one -- are you sure about this?"
 msgstr "niemanden – sind Sie sicher?"
 
-#: helios/forms.py:56
+#: helios/forms.py:72
 msgid "only voters who cast a ballot"
 msgstr "nur Wahlberechtigte, die ihre Stimme abgegeben haben"
 
-#: helios/forms.py:59 helios/forms.py:64
+#: helios/forms.py:75 helios/forms.py:80
 msgid "Voter ID"
 msgstr "Wähler-ID"
 
-#: helios/forms.py:61 helios_auth/auth_systems/ldapauth.py:27 helios_auth/auth_systems/password.py:39
+#: helios/forms.py:77 helios_auth/auth_systems/ldapauth.py:27 helios_auth/auth_systems/password.py:39
 #: helios_auth/templates/ldapauth/login.html:17 helios_auth/templates/ldapauth/login.html:18
 msgid "Password"
 msgstr "Passwort"
 
-#: helios/forms.py:64
+#: helios/forms.py:80
 msgid "Enter the voter ID you were assigned for this election"
 msgstr "Geben Sie die Wähler-ID ein, die Ihnen für diese Wahl zugewiesen wurde"
 

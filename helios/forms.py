@@ -6,11 +6,28 @@ from django import forms
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
-from .fields import DateTimeLocalField
+from . import timezones
+from .fields import LocalDateTimeField
 from .models import Election
 
 
-class ElectionForm(forms.Form):
+class LocalTimesMixin:
+  """
+  Date fields (LocalDateTimeField) take local time in the election time zone:
+  say which zone in their hint, and tell the browser script (timezone-display.js).
+  """
+  def __init__(self, *args, **kwargs):
+    super().__init__(*args, **kwargs)
+    zone = timezones.zone_name()
+    zone_hint = _('Local time in %(zone)s (currently %(offset)s).') % {
+      'zone': zone, 'offset': timezones.current_offset_label()}
+    for field in self.fields.values():
+      if isinstance(field, LocalDateTimeField):
+        field.widget.attrs['data-time-zone'] = zone
+        field.help_text = '%s %s' % (zone_hint, field.help_text) if field.help_text else zone_hint
+
+
+class ElectionForm(LocalTimesMixin, forms.Form):
   short_name = forms.SlugField(max_length=40, label=_('Short name'), help_text=_('Letters, digits and hyphens, no spaces. It becomes part of the election\'s web address, e.g. board-2026.'))
   name = forms.CharField(max_length=100, widget=forms.TextInput(attrs={'size':60}), label=_('Name'), help_text=_('The name voters see, e.g. Board Election 2026.'))
   description = forms.CharField(max_length=4000, widget=forms.Textarea(attrs={'cols': 70, 'wrap': 'soft'}), required=False, label=_('Description'), help_text=_('Shown on the election page. Explain what is being decided and by whom.'))
@@ -25,14 +42,13 @@ class ElectionForm(forms.Form):
     election_info_url = forms.CharField(required=False, initial="", label=_("Election Info Download URL"), help_text=_("the URL of a PDF document that contains extra election information, e.g. candidate bios and statements"))
   
   # times
-  voting_starts_at = DateTimeLocalField(label=_('Voting starts at'), help_text = _('Date and time in UTC. Leave empty to open voting as soon as you freeze the ballot.'),
+  voting_starts_at = LocalDateTimeField(label=_('Voting starts at'), help_text = _('Leave empty to open voting as soon as you freeze the ballot.'),
                                    required=False)
-  voting_ends_at = DateTimeLocalField(label=_('Voting ends at'), help_text = _('Date and time in UTC. Leave empty to end voting yourself, by computing the tally.'),
+  voting_ends_at = LocalDateTimeField(label=_('Voting ends at'), help_text = _('Leave empty to end voting yourself, by computing the tally.'),
                                    required=False)
 
-class ElectionTimeExtensionForm(forms.Form):
-  voting_extended_until = DateTimeLocalField(label=_('Voting extended until'), help_text = _('Date and time in UTC.'),
-                                   required=False)
+class ElectionTimeExtensionForm(LocalTimesMixin, forms.Form):
+  voting_extended_until = LocalDateTimeField(label=_('Voting extended until'), required=False)
   
 class EmailVotersForm(forms.Form):
   subject = forms.CharField(max_length=80, label=_('Subject'))

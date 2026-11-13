@@ -17,7 +17,7 @@ from django.conf import settings
 from django.core import mail
 from django.core.files import File
 from django.core.management import call_command
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import escape as html_escape
@@ -4670,3 +4670,110 @@ class RequeueStuckTasksTests(TestCase):
         stuck.refresh_from_db()
         self.assertEqual(stuck.status, TaskResultStatus.RUNNING)
         self.assertIn('would requeue 1 tasks', out.getvalue())
+
+
+@override_settings(ELECTION_TIME_ZONE='Europe/Berlin')
+class ElectionTimeZoneTests(WebTest):
+    """Election dates are entered and shown in ELECTION_TIME_ZONE and stored in UTC"""
+    fixtures = ['users.json', 'election.json']
+    allow_database_queries = True
+
+    def setUp(self):
+        self.election = models.Election.objects.get(short_name='test')
+        self.user = auth_models.User.objects.get(user_id='ben@adida.net', user_type='google')
+
+    def login(self):
+        self.client.get("/")
+        session = self.client.session
+        session['user'] = {'type': self.user.user_type, 'user_id': self.user.user_id}
+        session.save()
+
+    def test_local_to_utc_winter_and_summer(self):
+        from helios import timezones
+        self.assertEqual(timezones.local_to_utc(datetime.datetime(2026, 1, 15, 14, 30)), datetime.datetime(2026, 1, 15, 13, 30))
+        self.assertEqual(timezones.local_to_utc(datetime.datetime(2026, 7, 15, 14, 30)), datetime.datetime(2026, 7, 15, 12, 30))
+
+    def test_time_that_occurs_twice_is_the_first(self):
+        # 2026-10-25: the clocks go back from 03:00 CEST to 02:00 CET
+        from helios import timezones
+        self.assertEqual(timezones.local_to_utc(datetime.datetime(2026, 10, 25, 2, 30)), datetime.datetime(2026, 10, 25, 0, 30))
+
+    def test_skipped_time_is_rejected(self):
+        # 2026-03-29: the clocks go forward from 02:00 CET to 03:00 CEST
+        from helios import forms, timezones
+        with self.assertRaises(timezones.NonexistentLocalTime):
+            timezones.local_to_utc(datetime.datetime(2026, 3, 29, 2, 30))
+        form = forms.ElectionTimeExtensionForm({'voting_extended_until': '2026-03-29T02:30'})
+        self.assertFalse(form.is_valid())
+        self.assertIn('Europe/Berlin', form.errors['voting_extended_until'][0])
+
+    def test_round_trip(self):
+        from helios import timezones
+        for utc in [datetime.datetime(2026, 3, 29, 0, 59), datetime.datetime(2026, 3, 29, 1, 0),
+                    datetime.datetime(2026, 10, 25, 0, 30), datetime.datetime(2026, 12, 31, 23, 0)]:
+            local = timezones.utc_to_local(utc).replace(tzinfo=None)
+            self.assertEqual(timezones.local_to_utc(local), utc)
+
+    def test_form_converts_to_utc(self):
+        from helios import forms
+        form = forms.ElectionTimeExtensionForm({'voting_extended_until': '2026-11-20T10:00'})
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['voting_extended_until'], datetime.datetime(2026, 11, 20, 9, 0))
+        self.assertIn('Europe/Berlin', str(form['voting_extended_until'].help_text))
+        self.assertIn('data-time-zone="Europe/Berlin"', str(form['voting_extended_until']))
+
+    @override_settings(ELECTION_TIME_ZONE='UTC')
+    def test_utc_setting_keeps_utc(self):
+        from helios import forms
+        form = forms.ElectionTimeExtensionForm({'voting_extended_until': '2026-11-20T10:00'})
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['voting_extended_until'], datetime.datetime(2026, 11, 20, 10, 0))
+
+    def test_edit_form_prefills_local_time(self):
+        self.election.voting_starts_at = datetime.datetime(2026, 7, 1, 6, 0)
+        self.election.voting_ends_at = datetime.datetime(2026, 12, 1, 17, 0)
+        self.election.save()
+        self.login()
+        response = self.client.get(f'/helios/elections/{self.election.uuid}/edit')
+        self.assertContains(response, 'value="2026-07-01T08:00"')
+        self.assertContains(response, 'value="2026-12-01T18:00"')
+        self.assertContains(response, 'Europe/Berlin')
+
+    def test_edit_stores_utc(self):
+        self.login()
+        response = self.client.post(f'/helios/elections/{self.election.uuid}/edit', {
+            'short_name': self.election.short_name, 'name': self.election.name,
+            'description': self.election.description, 'election_type': self.election.election_type,
+            'voting_starts_at': '2026-07-01T08:00', 'voting_ends_at': '2026-12-01T18:00',
+            'csrf_token': self.client.session['csrf_token']})
+        self.assertRedirects(response, f'/helios/elections/{self.election.uuid}/view')
+        election = models.Election.objects.get(uuid=self.election.uuid)
+        self.assertEqual(election.voting_starts_at, datetime.datetime(2026, 7, 1, 6, 0))
+        self.assertEqual(election.voting_ends_at, datetime.datetime(2026, 12, 1, 17, 0))
+
+    def test_unchanged_resubmit_keeps_value(self):
+        from helios import forms
+        stored = datetime.datetime(2026, 12, 1, 17, 0)
+        form = forms.ElectionTimeExtensionForm({'voting_extended_until': stored})
+        shown = form['voting_extended_until'].value()
+        self.assertEqual(shown, datetime.datetime(2026, 12, 1, 18, 0))
+        resubmitted = forms.ElectionTimeExtensionForm({'voting_extended_until': shown.strftime('%Y-%m-%dT%H:%M')})
+        self.assertTrue(resubmitted.is_valid())
+        self.assertEqual(resubmitted.cleaned_data['voting_extended_until'], stored)
+
+    def test_time_shown_with_zone(self):
+        from helios.templatetags.timezone_tags import utc_time
+        html = str(utc_time(datetime.datetime(2026, 11, 20, 9, 0)))
+        self.assertIn('10:00 CET', html)
+        self.assertIn('datetime="2026-11-20T09:00Z"', html)
+        self.assertIn('2026-11-20 09:00 UTC', html)
+        self.assertEqual(utc_time(None), '')
+        summer = str(utc_time(datetime.datetime(2026, 7, 20, 9, 0)))
+        self.assertIn('11:00 CEST', summer)
+
+    def test_election_page_shows_local_time(self):
+        self.election.voting_ends_at = datetime.datetime(2026, 12, 1, 17, 0)
+        self.election.save()
+        self.login()
+        response = self.client.get(f'/helios/elections/{self.election.uuid}/view')
+        self.assertContains(response, '18:00 CET')
