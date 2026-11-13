@@ -65,6 +65,7 @@ Single sign-on is described in more detail in [sso.md](sso.md).
 | `LANGUAGE_CODE` | `en` | Interface language (`en` or `de`) for visitors whose browser prefers neither. Everyone can switch with the language button. Emails use the language of the person whose action sends them. |
 | `ADMIN_EMAIL` | – | Receives an email for every server error (500). Use a team address. Without it, errors appear only in the log. |
 | `ADMIN_NAME` | empty | Name to go with `ADMIN_EMAIL`. |
+| `EMAIL_SUBJECT_PREFIX` | `[Helios]` | Subject prefix of the error mails to `ADMIN_EMAIL`, e.g. `[Helios test]` to tell instances apart. A space is added after it. Set it to an empty value for no prefix. |
 
 ## 2. URLs
 

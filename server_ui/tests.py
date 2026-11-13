@@ -144,10 +144,10 @@ class EmailSettingsFromEnvironmentTests(TestCase):
         import os
         import subprocess
         import sys
-        environ = {k: v for k, v in os.environ.items() if k not in ('EMAIL_USE_TLS', 'EMAIL_USE_SSL', 'EMAIL_TIMEOUT')}
+        environ = {k: v for k, v in os.environ.items() if k not in ('EMAIL_USE_TLS', 'EMAIL_USE_SSL', 'EMAIL_TIMEOUT', 'EMAIL_SUBJECT_PREFIX')}
         environ.update(env)
         code = ("import json, settings; print(json.dumps({k: getattr(settings, k) for k in "
-                "('EMAIL_HOST_USER', 'EMAIL_USE_TLS', 'EMAIL_USE_SSL', 'EMAIL_TIMEOUT')}))")
+                "('EMAIL_HOST_USER', 'EMAIL_USE_TLS', 'EMAIL_USE_SSL', 'EMAIL_TIMEOUT', 'EMAIL_SUBJECT_PREFIX')}))")
         result = subprocess.run([sys.executable, '-c', code], env=environ, capture_output=True, text=True,
                                 cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         return result, (json.loads(result.stdout.strip().splitlines()[-1]) if result.returncode == 0 else None)
@@ -157,12 +157,19 @@ class EmailSettingsFromEnvironmentTests(TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(values['EMAIL_USE_SSL'], False)
         self.assertEqual(values['EMAIL_TIMEOUT'], 60)
+        self.assertEqual(values['EMAIL_SUBJECT_PREFIX'], '[Helios] ')
+
+    def test_subject_prefix(self):
+        for value, expected in (('[Helios test]', '[Helios test] '), ('[X] ', '[X] '), ('', '')):
+            result, values = self._settings(EMAIL_SUBJECT_PREFIX=value)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(values['EMAIL_SUBJECT_PREFIX'], expected)
 
     def test_authenticated_relay_with_implicit_tls(self):
         result, values = self._settings(EMAIL_HOST_USER='helios', EMAIL_USE_SSL='1', EMAIL_TIMEOUT='20')
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(values, {'EMAIL_HOST_USER': 'helios', 'EMAIL_USE_TLS': False,
-                                  'EMAIL_USE_SSL': True, 'EMAIL_TIMEOUT': 20})
+                                  'EMAIL_USE_SSL': True, 'EMAIL_TIMEOUT': 20, 'EMAIL_SUBJECT_PREFIX': '[Helios] '})
 
     def test_starttls_and_implicit_tls_together_refused(self):
         result, _ = self._settings(EMAIL_USE_TLS='1', EMAIL_USE_SSL='1')
