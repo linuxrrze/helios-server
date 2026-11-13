@@ -567,7 +567,7 @@ msgstr "Möchten Sie diesen Stimmzettel wirklich verwerfen und NICHT abgeben?"
 #: helios/templates/election_admin_remove.html:7 helios/templates/election_edit.html:17 helios/templates/election_extend.html:16
 #: helios/templates/election_new.html:18 helios/templates/election_new_guided.html:60 helios/templates/new_trustee.html:39
 #: helios/templates/release_result.html:24 helios/templates/votergroup_memberadd.html:12 helios/templates/votergroup_new.html:14
-#: helios/templates/votergroup_prepareelection.html:37 helios/templates/voters_email.html:69 helios/templates/voters_upload.html:38
+#: helios/templates/votergroup_prepareelection.html:37 helios/templates/voters_email.html:70 helios/templates/voters_upload.html:38
 msgid "cancel"
 msgstr "abbrechen"
 
@@ -1929,7 +1929,7 @@ msgstr "Die Stimmabgabe ist noch nicht geöffnet"
 msgid "You are registered to vote in this %(type)s."
 msgstr "Sie sind in dieser %(type)s stimmberechtigt."
 
-#: helios/templates/election_view.html:262 helios/templates/email/vote_body.txt:26
+#: helios/templates/election_view.html:262 helios/templates/email/vote_body.txt:28
 #, python-format
 msgid "Your voter alias is %(alias)s."
 msgstr "Ihr Alias lautet %(alias)s."
@@ -2020,8 +2020,8 @@ msgstr "Noch keine."
 msgid "Dear %(name)s,"
 msgstr "Guten Tag %(name)s,"
 
-#: helios/templates/email/info_body.txt:9 helios/templates/email/password_resend_body.txt:15 helios/templates/email/result_body.txt:24
-#: helios/templates/email/simple_body.txt:20 helios/templates/email/vote_body.txt:43 server_ui/templates/email/cast_vote_body.txt:20
+#: helios/templates/email/info_body.txt:9 helios/templates/email/password_resend_body.txt:15 helios/templates/email/result_body.txt:26
+#: helios/templates/email/simple_body.txt:20 helios/templates/email/vote_body.txt:45 server_ui/templates/email/cast_vote_body.txt:20
 msgid "To stop receiving all emails from Helios, click here:"
 msgstr "Um keine E-Mails von Helios mehr zu erhalten, klicken Sie hier:"
 
@@ -2053,14 +2053,22 @@ msgid "The tally for %(name)s has been computed and released:"
 msgstr "Die Auszählung für %(name)s wurde berechnet und freigegeben:"
 
 #: helios/templates/email/result_body.txt:9
+msgid "[Only for voters who have cast a ballot:]"
+msgstr "[Nur für Wahlberechtigte, die abgestimmt haben:]"
+
+#: helios/templates/email/result_body.txt:10
 msgid "Your ballot tracker in this election was:"
 msgstr "Ihr Stimmzettel-Tracker in dieser Wahl lautete:"
 
-#: helios/templates/email/result_body.txt:13
+#: helios/templates/email/result_body.txt:14
 msgid "If you believe this tracker to be in error, please contact us."
 msgstr "Falls Sie glauben, dass dieser Tracker fehlerhaft ist, wenden Sie sich bitte an uns."
 
-#: helios/templates/email/result_body.txt:15
+#: helios/templates/email/result_body.txt:16
+msgid "[Only for voters who have not cast a ballot:]"
+msgstr "[Nur für Wahlberechtigte, die nicht abgestimmt haben:]"
+
+#: helios/templates/email/result_body.txt:17
 msgid "It appears you did not cast a vote in this election. Please contact us if you believe you did."
 msgstr "Anscheinend haben Sie in dieser Wahl keine Stimme abgegeben. Falls Sie glauben, dass Sie doch abgestimmt haben, wenden Sie sich bitte an uns."
 
@@ -2083,22 +2091,30 @@ msgid "Election URL (click to begin voting):"
 msgstr "URL der Wahl (klicken Sie hier, um mit der Stimmabgabe zu beginnen):"
 
 #: helios/templates/email/vote_body.txt:14
+msgid "[Only for voters who have already voted:]"
+msgstr "[Nur für Wahlberechtigte, die bereits abgestimmt haben:]"
+
+#: helios/templates/email/vote_body.txt:15
 msgid "We have recorded your vote with ballot tracker:"
 msgstr "Wir haben Ihre Stimme mit folgendem Stimmzettel-Tracker erfasst:"
 
-#: helios/templates/email/vote_body.txt:18
+#: helios/templates/email/vote_body.txt:19
 msgid "You may re-vote if you wish: only your last vote counts."
 msgstr "Sie können erneut abstimmen, wenn Sie möchten: Nur Ihre letzte Stimme zählt."
 
 #: helios/templates/email/vote_body.txt:20
+msgid "[End of the part for voters who have already voted]"
+msgstr "[Ende des Teils für Wahlberechtigte, die bereits abgestimmt haben]"
+
+#: helios/templates/email/vote_body.txt:22
 msgid "In order to protect your privacy, this election is configured to never display your voter login ID, name, or email address to the public. Instead, the ballot tracking center will only display your alias."
 msgstr "Zum Schutz Ihrer Privatsphäre ist diese Wahl so eingestellt, dass Ihre Wähler-ID, Ihr Name und Ihre E-Mail-Adresse nie öffentlich angezeigt werden. Stattdessen zeigt die Stimmzettel-Übersicht nur Ihren Alias an."
 
-#: helios/templates/email/vote_body.txt:28
+#: helios/templates/email/vote_body.txt:30
 msgid "IMPORTANTLY, when you are prompted to log in to vote, please use your *voter ID*, not your alias."
 msgstr "WICHTIG: Wenn Sie zur Stimmabgabe aufgefordert werden, sich anzumelden, verwenden Sie bitte Ihre *Wähler-ID*, nicht Ihren Alias."
 
-#: helios/templates/email/vote_body.txt:34
+#: helios/templates/email/vote_body.txt:36
 #, python-format
 msgid "You may wish to verify the election fingerprint at the bottom of the screen when you vote: %(hash)s"
 msgstr "Bei der Stimmabgabe können Sie den Fingerabdruck der Wahl unten auf dem Bildschirm überprüfen: %(hash)s"
@@ -3022,24 +3038,28 @@ msgstr "Vorlagen"
 msgid "<b>Preview</b>: each voter receives this email, with the fields in angle brackets filled in for them."
 msgstr "<b>Vorschau</b>: Alle Wahlberechtigten erhalten diese E-Mail, wobei die Felder in spitzen Klammern für sie ausgefüllt werden."
 
-#: helios/templates/voters_email.html:53
+#: helios/templates/voters_email.html:50
+msgid "Notes in square brackets mark parts that only some voters receive; the notes themselves are not sent."
+msgstr "Hinweise in eckigen Klammern kennzeichnen Teile, die nur manche Wahlberechtigte erhalten; die Hinweise selbst werden nicht versendet."
+
+#: helios/templates/voters_email.html:54
 msgid "Subject:"
 msgstr "Betreff:"
 
-#: helios/templates/voters_email.html:59
+#: helios/templates/voters_email.html:60
 msgid "You may tweak the subject and add a custom message using the form below. Your message appears where <tt>&lt;BODY&gt;</tt> is shown above. Don't paste the preview into it."
 msgstr "Mit dem folgenden Formular können Sie den Betreff anpassen und eine eigene Nachricht hinzufügen. Ihre Nachricht erscheint dort, wo oben <tt>&lt;BODY&gt;</tt> steht. Fügen Sie die Vorschau nicht in das Feld ein."
 
-#: helios/templates/voters_email.html:68
+#: helios/templates/voters_email.html:69
 msgid "Send"
 msgstr "Senden"
 
-#: helios/templates/voters_email.html:77
+#: helios/templates/voters_email.html:78
 #, python-format
 msgid "Done, go <a href=\"%(url)s\">back to election</a>."
 msgstr "Fertig, <a href=\"%(url)s\">zurück zur Wahl</a>."
 
-#: helios/templates/voters_email.html:81
+#: helios/templates/voters_email.html:82
 msgid "Error emailing participants. Check server settings, make sure there's an SMTP server."
 msgstr "Fehler beim Versand der E-Mails. Prüfen Sie die Servereinstellungen und ob ein SMTP-Server vorhanden ist."
 
@@ -3501,33 +3521,33 @@ msgstr "Zusätzliche Informationen"
 msgid "Election Result"
 msgstr "Wahlergebnis"
 
-#: helios/views.py:1934
+#: helios/views.py:1937
 msgid "None of the voters match this choice, so no email would be sent."
 msgstr "Auf diese Auswahl trifft keine wahlberechtigte Person zu, daher würde keine E-Mail gesendet."
 
-#: helios/views.py:2075 helios/views.py:2085 helios/views.py:2093
-#: helios/views.py:2129
+#: helios/views.py:2078 helios/views.py:2088 helios/views.py:2096
+#: helios/views.py:2132
 msgid "Opt Out of Helios Emails"
 msgstr "Helios-E-Mails abbestellen"
 
-#: helios/views.py:2076 helios/views.py:2086 helios/views.py:2094
-#: helios/views.py:2130
+#: helios/views.py:2079 helios/views.py:2089 helios/views.py:2097
+#: helios/views.py:2133
 msgid "Enter your email address to stop receiving all emails from Helios voting system."
 msgstr "Geben Sie Ihre E-Mail-Adresse ein, um keine E-Mails des Wahlsystems Helios mehr zu erhalten."
 
-#: helios/views.py:2087 helios/views.py:2195
+#: helios/views.py:2090 helios/views.py:2198
 msgid "Email address is required"
 msgstr "E-Mail-Adresse ist erforderlich"
 
-#: helios/views.py:2095 helios/views.py:2203
+#: helios/views.py:2098 helios/views.py:2206
 msgid "Invalid email address"
 msgstr "Ungültige E-Mail-Adresse"
 
-#: helios/views.py:2102
+#: helios/views.py:2105
 msgid "Confirm your opt-out from Helios emails"
 msgstr "Bestätigen Sie die Abbestellung der Helios-E-Mails"
 
-#: helios/views.py:2106
+#: helios/views.py:2109
 #, python-format
 msgid ""
 "\n"
@@ -3550,51 +3570,51 @@ msgstr ""
 "--\n"
 "Wahlsystem Helios\n"
 
-#: helios/views.py:2131 helios/views.py:2243
+#: helios/views.py:2134 helios/views.py:2246
 #, python-format
 msgid "Failed to send confirmation email: %(error)s"
 msgstr "Die Bestätigungs-E-Mail konnte nicht gesendet werden: %(error)s"
 
-#: helios/views.py:2140
+#: helios/views.py:2143
 msgid "Opt-Out Confirmation Sent"
 msgstr "Bestätigung der Abbestellung gesendet"
 
-#: helios/views.py:2141
+#: helios/views.py:2144
 msgid "We have sent you a confirmation email. Please click the link in the email to complete your opt-out request."
 msgstr "Wir haben Ihnen eine Bestätigungs-E-Mail gesendet. Bitte klicken Sie auf den Link in der E-Mail, um die Abbestellung abzuschließen."
 
-#: helios/views.py:2155 helios/templates/optout_confirm_form.html:44
+#: helios/views.py:2158 helios/templates/optout_confirm_form.html:44
 msgid "Confirm Opt-Out"
 msgstr "Abbestellung bestätigen"
 
-#: helios/views.py:2156
+#: helios/views.py:2159
 msgid "Please confirm that you want to opt out of all Helios voting system emails."
 msgstr "Bitte bestätigen Sie, dass Sie keine E-Mails des Wahlsystems Helios mehr erhalten möchten."
 
-#: helios/views.py:2171
+#: helios/views.py:2174
 msgid "Successfully Opted Out"
 msgstr "Erfolgreich abbestellt"
 
-#: helios/views.py:2172
+#: helios/views.py:2175
 #, python-format
 msgid "The email address %(email)s has been successfully opted out of all Helios emails."
 msgstr "Die E-Mail-Adresse %(email)s erhält keine Helios-E-Mails mehr."
 
-#: helios/views.py:2183 helios/views.py:2193 helios/views.py:2201
-#: helios/views.py:2241
+#: helios/views.py:2186 helios/views.py:2196 helios/views.py:2204
+#: helios/views.py:2244
 msgid "Opt Back Into Helios Emails"
 msgstr "Helios-E-Mails wieder erhalten"
 
-#: helios/views.py:2184 helios/views.py:2194 helios/views.py:2202
-#: helios/views.py:2242
+#: helios/views.py:2187 helios/views.py:2197 helios/views.py:2205
+#: helios/views.py:2245
 msgid "Enter your email address to resume receiving emails from Helios voting system."
 msgstr "Geben Sie Ihre E-Mail-Adresse ein, um wieder E-Mails des Wahlsystems Helios zu erhalten."
 
-#: helios/views.py:2214
+#: helios/views.py:2217
 msgid "Confirm your opt-in to Helios emails"
 msgstr "Bestätigen Sie, dass Sie wieder Helios-E-Mails erhalten möchten"
 
-#: helios/views.py:2218
+#: helios/views.py:2221
 #, python-format
 msgid ""
 "\n"
@@ -3617,27 +3637,27 @@ msgstr ""
 "--\n"
 "Wahlsystem Helios\n"
 
-#: helios/views.py:2252
+#: helios/views.py:2255
 msgid "Opt-In Confirmation Sent"
 msgstr "Bestätigung gesendet"
 
-#: helios/views.py:2253
+#: helios/views.py:2256
 msgid "We have sent you a confirmation email. Please click the link in the email to complete your opt-in request."
 msgstr "Wir haben Ihnen eine Bestätigungs-E-Mail gesendet. Bitte klicken Sie auf den Link in der E-Mail, um den erneuten Empfang zu bestätigen."
 
-#: helios/views.py:2271 helios/templates/optout_confirm_form.html:44
+#: helios/views.py:2274 helios/templates/optout_confirm_form.html:44
 msgid "Confirm Opt-In"
 msgstr "E-Mail-Empfang bestätigen"
 
-#: helios/views.py:2272
+#: helios/views.py:2275
 msgid "Please confirm that you want to resume receiving emails from Helios voting system."
 msgstr "Bitte bestätigen Sie, dass Sie wieder E-Mails des Wahlsystems Helios erhalten möchten."
 
-#: helios/views.py:2287
+#: helios/views.py:2290
 msgid "Successfully Opted Back In"
 msgstr "Empfang erfolgreich wieder aktiviert"
 
-#: helios/views.py:2288
+#: helios/views.py:2291
 #, python-format
 msgid "The email address %(email)s has been successfully opted back in to Helios emails."
 msgstr "Die E-Mail-Adresse %(email)s erhält wieder Helios-E-Mails."

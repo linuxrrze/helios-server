@@ -1906,6 +1906,9 @@ def voters_email(request, election):
       'election_vote_url' : election_vote_url,
       'custom_subject' : default_subject,
       'custom_message': '<BODY>',
+      # marks the parts that only some voters receive (e.g. the ballot tracker
+      # of voters who have already voted); real emails never set this
+      'email_preview': True,
       'voter': {'vote_hash' : '<SMART_TRACKER>',
                 'name': '<VOTER_NAME>',
                 'voter_login_id': '<VOTER_LOGIN_ID>',

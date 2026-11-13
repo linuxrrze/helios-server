@@ -6,12 +6,14 @@
 
 {{custom_message|safe}}
 
-{% if voter.vote_hash %}{% translate "Your ballot tracker in this election was:" %}
+{% if email_preview %}{% translate "[Only for voters who have cast a ballot:]" %}
+{% endif %}{% if voter.vote_hash %}{% translate "Your ballot tracker in this election was:" %}
 
   {{voter.vote_hash}}
 
 {% translate "If you believe this tracker to be in error, please contact us." %}
-{% else %}
+{% endif %}{% if email_preview %}
+{% translate "[Only for voters who have not cast a ballot:]" %}{% endif %}{% if email_preview or not voter.vote_hash %}
 {% blocktranslate trimmed %}
 It appears you did not cast a vote in this election.
 Please contact us if you believe you did.

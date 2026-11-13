@@ -2248,6 +2248,38 @@ class EmailOptOutTests(TestCase):
         for entity in ['&amp;', '&#x27;', '&lt;', '&quot;']:
             self.assertNotIn(entity, message.body)
 
+    def _send_vote_email(self, voter, template='vote'):
+        tasks.single_voter_email.call(voter.uuid, 'email/%s_subject.txt' % template, 'email/%s_body.txt' % template, {
+            'custom_subject': 'Vote now',
+            'custom_message': 'Please vote.',
+            'election_vote_url': 'http://example.com/vote',
+            'election_url': 'http://example.com/election',
+        })
+        return mail.outbox[-1].body
+
+    def test_real_emails_have_no_preview_notes(self):
+        """The preview marks the tracker block as conditional; real emails stay as they were (A12)"""
+        election, _ = models.Election.get_or_create(
+            short_name='test-preview-notes', name='Preview notes', description='Test', admin=self.user)
+        voted = models.Voter.objects.create(uuid=str(uuid.uuid4()), election=election,
+            voter_email='voted@example.com', voter_name='Has Voted', vote_hash='TRACKER+/123')
+        not_voted = models.Voter.objects.create(uuid=str(uuid.uuid4()), election=election,
+            voter_email='notvoted@example.com', voter_name='Not Voted')
+
+        body = self._send_vote_email(voted)
+        self.assertIn('\n\nWe have recorded your vote with ballot tracker:\n\n  TRACKER+/123\n\n'
+                      'You may re-vote if you wish: only your last vote counts.\n\n', body)
+        body = self._send_vote_email(not_voted)
+        self.assertNotIn('ballot tracker', body)
+        body = self._send_vote_email(voted, 'result')
+        self.assertIn('please contact us.\n\n--\n', body)
+        self.assertNotIn('It appears you did not cast a vote', body)
+        body = self._send_vote_email(not_voted, 'result')
+        self.assertIn('\n\nIt appears you did not cast a vote in this election. Please contact us if you believe you did.\n\n--\n', body)
+        self.assertNotIn('ballot tracker', body)
+        for body in [m.body for m in mail.outbox[-4:]]:
+            self.assertNotIn('[', body)
+
 
 class EmailOptOutViewTests(WebTest):
     """Test the opt-out/opt-in web views and templates"""
@@ -3250,6 +3282,18 @@ class VoterEmailCutoffViewTests(WebTest):
             })
         self.assertRedirects(response, f'/helios/elections/{self.election.uuid}/view')
         self.assertEqual(voters_email.enqueue.call_args.kwargs['extra_vars']['custom_message'], 'Polls close <b>Friday</b>.')
+        self.assertNotIn('email_preview', voters_email.enqueue.call_args.kwargs['extra_vars'])
+
+    def test_voters_email_preview_marks_conditional_parts(self):
+        """The tracker block reaches only voters who have voted; the preview says so (A12)"""
+        self.setup_login()
+        response = self.client.get(f'/helios/elections/{self.election.uuid}/voters/email')
+        self.assertContains(response, '[Only for voters who have already voted:]\nWe have recorded your vote')
+        self.assertContains(response, '[End of the part for voters who have already voted]')
+        self.assertContains(response, 'Notes in square brackets mark parts that only some voters receive')
+        response = self.client.get(f'/helios/elections/{self.election.uuid}/voters/email?template=result')
+        self.assertContains(response, '[Only for voters who have cast a ballot:]\nYour ballot tracker')
+        self.assertContains(response, '[Only for voters who have not cast a ballot:]\nIt appears you did not cast a vote')
 
     def test_voters_email_accessible_when_recent_tally(self):
         """Test that voters email page is accessible when tally is recent"""

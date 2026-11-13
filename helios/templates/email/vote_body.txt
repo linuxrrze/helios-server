@@ -11,12 +11,14 @@
 {% elif voter.voter_type %}
 {% blocktranslate trimmed with voter_type=voter.voter_type %}Log in with your {{ voter_type }} account.{% endblocktranslate %}
 {% endif %}{% if voter.vote_hash %}
-{% translate "We have recorded your vote with ballot tracker:" %}
+{% if email_preview %}{% translate "[Only for voters who have already voted:]" %}
+{% endif %}{% translate "We have recorded your vote with ballot tracker:" %}
 
   {{voter.vote_hash}}
 
 {% translate "You may re-vote if you wish: only your last vote counts." %}
-{% endif %}{% if election.use_voter_aliases %}
+{% if email_preview %}{% translate "[End of the part for voters who have already voted]" %}
+{% endif %}{% endif %}{% if election.use_voter_aliases %}
 {% blocktranslate trimmed %}
 In order to protect your privacy, this election is configured
 to never display your voter login ID, name, or email address to the public.
