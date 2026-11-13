@@ -33,3 +33,8 @@ reset.sh
 settings_ci.py
 fly.toml
 *.md
+
+# GitLab CI: config and job caches
+.gitlab-ci.yml
+.uv-cache
+.trivycache

@@ -54,7 +54,7 @@ jobs:
 
       - name: Install Python dependencies
         run: |
-          uv sync
+          uv sync --extra saml
           uv pip freeze
 
       - name: Run tests

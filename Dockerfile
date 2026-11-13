@@ -16,8 +16,10 @@ COPY --from=ghcr.io/astral-sh/uv:0.11.32 /uv /bin/uv
 WORKDIR /app
 
 # install dependencies first so code changes don't invalidate this layer
+# optional extras, e.g. --build-arg UV_EXTRAS="--extra saml" for SAML login
+ARG UV_EXTRAS=""
 COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-dev --no-install-project
+RUN uv sync --frozen --no-dev --no-install-project $UV_EXTRAS
 
 COPY . .
 
@@ -26,6 +28,12 @@ COPY . .
 ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
     PORT=8080
+
+# settings.py defaults to DEBUG=1, which also enables "devlogin" (log in as
+# anyone). A container must never run like that by accident; set DEBUG=1
+# explicitly for development. With DEBUG=0, Helios refuses to start without
+# SECRET_KEY and EMAIL_OPTOUT_SECRET.
+ENV DEBUG=0
 
 # Helios stores uploads in the database, so the app never writes to disk
 RUN useradd --system --no-create-home helios
