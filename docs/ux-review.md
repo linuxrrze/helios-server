@@ -48,7 +48,7 @@ mistakes, **P3** polish.
 | A9 | Results are raw counts only. | `election_view.html` | P3 | done: share of ballots with a bar |
 | A10 | Start page: flat list of headings and buttons, no status per election, invalid list markup. | `server_ui/templates/index.html`, `elections_administered.html` | P3 | done: cards with status badges and empty states |
 | A11 | Dates are entered in UTC. The existing helper shows the local equivalent once a value is entered, but the field itself is still UTC. | `helios/forms.py`, `helios/widgets.py` | P2 | done: entry and display in `ELECTION_TIME_ZONE` (default `TIME_ZONE`), stored in UTC as before |
-| A12 | The email preview on "Contact voters" always shows the block "We have recorded your vote with ballot tracker <SMART_TRACKER>" (the preview voter has a placeholder tracker), although real invitations contain it only for voters who have already voted. Administrators read it as part of every invitation. | `voters_email` view, `helios/templates/email/vote_body.txt` | P3 | open |
+| A12 | The email preview on "Contact voters" always shows the block "We have recorded your vote with ballot tracker <SMART_TRACKER>" (the preview voter has a placeholder tracker), although real invitations contain it only for voters who have already voted. Administrators read it as part of every invitation. | `voters_email` view, `helios/templates/email/vote_body.txt` | P3 | done: the preview marks the conditional parts in square brackets (see third round); real emails unchanged |
 
 ## Voter
 
@@ -164,7 +164,8 @@ tests where there is logic, and a Playwright check (EN/DE, 1280 px and
    `off` with it): all component colors are variables now; the dark block
    only redefines them (text 13:1, muted 7.7:1, links 8.9:1). A site
    stylesheet is never combined with dark colors unless the site opts in
-   (see docs/configuration.md). The booth stays light.
+   (see docs/configuration.md). The booth stayed light in this round (now
+   follows `DARK_MODE`, see the third round).
 
 Merged into this branch on request: the sticky footer (`footer-fixed`),
 the fix for contacting voters of open-registration elections
@@ -173,19 +174,51 @@ page now uses the same check as the voter list) and the navigation bar
 with breadcrumbs (`navigation`). With the breadcrumbs in place, the
 `.back-link` links above the page titles were removed.
 
+## Third round: five open items
+
+Each is its own commit on `ux-open-items`, with German translations, tests
+and a Playwright check (EN/DE, 1280 px and 390 px):
+
+1. **Email preview** (A12): the preview passes `email_preview` to the
+   email templates, which then mark the parts only some voters receive:
+   "[Only for voters who have already voted:] ... [End of the part ...]"
+   around the ballot tracker of the invitation, and both alternatives of
+   the result email (voted / not voted). A sentence above the preview
+   explains the notes. Real emails never set the flag; their text was
+   compared byte for byte with the old templates.
+2. **Questions checked on the server**: `save_questions` rejects what the
+   editor already rejects (whole numbers, 0 <= min <= max <= number of
+   answers, max at least 1 or unlimited, at least one non-empty answer,
+   http(s) links, result type absolute/relative) with HTTP 400 and a
+   translated message naming the question; the editor shows it in the
+   form's error box (or above the questions for remove/move). The page's
+   question list changes only once the server accepted it. Existing
+   formats stay valid (max `null`, a missing min, other choice/tally types,
+   extra keys, fixtures and legacy data).
+3. **Unsaved input in the question editor**: with a question being added
+   or a changed edit form, links (setup steps, Next/Back, breadcrumbs,
+   menu) ask with a translated confirm; other ways of leaving get the
+   browser's leave dialog. The language switch keeps the input (its
+   "questions" hook) and is never asked about; there is never a second
+   dialog.
+4. **Seat table** (voter groups, "prepare election"): a row header with the
+   vote number and a hidden label per input, e.g. "Email, vote 3".
+5. **Dark mode for the booth**: the static booth loads
+   `/booth-dark-mode.css` (Django, outside `/booth/`), which is
+   `heliosbooth/css/booth-dark.css` with `DARK_MODE=auto` and empty with
+   `off`. Colors only; text contrast at least 5:1 in every step, the
+   white GIFs on a light plate. A complete vote (with audit) was cast in
+   dark mode; with `DARK_MODE=off` the booth stays light on a dark system.
+
 ## Open recommendations
 
 | Recommendation | Effort | Rationale for not doing it here |
 |----------------|--------|----------------------------------|
 | Replace jTemplates in the question editor and booth with server-rendered or modern client-side templates. (V7) | L | Still open on purpose: the booth's code is security-relevant; the presentation was improved without touching it. Needs an end-to-end test suite (Postgres-based CI) first. |
-| Email preview: mark the "already voted" block as conditional (or leave it out of the preview); structure the invitation (what / how / deadline / help). (A12) | S | Email wording is what voters see first and should be reviewed by the operators; the preview needs a small view change. |
+| Structure the invitation email (what / how / deadline / help). (A12; the preview part is done) | S | Email wording is what voters see first and should be reviewed by the operators. |
 | Optional "check answers" page before freezing that lists questions, answers, voters count, trustees and dates in one place. | S–M | The freeze page now summarises the most important points; a full summary needs the same data as the progress panel plus question details. |
 | Verifier pages (`heliosverifier/`, `heliosbooth/single-ballot-verify.html`): explanations for non-experts, consistent styling. The audited-ballots page is done. | M | Expert-facing; the explanations should be reviewed by someone who maintains the verification docs. |
 | Automated accessibility checks (axe-core in the Playwright run) in CI. | S | Requires a browser in CI; worth adding together with screenshot tests. |
-| Dark mode for the voting booth. | S | The booth has its own stylesheet and does not know `DARK_MODE`; kept light so that an installation that switched dark mode off does not get a dark booth. |
-| Server-side checks of min/max against the number of answers when saving questions. | S | The editor checks them now; the server still accepts any values (unchanged behaviour). |
-| Labels for the inputs of the seat table on "prepare election" (voter groups). | S | The columns have headers, but the inputs have no individual labels. |
-| Unsaved input when leaving the questions page with "Next" in the setup navigation. | S | The language switcher asks before discarding input; the setup links don't yet. |
 
 ## Things to check in a browser
 
@@ -222,5 +255,14 @@ After the second round, please also check by hand:
 - **Dark mode** with the site's stylesheet: off by default with
   `SITE_CSS_URL`; if the site wants it, set `DARK_MODE=auto` and check the
   site colors, logo and login icons on dark backgrounds.
+- **Booth in dark mode** on a real phone, and with a site stylesheet that
+  opts into `DARK_MODE=auto` (the booth uses its own colors, not the
+  site's variables).
+- **Draft elections with questions saved before the server checks**
+  (e.g. a maximum above the number of answers): every save of the
+  question list is now refused until that question is fixed; the message
+  names it. Frozen elections are not affected.
+- **Question editor**: leaving with unsaved input in other browsers
+  (Firefox and Safari show their own leave dialog text).
 - **Breadcrumbs instead of back links** on the trustee pages (key setup,
   check key, decryption) when logged in as a trustee.
