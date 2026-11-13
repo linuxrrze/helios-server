@@ -105,7 +105,8 @@ def admin_steps(election, trustees):
     detail = _('Done: only you can see the result so far') if not election.result_released_at else _('Done')
   elif election.encrypted_tally:
     num_decrypted = len([t for t in trustees if t.decryption_factors])
-    detail = _('%(done)d of %(total)d trustees have decrypted their share') % {'done': num_decrypted, 'total': len(trustees)}
+    detail = ngettext('%(done)d of %(total)d trustee has decrypted their share', '%(done)d of %(total)d trustees have decrypted their share',
+                      len(trustees)) % {'done': num_decrypted, 'total': len(trustees)}
   elif election.tallying_started_at:
     detail = _('Under way')
   else:

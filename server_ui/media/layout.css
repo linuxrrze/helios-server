@@ -347,3 +347,7 @@ table.pretty .helptext { margin-top: 4px; }
 .share-bar { display: inline-block; width: 8rem; height: .7rem; margin-right: 6px; border-radius: 999px; background: var(--surface-color);
   border: 1px solid var(--border-color); vertical-align: middle; overflow: hidden; }
 .share-bar > span { display: block; height: 100%; background: var(--primary-color); }
+/* header on phones: name, log out and language switcher wrap instead of overflowing */
+@media only screen and (max-width: 40em) {
+  .meta-header .login-info { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0 4px; }
+}

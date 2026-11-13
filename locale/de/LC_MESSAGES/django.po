@@ -106,8 +106,8 @@ msgstr "Wer die Schlüssel hält, mit denen das Ergebnis entschlüsselt wird. He
 msgid "Done: the ballot can no longer be changed"
 msgstr "Erledigt: Der Stimmzettel kann nicht mehr geändert werden"
 
-#: helios/election_progress.py:83 helios/election_progress.py:97 helios/election_progress.py:112
-#: helios/election_progress.py:118
+#: helios/election_progress.py:83 helios/election_progress.py:97 helios/election_progress.py:113
+#: helios/election_progress.py:119
 msgid "Not yet"
 msgstr "Noch nicht"
 
@@ -151,30 +151,32 @@ msgstr "Erledigt: Bisher sehen nur Sie das Ergebnis"
 
 #: helios/election_progress.py:108
 #, python-format
-msgid "%(done)d of %(total)d trustees have decrypted their share"
-msgstr "%(done)d von %(total)d Treuhänder*innen haben ihren Anteil entschlüsselt"
+msgid "%(done)d of %(total)d trustee has decrypted their share"
+msgid_plural "%(done)d of %(total)d trustees have decrypted their share"
+msgstr[0] "%(done)d von %(total)d Treuhänder*in hat den eigenen Anteil entschlüsselt"
+msgstr[1] "%(done)d von %(total)d Treuhänder*innen haben ihren Anteil entschlüsselt"
 
-#: helios/election_progress.py:110
+#: helios/election_progress.py:111
 msgid "Under way"
 msgstr "Läuft"
 
-#: helios/election_progress.py:113
+#: helios/election_progress.py:114
 msgid "Count the votes"
 msgstr "Stimmen auszählen"
 
-#: helios/election_progress.py:114
+#: helios/election_progress.py:115
 msgid "Ends voting and adds up the encrypted ballots; the trustees then decrypt only the totals."
 msgstr "Beendet die Stimmabgabe und addiert die verschlüsselten Stimmzettel; die Treuhänder*innen entschlüsseln danach nur die Summen."
 
-#: helios/election_progress.py:117
+#: helios/election_progress.py:118
 msgid "Release the result"
 msgstr "Ergebnis freigeben"
 
-#: helios/election_progress.py:118
+#: helios/election_progress.py:119
 msgid "Done: the result is public"
 msgstr "Erledigt: Das Ergebnis ist öffentlich"
 
-#: helios/election_progress.py:119
+#: helios/election_progress.py:120
 msgid "Makes the result visible to everyone and lets you notify the voters."
 msgstr "Macht das Ergebnis für alle sichtbar; danach können Sie die Wahlberechtigten benachrichtigen."
 
