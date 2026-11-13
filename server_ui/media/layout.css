@@ -73,8 +73,8 @@ h1{line-height:1.2}
   --accent-hover: var(--primary-color-dark);
   --link-color: var(--accent-color);
   --card-bg: #fff;                 /* cards, inputs, tables, outlined buttons */
-  --input-border: var(--input-border);
-  --table-stripe: var(--table-stripe);
+  --input-border: #8a96a3;          /* 3:1 on white */
+  --table-stripe: #fafbfc;
   --on-success: #fff;              /* text on success/danger fills */
   --on-danger: #fff;
   --danger-hover: #7d1013;
