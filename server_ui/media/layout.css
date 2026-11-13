@@ -21,3 +21,224 @@ body,html{margin:0;height:100%}:root{--screen-xs:480px;--fontsize:18px;--linehei
 /* multi-line headings overlapped with the fixed 32px line-height */
 h1{line-height:1.2}
 .meta-header .language-switcher{display:inline;margin:0}.meta-header .language-switcher button{display:inline-block;margin:0;padding:8px;border:0;background:none;box-shadow:none;color:var(--meta-link-color);font:inherit;font-weight:400;cursor:pointer}.meta-header .language-switcher button:focus,.meta-header .language-switcher button:hover{background:none;color:var(--meta-link-color);text-decoration:underline}
+
+/* ==========================================================================
+ * Components for the application pages (election, voter and trustee pages).
+ *
+ * The pages were written for the Foundation stylesheet and main.css, which
+ * this layout does not load; these rules give their elements a consistent,
+ * accessible look. Colors come from the variables below, so a site
+ * stylesheet (SITE_CSS_URL) can adapt them along with --primary-color.
+ * ========================================================================== */
+:root {
+  --text-color: #1f2933;
+  --muted-color: #52606d;          /* 6.6:1 on white */
+  --border-color: #c7d0d9;
+  --surface-color: #f4f6f8;        /* cards, table headers */
+  --link-color: var(--primary-color);
+  --focus-color: #1a5fb4;
+  --success-color: #1e6b34;
+  --success-bg: #e6f4ea;
+  --warning-color: #7a4d00;
+  --warning-bg: #fff4d6;
+  --danger-color: #a4161a;
+  --danger-bg: #fdecea;
+  --info-color: #1d4f73;
+  --info-bg: #e7f1f8;
+  --radius: 6px;
+  --logo-max-height: 72px;
+}
+
+body { color: var(--text-color); }
+.content-body { line-height: 1.5; }
+.content-body .content { box-sizing: border-box; }
+.row { padding: 10px 20px 32px; }
+
+/* the default logo is a large bitmap: keep it a header, not a poster */
+.content > .row > .logo { margin: 8px 0 16px; }
+.helios-logo { display: block; max-width: 100%; height: auto; max-height: var(--logo-max-height); width: auto; }
+
+/* --- typography ---------------------------------------------------------- */
+.content-body h1, .content-body h2, .content-body h3 { line-height: 1.25; margin: 1.2em 0 .5em; }
+.content-body h1 { font-size: 1.75rem; }
+.content-body h2 { font-size: 1.4rem; }
+.content-body h3 { font-size: 1.2rem; }
+.content-body h4, .content-body h5 { font-size: 1.05rem; margin: 1em 0 .4em; }
+.content-body h1:first-child, .content-body h2.title, .content-body h3.title { margin-top: .25em; }
+.content-body p { margin: 0 0 1em; }
+.content-body a { color: var(--link-color); text-underline-offset: 2px; }
+.content-body a:hover { text-decoration-thickness: 2px; }
+.content-body tt, .content-body code, .content-body pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.muted, .content-body .small { color: var(--muted-color); font-size: .9rem; }
+
+/* visible keyboard focus everywhere (WCAG 2.4.7, 2.4.11) */
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible,
+textarea:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
+  outline: 3px solid var(--focus-color);
+  outline-offset: 2px;
+}
+
+/* skip link: first focusable element, visible only when focused */
+.skip-link { position: absolute; left: 8px; top: -60px; z-index: 100; padding: 8px 12px;
+  background: #fff; color: var(--link-color); border: 2px solid var(--focus-color); border-radius: var(--radius); }
+.skip-link:focus { top: 8px; }
+
+/* --- buttons --------------------------------------------------------------
+ * One hierarchy for all pages: .button (primary, filled), .button.secondary
+ * (outlined), .button.alert/.danger (destructive), .link-button (text).
+ * Old size classes (tiny, small, large) still work. */
+.content-body .button, .content-body .btn-primary, .content-body .btn-secondary,
+.content-body input[type=submit], .content-body input[type=button], .content-body button:not(.link-button) {
+  display: inline-block; box-sizing: border-box; min-height: 44px; margin: 4px 8px 4px 0; padding: 10px 18px;
+  border: 2px solid var(--primary-color); border-radius: var(--radius); box-shadow: none;
+  background: var(--primary-color); color: #fff; font: inherit; font-size: 1rem; font-weight: 600;
+  line-height: 1.25; text-align: center; text-decoration: none; cursor: pointer; vertical-align: middle;
+  transition: background-color .15s ease, border-color .15s ease;
+}
+.content-body .button:hover, .content-body .button:focus, .content-body .btn-primary:hover,
+.content-body input[type=submit]:hover, .content-body input[type=button]:hover, .content-body button:not(.link-button):hover {
+  background: var(--primary-color-dark); border-color: var(--primary-color-dark); color: #fff;
+}
+.content-body .button.secondary, .content-body .btn-secondary, .content-body button.secondary,
+.content-body input.secondary, .content-body input[type=button]:not(.button) {
+  background: #fff; color: var(--primary-color);
+}
+.content-body .button.secondary:hover, .content-body .button.secondary:focus, .content-body .btn-secondary:hover,
+.content-body button.secondary:hover, .content-body input.secondary:hover, .content-body input[type=button]:not(.button):hover {
+  background: var(--surface-color); color: var(--primary-color-dark);
+}
+.content-body .button.alert, .content-body .button.danger, .content-body button.danger, .content-body input.danger {
+  background: var(--danger-color); border-color: var(--danger-color); color: #fff;
+}
+.content-body .button.alert:hover, .content-body .button.danger:hover, .content-body button.danger:hover, .content-body input.danger:hover {
+  background: #7d1013; border-color: #7d1013;
+}
+.content-body .button.danger.secondary, .content-body button.danger.secondary {
+  background: #fff; color: var(--danger-color); border-color: var(--danger-color);
+}
+.content-body .button.danger.secondary:hover, .content-body button.danger.secondary:hover { background: var(--danger-bg); color: #7d1013; }
+.content-body .button.tiny, .content-body .button.small, .content-body button.small {
+  min-height: 32px; padding: 4px 12px; font-size: .9rem;
+}
+.content-body .button.large, .content-body button.large { padding: 14px 28px; font-size: 1.2rem; }
+.content-body .button[disabled], .content-body button[disabled], .content-body input[disabled],
+.content-body .button.disabled {
+  opacity: .55; cursor: not-allowed;
+}
+/* the start page's login button is a full-width block */
+.content-body.login a.button { display: block; }
+
+/* state-changing actions are POST forms; these show them inline like links */
+form.inline-action { display: inline; margin: 0; }
+button.link-button {
+  display: inline; margin: 0; padding: 0; min-height: 0; border: 0; background: none; box-shadow: none;
+  font: inherit; color: var(--link-color); text-decoration: underline; text-underline-offset: 2px; cursor: pointer;
+}
+button.link-button:hover, button.link-button:focus { background: none; color: var(--primary-color-dark); text-decoration-thickness: 2px; }
+button.link-button.danger { color: var(--danger-color); }
+
+/* a row of actions: primary first, then secondary, then a cancel link */
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 1.5em 0 1em; }
+.actions .button, .actions button, .actions input[type=submit] { margin: 0; }
+
+/* --- forms ------------------------------------------------------------- */
+.content-body input[type=text], .content-body input[type=email], .content-body input[type=password],
+.content-body input[type=url], .content-body input[type=number], .content-body input[type=search],
+.content-body input[type=datetime-local], .content-body input[type=date], .content-body input[type=time],
+.content-body input:not([type]), .content-body select, .content-body textarea {
+  box-sizing: border-box; max-width: 100%; min-height: 40px; padding: 7px 10px;
+  border: 1px solid #8a96a3; border-radius: 4px; background: #fff; color: var(--text-color);
+  font: inherit; font-size: 1rem;
+}
+.content-body textarea { width: 100%; min-height: 8em; }
+.content-body input[type=file] { max-width: 100%; font: inherit; }
+.content-body input[type=checkbox], .content-body input[type=radio] { width: 18px; height: 18px; margin: 0 6px 0 0; vertical-align: -3px; accent-color: var(--primary-color); }
+.content-body label { font-weight: 600; }
+.content-body label.choice, .content-body .choice label { font-weight: 400; }
+.content-body fieldset { margin: 0 0 1.5em; padding: 12px 16px; border: 1px solid var(--border-color); border-radius: var(--radius); }
+.content-body legend { padding: 0 6px; font-weight: 600; }
+
+/* field: label above control, hint below the label, error above the control */
+.field { margin: 0 0 1.25em; }
+.field > label, .field > .label { display: block; margin-bottom: 4px; }
+.field .required-marker { color: var(--danger-color); }
+.field .optional-marker { color: var(--muted-color); font-weight: 400; }
+.field-hint, .helptext { display: block; margin: 2px 0 6px; color: var(--muted-color); font-size: .9rem; font-weight: 400; }
+.field-check { display: flex; align-items: flex-start; gap: 8px; }
+.field-check input { margin-top: 3px; }
+.field-check label { display: inline; }
+.field.has-error input, .field.has-error select, .field.has-error textarea { border: 2px solid var(--danger-color); }
+ul.errorlist { margin: 4px 0 6px; padding: 0; list-style: none; color: var(--danger-color); font-weight: 600; }
+ul.errorlist li { font-size: .95rem; }
+.form-narrow { max-width: 42rem; }
+
+/* Django's as_table forms (election, email and other forms) */
+table.pretty th label { font-weight: 600; }
+table.pretty .helptext { margin-top: 4px; }
+
+/* --- tables ------------------------------------------------------------ */
+.content-body table { border-collapse: collapse; border: 1px solid var(--border-color); background: #fff; }
+.content-body table th, .content-body table td { padding: 8px 12px; border-bottom: 1px solid var(--border-color); font-size: .95rem; color: var(--text-color); line-height: 1.4; vertical-align: top; }
+.content-body table th { background: var(--surface-color); font-weight: 600; }
+.content-body table tr:nth-of-type(even) { background: #fafbfc; }
+.table-scroll { max-width: 100%; overflow-x: auto; }
+
+/* --- boxes ------------------------------------------------------------- */
+.highlight-box, .callout {
+  display: block; margin: 1em 0; padding: 12px 16px; border: 1px solid var(--border-color);
+  border-left: 5px solid var(--primary-color); border-radius: var(--radius); background: var(--surface-color);
+}
+.callout > :last-child { margin-bottom: 0; }
+.callout-info { border-left-color: var(--info-color); background: var(--info-bg); }
+.callout-success { border-left-color: var(--success-color); background: var(--success-bg); }
+.callout-warning { border-left-color: #b7791f; background: var(--warning-bg); }
+.callout-danger { border-left-color: var(--danger-color); background: var(--danger-bg); }
+.callout-title { display: block; margin: 0 0 .35em; font-size: 1.05rem; font-weight: 700; }
+.round { border-radius: var(--radius); }
+.card { margin: 0 0 1.25em; padding: 16px 20px; border: 1px solid var(--border-color); border-radius: var(--radius); background: #fff; }
+.card > :last-child { margin-bottom: 0; }
+.announcement-banner { padding: 10px 20px; border-bottom: 1px solid #e0c97a; background: var(--warning-bg); color: var(--text-color); text-align: center; }
+.error, p.error { color: var(--danger-color); font-weight: 600; }
+
+/* expandable sections (<details>) */
+.content-body details { margin: 1em 0; border: 1px solid var(--border-color); border-radius: var(--radius); background: #fff; }
+.content-body details > summary { padding: 10px 16px; cursor: pointer; font-weight: 600; color: var(--link-color); }
+.content-body details[open] > summary { border-bottom: 1px solid var(--border-color); }
+.content-body details > .details-body { padding: 12px 16px; overflow-wrap: anywhere; }
+
+/* page header: title with a back link above it */
+.back-link { display: inline-block; margin: 0 0 .25em; font-size: .95rem; }
+.back-link::before { content: "\2190\00a0"; }
+.page-lead { max-width: 48rem; color: var(--muted-color); font-size: 1.05rem; }
+
+/* ballot trackers and fingerprints: long, unbroken, must stay readable */
+.tracker { display: inline-block; max-width: 100%; padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 4px;
+  background: var(--surface-color); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 1.05rem;
+  font-weight: 600; overflow-wrap: anywhere; word-break: break-all; }
+
+/* status label next to an election's name */
+.status-badge { display: inline-block; padding: 2px 10px; border-radius: 999px; border: 1px solid currentColor;
+  font-size: .85rem; font-weight: 600; line-height: 1.5; vertical-align: middle; white-space: nowrap; }
+.status-draft { color: var(--muted-color); background: var(--surface-color); }
+.status-scheduled, .status-open { color: var(--success-color); background: var(--success-bg); }
+.status-closed, .status-tallying { color: var(--warning-color); background: var(--warning-bg); }
+.status-released { color: var(--info-color); background: var(--info-bg); }
+.status-archived { color: var(--muted-color); background: #fff; }
+
+/* --- phones and tablets ------------------------------------------------- */
+@media only screen and (max-width: 64em) {
+  .content-body tt, .content-body pre { overflow-wrap: anywhere; }
+  .content-body pre { white-space: pre-wrap; }
+  .content-body textarea, .content-body img { max-width: 100%; }
+  table.pretty { display: block; width: fit-content; max-width: 100%; overflow-x: auto; }
+  table.pretty tt { overflow-wrap: normal; }
+}
+@media only screen and (max-width: 40em) {
+  .row { padding: 10px 16px 24px; }
+  .content-body h1 { font-size: 1.5rem; }
+  .actions { flex-direction: column; align-items: stretch; }
+  .actions .button, .actions button, .actions input[type=submit] { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}

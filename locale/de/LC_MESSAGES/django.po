@@ -1352,7 +1352,7 @@ msgid "This election is open to: %(eligibility)s"
 msgstr "Diese Wahl steht offen für: %(eligibility)s"
 
 #: helios/templates/election_view.html:278 helios_auth/templates/login_box.html:3 helios_auth/templates/auth/devlogin.html:21
-#: server_ui/templates/base.html:50 server_ui/templates/index.html:84
+#: server_ui/templates/base.html:50 server_ui/templates/index.html:85
 msgid "Log in"
 msgstr "Anmelden"
 
@@ -2525,7 +2525,7 @@ msgid "Actions"
 msgstr "Aktionen"
 
 #: helios/templates/voters_list.html:141 helios_auth/templates/ldapauth/login.html:21 helios_auth/templates/password/login.html:5
-#: helios_auth/templates/password/login.html:24
+#: helios_auth/templates/password/login.html:25
 msgid "Login"
 msgstr "Anmelden"
 
@@ -3082,16 +3082,16 @@ msgstr "Fortfahren"
 msgid "JavaScript is disabled. Please press the button to continue."
 msgstr "JavaScript ist deaktiviert. Bitte klicken Sie auf die Schaltfläche, um fortzufahren."
 
-#: helios_auth/templates/base.html:10 helios_auth/templates/index.html:5
+#: helios_auth/templates/base.html:10 helios_auth/templates/index.html:6
 msgid "Authentication"
 msgstr "Anmeldung"
 
-#: helios_auth/templates/index.html:9
+#: helios_auth/templates/index.html:10
 #, python-format
 msgid "You are currently logged in as<br /><b>%(user_id)s</b> via <b>%(user_type)s</b>."
 msgstr "Sie sind derzeit angemeldet als<br /><b>%(user_id)s</b> über <b>%(user_type)s</b>."
 
-#: helios_auth/templates/index.html:12
+#: helios_auth/templates/index.html:13
 msgid "logout"
 msgstr "abmelden"
 
@@ -3111,11 +3111,11 @@ msgstr "Erneut anmelden"
 msgid "Password Forgotten"
 msgstr "Passwort vergessen"
 
-#: helios_auth/templates/password/forgot.html:19
+#: helios_auth/templates/password/forgot.html:20
 msgid "Send Reminder"
 msgstr "Erinnerung senden"
 
-#: helios_auth/templates/password/forgot.html:19
+#: helios_auth/templates/password/forgot.html:20
 msgid "Your Username"
 msgstr "Ihr Benutzername"
 
@@ -3202,6 +3202,10 @@ msgstr "Olivier Pereira ist Forschungsmitarbeiter der belgischen Wissenschaftsst
 msgid "Dan Wallach is an associate professor in the Department of Computer Science at Rice University in Houston, Texas and is the director of NSF’s ACCURATE (A Center for Correct, Usable, Reliable, Auditable and Transparent Elections). His research involves computer security and the issues of building secure and robust software systems for the Internet. He has testified about voting security issues before government bodies in the U.S., Mexico, and the European Union, has served as an expert witness in a number of voting technology lawsuits, and participated in California’s “top-to-bottom” audit of its voting systems."
 msgstr "Dan Wallach ist außerordentlicher Professor am Department of Computer Science der Rice University in Houston, Texas, und Direktor von ACCURATE (A Center for Correct, Usable, Reliable, Auditable and Transparent Elections) der NSF. Seine Forschung befasst sich mit Computersicherheit und dem Bau sicherer und robuster Softwaresysteme für das Internet. Er hat vor Regierungsstellen in den USA, in Mexiko und in der Europäischen Union zu Sicherheitsfragen bei Wahlen ausgesagt, war Sachverständiger in mehreren Gerichtsverfahren zu Wahltechnik und nahm am „Top-to-Bottom“-Audit der Wahlsysteme Kaliforniens teil."
 
+#: server_ui/templates/base.html:21
+msgid "Skip to main content"
+msgstr "Zum Hauptinhalt springen"
+
 #: server_ui/templates/base.html:27
 msgid "Meta navigation"
 msgstr "Meta-Navigation"
@@ -3220,27 +3224,27 @@ msgstr "Abmelden"
 msgid "Logged in as <strong>%(name)s</strong> for the election <em>%(election)s</em>."
 msgstr "Angemeldet als <strong>%(name)s</strong> für die Wahl <em>%(election)s</em>."
 
-#: server_ui/templates/base.html:95
+#: server_ui/templates/base.html:86
 msgid "Contact, imprint and further information"
 msgstr "Kontakt, Impressum und Zusatzinformationen"
 
-#: server_ui/templates/base.html:97
+#: server_ui/templates/base.html:88
 msgid "About Helios"
 msgstr "Über Helios"
 
-#: server_ui/templates/base.html:98
+#: server_ui/templates/base.html:89
 msgid "Imprint"
 msgstr "Impressum"
 
-#: server_ui/templates/base.html:99
+#: server_ui/templates/base.html:90
 msgid "Privacy"
 msgstr "Datenschutz"
 
-#: server_ui/templates/base.html:100
+#: server_ui/templates/base.html:91
 msgid "Accessibility"
 msgstr "Barrierefreiheit"
 
-#: server_ui/templates/base.html:102
+#: server_ui/templates/base.html:93
 msgid "Contact"
 msgstr "Kontakt"
 
@@ -3397,47 +3401,47 @@ msgstr "Nein, das sollten Sie nicht. Online-Wahlen sind geeignet, wenn keine gro
 msgid "If you’d like to use a truly verifiable voting system for your public-office election, we recommend an in-person election. Helios could be adapted to the in-person, precinct voting setting, but we have not done this work yet, and we intend to focus on online elections first."
 msgstr "Wenn Sie für eine öffentliche Wahl ein wirklich überprüfbares Wahlsystem einsetzen möchten, empfehlen wir eine Präsenzwahl. Helios könnte für die Stimmabgabe im Wahllokal angepasst werden, doch diese Arbeit haben wir noch nicht geleistet; wir konzentrieren uns zunächst auf Online-Wahlen."
 
-#: server_ui/templates/index.html:27
+#: server_ui/templates/index.html:28
 msgid "There are currently no elections available."
 msgstr "Derzeit sind keine Abstimmungen verfügbar."
 
-#: server_ui/templates/index.html:36
+#: server_ui/templates/index.html:37
 msgid "Create election"
 msgstr "Wahl erstellen"
 
-#: server_ui/templates/index.html:39
+#: server_ui/templates/index.html:40
 msgid "Committee administration"
 msgstr "Gremien Administration"
 
-#: server_ui/templates/index.html:41
+#: server_ui/templates/index.html:42
 msgid "See all groups"
 msgstr "Alle Gruppen anzeigen"
 
-#: server_ui/templates/index.html:43
+#: server_ui/templates/index.html:44
 msgid "Administration"
 msgstr "Administration"
 
-#: server_ui/templates/index.html:54
+#: server_ui/templates/index.html:55
 msgid "See all elections"
 msgstr "Alle Wahlen anzeigen"
 
-#: server_ui/templates/index.html:58
+#: server_ui/templates/index.html:59
 msgid "Recent votes"
 msgstr "Meine Abstimmungen"
 
-#: server_ui/templates/index.html:67
+#: server_ui/templates/index.html:68
 msgid "See all votes"
 msgstr "Alle Stimmabgaben anzeigen"
 
-#: server_ui/templates/index.html:71
+#: server_ui/templates/index.html:72
 msgid "None yet."
 msgstr "Noch keine."
 
-#: server_ui/templates/index.html:90
+#: server_ui/templates/index.html:91
 msgid "Select an election to start voting. You will be asked for your voting credentials after you complete a ballot."
 msgstr "Wählen Sie eine Abstimmung aus, um sich daran zu beteiligen. Während des Verlaufs der Abstimmung werden Sie nach den Tokens zur Wahlberechtigung gefragt."
 
-#: server_ui/templates/index.html:95
+#: server_ui/templates/index.html:96
 msgid "Made with"
 msgstr "Erstellt mit"
 

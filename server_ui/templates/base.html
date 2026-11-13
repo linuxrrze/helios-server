@@ -18,7 +18,7 @@
 
 </head>
 <body>
-    
+ <a class="skip-link" href="#main-content">{% translate "Skip to main content" %}</a>
  <div class="container">
     <header>
 	 <div class="meta-header">
@@ -62,20 +62,10 @@
     <div class="announcement-banner">{{announcement}}</div>
     {% endif %}
 
-     {% if user %}
-     <main class="content-body userlogin">
-     {% else %}
-       {% if voter %}
-     <main class="content-body voterlogin">
-       {% else %}
-	{% if settings.SHOW_LOGIN_OPTIONS %}
-     <main class="content-body login">
-	{% else %}
-     <main class="content-body">
-	{% endif %}
-       {% endif %}
-     {% endif %}
-
+     {% comment %}Pages that offer the login (start page, login pages) set the "login" layout: a narrow box
+        over the site's background image. All other pages use the full-width layout, also for anonymous
+        visitors.{% endcomment %}
+     <main id="main-content" tabindex="-1" class="content-body {% block layout_class %}{% if user %}userlogin{% elif voter %}voterlogin{% endif %}{% endblock %}">
      <div class="content">
 	<div class="row">    
 	    <p class="logo">

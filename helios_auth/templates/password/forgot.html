@@ -5,6 +5,7 @@
 <h2>{% localized_setting "SITE_TITLE" %} &mdash; {% translate "Password Forgotten" %}</h2>
 {% endblock %}
 
+{% block layout_class %}{% if user %}userlogin{% elif voter %}voterlogin{% elif settings.SHOW_LOGIN_OPTIONS %}login{% endif %}{% endblock %}
 {% block content %}
 
 {% if error %}

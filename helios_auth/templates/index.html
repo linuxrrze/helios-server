@@ -1,6 +1,7 @@
 {% extends TEMPLATE_BASE %}
 {% load i18n %}
 
+{% block layout_class %}{% if user %}userlogin{% elif voter %}voterlogin{% elif settings.SHOW_LOGIN_OPTIONS %}login{% endif %}{% endblock %}
 {% block content %}
 <h1>{% translate "Authentication" %}</h1>
 
