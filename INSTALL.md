@@ -124,7 +124,8 @@ Older versions of Helios used Celery with RabbitMQ. To upgrade:
 Helios is configured with environment variables. All of them, including the site's
 branding, footer links and imprint/privacy pages, are listed in
 [docs/configuration.md](docs/configuration.md). Single sign-on with SAML or OpenID Connect
-is described in [docs/sso.md](docs/sso.md).
+is described in [docs/sso.md](docs/sso.md), provisioning of users, roles and voter groups
+by an identity management system (SCIM 2.0) in [docs/scim.md](docs/scim.md).
 
 ## Google Auth Configuration
 

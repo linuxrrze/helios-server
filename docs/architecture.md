@@ -36,6 +36,7 @@ arithmetic.
 | `helios/workflows/homomorphic.py` | Encrypted answers, encrypted votes and the homomorphic tally. |
 | `helios/datatypes/` | JSON serialization of crypto and election objects (the `legacy/...` formats). |
 | `helios_auth/` | User accounts and the pluggable login systems (`auth_systems/`). |
+| `helios_scim/` | SCIM 2.0 server for provisioning by an identity management system ([scim.md](scim.md)); the source-independent mapping to users, roles and voter groups is `helios/provisioning.py`. |
 | `server_ui/` | The site shell: home/about/FAQ/privacy pages, the shared base template (`templates/base.html`) and the site CSS (`media/`). |
 | `heliosbooth/` | The JavaScript voting booth, and the single-ballot verifier. |
 | `heliosverifier/` | The JavaScript whole-election verifier. |
