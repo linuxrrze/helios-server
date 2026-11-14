@@ -531,6 +531,68 @@ class OtherWaysTests(AddressTestCase):
     self.assertEqual(copy.short_name, copy.uuid)
 
 
+class LookupTests(AddressTestCase):
+  """links typed in another case still find the election, unless ambiguous"""
+
+  def make_election(self, short_name, uuid):
+    return Election.objects.create(admin=self.unia, uuid=uuid, short_name=short_name, name='x')
+
+  def view_url(self, uuid):
+    return '/helios/elections/%s/view' % uuid
+
+  def test_case_insensitive_hit(self):
+    self.make_election('board-2026', 'e1')
+    self.assertEqual(Election.get_by_short_name('Board-2026').uuid, 'e1')
+    response = self.client.get('/helios/e/BOARD-2026')
+    self.assertTrue(response['location'].endswith(self.view_url('e1')))
+
+  def test_exact_wins_over_case_variant(self):
+    # both from before the check
+    self.make_election('Board', 'e1')
+    self.make_election('board', 'e2')
+    self.assertEqual(Election.get_by_short_name('Board').uuid, 'e1')
+    self.assertEqual(Election.get_by_short_name('board').uuid, 'e2')
+    self.assertTrue(self.client.get('/helios/e/board')['location'].endswith(self.view_url('e2')))
+
+  def test_ambiguous_is_not_found(self):
+    self.make_election('Board', 'e1')
+    self.make_election('board', 'e2')
+    self.assertIsNone(Election.get_by_short_name('BOARD'))
+    self.assertEqual(self.client.get('/helios/e/BOARD').status_code, 404)
+    self.assertEqual(self.client.get('/helios/e/BOARD/vote').status_code, 404)
+
+  def test_not_found(self):
+    self.make_election('board', 'e1')
+    self.assertIsNone(Election.get_by_short_name('boards'))
+    self.assertEqual(self.client.get('/helios/e/boards').status_code, 404)
+
+  def test_deleted_elections(self):
+    deleted = self.make_election('Board', 'e1')
+    deleted.soft_delete()
+    self.assertIsNone(Election.get_by_short_name('board'))
+    self.assertEqual(Election.get_by_short_name('board', include_deleted=True).uuid, 'e1')
+    # a deleted case variant doesn't make a live election ambiguous
+    self.make_election('BOARD', 'e2')
+    self.assertEqual(Election.get_by_short_name('board').uuid, 'e2')
+
+  def test_vote_link(self):
+    self.make_election('board', 'e1')
+    response = self.client.get('/helios/e/Board/vote')
+    # not started yet: the election was found
+    self.assertEqual(response.status_code, 200)
+    self.assertEqual(self.client.get('/helios/e/Boards/vote').status_code, 404)
+
+  def test_trustee_link(self):
+    election = self.make_election('board', 'e1')
+    trustee = Trustee.objects.create(election=election, uuid='t1', name='T', email='t@example.org', secret='s3cret')
+    from helios.security import HELIOS_TRUSTEE_UUID
+    response = self.client.get('/helios/t/Board/t@example.org/s3cret')
+    self.assertEqual(response.status_code, 302)
+    self.assertTrue(response['location'].endswith('/helios/elections/e1/trustees/t1/home'))
+    self.assertEqual(self.client.session[HELIOS_TRUSTEE_UUID], trustee.uuid)
+    self.assertEqual(self.client.get('/helios/t/Board/t@example.org/wrong').status_code, 404)
+
+
 class LinkTests(AddressTestCase):
   """links with the UUID as address: on the pages, in emails, for trustees"""
 

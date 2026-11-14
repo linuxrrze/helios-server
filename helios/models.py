@@ -304,11 +304,18 @@ class Election(HeliosModel):
 
   @classmethod
   def get_by_short_name(cls, short_name, include_deleted=False):
+    """
+    The election with this address, or None. An address typed in another case
+    (Board-2026 for board-2026) is found too, unless that is ambiguous: older
+    addresses may differ only in case, and then only the exact one is found.
+    """
+    manager = cls.objects_with_deleted if include_deleted else cls.objects
     try:
-      manager = cls.objects_with_deleted if include_deleted else cls.objects
       return manager.get(short_name=short_name)
     except cls.DoesNotExist:
-      return None
+      pass
+    matches = list(manager.filter(short_name__iexact=short_name)[:2])
+    return matches[0] if len(matches) == 1 else None
 
   @staticmethod
   def questions_problem(questions):

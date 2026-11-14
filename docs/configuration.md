@@ -193,8 +193,9 @@ Addresses starting with any configured prefix and a hyphen (in any case, e.g. `U
 chosen by anyone else. These rules apply to site administrators too. Addresses are unique
 regardless of case: if `board-2026` exists, `Board-2026` is refused as taken (also if the other
 election was deleted). They are stored as entered; addresses created before this check are kept,
-even if two of them differ only in case. Links are looked up exactly as stored, so
-`/helios/e/Board-2026` does not find `board-2026`.
+even if two of them differ only in case. Links find the election also when typed in another
+case (`/helios/e/Board-2026` finds `board-2026`); if two older addresses differ only in case,
+only the exact spelling finds each of them.
 
 Example for two universities and a medical faculty with its own prefix:
 
