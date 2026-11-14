@@ -122,7 +122,9 @@ granted by SCIM and is revoked with the membership.
 
 **Voter groups.** A provisioned voter group is owned by an account that stands for the client
 ("SCIM: idm"; nobody can log in as it). Its administrators are the members of the administrator
-groups above; site administrators can open it, too. Administrators need the right to create
+groups above, and only they: administrators can't be added in Helios. Site administrators who
+aren't among them see only the group's overview (name, owner, number of members), as for local
+groups. Administrators need the right to create
 elections (see `ELECTION_CREATORS_ONLY`) to see voter groups at all. Each member has one vote;
 first name, last name and email come from the user (`name.givenName`, `name.familyName`, the
 primary email). Elections are prepared from a provisioned voter group as from any other: the
@@ -132,13 +134,21 @@ Group names are unique per client (case-insensitive) and at most 100 characters 
 must be users provisioned by the same client; other members (unknown ids, nested groups) are
 ignored and logged.
 
+**Group log.** Besides the server log (logger `helios.provisioning`), changes made by SCIM are
+recorded in the group's log on the group's page, shown to its administrators with "SCIM:
+&lt;client&gt;" as the author: created, renamed, and member updates as counts ("2 added, 1
+removed; 3 administrator(s)"), without member data. Elections prepared from the group are
+recorded there, too. When the group is deleted, its log goes with it; the server log keeps the
+deletion.
+
 ## 4. What is locked in Helios
 
 Provisioned entities show the badge "Provisioned (SCIM: &lt;client&gt;)" (voter group lists and
 pages, election and voter group administrators, the site administrators' user search). The
 server refuses, with an explanation (HTTP 403), every change to
 
-- a provisioned voter group: adding or removing members, adding or removing administrators;
+- a provisioned voter group: adding or removing members, adding or removing administrators,
+  transferring the ownership;
 - a provisioned user's name and email address (kept on login, see section 2).
 
 Roles have no editing page in Helios; `manage.py merge_duplicate_users` skips provisioned users.
