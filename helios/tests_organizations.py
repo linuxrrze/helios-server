@@ -1025,20 +1025,95 @@ class ElectionMailTests(OrganizationTestCase):
       self.assertTrue(message.body.endswith('\n--\nElectoral office\nUniversity C\n'), message.body)
     self.assertIn('/t/%s/trustee@example.net/s3cret' % election.short_name, mail.outbox[0].body)
 
+  def assertFromUnic(self, message, signature='Electoral office\nUniversity C'):
+    self.assertEqual(message.from_email, '"Electoral office, University C" <elections@example.org>')
+    self.assertEqual(message.reply_to, ['elections@uni-c.example.org'])
+    self.assertTrue(message.body.endswith('\n--\n%s\n' % signature), message.body)
+    self.assertNotIn('\n--\nHelios', message.body)
+
   @override_settings(ORGANIZATIONS=ORGS2)
-  def test_admin_notifications_and_other_emails_stay_the_operators(self):
+  def test_admin_notifications_from_the_elections_organization(self):
     from helios import tasks
     from helios.tests import run_queued_tasks
     election = self.make_election(self.unia_user, organization='unic')
+    tasks.election_notify_admin.enqueue(election_id=election.id, subject='voter file processed', body='done\n')
+    run_queued_tasks()
+    self.assertEqual(mail.outbox[0].body, 'done\n\n--\nElectoral office\nUniversity C\n')
+    self.assertFromUnic(mail.outbox[0])
+    # in the language of the person whose action sent it
+    tasks.election_notify_admin.enqueue(election_id=election.id, subject='s', body='erledigt', language='de')
+    run_queued_tasks()
+    from email.header import decode_header, make_header
+    self.assertEqual(str(make_header(decode_header(mail.outbox[1].from_email))),
+                     'Wahlamt der Universität C <elections@example.org>')
+    self.assertEqual(mail.outbox[1].body, 'erledigt\n\n--\nWahlamt\nUniversität C\n')
+    # a body queued before the signature was added here keeps its own
+    tasks.election_notify_admin.enqueue(election_id=election.id, subject='s', body='done\n\n--\nHelios\n')
+    run_queued_tasks()
+    self.assertEqual(mail.outbox[2].body, 'done\n\n--\nHelios\n')
+    self.assertIsNone(organizations.mail_organization())
+
+  @override_settings(ORGANIZATIONS=ORGS2)
+  def test_admin_notifications_of_the_tasks(self):
+    from helios import tasks
+    from helios.models import VoterFile
+    from helios.tests import run_queued_tasks
+    election = self.make_election(self.unia_user, organization='unic')
+    # tally computed
+    with mock.patch.object(Election, 'compute_tally'):
+      tasks.election_compute_tally.enqueue(election_id=election.id, language='en')
+      run_queued_tasks()
+    # voter file processed, with the opted-out voters in their own email
+    from helios.models import EmailOptOut
+    EmailOptOut.add_opt_out('optedout@example.net')
+    voter_file = VoterFile.objects.create(election=election, voter_file_content=(
+      'password,v1,v1@example.net,Voter One\npassword,v2,optedout@example.net,Voter Two\n'))
+    tasks.voter_file_process.enqueue(voter_file_id=voter_file.id, language='en')
+    run_queued_tasks()
+    subjects = sorted(m.subject for m in mail.outbox)
+    self.assertEqual(subjects, ['Opted-out voters not added to election Board election',
+                                'encrypted tally computed', 'voter file processed'])
+    for message in mail.outbox:
+      with self.subTest(subject=message.subject):
+        self.assertEqual(message.to, ['"unia-admin" <unia-admin>'])  # the election's administrator
+        self.assertFromUnic(message)
+
+  @override_settings(ORGANIZATIONS=ORGS2)
+  def test_admin_notification_sent_by_a_view(self):
+    # as the views send the trustee notes (public key uploaded, partial decryption)
+    from helios import tasks
+    election = self.make_election(self.unia_user, organization='unic')
+    tasks.notify_election_admin(election, 'Board election - trustee pk upload', 'trustee Tara uploaded a pk.')
+    self.assertEqual(mail.outbox[0].body, 'trustee Tara uploaded a pk.\n\n--\nElectoral office\nUniversity C\n')
+    self.assertFromUnic(mail.outbox[0])
+    with open(os.path.join(settings.ROOT_PATH, 'helios', 'views.py'), encoding='utf-8') as f:
+      self.assertNotIn('election.admin.send_message', f.read())
+
+  def test_admin_notifications_of_the_default_organization(self):
+    from helios import tasks
+    from helios.tests import run_queued_tasks
+    election = self.make_election(self.unia_user)
     tasks.election_notify_admin.enqueue(election_id=election.id, subject='voter file processed', body='done')
     run_queued_tasks()
     self.assertEqual(mail.outbox[0].from_email, 'Example Elections <elections@example.org>')
     self.assertEqual(mail.outbox[0].reply_to, [])
-    # another sender address is never touched
+    self.assertEqual(mail.outbox[0].body, 'done\n\n--\nHelios\n')
+
+  @override_settings(ORGANIZATIONS=ORGS2)
+  def test_other_sender_addresses_are_not_touched(self):
+    election = self.make_election(self.unia_user, organization='unic')
     from django.core.mail import send_mail
     with organizations.mail_context(election):
       send_mail('s', 'b', 'Other <other@example.org>', ['x@example.net'])
-    self.assertEqual(mail.outbox[1].from_email, 'Other <other@example.org>')
+    self.assertEqual(mail.outbox[0].from_email, 'Other <other@example.org>')
+
+  @override_settings(ORGANIZATIONS=ORGS2)
+  def test_emails_not_about_an_election_stay_the_operators(self):
+    self.client.cookies[ENTRY] = 'unic'  # also for a visitor of an organization's entry link
+    self.client.post('/optout/', {'email': 'someone@example.net'})
+    self.assertEqual(len(mail.outbox), 1)
+    self.assertEqual(mail.outbox[0].from_email, 'elections@example.org')
+    self.assertEqual(mail.outbox[0].reply_to, [])
 
   @override_settings(ORGANIZATIONS=ORGS2)
   def test_preview_shows_the_organizations_signature(self):
@@ -1054,3 +1129,254 @@ class ElectionMailTests(OrganizationTestCase):
     with self.settings(SITE_TITLE='Example Elections', LOCALIZED_SETTINGS={'SITE_TITLE': {'de': 'Beispielwahlen'}}):
       self.client.post('/auth/password/forgot', {'username': 'jdoe', 'csrf_token': 'tok'}, HTTP_ACCEPT_LANGUAGE='de')
     self.assertTrue(mail.outbox[0].body.rstrip().endswith('Beispielwahlen'), mail.outbox[0].body)
+
+
+##
+## phase 3: entry links /<slug>/ and the entry organization
+##
+
+ENTRY = organizations.ENTRY_COOKIE_NAME
+
+
+class EntryLinkConfigurationTests(TestCase):
+
+  def test_reserved_slugs_are_refused(self):
+    for slug in ('helios', 'auth', 'booth', 'verifier', 'static', 'scim', 'admin', 'imprint', 'privacy',
+                 'accessibility', 'about', 'faq', 'docs', 'i18n', 'jsi18n', 'optout', 'robots', 'favicon'):
+      with self.subTest(slug=slug):
+        with self.assertRaisesMessage(ImproperlyConfigured, '"%s" cannot be an organization slug' % slug):
+          project_settings.parse_organizations(_config(**{slug: {'name': 'A'}}))
+
+  def test_reserved_paths_from_the_url_configuration(self):
+    paths = organizations.reserved_paths()
+    for segment in ('helios', 'auth', 'scim', 'i18n', 'jsi18n', 'booth', 'verifier', 'static', 'optout', 'optin',
+                    'about', 'docs', 'faq', 'privacy', 'imprint', 'accessibility', 'booth-dark-mode.css'):
+      self.assertIn(segment, paths)
+    # the fixed list covers every path of the URL configuration a slug could have
+    slug_re = re.compile(project_settings.ORGANIZATION_SLUG_RE)
+    self.assertEqual({p for p in paths if slug_re.match(p)} - project_settings.RESERVED_ORGANIZATION_SLUGS, set())
+
+  @override_settings(RESERVED_ORGANIZATION_SLUGS=frozenset(), ORGANIZATIONS={'optin': {'name': {'': 'A'}}})
+  def test_collision_with_the_url_configuration_stops_the_start(self):
+    with self.assertRaisesMessage(ImproperlyConfigured, 'the organization slug(s) optin collide with paths'):
+      organizations.check_entry_slugs()
+    with self.assertRaisesMessage(ImproperlyConfigured, 'optin'):
+      self.client.get('/')
+
+  @override_settings(ORGANIZATIONS=ORGS)
+  def test_configured_slugs_pass(self):
+    organizations.check_entry_slugs()
+
+
+class WithoutOrganizationsTests(OrganizationTestCase):
+  """Without an organizations file, nothing changes: no cookie, no entry links."""
+
+  def test_no_cookie_and_no_entry_links(self):
+    response = self.client.get('/')
+    self.assertNotIn(ENTRY, response.cookies)
+    for path in ('/unia/', '/unia', '/unia/imprint', '/x/'):
+      with self.subTest(path=path):
+        self.assertEqual(self.client.get(path).status_code, 404)
+
+  def test_cookie_is_ignored(self):
+    self.client.cookies[ENTRY] = 'unia'
+    response = self.client.get('/about')
+    self.assertNotIn('University A', response.content.decode())
+    self.assertEqual(organizations.entry_organization(SimpleNamespace(COOKIES={ENTRY: 'unia'})), None)
+
+
+@override_settings(ORGANIZATIONS=ORGS, SITE_TITLE='Example Elections', SITE_CSS_URL='/static/site/operator.css',
+                   PRIVACY_URL='/privacy', HELP_EMAIL_ADDRESS='help@example.org')
+class EntryLinkTests(OrganizationTestCase):
+  """/<slug>/ shows the organization's CI on all pages that are not an election's pages for voters and trustees."""
+
+  assertCI = ElectionPagesTests.assertCI
+  UNIA_MARKS = ElectionPagesTests.UNIA_MARKS
+  DEFAULT_MARKS = ElectionPagesTests.DEFAULT_MARKS
+
+  def login(self, user):
+    # without opening the start page, which would end the entry organization
+    session = self.client.session
+    session['user'] = {'type': user.user_type, 'user_id': user.user_id}
+    session['csrf_token'] = 'tok'
+    session.save()
+
+  def enter(self, slug='unia'):
+    response = self.client.get('/%s/' % slug)
+    self.assertEqual(response.status_code, 200)
+    return response
+
+  def test_entry_link_sets_the_cookie(self):
+    response = self.enter()
+    self.assertCI(response, unia=True)
+    cookie = response.cookies[ENTRY]
+    self.assertEqual(cookie.value, 'unia')
+    self.assertEqual(cookie['path'], '/')
+    self.assertEqual(cookie['samesite'], 'Lax')
+    self.assertTrue(cookie['httponly'])
+    self.assertFalse(cookie['secure'])
+    self.assertEqual(cookie['max-age'], organizations.ENTRY_COOKIE_MAX_AGE)
+    self.assertIn('Cookie', response['Vary'])
+    # home and logo links lead back to the entry link
+    content = response.content.decode()
+    self.assertIn('<a class="site-name" href="/unia/">', content)
+    self.assertIn('<a href="/unia/"><img src="/static/site/unia/logo.svg"', content)
+    self.assertNotIn('href="/"', content)
+
+  def test_secure_cookie_over_https(self):
+    response = self.client.get('/unia/', secure=True)
+    self.assertTrue(response.cookies[ENTRY]['secure'])
+
+  def test_pages_in_the_entry_organizations_ci(self):
+    election = self.make_election(self.unia_user, organization='')
+    self.enter()
+    for path in ['/about', '/faq', '/docs', '/auth/', '/auth/password/login', '/no/such/page']:
+      with self.subTest(path=path):
+        response = self.client.get(path)
+        content = response.content.decode()
+        if path == '/no/such/page':
+          self.assertEqual(response.status_code, 404)
+          self.assertIn('<link rel="stylesheet" href="/static/site/unia/site.css">', content)
+          self.assertIn('href="/unia/"', content)
+        else:
+          self.assertCI(response, unia=True)
+    self.login(self.unia_user)
+    base = '/helios/elections/%s' % election.uuid
+    for path in ['/helios/elections/administered', '/helios/elections/voted', '/helios/elections/new',
+                 '/helios/elections/new/guided', '/helios/votergroup/administered', '/helios/votergroup/new', base + '/edit', base + '/voters/upload',
+                 base + '/admins/', base + '/trustees/new']:
+      with self.subTest(path=path, logged_in=True):
+        response = self.client.get(path)
+        self.assertCI(response, unia=True)
+        self.assertIn('href="/unia/"', response.content.decode())
+    self.login(self.site_admin)
+    self.assertCI(self.client.get('/helios/stats/elections'), unia=True)
+
+  def test_election_pages_keep_the_elections_organization(self):
+    """Anti-phishing: the cookie never changes the CI of an election's pages for voters and trustees."""
+    default_election = self.make_election(self.unia_user, organization='')
+    unib_election = self.make_election(self.unia_user, organization='unib')
+    self.enter('unia')
+    for election in (default_election, unib_election):
+      for path in ['/view', '/questions', '/voters/list', '/trustees/view', '/password_voter_login']:
+        with self.subTest(election=election.organization, path=path):
+          content = self.client.get('/helios/elections/%s%s' % (election.uuid, path)).content.decode()
+          for mark in self.UNIA_MARKS:
+            self.assertNotIn(mark, content)
+    # and an election of the entry organization in another organization's entry
+    unia_election = self.make_election(self.unia_user, organization='unia')
+    self.enter('unib')
+    response = self.client.get('/helios/elections/%s/view' % unia_election.uuid)
+    self.assertCI(response, unia=True)
+    # the start page is still the visitor's
+    self.assertIn('href="/unib/"', response.content.decode())
+
+  def test_booth_and_verifier_unchanged(self):
+    self.enter()
+    for path in ['/booth/vote.html', '/verifier/verify.html']:
+      with self.subTest(path=path):
+        response = self.client.get(path)
+        self.assertNotIn('University A', b''.join(response.streaming_content).decode())
+
+  def test_start_page_clears_the_cookie(self):
+    self.enter()
+    response = self.client.get('/')
+    self.assertCI(response, unia=False)
+    self.assertEqual(response.cookies[ENTRY].value, '')
+    self.assertEqual(response.cookies[ENTRY]['max-age'], 0)
+    self.assertCI(self.client.get('/about'), unia=False)
+    # without a cookie, the start page sets none
+    del self.client.cookies[ENTRY]
+    self.assertNotIn(ENTRY, self.client.get('/').cookies)
+
+  def test_switching_organizations(self):
+    self.enter('unia')
+    response = self.enter('unib')
+    self.assertEqual(response.cookies[ENTRY].value, 'unib')
+    content = self.client.get('/about').content.decode()
+    self.assertIn('href="/unib/"', content)
+    self.assertNotIn('/static/site/unia/', content)
+
+  def test_unknown_or_invalid_cookie_is_ignored(self):
+    for value in ('gone', 'UNIA', '../unia', '', 'unia; path=/'):
+      with self.subTest(value=value):
+        self.client.cookies[ENTRY] = value
+        response = self.client.get('/about')
+        self.assertCI(response, unia=False)
+        self.assertIn('<a class="site-name" href="/">', response.content.decode())
+    # the start page removes it
+    self.client.cookies[ENTRY] = 'gone'
+    self.assertEqual(self.client.get('/').cookies[ENTRY]['max-age'], 0)
+
+  def test_unknown_slug_is_not_found(self):
+    for path in ('/unic/', '/unic', '/Unia/', '/unia/nothing', '/unia/imprint/'):
+      with self.subTest(path=path):
+        self.assertEqual(self.client.get(path).status_code, 404)
+    # APPEND_SLASH still leads to the entry link
+    self.assertRedirects(self.client.get('/unia'), '/unia/', fetch_redirect_response=False, status_code=301)
+
+  def test_featured_elections_of_the_organization(self):
+    self.make_election(self.unia_user, organization='unia', featured_p=True, name='A featured', short_name='unia-a')
+    self.make_election(self.site_admin, organization='unib', featured_p=True, name='B featured', short_name='unib-b')
+    self.make_election(self.site_admin, featured_p=True, name='Default featured', short_name='default-c')
+
+    def featured(path):
+      content = self.client.get(path).content.decode()
+      return [name for name in ['A featured', 'B featured', 'Default featured'] if '>%s</a>' % name in content]
+
+    # also for visitors who are not logged in
+    self.assertEqual(featured('/unia/'), ['A featured'])
+    self.assertEqual(featured('/unib/'), ['B featured'])
+    self.assertEqual(featured('/'), [])
+    # the entry organization wins over the visitor's own
+    self.login(self.other_user)
+    self.assertEqual(featured('/unia/'), ['A featured'])
+    self.assertEqual(featured('/'), ['Default featured'])
+
+  def test_login_returns_to_the_entry_link(self):
+    content = self.enter().content.decode()
+    self.assertIn('/auth/?return_url=/unia/', content)
+
+  def test_logout_keeps_the_ci(self):
+    self.enter()
+    self.login(self.unia_user)
+    response = self.client.get('/auth/logout', {'return_url': '/about'})
+    self.assertRedirects(response, '/about', fetch_redirect_response=False)
+    self.assertEqual(self.client.cookies[ENTRY].value, 'unia')
+    self.assertCI(self.client.get('/about'), unia=True)
+
+  def test_operators_legal_pages_stay_the_operators(self):
+    self.enter()
+    self.assertCI(self.client.get('/privacy'), unia=False)
+
+  def test_privacy_notes_mention_the_cookie(self):
+    self.assertContains(self.client.get('/privacy'), 'a cookie stores for 90 days in which organization')
+    with self.settings(ORGANIZATIONS={}):
+      self.assertNotContains(self.client.get('/privacy'), 'organization&#x27;s design')
+
+  def write_page(self, site_dir, slug, page, text):
+    directory = os.path.join(site_dir, 'organizations', slug)
+    os.makedirs(directory, exist_ok=True)
+    with open(os.path.join(directory, page + '.html'), 'w', encoding='utf-8') as f:
+      f.write("{%% extends 'server_ui/templates/base.html' %%}{%% block content %%}%s{%% endblock %%}" % text)
+
+  def test_organization_legal_pages(self):
+    with tempfile.TemporaryDirectory() as site_dir:
+      self.write_page(site_dir, 'unia', 'imprint', 'Imprint of University A')
+      self.write_page(site_dir, 'unia', 'accessibility', 'Accessibility of University A')
+      self.write_page(site_dir, 'unia', 'other', 'Not a legal page')
+      templates = [dict(settings.TEMPLATES[0], DIRS=[site_dir] + settings.TEMPLATES[0]['DIRS'])]
+      with self.settings(TEMPLATES=templates):
+        for path, text in [('/unia/imprint', 'Imprint of University A'),
+                           ('/unia/accessibility', 'Accessibility of University A')]:
+          with self.subTest(path=path):
+            response = self.client.get(path)
+            self.assertContains(response, text)
+            self.assertCI(response, unia=True)
+            # the page alone selects no entry organization
+            self.assertNotIn(ENTRY, response.cookies)
+        for path in ('/unia/privacy', '/unia/other', '/unib/imprint', '/unic/imprint'):
+          with self.subTest(path=path):
+            self.assertEqual(self.client.get(path).status_code, 404)
+        # the operator's pages stay the operator's
+        self.assertEqual(self.client.get('/imprint').status_code, 404)

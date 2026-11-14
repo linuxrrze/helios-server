@@ -71,7 +71,7 @@
      <div class="content">
 	<div class="row">    
 	    <p class="logo">
-		<a href="/"><img src="{{ ci.main_logo_url }}" class="helios-logo" alt="{{ ci.site_title }}"></a> 
+		<a href="{{ home_url|default:"/" }}"><img src="{{ ci.main_logo_url }}" class="helios-logo" alt="{{ ci.site_title }}"></a> 
 	    </p>
 	    {% block breadcrumbs %}{% breadcrumbs %}{% endblock %}
       {% block content %}{% endblock %}

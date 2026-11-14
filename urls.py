@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 from django.conf import settings
-from django.urls import include, path, re_path
+from django.urls import include, path, re_path, register_converter
 from django.views.i18n import JavaScriptCatalog
 from django.views.static import serve
 from helios import views as helios_views
+from helios import organizations
 from server_ui import views as server_ui_views
+
+register_converter(organizations.EntrySlugConverter, 'organization')
 
 urlpatterns = [
     path('auth/', include('helios_auth.urls')),
@@ -43,6 +46,11 @@ urlpatterns = [
     ])),
 
     path('', include('server_ui.urls')),
+
+    # entry links of the organizations (docs/organizations.md, "Entry links"):
+    # only configured slugs match, which never collide with the paths above
+    path('<organization:slug>/', server_ui_views.organization_home, name='organization@home'),
+    path('<organization:slug>/<str:page>', server_ui_views.organization_page, name='organization@page'),
 ]
 
 # SAML assertion consumer service under a custom path, e.g. one that is already

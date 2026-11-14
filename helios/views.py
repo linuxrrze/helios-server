@@ -753,7 +753,7 @@ def trustee_upload_pk(request, election, trustee):
     
     # send a note to admin
     try:
-      election.admin.send_message(_("%(election)s - trustee pk upload") % {'election': election.name}, _("trustee %(name)s (%(email)s) uploaded a pk.") % {'name': trustee.name, 'email': trustee.email})
+      tasks.notify_election_admin(election, _("%(election)s - trustee pk upload") % {'election': election.name}, _("trustee %(name)s (%(email)s) uploaded a pk.") % {'name': trustee.name, 'email': trustee.email})
     except:
       # oh well, no message sent
       pass
@@ -1537,7 +1537,7 @@ def trustee_upload_decryption(request, election, trustee):
     
     try:
       # send a note to admin
-      election.admin.send_message(_("%(election)s - trustee partial decryption") % {'election': election.name}, _("trustee %(name)s (%(email)s) did their partial decryption.") % {'name': trustee.name, 'email': trustee.email})
+      tasks.notify_election_admin(election, _("%(election)s - trustee partial decryption") % {'election': election.name}, _("trustee %(name)s (%(email)s) did their partial decryption.") % {'name': trustee.name, 'email': trustee.email})
     except:
       # ah well
       pass

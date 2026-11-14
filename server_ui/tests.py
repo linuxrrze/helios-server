@@ -79,6 +79,26 @@ class LandingPageTests(TestCase):
         self.assertEqual(content.count('class="button"><span>Log in</span>'), 1)
         self.assertNotIn('/auth/start/', content)  # login-box links
 
+    def test_recent_votes_without_archived_elections(self):
+        # like the administered list next to it: archived elections are left out
+        import datetime
+        import uuid
+        from helios.models import Election, Voter
+        from helios_auth.models import User
+        user = User.objects.create(user_type='password', user_id='voter1', name='Voter',
+                                   info={'password': 'x', 'email': 'voter1@example.org'})
+        for name, archived_at in [('Current election', None), ('Archived election', datetime.datetime(2025, 1, 1))]:
+            election = Election.objects.create(admin=user, uuid=str(uuid.uuid4()), short_name=name.split()[0].lower(),
+                                               name=name, description='d', archived_at=archived_at)
+            Voter.objects.create(uuid=str(uuid.uuid4()), election=election, user=user)
+        self.client.get('/')
+        session = self.client.session
+        session['user'] = {'type': 'password', 'user_id': 'voter1'}
+        session.save()
+        content = self.client.get('/').content.decode()
+        self.assertIn('>Current election</a>', content)
+        self.assertNotIn('Archived election', content)
+
 
 class VoteCastEmailTests(TestCase):
     """The confirmation email sent by server_ui.glue after a ballot is stored."""

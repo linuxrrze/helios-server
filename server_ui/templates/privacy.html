@@ -47,5 +47,12 @@
 <li>{% translate "To create and administer elections, you log in with a login service of this installation. Helios keeps only what it needs to recognize you the next time: your name, email address and user ID, and uses your email address to notify you about your elections." %}</li>
 </ul>
 
+<h2>{% translate "Cookies" %}</h2>
+
+<ul>
+<li>{% translate "Helios uses only technically necessary cookies: a session cookie that keeps you logged in and protects forms against misuse, and, if you choose a language, a cookie with that language." %}</li>
+{% if entry_link_example %}<li>{% blocktranslate trimmed with example=entry_link_example days=entry_cookie_days %}If you open this site through the address of an organization (e.g. {{ example }}), a cookie stores for {{ days }} days in which organization's design the pages are shown. It contains only the organization's short name, no personal data. Opening the start page removes it.{% endblocktranslate %}</li>{% endif %}
+</ul>
+
 </div>
 {% endblock %}

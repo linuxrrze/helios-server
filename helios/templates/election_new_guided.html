@@ -57,7 +57,7 @@
   {% include "_form_fields.html" with form=form %}
   <div class="actions">
     <button class="button" type="submit">{% translate "Continue" %}</button>
-    {% if previous_url %}<a href="{{ previous_url }}">{% translate "Back" %}</a>{% else %}<a href="/">{% translate "cancel" %}</a>{% endif %}
+    {% if previous_url %}<a href="{{ previous_url }}">{% translate "Back" %}</a>{% else %}<a href="{{ home_url|default:"/" }}">{% translate "cancel" %}</a>{% endif %}
   </div>
 </form>
 {% endif %}

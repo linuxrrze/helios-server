@@ -225,6 +225,8 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    # organizations' entry links: checks their slugs at start, Vary: Cookie
+    'helios.organizations.EntryOrganizationMiddleware',
 ]
 
 ROOT_URLCONF = 'urls'
@@ -251,7 +253,8 @@ TEMPLATES = [
         ],
         'OPTIONS': {
             'debug': DEBUG,
-            # `ci`: the corporate identity of the page (helios/organizations.py)
+            # `ci`: the corporate identity of the page, `home_url`: the start page
+            # (the visitor's entry link, see helios/organizations.py)
             'context_processors': ['helios.organizations.context_processor'],
         }
     },
@@ -533,6 +536,20 @@ BOOTH_FONT_URL = _booth_setting('BOOTH_FONT_URL', check_font_url, '')
 # above. Errors in the file stop Helios from starting.
 ORGANIZATION_SLUG_RE = r'^[a-z0-9](?:[a-z0-9-]{0,48}[a-z0-9])?$'
 
+# Every organization gets an entry link /<slug>/ (docs/organizations.md, "Entry
+# links"), so a slug must not be a top-level path of this server. These are refused
+# when the file is read; helios.organizations.check_entry_slugs also compares the
+# slugs with the first path segments of the root URL configuration at start.
+RESERVED_ORGANIZATION_SLUGS = frozenset([
+  # paths of this server
+  'helios', 'auth', 'booth', 'verifier', 'static', 'media', 'scim', 'admin', 'i18n', 'jsi18n',
+  'optout', 'optin', 'imprint', 'privacy', 'accessibility', 'about', 'faq', 'docs',
+  'booth-dark-mode', 'saml', 'saml2-auth', 'oidc',
+  # common paths of web servers, proxies and browsers
+  'robots', 'favicon', 'apple-touch-icon', 'sitemap', 'well-known', 'api', 'health', 'healthz',
+  'status', 'metrics', 'login', 'logout', 'assets', 'public', 'site', 'www',
+])
+
 def parse_organizations(config_json, source='ORGANIZATIONS_FILE'):
   """
   slug -> normalized organization (a dict holding only the keys given in the
@@ -678,6 +695,9 @@ def parse_organizations(config_json, source='ORGANIZATIONS_FILE'):
   for slug, config in raw.get('organizations', {}).items():
     if not slug_re.match(slug):
       fail('%r is not a valid organization slug: use 1 to 50 lowercase letters, digits or hyphens.', slug)
+    if slug in RESERVED_ORGANIZATION_SLUGS:
+      fail('"%s" cannot be an organization slug: its entry link /%s/ would collide with a path of this server '
+           '(reserved: %s).', slug, slug, ', '.join(sorted(RESERVED_ORGANIZATION_SLUGS)))
     if not isinstance(config, dict):
       fail('organization "%s" must be a JSON object.', slug)
     unknown = sorted(set(config) - set(fields))

@@ -253,7 +253,7 @@ and the built-in pages. See [section 10](#10-customizing-the-site) for a worked 
 | `PRIVACY_URL` | `/privacy` | Footer link "Privacy". `/privacy` is a built-in, generic description of how Helios handles data; it is not a complete privacy policy. Replace it with your own template or link an external page. Set it empty to hide the link. |
 | `ACCESSIBILITY_URL` | empty | Footer link "Accessibility". `/accessibility` renders `server_ui/templates/accessibility.html`, which only exists if the site provides it (otherwise 404); or link an external page. |
 | `FOOTER_LINKS` | `[]` | Further footer links, as JSON: `[{"url": "https://help.example.org", "text": "Help desk"}]`. Invalid JSON stops Helios from starting. |
-| `SITE_TEMPLATES_DIR` | empty | Directory searched before the built-in templates. It mirrors the repository layout: `<dir>/server_ui/templates/imprint.html` adds or replaces that template. Any template can be overridden this way. |
+| `SITE_TEMPLATES_DIR` | empty | Directory searched before the built-in templates. It mirrors the repository layout: `<dir>/server_ui/templates/imprint.html` adds or replaces that template. Any template can be overridden this way. With an organizations file, `<dir>/organizations/<slug>/imprint.html` (and `privacy.html`, `accessibility.html`) are an organization's own legal pages at `/<slug>/imprint` etc. ([organizations.md, section 9](organizations.md#organizations-legal-pages)). |
 | `SITE_STATIC_DIR` | empty | Directory served at `/static/site/` (logos, stylesheets, images). `login-icons/<name>.png` (or `.svg`) in it is the icon of the auth system `<name>`, e.g. `oidc`, `saml` or a custom name such as `campus`; without one, a neutral default icon is shown. |
 
 Footer links appear only when their URL is set, in this order: imprint, privacy,
@@ -267,7 +267,7 @@ the emails of their elections:
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `ORGANIZATIONS_FILE` | empty | Path of a JSON file describing the organizations, their address prefixes and who belongs to them. Each election belongs to one organization (from its creator's login; only site administrators can change it) and its pages for voters and trustees, its voting booth and its emails to voters and trustees show that organization's corporate identity; all other pages, including the election's administration pages, keep the operator's. With the file, the start page lists only the featured elections of the visitor's own organization (none when not logged in). Read at start: a missing file or an invalid entry stops Helios from starting. Format, rules and migration: [organizations.md](organizations.md). |
+| `ORGANIZATIONS_FILE` | empty | Path of a JSON file describing the organizations, their address prefixes and who belongs to them. Each election belongs to one organization (from its creator's login; only site administrators can change it) and its pages for voters and trustees, its voting booth and its emails to voters and trustees show that organization's corporate identity; all other pages, including the election's administration pages, keep the operator's. With the file, the start page lists only the featured elections of the visitor's own organization (none when not logged in), and each organization has an entry link `/<slug>/`: its start page with its featured elections, after which the pages around the elections (login, administration, ...) show its CI (kept in the cookie `helios_organization`; `/` returns to the operator's). The emails to an election's administrator also come from its organization. Read at start: a missing file or an invalid entry stops Helios from starting. Format, rules and migration: [organizations.md](organizations.md). |
 
 **CSS variables** of the default layout, to be set in `SITE_CSS_URL`:
 
@@ -406,10 +406,12 @@ directory holds templates and static files, and a few variables point to them.
 ```
 site/
 ├── templates/                     -> SITE_TEMPLATES_DIR
-│   └── server_ui/templates/
-│       ├── imprint.html
-│       ├── accessibility.html
-│       └── privacy.html           (replaces the built-in generic page)
+│   ├── server_ui/templates/
+│   │   ├── imprint.html
+│   │   ├── accessibility.html
+│   │   └── privacy.html           (replaces the built-in generic page)
+│   └── organizations/<slug>/      (optional: legal pages of an organization at /<slug>/imprint etc.,
+│                                   see organizations.md, section 9)
 └── static/                        -> SITE_STATIC_DIR, served at /static/site/
     ├── logo.svg
     ├── logo-white.svg
