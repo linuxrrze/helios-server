@@ -72,6 +72,8 @@ def render_template(request, template_name, values = None, include_user=True):
 
   if template_name in ELECTION_CI_TEMPLATES and 'ci' not in vars_with_user:
     vars_with_user['ci'] = organizations.for_election(vars_with_user.get('election'))
+    # the logo and "home" lead to the start page of the organization whose CI is shown
+    vars_with_user.setdefault('home_url', organizations.organization_home_url(vars_with_user['ci']))
 
   if not include_user:
     del vars_with_user['user']

@@ -1268,8 +1268,19 @@ class EntryLinkTests(OrganizationTestCase):
     self.enter('unib')
     response = self.client.get('/helios/elections/%s/view' % unia_election.uuid)
     self.assertCI(response, unia=True)
-    # the start page is still the visitor's
-    self.assertIn('href="/unib/"', response.content.decode())
+    # logo, site name and "home" lead to the start page of the organization whose CI is shown
+    content = response.content.decode()
+    self.assertIn('<a class="site-name" href="/unia/">', content)
+    self.assertIn('<a href="/unia/"><img src="/static/site/unia/logo.svg"', content)
+    self.assertNotIn('href="/unib/"', content)
+    # an election of the default organization leads to the operator's start page
+    content = self.client.get('/helios/elections/%s/view' % default_election.uuid).content.decode()
+    self.assertIn('<a class="site-name" href="/">', content)
+    self.assertNotIn('href="/unib/"', content)
+    # the pages around the elections keep the visitor's entry
+    self.login(self.unia_user)
+    content = self.client.get('/helios/elections/%s/edit' % unia_election.uuid).content.decode()
+    self.assertIn('<a class="site-name" href="/unib/">', content)
 
   def test_booth_and_verifier_unchanged(self):
     self.enter()

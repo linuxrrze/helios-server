@@ -359,8 +359,12 @@ def page_ci(request):
 
 def home_url(request):
   """the start page: the entry link of the entry organization, else /"""
-  organization = entry_organization(request)
-  return '/%s/' % organization.slug if organization else '/'
+  return organization_home_url(entry_organization(request))
+
+
+def organization_home_url(organization):
+  """the start page of an organization: its entry link, / for the default organization (or None)"""
+  return '/%s/' % organization.slug if organization and not organization.is_default else '/'
 
 
 def set_entry_cookie(request, response, organization):

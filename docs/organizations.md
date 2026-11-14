@@ -420,8 +420,10 @@ An election's pages never follow the entry link, so nobody can make an election 
 another organization's by sending a link to the election together with an entry link.
 
 **Navigation.** While an entry organization is active, the "Home" links, the site title
-and the logo lead to `/<slug>/`. Opening `/` returns to the operator's CI: it ends the
-entry organization. Opening another organization's entry link switches to it. Logging in
+and the logo lead to `/<slug>/`. On an election's pages for voters and trustees they lead to
+the start page of the organization whose CI is shown, i.e. the election's: its entry link,
+or `/` for an election of the default organization. Opening `/` returns to the operator's
+CI: it ends the entry organization. Opening another organization's entry link switches to it. Logging in
 and out keeps the entry organization: the login returns to the page where it was started,
 and logging out doesn't touch it.
 
