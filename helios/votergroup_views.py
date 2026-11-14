@@ -25,6 +25,7 @@ from . import short_names, url_names
 from . import votergroup as vg
 from .mail_backend import mask_address
 from .models import Election, Voter, VoterGroup, VoterGroupMember
+from .provisioning import is_source_owner, source_label
 from .security import can_create_election, user_can_admin_votergroup, user_can_create_election
 from .view_utils import find_user_to_add_as_admin, render_template
 
@@ -52,9 +53,27 @@ def _get_group(request, votergroup_uuid):
   return group
 
 
+def _refuse_if_provisioned(request, group):
+  """
+  A provisioned group (e.g. by SCIM) is managed by its source: its name,
+  members and administrators can't be changed here. Returns the 403 response
+  to send for such a group, None for a group that may be changed. Every view
+  that changes a group calls this.
+  """
+  if not group.is_provisioned:
+    return None
+  logger.info('votergroup %s: change refused, provisioned by %s (%s)', group.uuid, group.provisioned_by,
+              _who(get_user(request)))
+  response = render_template(request, "votergroup_provisioned", {
+    'group': group, 'source': source_label(group.provisioned_by)})
+  response.status_code = 403
+  return response
+
+
 def _other_admins(group, user):
-  """Owner and additional administrators of the group, without USER."""
-  return [a for a in [group.admin] + list(group.get_admins()) if a != user]
+  """Owner and additional administrators of the group, without USER (and
+  without the account owning provisioned groups, which can't log in)."""
+  return [a for a in [group.admin] + list(group.get_admins()) if a != user and not is_source_owner(a)]
 
 
 def _add_election_admins(group, election, user, admins):
@@ -111,6 +130,9 @@ def votergroup_view(request, votergroup_uuid):
 @require_http_methods(["GET", "POST"])
 def votergroup_memberadd(request, votergroup_uuid):
   group = _get_group(request, votergroup_uuid)
+  refused = _refuse_if_provisioned(request, group)
+  if refused:
+    return refused
   if request.method == "GET":
     form = vg.VoterGroupMemberForm()
   else:
@@ -136,6 +158,9 @@ def votergroup_memberdelete(request, member_uuid):
   user = get_user(request)
   if not user_can_admin_votergroup(user, member.group):
     raise Http404
+  refused = _refuse_if_provisioned(request, member.group)
+  if refused:
+    return refused
   group_uuid = member.group.uuid
   logger.info('votergroup %s: member %s (%s) deleted by %s', group_uuid, member.uuid,
               mask_address(member.email), _who(user))
@@ -244,6 +269,9 @@ def _new_admin_error(group, new_admin):
 @require_http_methods(["GET", "POST"])
 def votergroup_adminadd(request, votergroup_uuid):
   group = _get_group(request, votergroup_uuid)
+  refused = _refuse_if_provisioned(request, group)
+  if refused:
+    return refused
   matching_users = None
 
   if request.method == "GET":
@@ -273,6 +301,9 @@ def votergroup_adminadd(request, votergroup_uuid):
 @require_http_methods(["GET", "POST"])
 def votergroup_adminremove(request, votergroup_uuid):
   group = _get_group(request, votergroup_uuid)
+  refused = _refuse_if_provisioned(request, group)
+  if refused:
+    return refused
   data = request.POST if request.method == "POST" else request.GET
   # only additional administrators can be removed, the owner is not among them
   try:

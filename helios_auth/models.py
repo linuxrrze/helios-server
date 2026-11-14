@@ -35,6 +35,23 @@ class User(models.Model):
   # administrator
   admin_p = models.BooleanField(default=False)
 
+  # may create elections even when election creation is restricted
+  # (ELECTION_CREATORS_ONLY); only granted by provisioning
+  election_creator_p = models.BooleanField(default=False)
+
+  # Provisioning (e.g. SCIM, see helios/provisioning.py): the source that manages
+  # this user, as "<kind>:<name>" (e.g. "scim:idm"), empty for users created by
+  # logging in. A provisioned user's name and email come from the source and are
+  # kept on login; the source can deactivate the user (no login, no rights).
+  provisioned_by = models.CharField(max_length=100, blank=True, default='', db_index=True)
+  provisioned_at = models.DateTimeField(null=True, blank=True)
+  external_id = models.CharField(max_length=255, blank=True, default='')
+  deactivated_at = models.DateTimeField(null=True, blank=True)
+  # the source that granted admin_p / election_creator_p, empty if granted otherwise;
+  # only a role granted by a source is revoked by it
+  admin_provisioned_by = models.CharField(max_length=100, blank=True, default='')
+  election_creator_provisioned_by = models.CharField(max_length=100, blank=True, default='')
+
   class Meta:
     unique_together = (('user_type', 'user_id'),)
     app_label = 'helios_auth'
@@ -74,9 +91,19 @@ class User(models.Model):
       obj, created_p = cls.objects.get_or_create(user_type=user_type, user_id=user_id, defaults={'name': name, 'info': info, 'token': token})
 
     if not created_p:
+      info = dict(info or {})
+      old_info = obj.info or {}
       # special case the password: don't replace it if it exists
-      if 'password' in obj.info:
-        info['password'] = obj.info['password']
+      if 'password' in old_info:
+        info['password'] = old_info['password']
+
+      # a provisioned user's name and email are managed by the provisioning
+      # source: the login adds its other data, but doesn't overwrite them
+      if obj.provisioned_by:
+        for key in ('name', 'email', 'given_name', 'family_name'):
+          if old_info.get(key):
+            info[key] = old_info[key]
+        name = obj.name or name
 
       obj.info = info
       obj.name = name
@@ -94,11 +121,18 @@ class User(models.Model):
 
     return AUTH_SYSTEMS[self.user_type].STATUS_UPDATES
 
+  @property
+  def is_active(self):
+    """False for a user deactivated by provisioning: no login, no rights."""
+    return self.deactivated_at is None
+
   def can_create_election(self):
     """
     Certain auth systems can choose to limit election creation
     to certain users. 
     """
+    if not self.is_active:
+      return False
     if self.user_type not in AUTH_SYSTEMS:
       return False
     

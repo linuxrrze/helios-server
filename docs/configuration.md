@@ -311,6 +311,25 @@ in `AUTH_ENABLED_SYSTEMS`.
 **LDAP cannot be configured through the environment:** the server and search settings are fixed
 in `settings.py` (an upstream example server). Don't enable `ldap` without changing the code.
 
+**Provisioning (SCIM 2.0)** (enabled with `SCIM_ENABLED=1`): an identity management system
+creates users, site administrators, election creators and voter groups. Setup, the matching of
+logins and what is locked in Helios are described in [scim.md](scim.md).
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `SCIM_ENABLED` | `0` | `1`: serve the SCIM endpoints at `<SECURE_URL_HOST>/scim/v2/`. Otherwise they answer *404*. |
+| `SCIM_TOKENS` | `{}` | Bearer tokens per client, as JSON: `{"idm": "sha256:<hex digest>"}`, several per client as a list (rotation). Generate a token and its entry with `python manage.py scim_token <client>`. Plain tokens of at least 32 characters are accepted, digests are recommended. Client names: letters, digits, `_ . -`. |
+| `SCIM_USER_TYPE` | `OIDC_AUTH_SYSTEM_NAME` | Auth system of provisioned users, e.g. `campus`: the one they log in with. |
+| `SCIM_USER_ID_ATTRIBUTE` | `userName` | SCIM attribute used as their user id: `userName`, `email` (the primary email) or `externalId`. Must be what the login uses as user id (see [scim.md](scim.md#2-matching-the-login)). |
+| `SCIM_ADMIN_GROUP` | empty | SCIM group (`displayName` or `externalId`) whose members are site administrators. Empty: none. |
+| `SCIM_ELECTION_CREATOR_GROUP` | empty | SCIM group whose members are election creators (may create elections and voter groups; matters with `ELECTION_CREATORS_ONLY=1`). |
+| `SCIM_VOTERGROUP_ADMINS_GROUP` | empty | SCIM group whose members administer all voter groups provisioned by the same client. |
+| `SCIM_VOTERGROUP_ADMINS_SUFFIX` | empty | With e.g. ` (admins)`, the members of the SCIM group `Council (admins)` administer the voter group `Council`. Empty: no such groups. |
+| `ELECTION_CREATORS_ONLY` | `0` | `1`: only site administrators and election creators (`SCIM_ELECTION_CREATOR_GROUP`) may create elections and voter groups. |
+
+All other SCIM groups become voter groups. After changing one of the group settings, run
+`python manage.py scim_sync`.
+
 ## 7. Monitoring
 
 | Variable | Default | Meaning |

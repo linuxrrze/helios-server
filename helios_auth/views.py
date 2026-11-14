@@ -234,6 +234,12 @@ def after(request):
   if user:
     # get the user and store any new data about him
     user_obj = User.update_or_create(user['type'], user['user_id'], user['name'], user['info'], user['token'])
+    if not user_obj.is_active:
+      # deactivated by provisioning (e.g. the account was disabled in the
+      # identity management): no login
+      logger.info("login refused for deactivated user %s:%s", user_obj.user_type, user_obj.pk)
+      request.session.pop('user', None)
+      return _login_failed(request, error_message=_("Your account has been deactivated. Please contact the administrators of this site."))
 
     # new session key on login (session fixation); the session data, e.g. a
     # ballot waiting to be cast, is kept

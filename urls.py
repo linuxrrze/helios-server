@@ -9,6 +9,8 @@ from server_ui import views as server_ui_views
 urlpatterns = [
     path('auth/', include('helios_auth.urls')),
     path('helios/', include('helios.urls')),
+    # SCIM 2.0 provisioning (off unless SCIM_ENABLED=1, see docs/scim.md)
+    path('scim/v2/', include('helios_scim.urls')),
 
     # language switcher (POST, sets the language cookie) and the JavaScript
     # translation catalog for the voting booth and verifier

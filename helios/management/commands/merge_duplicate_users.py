@@ -168,6 +168,14 @@ class Command(BaseCommand):
         survivor.user_type, survivor.user_id, survivor.id,
         ", ".join("%r (id %d)" % (u.user_id, u.id) for u in duplicates))
 
+      provisioned = [u for u in duplicates if u.provisioned_by]
+      if provisioned:
+        # merging would delete a user that a provisioning source (SCIM) manages
+        skipped += 1
+        self.stdout.write("SKIPPED %s -- provisioned by %s; resolve it at the provisioning source" % (
+          desc, ", ".join(sorted(set(u.provisioned_by for u in provisioned)))))
+        continue
+
       clashes = login_id_clashes(duplicates)
       if clashes:
         skipped += 1

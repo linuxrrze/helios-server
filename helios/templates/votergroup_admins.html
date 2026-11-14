@@ -1,11 +1,15 @@
 {% extends TEMPLATE_BASE %}
-{% load i18n %}
+{% load i18n provisioning_tags %}
 {% block title %}{{group.short_name}} &mdash; {% translate "Administrators" context "voter group" %}{% endblock %}
 {% block content %}
 <h1 class="title">{% blocktranslate trimmed with name=group.short_name %}Administrators of voter group {{name}}{% endblocktranslate %}</h1>
+{% if group.is_provisioned %}
+<p class="page-lead">{% blocktranslate trimmed with source=group.admin.pretty_name %}This voter group is provisioned by the identity management ({{source}}). Its administrators are managed there and can prepare elections from it.{% endblocktranslate %}</p>
+{% else %}
 <p class="page-lead">{% translate "Administrators of a voter group can change its members, prepare elections from it and add or remove administrators. The owner created the group and cannot be removed." %}</p>
 
 <p class="actions"><a class="button" href="{% url "votergroup@admins@add" group.uuid %}">{% translate "Add administrator" context "voter group" %}</a></p>
+{% endif %}
 
 <div class="table-scroll">
 <table class="voters-table">
@@ -21,10 +25,10 @@
   </tr>
   {% for a in admins %}
   <tr>
-    <td>{{a.display_html_small|safe}}{% if a == user %} <em>{% translate "(you)" %}</em>{% endif %}</td>
+    <td>{{a.display_html_small|safe}}{% if a == user %} <em>{% translate "(you)" %}</em>{% endif %} {% provisioned_badge a %}</td>
     <td>{{a.user_id}}</td>
     <td>{% translate "Administrator" context "voter group" %}</td>
-    <td class="row-actions"><a href="{% url "votergroup@admins@remove" group.uuid %}?user_id={{a.user_id|urlencode}}&amp;user_type={{a.user_type|urlencode}}">{% if a == user %}{% translate "Leave group" %}{% else %}{% translate "Remove" %}<span class="screen-reader-text"> {{a.pretty_name}}</span>{% endif %}</a></td>
+    <td class="row-actions">{% if not group.is_provisioned %}<a href="{% url "votergroup@admins@remove" group.uuid %}?user_id={{a.user_id|urlencode}}&amp;user_type={{a.user_type|urlencode}}">{% if a == user %}{% translate "Leave group" %}{% else %}{% translate "Remove" %}<span class="screen-reader-text"> {{a.pretty_name}}</span>{% endif %}</a>{% endif %}</td>
   </tr>
   {% endfor %}
   </tbody>

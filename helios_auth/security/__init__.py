@@ -48,8 +48,15 @@ def get_user(request):
   if 'user' in request.session:
     user = request.session['user']
 
-    # find the user
-    user_obj = User.get_by_type_and_id(user['type'], user['user_id'])
+    # find the user; one deleted or deactivated by provisioning in the
+    # meantime is logged out
+    try:
+      user_obj = User.get_by_type_and_id(user['type'], user['user_id'])
+    except User.DoesNotExist:
+      user_obj = None
+    if user_obj is None or not user_obj.is_active:
+      del request.session['user']
+      return None
     return user_obj
   else:
     return None  

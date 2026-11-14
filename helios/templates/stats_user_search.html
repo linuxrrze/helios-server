@@ -1,5 +1,5 @@
 {% extends TEMPLATE_BASE %}
-{% load i18n %}
+{% load i18n provisioning_tags %}
 {% block title %}{% translate "User Search" %}{% endblock %}
 
 {% block content %}
@@ -16,11 +16,13 @@
 
     {% for item in users_with_elections %}
     <section class="card">
-      <h2 class="title">{{item.user.pretty_name}}</h2>
+      <h2 class="title">{{item.user.pretty_name}} {% provisioned_badge item.user %} {% deactivated_badge item.user %}</h2>
       <dl class="facts">
         <div><dt>{% translate "User ID:" %}</dt><dd>{{item.user.user_id}}</dd></div>
         <div><dt>{% translate "User Type:" %}</dt><dd>{{item.user.user_type}}</dd></div>
-        <div><dt>{% translate "Site Admin:" %}</dt><dd>{% if item.user.admin_p %}{% translate "Yes" %}{% else %}{% translate "No" %}{% endif %}</dd></div>
+        <div><dt>{% translate "Site Admin:" %}</dt><dd>{% if item.user.admin_p %}{% translate "Yes" %}{% if item.user.admin_provisioned_by %} ({% blocktranslate trimmed with source=item.user.admin_provisioned_by|source_label %}granted by {{source}}{% endblocktranslate %}){% endif %}{% else %}{% translate "No" %}{% endif %}</dd></div>
+        {% if item.user.election_creator_p %}<div><dt>{% translate "Election creator:" %}</dt><dd>{% translate "Yes" %}{% if item.user.election_creator_provisioned_by %} ({% blocktranslate trimmed with source=item.user.election_creator_provisioned_by|source_label %}granted by {{source}}{% endblocktranslate %}){% endif %}</dd></div>{% endif %}
+        {% if item.user.provisioned_by %}<div><dt>{% translate "Provisioned:" %}</dt><dd>{{item.user.provisioned_at|date:"Y-m-d H:i"}}{% if item.user.external_id %} &middot; {% translate "external ID" %} {{item.user.external_id}}{% endif %}{% if item.user.deactivated_at %} &middot; {% blocktranslate trimmed with date=item.user.deactivated_at|date:"Y-m-d H:i" %}deactivated on {{date}}{% endblocktranslate %}{% endif %}</dd></div>{% endif %}
       </dl>
 
       <h3>{% blocktranslate trimmed with n=item.elections_as_admin|length %}Elections as Administrator ({{n}}){% endblocktranslate %}</h3>

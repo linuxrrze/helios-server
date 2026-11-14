@@ -266,6 +266,7 @@ INSTALLED_APPS = (
     ## HELIOS stuff
     'helios_auth',
     'helios',
+    'helios_scim',
     'server_ui',
 )
 
@@ -502,6 +503,27 @@ SAML_ATTRIBUTE_NAME = get_from_env('SAML_ATTRIBUTE_NAME', '')
 SAML_ATTRIBUTE_GIVEN_NAME = get_from_env('SAML_ATTRIBUTE_GIVEN_NAME', '')
 SAML_ATTRIBUTE_SURNAME = get_from_env('SAML_ATTRIBUTE_SURNAME', '')
 SAML_LOGIN_MESSAGE = get_from_env('SAML_LOGIN_MESSAGE', '')  # empty: translated default
+
+# SCIM 2.0 provisioning (see docs/scim.md): an identity management system (e.g.
+# Keycloak, Entra ID) creates users, roles and voter groups through /scim/v2/.
+SCIM_ENABLED = (get_from_env('SCIM_ENABLED', '0') == '1')
+# JSON: {"<client>": "sha256:<hex digest of the token>"} or a list of them per client
+SCIM_TOKENS = get_from_env('SCIM_TOKENS', '{}')
+# provisioned users are users of this auth system, with this SCIM attribute as user id
+# (userName, email or externalId): it must be what the login uses as user id
+SCIM_USER_TYPE = get_from_env('SCIM_USER_TYPE', OIDC_AUTH_SYSTEM_NAME)
+SCIM_USER_ID_ATTRIBUTE = get_from_env('SCIM_USER_ID_ATTRIBUTE', 'userName')
+# SCIM groups (displayName or externalId) whose members get a role
+SCIM_ADMIN_GROUP = get_from_env('SCIM_ADMIN_GROUP', '')
+SCIM_ELECTION_CREATOR_GROUP = get_from_env('SCIM_ELECTION_CREATOR_GROUP', '')
+# administrators of provisioned voter groups: members of this group (all voter groups),
+# and of the group "<voter group name><suffix>" (that voter group)
+SCIM_VOTERGROUP_ADMINS_GROUP = get_from_env('SCIM_VOTERGROUP_ADMINS_GROUP', '')
+SCIM_VOTERGROUP_ADMINS_SUFFIX = get_from_env('SCIM_VOTERGROUP_ADMINS_SUFFIX', '')
+
+# only site administrators and users with the election creator role (granted by
+# provisioning, SCIM_ELECTION_CREATOR_GROUP) may create elections and voter groups
+ELECTION_CREATORS_ONLY = (get_from_env('ELECTION_CREATORS_ONLY', '0') == '1')
 
 # email server
 EMAIL_HOST = get_from_env('EMAIL_HOST', 'localhost')
