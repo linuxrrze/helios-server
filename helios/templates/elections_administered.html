@@ -7,6 +7,8 @@
 
 <p class="actions"><a class="button" href="{% url "elections@new@guided" %}">{% translate "Create election" %}</a></p>
 
+{% include "_archived_filter.html" %}
+
 {% if elections %}
 <ul class="election-list">
 {% for election in elections %}
@@ -15,6 +17,6 @@
 {% endfor %}
 </ul>
 {% else %}
-<div class="callout empty-state"><p>{% translate "You don't administer any elections yet." %}</p></div>
+<div class="callout empty-state"><p>{% if num_archived and not show_archived %}{% translate "All your elections are archived." %}{% else %}{% translate "You don't administer any elections yet." %}{% endif %}</p></div>
 {% endif %}
 {% endblock %}

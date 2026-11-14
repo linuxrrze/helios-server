@@ -1,0 +1,11 @@
+{% load i18n %}{% comment %}
+The option to show archived elections in a list of the user's elections
+(show_archived, num_archived from views._archived_filter). Works without
+JavaScript (button); with JavaScript the checkbox applies itself.
+{% endcomment %}{% if num_archived %}
+<form method="get" class="voter-search archived-filter">
+<label><input type="checkbox" name="archived" value="1"{% if show_archived %} checked{% endif %} onchange="this.form.submit()"/>{% translate "Also show archived elections" %}</label>
+<noscript><button class="button small" type="submit">{% translate "Apply" %}</button></noscript>
+{% if not show_archived %}<span class="muted">{% blocktranslate trimmed count num=num_archived %}{{ num }} archived election hidden{% plural %}{{ num }} archived elections hidden{% endblocktranslate %}</span>{% endif %}
+</form>
+{% endif %}

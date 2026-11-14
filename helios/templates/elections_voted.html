@@ -5,6 +5,8 @@
 {% block content %}
 <h1 class="title">{% translate "Elections where you voted" %}</h1>
 
+{% include "_archived_filter.html" %}
+
 {% if elections %}
 <ul class="election-list">
 {% for election in elections %}
@@ -12,6 +14,6 @@
 {% endfor %}
 </ul>
 {% else %}
-<div class="callout empty-state"><p>{% translate "None yet." %}</p></div>
+<div class="callout empty-state"><p>{% if num_archived and not show_archived %}{% translate "All elections where you voted are archived." %}{% else %}{% translate "None yet." %}{% endif %}</p></div>
 {% endif %}
 {% endblock %}

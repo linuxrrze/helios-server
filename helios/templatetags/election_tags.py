@@ -14,7 +14,11 @@ register = template.Library()
 @register.simple_tag
 def election_status_badge(election):
   key, label = election_status(election)
-  return format_html('<span class="status-badge status-{}">{}</span>', key, label)
+  badge = format_html('<span class="status-badge status-{}">{}</span>', key, label)
+  if election.is_archived:
+    from django.utils.translation import gettext as _
+    badge += format_html(' <span class="status-badge status-archived">{}</span>', _('Archived'))
+  return badge
 
 
 @register.inclusion_tag('_setup_nav.html')

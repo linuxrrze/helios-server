@@ -179,22 +179,35 @@ def trustee_keygenerator(request, election, trustee):
 
   return render_template(request, "election_keygenerator", {'eg_params_json': eg_params_json, 'election': election, 'trustee': trustee})
 
+def _archived_filter(request, get_elections, user):
+  """
+  (show_archived, num_archived) for a list of the user's elections: archived
+  elections are hidden unless ?archived=1; num_archived is how many there are.
+  """
+  show_archived = request.GET.get('archived') == '1'
+  num_archived = get_elections(user, archived_p=True).count()
+  return show_archived, num_archived
+
 @login_required
 def elections_administered(request):
   if not can_create_election(request):
     return HttpResponseForbidden(_('only an administrator has elections to administer'))
   
   user = get_user(request)
-  elections = Election.get_by_user_as_admin(user)
-  
-  return render_template(request, "elections_administered", {'elections': elections})
+  show_archived, num_archived = _archived_filter(request, Election.get_by_user_as_admin, user)
+  elections = Election.get_by_user_as_admin(user, archived_p=None if show_archived else False)
+
+  return render_template(request, "elections_administered", {'elections': elections,
+    'show_archived': show_archived, 'num_archived': num_archived})
 
 @login_required
 def elections_voted(request):
   user = get_user(request)
-  elections = Election.get_by_user_as_voter(user)
-  
-  return render_template(request, "elections_voted", {'elections': elections})
+  show_archived, num_archived = _archived_filter(request, Election.get_by_user_as_voter, user)
+  elections = Election.get_by_user_as_voter(user, archived_p=None if show_archived else False)
+
+  return render_template(request, "elections_voted", {'elections': elections,
+    'show_archived': show_archived, 'num_archived': num_archived})
     
 
 @login_required
