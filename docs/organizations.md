@@ -8,17 +8,19 @@ contact address. The server, its host name and its logins stay the same for ever
 - Every election belongs to one organization. Its pages for voters and trustees, and its
   public pages, show that organization's CI.
 - All other pages (start page, login, "My elections", creating an election, voter groups,
-  the administration pages of an election, site administration, the operator's legal
-  pages) show the CI of the **default
-  organization**: the operator of the server, configured with the variables of
+  the administration pages of an election, site administration) show the CI of the
+  organization whose **entry link** (`https://<host>/<slug>/`) the visitor opened
+  ([section 9](#9-entry-links)), else the CI of the **default organization**: the
+  operator of the server, configured with the variables of
   [configuration.md, section 5](configuration.md#5-site-and-interface) (`SITE_TITLE`,
-  `SITE_CSS_URL`, `ORGANIZATION_NAME`, `IMPRINT_URL`, ...).
+  `SITE_CSS_URL`, `ORGANIZATION_NAME`, `IMPRINT_URL`, ...). The operator's legal pages
+  (`/imprint`, `/privacy`, `/accessibility`) always show the operator's CI.
 - The voting booth shows the colors, font and name or logo of the election's organization
   ([section 7](#7-voting-booth)). The ballot verifiers stay neutral: they look the same
   for all elections.
-- Emails to the voters and trustees of an election show the organization as sender name,
-  with its Reply-To address and signature ([section 8](#8-emails)). The sender address and
-  the opt-out list are shared.
+- Emails to the voters, trustees and administrators of an election show the organization
+  as sender name, with its Reply-To address and signature ([section 8](#8-emails)). The
+  sender address and the opt-out list are shared.
 
 CI is not a separation of tenants: all organizations share the database, the site
 administrators, the logins and the email opt-out list. If an organization requires its
@@ -36,6 +38,8 @@ Without `ORGANIZATIONS_FILE`, there is only the default organization and nothing
 6. [Migrating from a single-organization setup](#6-migrating-from-a-single-organization-setup)
 7. [Voting booth](#7-voting-booth)
 8. [Emails](#8-emails)
+9. [Entry links](#9-entry-links)
+10. [Setup: a neutral operator and one entry link per organization](#10-setup-a-neutral-operator-and-one-entry-link-per-organization)
 
 ## 1. Configuration file
 
@@ -99,7 +103,12 @@ Example with two universities:
 
 The keys of `organizations` are the **slugs**: 1 to 50 lowercase letters, digits or
 hyphens (not at the start or end). Elections store the slug, so don't rename it once
-elections use it.
+elections use it. The slug is also the organization's entry link `/<slug>/`
+([section 9](#9-entry-links)), so it can't be a path of the server: `helios`, `auth`,
+`booth`, `verifier`, `static`, `scim`, `admin`, `about`, `faq`, `docs`, `imprint`,
+`privacy`, `accessibility`, `optout`, `i18n` and a few more are refused (the list is
+`RESERVED_ORGANIZATION_SLUGS` in `settings.py`; at start, Helios also compares the slugs
+with the first path segments of its URL configuration).
 
 | Key | Required | Meaning |
 |---|---|---|
@@ -154,9 +163,10 @@ site/static/                     -> SITE_STATIC_DIR, served at /static/site/
     └── logo-white.svg
 ```
 
-An organization's legal pages can be external pages or templates in `SITE_TEMPLATES_DIR`
-served under your own paths, e.g. by overriding `server_ui/templates/imprint.html` for the
-operator and linking the organizations' pages on their own websites.
+An organization's legal pages can be external pages, or pages served by Helios from
+templates in `SITE_TEMPLATES_DIR` (see [section 9](#organizations-legal-pages)): set
+`imprint_url` etc. to `/<slug>/imprint`. The operator's own pages are
+`server_ui/templates/imprint.html` etc. in the same directory.
 
 ## 2. Which organization an election belongs to
 
@@ -182,11 +192,14 @@ The organization's CI is shown on the pages of an election meant for voters and 
 - for trustees: their home page, key generation, key check, decryption.
 
 The election's administrators see these pages in the same CI (e.g. the election's page
-with its administration steps). The election's administration pages keep the operator's
-CI: edit, uploading voters and emailing them, adding trustees, administrators, freeze,
-extend, tally and releasing the result. The list of pages is in
-`ELECTION_CI_TEMPLATES` (`helios/view_utils.py`): a page shows the organization's CI only
-if it is listed there.
+with its administration steps). The election's administration pages (edit, uploading
+voters and emailing them, adding trustees, administrators, freeze, extend, tally and
+releasing the result) are part of the administration around the elections: they show the
+CI of the visitor's entry organization, else the operator's
+([section 9](#9-entry-links)). The list of pages is in
+`ELECTION_CI_TEMPLATES` (`helios/view_utils.py`): a page shows the election's
+organization's CI only if it is listed there, and then whatever entry link the visitor
+used.
 
 **Site administrators** see the organization of each election in the list of elections
 (`/helios/stats/elections`) and can filter it by organization; "default organization"
@@ -223,12 +236,16 @@ it grants no permissions.
 
 ## 4. Start page
 
-The start page keeps the operator's CI. With an organizations file, its list of
+The start page `/` shows the operator's CI. With an organizations file, its list of
 **featured elections** is filtered: people who are logged in see the featured elections of
 their own organization only (determined as in section 3; people of the default
 organization also see those of organizations no longer in the file), and visitors who are
 not logged in see none. The lists of one's own elections and votes are not filtered.
 Without an organizations file, everyone sees all featured elections as before.
+
+An organization's entry link `/<slug>/` is its start page, in its CI: it shows the
+featured elections of that organization, to everyone (also to visitors who are not
+logged in, and to people of another organization). See [section 9](#9-entry-links).
 
 ## 5. Assigning existing elections
 
@@ -347,7 +364,10 @@ Emails to the voters and trustees of an election come from its organization:
 
 - the emails to voters (to all, a group or one voter, including password credentials and the
   "resend credentials" email), the confirmation after a ballot was cast, the notice that a
-  vote was removed, and the trustee's link to their page.
+  vote was removed, and the trustee's link to their page;
+- the notes to the election's administrator: voter file processed, voters not added
+  because they opted out, encrypted tally computed, Helios trustee decrypted its part,
+  a trustee uploaded their public key or their partial decryption.
 
 They get:
 
@@ -358,17 +378,146 @@ They get:
 - **Reply-To** `mail.reply_to`, so that replies reach the organization rather than the
   operator.
 - **signature** `mail.signature` (after `--`), instead of `EMAIL_SIGNATURE` (default
-  `Helios`).
+  `Helios`). The administrator notes used to end with a fixed `Helios`; they now end with
+  the signature of the election's organization (for the default organization
+  `EMAIL_SIGNATURE`).
 
 The emails of the default organization's elections, and of organizations without `mail`,
 look as before (sender `DEFAULT_FROM_NAME`, no Reply-To, signature `EMAIL_SIGNATURE`).
 
-Not about one election, and so always from the operator: emails to election administrators
-(processed voter files, computed tally, trustee uploads, opted-out voters), opt-out and opt-in
-confirmations, password reminders (signed with the operator's site title). The opt-out list
-is shared: who opts out receives no emails of any organization.
+Not about one election, and so always from the operator (also for visitors of an entry
+link): opt-out and opt-in confirmations, password reminders (signed with the operator's site
+title), and the login services' welcome emails. The opt-out list is shared: who opts out
+receives no emails of any organization.
 
 The values are checked at start: `from_name` must be one line without control characters
 (at most 100 characters), so it can't add header lines; `reply_to` must be a plain email
 address. Helios sets the organization when the email is sent, also in the background worker,
 and applies it in its email backend to emails with the default sender address only.
+
+## 9. Entry links
+
+Every organization in the file has an **entry link**: `https://<host>/<slug>/`, e.g.
+`https://helios.example.org/unia/`. It is the organization's start page, in its CI, with
+its featured elections ([section 4](#4-start-page)). Publish it on the organization's
+website, in its intranet or in the emails announcing elections.
+
+Opening it selects the organization as the visitor's **entry organization**. From then on,
+all pages that are not an election's pages for voters and trustees show its CI:
+
+| Pages | CI |
+|---|---|
+| start page `/<slug>/`, login (also with password and the choice of the login service), "My elections", "My votes", creating an election (wizard and form), voter groups, the administration pages of an election, site administration, About / FAQ / Docs, "page not found" | the entry organization |
+| an election's pages for voters and trustees, and its public pages ([section 2](#2-which-organization-an-election-belongs-to)) | always the **election's** organization, whatever entry link was used |
+| voting booth | the election's organization ([section 7](#7-voting-booth)) |
+| ballot verifiers | neutral, the same for everyone |
+| `/imprint`, `/privacy`, `/accessibility` | always the operator |
+| `/<slug>/imprint`, `/<slug>/privacy`, `/<slug>/accessibility` | that organization (see below) |
+| start page `/`, and every page without an entry organization | the operator (default organization) |
+| server error page | the operator |
+
+An election's pages never follow the entry link, so nobody can make an election look like
+another organization's by sending a link to the election together with an entry link.
+
+**Navigation.** While an entry organization is active, the "Home" links, the site title
+and the logo lead to `/<slug>/`. Opening `/` returns to the operator's CI: it ends the
+entry organization. Opening another organization's entry link switches to it. Logging in
+and out keeps the entry organization: the login returns to the page where it was started,
+and logging out doesn't touch it.
+
+**The cookie.** The entry organization is kept in a cookie of its own, not in the session,
+so that visitors who are not logged in need no session for it and it survives logging out:
+
+| | |
+|---|---|
+| Name | `helios_organization` |
+| Value | the slug, e.g. `unia` (no personal data) |
+| Lifetime | 90 days, renewed on each visit of the entry link; removed by opening `/` |
+| Attributes | `Path=/`, `HttpOnly`, `SameSite=Lax`, `Secure` over HTTPS (with `SSL=1` always) |
+
+Helios checks the value against the slugs in the file on every request and ignores
+anything else (an organization removed from the file, a changed value). Pages showing a
+CI send `Vary: Cookie`. It is a technically necessary cookie (it only stores a display
+choice the visitor made); the generic privacy page (`/privacy`) mentions it when an
+organizations file is configured. If you replace that page with your own, mention it there.
+Without an organizations file, Helios sets no such cookie and `/<anything>/` stays
+"page not found".
+
+### Organizations' legal pages
+
+An organization can have its imprint, privacy policy and accessibility statement on this
+server, in its own CI. Put the templates into `SITE_TEMPLATES_DIR`:
+
+```
+site/templates/                          -> SITE_TEMPLATES_DIR
+├── server_ui/templates/
+│   ├── imprint.html                     the operator's: /imprint
+│   ├── privacy.html                     the operator's: /privacy (a generic one is built in)
+│   └── accessibility.html               the operator's: /accessibility
+└── organizations/
+    ├── unia/
+    │   ├── imprint.html                 /unia/imprint
+    │   ├── privacy.html                 /unia/privacy
+    │   └── accessibility.html           /unia/accessibility
+    └── unib/
+        └── imprint.html                 /unib/imprint (/unib/privacy: page not found)
+```
+
+Each page is served only if its template exists (otherwise "page not found"), always in
+that organization's CI, also without its entry link; it doesn't select the entry
+organization. A template extends the layout:
+
+```html
+{% extends "server_ui/templates/base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Imprint" %} &ndash; {{ ci.site_title }}{% endblock %}
+{% block content %}
+<h1>{% translate "Imprint" %}</h1>
+<p>University A, Example Street 1, 12345 Example City ...</p>
+{% endblock %}
+```
+
+Then link the pages in the organization's entry: `"imprint_url": "/unia/imprint"`,
+`"privacy_url": "/unia/privacy"`, `"accessibility_url": "/unia/accessibility"`. Pages in
+several languages can use `{% get_current_language as LANGUAGE_CODE %}` and
+`{% if LANGUAGE_CODE == "de" %}...{% endif %}`.
+
+## 10. Setup: a neutral operator and one entry link per organization
+
+The usual setup for a server shared by several organizations: `https://helios.example.org/`
+shows a neutral CI of the operator, and each organization has its own entry link, e.g.
+`https://helios.example.org/unia/`, showing its CI.
+
+1. **The global settings are the neutral operator** (the default organization,
+   [configuration.md, section 5](configuration.md#5-site-and-interface)): `SITE_TITLE`
+   (e.g. "Elections at example.org"), `ORGANIZATION_NAME`, `ORGANIZATION_URL`, a neutral
+   `SITE_CSS_URL` and logos, `HELP_EMAIL_ADDRESS` of the operator's support,
+   `DEFAULT_FROM_NAME` and `EMAIL_SIGNATURE`. The operator's legal pages: templates
+   `server_ui/templates/imprint.html`, `privacy.html` and `accessibility.html` in
+   `SITE_TEMPLATES_DIR`, with `IMPRINT_URL=/imprint`, `PRIVACY_URL=/privacy`,
+   `ACCESSIBILITY_URL=/accessibility` (or links to the operator's website).
+2. **One entry per organization** in the organizations file
+   ([section 1](#1-configuration-file)). Choose the slug carefully: it is the entry link
+   and stays in the elections. Give it at least `name`, `url`, `site_title`.
+3. **Its files**: stylesheet, logos and font under `SITE_STATIC_DIR/<slug>/`
+   (`css_url`, `main_logo_url`, `header_logo_url`, `footer_logo_url`, `font_url`), and the
+   booth's `colors`.
+4. **Its legal pages**: either links to its website, or templates under
+   `SITE_TEMPLATES_DIR/organizations/<slug>/` with `imprint_url: "/<slug>/imprint"` etc.
+   ([section 9](#organizations-legal-pages)). Set all three links (or `""` to hide one):
+   unset links fall back to the operator's.
+5. **Who belongs to it**: `match.idps` with the issuer (OIDC) or entity ID (SAML) of its
+   identity provider, if it has its own, and/or `match.email_domains`. This assigns the
+   people who log in through it to the organization: their new elections belong to it,
+   and they see its featured elections on `/`.
+6. **The address prefix** of its elections: `short_name_prefix` (e.g. `unia` for
+   `/helios/e/unia-board-2026`). With the same identity provider in `match.idps`, everyone
+   logging in through it gets the prefix ([section 3](#3-one-mapping-for-organizations-and-address-prefixes)).
+7. **Its emails**: `mail.from_name`, `mail.reply_to` and `mail.signature`
+   ([section 8](#8-emails)), and its `help_email`.
+8. Restart the web and worker processes, open `https://helios.example.org/unia/` and
+   check the start page, the login and the footer links; then assign existing elections
+   ([section 5](#5-assigning-existing-elections)).
+9. Publish the entry link: on the organization's website and in its announcements. The
+   emails to voters link the elections themselves, which show the election's
+   organization anyway.
