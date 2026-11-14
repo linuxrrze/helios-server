@@ -186,7 +186,9 @@ def build_site_nav(context):
 
 @register.inclusion_tag('server_ui/templates/_site_nav.html', takes_context=True)
 def site_nav(context):
-  return {'items': build_site_nav(context), 'settings': context.get('settings')}
+  from helios import organizations
+  return {'items': build_site_nav(context), 'settings': context.get('settings'),
+          'ci': context.get('ci') or organizations.default()}
 
 
 @register.simple_tag(takes_context=True)

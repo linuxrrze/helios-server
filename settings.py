@@ -250,7 +250,9 @@ TEMPLATES = [
             # os.path.join(ROOT_PATH, 'server_ui/templates'),  # covered by APP_DIRS:True
         ],
         'OPTIONS': {
-            'debug': DEBUG
+            'debug': DEBUG,
+            # `ci`: the corporate identity of the page (helios/organizations.py)
+            'context_processors': ['helios.organizations.context_processor'],
         }
     },
 ]
@@ -417,6 +419,164 @@ PRIVACY_URL = get_from_env('PRIVACY_URL', '/privacy')
 ACCESSIBILITY_URL = get_from_env('ACCESSIBILITY_URL', '')
 # further footer links, JSON: [{"url": "https://...", "text": "..."}]
 FOOTER_LINKS = json.loads(get_from_env('FOOTER_LINKS', '[]'))
+
+# Organizations sharing this server, each with its own corporate identity (CI) on
+# the pages of its elections, and the rules that assign people to them (identity
+# provider, email domain), which also give the prefix of their election addresses.
+# A JSON file maintained by the operator, see docs/organizations.md. Without it,
+# there is only the default organization: the operator, described by the settings
+# above. Errors in the file stop Helios from starting.
+ORGANIZATION_SLUG_RE = r'^[a-z0-9](?:[a-z0-9-]{0,48}[a-z0-9])?$'
+
+def parse_organizations(config_json, source='ORGANIZATIONS_FILE'):
+  """
+  slug -> normalized organization (a dict holding only the keys given in the
+  file, texts as {language or '': text}); ImproperlyConfigured if invalid
+  """
+  import re
+  from django.core.exceptions import ImproperlyConfigured
+
+  def fail(message, *args):
+    raise ImproperlyConfigured('%s: %s' % (source, message % args))
+
+  try:
+    raw = json.loads(config_json or '{}')
+  except ValueError as e:
+    fail('not valid JSON (%s).', e)
+  if not isinstance(raw, dict) or set(raw) - {'organizations'} or not isinstance(raw.get('organizations', {}), dict):
+    fail('expected a JSON object {"organizations": {"<slug>": {...}, ...}}.')
+
+  languages = {code for code, _name in LANGUAGES}
+  slug_re = re.compile(ORGANIZATION_SLUG_RE)
+  prefix_re = re.compile(SHORT_NAME_PREFIX_RE)
+  email_re = re.compile(r'^[^@\s<>"\',;]+@[^@\s<>"\',;]+\.[^@\s<>"\',;]+$')
+  unsafe = re.compile(r'[\s"\'<>\\`]')
+
+  def text(where, value):
+    if isinstance(value, str) and value.strip():
+      return {'': value.strip()}
+    if (isinstance(value, dict) and value and all(lang in languages for lang in value)
+        and all(isinstance(v, str) and v.strip() for v in value.values())):
+      return {lang: v.strip() for lang, v in value.items()}
+    fail('%s must be a text or an object with a text per language (%s).', where, ', '.join(sorted(languages)))
+
+  def local_path(where, value, empty_ok=True):
+    # served by this site: the Content Security Policy only allows 'self'
+    if isinstance(value, str) and (value == '' and empty_ok or (
+        value.startswith('/') and not value.startswith('//') and not unsafe.search(value))):
+      return value
+    fail('%s must be a path on this site such as "/static/site/..." (%r).', where, value)
+
+  def link(where, value, empty_ok=True):
+    if isinstance(value, str) and (value == '' and empty_ok or (
+        (value.startswith('/') and not value.startswith('//') or re.match(r'^https?://[^/\s]', value))
+        and not unsafe.search(value))):
+      return value
+    fail('%s must be an http(s) URL or a path on this site (%r).', where, value)
+
+  def string_list(where, value):
+    if not isinstance(value, list) or not all(isinstance(v, str) for v in value):
+      fail('%s must be a list of texts.', where)
+    return value
+
+  def footer_links(where, value):
+    if not isinstance(value, list):
+      fail('%s must be a list of {"url": ..., "text": ...}.', where)
+    links = []
+    for link_value in value:
+      if not isinstance(link_value, dict) or set(link_value) != {'url', 'text'}:
+        fail('%s must be a list of {"url": ..., "text": ...}.', where)
+      links.append({'url': link(where + ' url', link_value['url'], empty_ok=False),
+                    'text': text(where + ' text', link_value['text'])})
+    return links
+
+  def email(where, value):
+    if isinstance(value, str) and (value == '' or email_re.match(value)):
+      return value
+    fail('%s must be an email address (%r).', where, value)
+
+  def choice(*values):
+    def check(where, value):
+      if value in values:
+        return value
+      fail('%s must be one of %s (%r).', where, ', '.join(values), value)
+    return check
+
+  def url(where, value):
+    if isinstance(value, str) and (value == '' or re.match(r'^https?://[^/\s]', value)) and not unsafe.search(value):
+      return value
+    fail('%s must be an http(s) URL (%r).', where, value)
+
+  def prefix(where, value):
+    if isinstance(value, str) and prefix_re.match(value):
+      return value
+    fail('%s %r is not a valid prefix: use %s.', where, value, SHORT_NAME_PREFIX_RULE)
+
+  fields = {
+    'name': text, 'url': url, 'short_name_prefix': prefix, 'match': None,
+    'site_title': text, 'css_url': local_path, 'dark_mode': choice('auto', 'off'),
+    'main_logo_url': lambda where, value: local_path(where, value, empty_ok=False),
+    'header_logo_url': local_path, 'footer_logo_url': local_path,
+    'imprint_url': link, 'privacy_url': link, 'accessibility_url': link,
+    'footer_links': footer_links, 'help_email': email,
+  }
+  organizations = {}
+  owners = {}  # prefix / identity provider / email domain -> slug, to find duplicates
+
+  def claim(kind, key, slug):
+    if key in owners and owners[key] != slug:
+      fail('%s %r is given for both "%s" and "%s".', kind, key[1], owners[key], slug)
+    owners[key] = slug
+
+  for slug, config in raw.get('organizations', {}).items():
+    if not slug_re.match(slug):
+      fail('%r is not a valid organization slug: use 1 to 50 lowercase letters, digits or hyphens.', slug)
+    if not isinstance(config, dict):
+      fail('organization "%s" must be a JSON object.', slug)
+    unknown = sorted(set(config) - set(fields))
+    if unknown:
+      fail('organization "%s": unknown key(s) %s.', slug, ', '.join(unknown))
+    if 'name' not in config:
+      fail('organization "%s" needs a "name".', slug)
+    organization = {}
+    for key, value in config.items():
+      where = '"%s" of "%s"' % (key, slug)
+      if key == 'match':
+        if not isinstance(value, dict) or set(value) - {'idps', 'email_domains'}:
+          fail('%s must be an object with "idps" and/or "email_domains".', where)
+        idps = [idp_key(v) for v in string_list(where + ' idps', value.get('idps', []))]
+        domains = [v.strip().lstrip('@').rstrip('.').lower()
+                   for v in string_list(where + ' email_domains', value.get('email_domains', []))]
+        for idp in idps:
+          if not idp or any(c.isspace() for c in idp):
+            fail('%s: %r is not an auth system name or issuer.', where, idp)
+          claim('the identity provider', ('idp', idp), slug)
+        for domain in domains:
+          if not domain or '@' in domain or any(c.isspace() for c in domain):
+            fail('%s: %r is not an email domain.', where, domain)
+          claim('the email domain', ('domain', domain), slug)
+        organization['match'] = {'idps': idps, 'email_domains': domains}
+      else:
+        organization[key] = fields[key](where, value)
+        if key == 'short_name_prefix':
+          claim('the prefix', ('prefix', value), slug)
+    organization.setdefault('match', {'idps': [], 'email_domains': []})
+    organizations[slug] = organization
+  return organizations
+
+def load_organizations_file(path):
+  if not path:
+    return {}
+  from django.core.exceptions import ImproperlyConfigured
+  try:
+    with open(path, encoding='utf-8') as f:
+      content = f.read()
+  except OSError as e:
+    raise ImproperlyConfigured('ORGANIZATIONS_FILE %r cannot be read (%s).' % (path, e))
+  return parse_organizations(content, 'ORGANIZATIONS_FILE %s' % path)
+
+ORGANIZATIONS_FILE = get_from_env('ORGANIZATIONS_FILE', '')
+ORGANIZATIONS = load_organizations_file(ORGANIZATIONS_FILE)
 
 WELCOME_MESSAGE = get_from_env('WELCOME_MESSAGE', "This is the default message")
 

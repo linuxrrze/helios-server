@@ -13,7 +13,7 @@ from django.utils.translation import gettext as _
 from functools import update_wrapper
 
 import helios
-from . import utils
+from . import organizations, utils
 from helios_auth.models import User
 from helios_auth.security import get_user
 
@@ -51,8 +51,27 @@ def prepare_vars(request, values):
   return vars_with_user
 
 
+# The pages of an election for voters and trustees, and its public pages, show the
+# corporate identity (CI) of the election's organization (helios/organizations.py).
+# The election's administration pages (edit, voters upload and emails, trustees and
+# administrators management, freeze, tally) and all other pages keep the default CI.
+# Opt-in per page: add a template here only if voters or trustees are meant to see it.
+ELECTION_CI_TEMPLATES = frozenset([
+  # public pages of the election (its administrators see them in the same CI)
+  'election_view', 'election_questions', 'voters_list', 'list_trustees',
+  'election_not_started', 'election_tallied', 'election_bboard', 'election_audited_ballots', 'castvote',
+  # voters
+  'password_voter_login', 'password_voter_resend', 'election_cast_confirm', 'cast_done',
+  # trustees
+  'trustee_home', 'trustee_check_sk', 'election_keygenerator', 'trustee_decrypt_and_prove',
+])
+
+
 def render_template(request, template_name, values = None, include_user=True):
   vars_with_user = prepare_vars(request, values)
+
+  if template_name in ELECTION_CI_TEMPLATES and 'ci' not in vars_with_user:
+    vars_with_user['ci'] = organizations.for_election(vars_with_user.get('election'))
 
   if not include_user:
     del vars_with_user['user']

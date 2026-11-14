@@ -1,8 +1,8 @@
 {% extends TEMPLATE_BASE %}
-{% load i18n localized_settings %}
+{% load i18n %}
 
 {% block header %}
-<h2>{% localized_setting "SITE_TITLE" %} &mdash; {% translate "Login" %}</h2>
+<h2>{{ ci.site_title }} &mdash; {% translate "Login" %}</h2>
 {% endblock %}
 
 

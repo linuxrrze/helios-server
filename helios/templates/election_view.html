@@ -180,6 +180,24 @@
 </p>
 {% endif %}
 
+{% if organizations_p %}
+<div class="election-organization">
+<p>{% if organization.is_default %}{% blocktranslate trimmed with name=organization.label %}Corporate identity of the pages: <strong>{{ name }}</strong> (default organization).{% endblocktranslate %}{% else %}{% blocktranslate trimmed with name=organization.label %}Corporate identity of the pages: <strong>{{ name }}</strong>.{% endblocktranslate %}{% endif %}
+{% if not can_set_organization_p %}{% translate "Only site administrators can change it." %}{% endif %}</p>
+{% if can_set_organization_p %}
+<form class="inline-action" method="post" action="{% url "election@set-organization" election.uuid %}">
+<input type="hidden" name="csrf_token" value="{{csrf_token}}" />
+<label for="election-organization">{% translate "Organization" %}</label>
+<select id="election-organization" name="organization">
+<option value=""{% if organization.is_default %} selected{% endif %}>{% translate "Default organization" %}</option>
+{% for choice in organization_choices %}<option value="{{ choice.slug }}"{% if choice.slug == organization.slug %} selected{% endif %}>{{ choice.label }}</option>
+{% endfor %}</select>
+<button type="submit" class="button secondary small">{% translate "change organization" %}</button>
+</form>
+{% endif %}
+</div>
+{% endif %}
+
 {% if election.frozen_p %}
 <h3>{% translate "Embed an Election Badge" %}</h3>
 <form action="#">

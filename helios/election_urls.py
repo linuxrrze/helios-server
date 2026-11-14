@@ -69,6 +69,7 @@ urlpatterns = [
     path('/questions', views.one_election_questions, name=names.ELECTION_QUESTIONS),
     path('/set_reg', views.one_election_set_reg, name=names.ELECTION_SET_REG),
     path('/set_featured', views.one_election_set_featured, name=names.ELECTION_SET_FEATURED),
+    path('/set_organization', views.one_election_set_organization, name=names.ELECTION_SET_ORGANIZATION),
     path('/save_questions', views.one_election_save_questions, name=names.ELECTION_SAVE_QUESTIONS),
     path('/register', views.one_election_register, name=names.ELECTION_REGISTER),
     path('/freeze', views.one_election_freeze, name=names.ELECTION_FREEZE), # includes freeze_2 as POST target
