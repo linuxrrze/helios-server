@@ -383,6 +383,15 @@ table.pretty .helptext { margin-top: 4px; }
 .election-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 8px 0; border-bottom: 1px solid var(--border-color); }
 .election-list li:last-child { border-bottom: 0; }
 .election-list .muted { flex-basis: 100%; }
+/* tables of elections (helios/templates/_election_table.html): fixed columns, so status and numbers line up */
+.content-body table.election-table { width: 100%; }
+.content-body table.election-table tbody th { background: transparent; font-weight: 400; text-align: left; }
+.election-table .election-name { min-width: 12rem; }
+.election-table .election-status { white-space: nowrap; }
+.election-table .election-period { min-width: 9rem; }
+.election-table .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.home-section-wide { grid-column: 1 / -1; }
+.home-section .table-scroll { margin: 0 0 1em; }
 .featured-elections { padding-left: 0; list-style: none; }
 .featured-elections li { margin: 0 0 .5em; }
 .welcome { max-width: 48rem; }
@@ -533,6 +542,7 @@ table.pretty .helptext { margin-top: 4px; }
   :root.color-scheme-auto .breadcrumbs li + li::before { color: var(--muted-color); }
   :root.color-scheme-auto .content-body table th, :root.color-scheme-auto .content-body table td { color: var(--text-color); }
   :root.color-scheme-auto .content-body table th { background: var(--surface-color); }
+  :root.color-scheme-auto .content-body table.election-table tbody th { background: transparent; }
   :root.color-scheme-auto .content-body input[type=checkbox], :root.color-scheme-auto .content-body input[type=radio] { accent-color: var(--accent-color); }
   :root.color-scheme-auto .share-bar > span { background: var(--accent-color); }
   :root.color-scheme-auto .alert { background-color: var(--surface-color); color: var(--text-color); }

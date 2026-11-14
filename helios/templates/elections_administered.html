@@ -10,12 +10,7 @@
 {% include "_archived_filter.html" %}
 
 {% if elections %}
-<ul class="election-list">
-{% for election in elections %}
-<li><a href="{% url "election@view" election.uuid %}">{{election.name}}</a> {% election_status_badge election %}
-<span class="muted">{% blocktranslate trimmed with num_voters=election.num_voters num_cast_votes=election.num_cast_votes %}{{num_voters}} voters / {{num_cast_votes}} cast votes{% endblocktranslate %}</span></li>
-{% endfor %}
-</ul>
+{% translate "Elections you Administer" as caption %}{% include "_election_table.html" with elections=elections counts=True caption=caption %}
 {% else %}
 <div class="callout empty-state"><p>{% if num_archived and not show_archived %}{% translate "All your elections are archived." %}{% else %}{% translate "You don't administer any elections yet." %}{% endif %}</p></div>
 {% endif %}

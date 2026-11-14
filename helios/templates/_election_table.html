@@ -1,0 +1,31 @@
+{% load i18n election_tags organization_tags timezone_tags %}{% comment %}
+A table of elections: name, status, voting period, and optionally the numbers
+of voters and cast votes (counts) and the organization (when organizations are
+configured).
+  {% include "_election_table.html" with elections=elections counts=True caption=_("…") %}
+{% endcomment %}{% organizations_enabled as organizations_p %}
+<div class="table-scroll">
+<table class="election-table">
+{% if caption %}<caption class="screen-reader-text">{{ caption }}</caption>{% endif %}
+<thead><tr>
+  <th scope="col">{% translate "Name" %}</th>
+  <th scope="col">{% translate "Status" %}</th>
+  <th scope="col">{% translate "Voting" %}</th>
+  {% if counts %}<th scope="col" class="num">{% translate "Voters" %}</th>
+  <th scope="col" class="num">{% translate "Cast votes" %}</th>{% endif %}
+  {% if organizations_p %}<th scope="col">{% translate "Organization" %}</th>{% endif %}
+</tr></thead>
+<tbody>
+{% for election in elections %}
+<tr>
+  <th scope="row" class="election-name"><a href="{% url "election@view" election.uuid %}">{{ election.name }}</a></th>
+  <td class="election-status">{% election_status_badge election %}</td>
+  <td class="election-period">{% if election.voting_start_at and not election.voting_has_started %}{% blocktranslate trimmed with start=election.voting_start_at|utc_time %}from {{ start }}{% endblocktranslate %}{% elif election.voting_end_at %}{% blocktranslate trimmed with end=election.voting_end_at|utc_time %}until {{ end }}{% endblocktranslate %}{% else %}<span class="muted" aria-label="{% translate "no voting period set" %}">&ndash;</span>{% endif %}</td>
+  {% if counts %}<td class="num">{{ election.num_voters }}</td>
+  <td class="num">{{ election.num_cast_votes }}</td>{% endif %}
+  {% if organizations_p %}<td>{{ election|organization_label }}</td>{% endif %}
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>

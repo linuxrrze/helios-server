@@ -16,3 +16,15 @@ register = template.Library()
 @register.simple_tag(takes_context=True)
 def current_ci(context):
   return context.get('ci') or organizations.default()
+
+
+@register.simple_tag
+def organizations_enabled():
+  """whether organizations are configured: {% organizations_enabled as organizations_p %}"""
+  return organizations.enabled()
+
+
+@register.filter
+def organization_label(election):
+  """how the election's organization is named in lists: {{ election|organization_label }}"""
+  return organizations.for_election(election).label

@@ -68,8 +68,8 @@ msgstr[1] "%(count)d Wahlberechtigte"
 msgid "No voters yet"
 msgstr "Noch keine Wahlberechtigten"
 
-#: helios/election_progress.py:63 helios/templates/votergroup_prepareelection.html:14 helios/templatetags/election_tags.py:47
-#: helios/templatetags/navigation_tags.py:47
+#: helios/election_progress.py:63 helios/templates/_election_table.html:14 helios/templates/votergroup_prepareelection.html:14
+#: helios/templatetags/election_tags.py:47 helios/templatetags/navigation_tags.py:47
 msgid "Voters"
 msgstr "Wahlberechtigte"
 
@@ -135,7 +135,7 @@ msgid_plural "%(cast)d of %(total)d voters have voted"
 msgstr[0] "%(cast)d von %(total)d wahlberechtigten Person hat abgestimmt"
 msgstr[1] "%(cast)d von %(total)d Wahlberechtigten haben abgestimmt"
 
-#: helios/election_progress.py:98
+#: helios/election_progress.py:98 helios/templates/_election_table.html:13
 msgid "Voting"
 msgstr "Stimmabgabe"
 
@@ -200,9 +200,9 @@ msgstr "Adresse der Wahl"
 msgid "The link to the election that voters get in their invitation and that you can pass on. Letters, digits, hyphens and underscores, no spaces, e.g. board-2026. Leave empty to have one created automatically (a long random code)."
 msgstr "Der Link zur Wahl, den die Wahlberechtigten in ihrer Einladung erhalten und den Sie weitergeben können. Buchstaben, Ziffern, Binde- und Unterstriche, keine Leerzeichen, z. B. vorstand-2026. Lassen Sie das Feld leer, wird die Adresse automatisch erzeugt (ein langer Zufallscode)."
 
-#: helios/forms.py:71 helios/templates/election_bboard.html:24 helios/templates/new_trustee.html:19
-#: helios/templates/new_trustee.html:27 helios/templates/votergroup_admins.html:17 helios/templates/voters_list.html:145
-#: helios/templates/voters_manage.html:28 helios/templates/voters_upload_confirm.html:14
+#: helios/forms.py:71 helios/templates/_election_table.html:11 helios/templates/election_bboard.html:24
+#: helios/templates/new_trustee.html:19 helios/templates/new_trustee.html:27 helios/templates/votergroup_admins.html:17
+#: helios/templates/voters_list.html:145 helios/templates/voters_manage.html:28 helios/templates/voters_upload_confirm.html:14
 msgid "Name"
 msgstr "Name"
 
@@ -726,6 +726,33 @@ msgstr "Sie können beliebig oft einen Stimmzettel abgeben: Nur der letzte zähl
 #: helios/templates/_castconfirm_password.html:26
 msgid "log in"
 msgstr "Anmelden"
+
+#: helios/templates/_election_table.html:12
+msgid "Status"
+msgstr "Status"
+
+#: helios/templates/_election_table.html:15
+msgid "Cast votes"
+msgstr "Abgegebene Stimmen"
+
+#: helios/templates/_election_table.html:16 helios/templates/election_view.html:190 helios/templates/stats_elections.html:10
+#: helios/templates/stats_elections.html:36
+msgid "Organization"
+msgstr "Organisation"
+
+#: helios/templates/_election_table.html:23
+#, python-format
+msgid "from %(start)s"
+msgstr "ab %(start)s"
+
+#: helios/templates/_election_table.html:23
+msgid "no voting period set"
+msgstr "kein Abstimmungszeitraum festgelegt"
+
+#: helios/templates/_election_table.html:23
+#, python-format
+msgid "until %(end)s"
+msgstr "bis %(end)s"
 
 #: helios/templates/_form_fields.html:9 helios/templates/new_trustee.html:17 helios/templates/votergroup_transfer.html:61
 msgid "Please correct the following:"
@@ -1490,7 +1517,7 @@ msgstr "Ändern"
 
 #: helios/templates/election_new_guided.html:49 helios/templates/elections_administered.html:8 helios/templates/votergroup_prepareelection.html:46
 #: helios/templatetags/navigation_tags.py:65 helios/templatetags/navigation_tags.py:66 helios/templatetags/navigation_tags.py:72
-#: helios/templatetags/navigation_tags.py:185 server_ui/templates/index.html:34
+#: helios/templatetags/navigation_tags.py:185 server_ui/templates/index.html:30
 msgid "Create election"
 msgstr "Wahl erstellen"
 
@@ -1937,10 +1964,6 @@ msgstr "Erscheinungsbild der Seiten: <strong>%(name)s</strong>."
 msgid "Only site administrators can change it."
 msgstr "Nur die Administration kann es ändern."
 
-#: helios/templates/election_view.html:190 helios/templates/stats_elections.html:10 helios/templates/stats_elections.html:36
-msgid "Organization"
-msgstr "Organisation"
-
 #: helios/templates/election_view.html:192
 msgid "Default organization"
 msgstr "Standardorganisation"
@@ -2070,7 +2093,7 @@ msgid "This election is open to: %(eligibility)s"
 msgstr "Diese Wahl steht offen für: %(eligibility)s"
 
 #: helios/templates/election_view.html:299 helios_auth/templates/login_box.html:3 helios_auth/templates/auth/devlogin.html:21
-#: server_ui/templates/base.html:51 server_ui/templates/index.html:91
+#: server_ui/templates/base.html:51 server_ui/templates/index.html:83
 msgid "Log in"
 msgstr "Anmelden"
 
@@ -2113,33 +2136,27 @@ msgstr "<a target=\"_blank\" href=\"%(verifier_url)s%(election_home_url)s\">Ausz
 msgid "review the <a href=\"%(vote_url)s\">voting booth</a>."
 msgstr "<a href=\"%(vote_url)s\">Wahlkabine</a> ansehen."
 
-#: helios/templates/elections_administered.html:4 helios/templates/elections_administered.html:6
+#: helios/templates/elections_administered.html:4 helios/templates/elections_administered.html:6 helios/templates/elections_administered.html:13
 msgid "Elections you Administer"
 msgstr "Von Ihnen geleitete Wahlen"
 
-#: helios/templates/elections_administered.html:16 helios/templates/stats_deleted_elections.html:30 helios/templates/stats_elections.html:35
-#: helios/templates/stats_user_search.html:34 helios/templates/stats_user_search.html:50 helios/templates/stats_user_search.html:66
-#, python-format
-msgid "%(num_voters)s voters / %(num_cast_votes)s cast votes"
-msgstr "%(num_voters)s Wahlberechtigte / %(num_cast_votes)s abgegebene Stimmen"
-
-#: helios/templates/elections_administered.html:20
+#: helios/templates/elections_administered.html:15
 msgid "All your elections are archived."
 msgstr "Alle Ihre Wahlen sind archiviert."
 
-#: helios/templates/elections_administered.html:20
+#: helios/templates/elections_administered.html:15
 msgid "You don't administer any elections yet."
 msgstr "Sie leiten noch keine Wahlen."
 
-#: helios/templates/elections_voted.html:4 helios/templates/elections_voted.html:6
+#: helios/templates/elections_voted.html:4 helios/templates/elections_voted.html:6 helios/templates/elections_voted.html:11
 msgid "Elections where you voted"
 msgstr "Wahlen, an denen Sie teilgenommen haben"
 
-#: helios/templates/elections_voted.html:17
+#: helios/templates/elections_voted.html:13
 msgid "All elections where you voted are archived."
 msgstr "Alle Wahlen, an denen Sie teilgenommen haben, sind archiviert."
 
-#: helios/templates/elections_voted.html:17 server_ui/templates/index.html:56
+#: helios/templates/elections_voted.html:13 server_ui/templates/index.html:48
 msgid "None yet."
 msgstr "Noch keine."
 
@@ -2690,6 +2707,12 @@ msgstr "Wahlen %(start)s - %(end)s (von %(total)s)"
 msgid "<b>%(name)s</b> by <a href=\"mailto:%(email)s\">%(admin_name)s</a>"
 msgstr "<b>%(name)s</b> von <a href=\"mailto:%(email)s\">%(admin_name)s</a>"
 
+#: helios/templates/stats_deleted_elections.html:30 helios/templates/stats_elections.html:35 helios/templates/stats_user_search.html:34
+#: helios/templates/stats_user_search.html:50 helios/templates/stats_user_search.html:66
+#, python-format
+msgid "%(num_voters)s voters / %(num_cast_votes)s cast votes"
+msgstr "%(num_voters)s Wahlberechtigte / %(num_cast_votes)s abgegebene Stimmen"
+
 #: helios/templates/stats_deleted_elections.html:30
 msgid "Deleted at:"
 msgstr "Gelöscht am:"
@@ -3092,7 +3115,7 @@ msgstr "Wählergruppen"
 msgid "Voter groups you administer"
 msgstr "Von Ihnen verwaltete Wählergruppen"
 
-#: helios/templates/votergroup_administered.html:6 server_ui/templates/index.html:41
+#: helios/templates/votergroup_administered.html:6 server_ui/templates/index.html:37
 msgid "Voter groups are reusable lists of members, with their votes, from which you prepare an election."
 msgstr "Wählergruppen sind wiederverwendbare Mitgliederlisten mit Stimmenzahl, aus denen Sie eine Wahl vorbereiten."
 
@@ -4758,47 +4781,47 @@ msgstr "Nein, das sollten Sie nicht. Online-Wahlen sind geeignet, wenn keine gro
 msgid "If you’d like to use a truly verifiable voting system for your public-office election, we recommend an in-person election. Helios could be adapted to the in-person, precinct voting setting, but we have not done this work yet, and we intend to focus on online elections first."
 msgstr "Wenn Sie für eine öffentliche Wahl ein wirklich überprüfbares Wahlsystem einsetzen möchten, empfehlen wir eine Präsenzwahl. Helios könnte für die Stimmabgabe im Wahllokal angepasst werden, doch diese Arbeit haben wir noch nicht geleistet; wir konzentrieren uns zunächst auf Online-Wahlen."
 
-#: server_ui/templates/index.html:23
+#: server_ui/templates/index.html:23 server_ui/templates/index.html:25
 msgid "Administration"
 msgstr "Administration"
 
-#: server_ui/templates/index.html:31
+#: server_ui/templates/index.html:27
 msgid "You don't administer any elections yet. Create one: you add questions and voters next, and nothing is sent to anyone until you decide to."
 msgstr "Sie leiten noch keine Wahlen. Legen Sie eine an: Danach fügen Sie Fragen und Wahlberechtigte hinzu, und es wird nichts verschickt, bevor Sie es entscheiden."
 
-#: server_ui/templates/index.html:35
+#: server_ui/templates/index.html:31
 msgid "See all elections"
 msgstr "Alle Wahlen anzeigen"
 
-#: server_ui/templates/index.html:40
+#: server_ui/templates/index.html:36
 msgid "Committee administration"
 msgstr "Gremienverwaltung"
 
-#: server_ui/templates/index.html:42
+#: server_ui/templates/index.html:38
 msgid "See all groups"
 msgstr "Alle Gruppen anzeigen"
 
-#: server_ui/templates/index.html:47
+#: server_ui/templates/index.html:43 server_ui/templates/index.html:45
 msgid "Recent votes"
 msgstr "Meine Abstimmungen"
 
-#: server_ui/templates/index.html:54
+#: server_ui/templates/index.html:46
 msgid "See all votes"
 msgstr "Alle Stimmabgaben anzeigen"
 
-#: server_ui/templates/index.html:62
+#: server_ui/templates/index.html:54
 msgid "Featured elections"
 msgstr "Hervorgehobene Wahlen"
 
-#: server_ui/templates/index.html:81
+#: server_ui/templates/index.html:73
 msgid "There are currently no elections available."
 msgstr "Derzeit sind keine Abstimmungen verfügbar."
 
-#: server_ui/templates/index.html:97
+#: server_ui/templates/index.html:89
 msgid "Select an election to start voting. You will be asked for your voting credentials after you complete a ballot."
 msgstr "Wählen Sie eine Abstimmung aus, um sich daran zu beteiligen. Während des Verlaufs der Abstimmung werden Sie nach den Tokens zur Wahlberechtigung gefragt."
 
-#: server_ui/templates/index.html:102
+#: server_ui/templates/index.html:94
 msgid "Made with"
 msgstr "Erstellt mit"
 

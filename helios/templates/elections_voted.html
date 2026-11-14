@@ -8,11 +8,7 @@
 {% include "_archived_filter.html" %}
 
 {% if elections %}
-<ul class="election-list">
-{% for election in elections %}
-<li><a href="{% url "election@view" election.uuid %}">{{election.name}}</a> {% election_status_badge election %}</li>
-{% endfor %}
-</ul>
+{% translate "Elections where you voted" as caption %}{% include "_election_table.html" with elections=elections caption=caption %}
 {% else %}
 <div class="callout empty-state"><p>{% if num_archived and not show_archived %}{% translate "All elections where you voted are archived." %}{% else %}{% translate "None yet." %}{% endif %}</p></div>
 {% endif %}
