@@ -934,7 +934,7 @@ msgid "To verify an audited ballot, copy its entire content and paste it in the 
 msgstr "Um einen geprüften Stimmzettel zu überprüfen, kopieren Sie seinen gesamten Inhalt und fügen Sie ihn in die <a target=\"_new\" href=\"%(verifier_url)s%(election_home_url)s\">Einzelstimmzettel-Überprüfung</a> ein."
 
 #: helios/templates/election_audited_ballots.html:27 helios/templates/election_bboard.html:13 helios/templates/stats_deleted_elections.html:15
-#: helios/templates/stats_elections.html:14 helios/templates/voters_list.html:125
+#: helios/templates/stats_elections.html:20 helios/templates/voters_list.html:125
 msgid "Pages"
 msgstr "Seiten"
 
@@ -948,7 +948,7 @@ msgid "back to start"
 msgstr "zurück zum Anfang"
 
 #: helios/templates/election_audited_ballots.html:30 helios/templates/election_audited_ballots.html:30 helios/templates/election_bboard.html:16
-#: helios/templates/stats_deleted_elections.html:21 helios/templates/stats_elections.html:20 helios/templates/voters_list.html:131
+#: helios/templates/stats_deleted_elections.html:21 helios/templates/stats_elections.html:26 helios/templates/voters_list.html:131
 #: helios/templates/voters_manage.html:16 helios/templates/voters_manage.html:24
 #, python-format
 msgid "next %(limit)s"
@@ -1879,7 +1879,7 @@ msgstr "Erscheinungsbild der Seiten: <strong>%(name)s</strong>."
 msgid "Only site administrators can change it."
 msgstr "Nur die Administration kann es ändern."
 
-#: helios/templates/election_view.html:190
+#: helios/templates/election_view.html:190 helios/templates/stats_elections.html:10 helios/templates/stats_elections.html:36
 msgid "Organization"
 msgstr "Organisation"
 
@@ -2059,7 +2059,7 @@ msgstr "<a href=\"%(vote_url)s\">Wahlkabine</a> ansehen."
 msgid "Elections you Administer"
 msgstr "Von Ihnen geleitete Wahlen"
 
-#: helios/templates/elections_administered.html:14 helios/templates/stats_deleted_elections.html:30 helios/templates/stats_elections.html:29
+#: helios/templates/elections_administered.html:14 helios/templates/stats_deleted_elections.html:30 helios/templates/stats_elections.html:35
 #: helios/templates/stats_user_search.html:34 helios/templates/stats_user_search.html:50 helios/templates/stats_user_search.html:66
 #, python-format
 msgid "%(num_voters)s voters / %(num_cast_votes)s cast votes"
@@ -2599,22 +2599,22 @@ msgid "Deleted Elections"
 msgstr "Gelöschte Wahlen"
 
 #: helios/templates/stats_deleted_elections.html:10 helios/templates/stats_deleted_elections.html:11 helios/templates/stats_elections.html:9
-#: helios/templates/stats_elections.html:10 helios/templates/stats_user_search.html:10 helios/templates/voters_list.html:108
+#: helios/templates/stats_elections.html:16 helios/templates/stats_user_search.html:10 helios/templates/voters_list.html:108
 #: helios/templates/voters_list.html:110 helios/templates/voters_manage.html:7 helios/templates/voters_manage.html:7
 msgid "search"
 msgstr "suchen"
 
-#: helios/templates/stats_deleted_elections.html:11 helios/templates/stats_elections.html:10 helios/templates/stats_user_search.html:10
+#: helios/templates/stats_deleted_elections.html:11 helios/templates/stats_elections.html:16 helios/templates/stats_user_search.html:10
 #: helios/templates/voters_list.html:105
 msgid "clear search"
 msgstr "Suche zurücksetzen"
 
-#: helios/templates/stats_deleted_elections.html:17 helios/templates/stats_elections.html:16 helios/templates/voters_list.html:127
+#: helios/templates/stats_deleted_elections.html:17 helios/templates/stats_elections.html:22 helios/templates/voters_list.html:127
 #, python-format
 msgid "previous %(limit)s"
 msgstr "vorherige %(limit)s"
 
-#: helios/templates/stats_deleted_elections.html:19 helios/templates/stats_elections.html:18
+#: helios/templates/stats_deleted_elections.html:19 helios/templates/stats_elections.html:24
 #, python-format
 msgid "Elections %(start)s - %(end)s (of %(total)s)"
 msgstr "Wahlen %(start)s - %(end)s (von %(total)s)"
@@ -2644,7 +2644,16 @@ msgstr "Keine gelöschten Wahlen gefunden."
 msgid "Elections"
 msgstr "Wahlen"
 
-#: helios/templates/stats_elections.html:28
+#: helios/templates/stats_elections.html:12
+msgid "all organizations"
+msgstr "alle Organisationen"
+
+#: helios/templates/stats_elections.html:13 helios/templates/stats_elections.html:36
+#, python-format
+msgid "%(name)s (default organization)"
+msgstr "%(name)s (Standardorganisation)"
+
+#: helios/templates/stats_elections.html:34
 #, python-format
 msgid "<b><a href=\"%(url)s\">%(name)s</a></b> by <a href=\"mailto:%(email)s\">%(admin_name)s</a>"
 msgstr "<b><a href=\"%(url)s\">%(name)s</a></b> von <a href=\"mailto:%(email)s\">%(admin_name)s</a>"
@@ -3627,11 +3636,11 @@ msgstr "Deaktiviert"
 msgid "QR code with the link to your ballot tracker"
 msgstr "QR-Code mit dem Link zu Ihrem Stimmzettel-Tracker"
 
-#: helios/view_utils.py:135 helios/views.py:485
+#: helios/view_utils.py:147 helios/views.py:485
 msgid "Please enter an email address."
 msgstr "Bitte geben Sie eine E-Mail-Adresse ein."
 
-#: helios/view_utils.py:148
+#: helios/view_utils.py:160
 msgid "No user found with that email. They must log in to Helios at least once before being added as an administrator."
 msgstr "Kein Konto mit dieser E-Mail-Adresse gefunden. Die Person muss sich mindestens einmal bei Helios anmelden, bevor sie als Wahlleitung hinzugefügt werden kann."
 
