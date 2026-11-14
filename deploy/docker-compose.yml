@@ -32,6 +32,9 @@
 #       proxy_set_header X-Forwarded-Proto $scheme;
 #   }
 # Static files are in the image and the app serves them; no separate location blocks needed.
+# The app then also sends its Content Security Policy for the voting booth and verifier; if the
+# proxy serves /booth/, /verifier/ or /static/ itself, add the headers of
+# systemd/nginx-helios-security-headers.conf there.
 
 name: helios
 

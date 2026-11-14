@@ -60,6 +60,11 @@ Single sign-on is described in more detail in [sso.md](sso.md).
 | `SESSION_COOKIE_SAMESITE` | `Lax` | Don't change it: `Lax` is part of Helios' CSRF protection, and the SAML and OIDC logins rely on it. |
 | `CSP_REPORT_ONLY` | `0` | `1`: report Content Security Policy violations without enforcing the policy (for testing). |
 | `CSP_REPORT_URI` | – | URL that receives CSP violation reports. |
+
+The Content Security Policy and the other security headers are set by Django on what it
+serves. With Docker Compose that is everything, including the voting booth and the static
+files. When nginx serves `/booth/`, `/verifier/` and `/static/` itself (systemd setup), it
+must add the same headers: see [deploy/systemd/README.md](../deploy/systemd/README.md#security-headers-of-the-booth-and-verifier).
 | `TIME_ZONE` | `UTC` | Only for automatic timestamps such as the creation date of an election. Also the default of `ELECTION_TIME_ZONE`. |
 | `ELECTION_TIME_ZONE` | `TIME_ZONE` | Time zone (IANA name, e.g. `Europe/Berlin`) in which administrators enter voting start, end and extension, and in which the pages show these times, always with the zone's abbreviation (the visitor's own time is added by the browser if it differs). Helios still stores and compares them in UTC. `UTC` restores the earlier behaviour (entry and display in UTC). With neither variable set, times are entered and shown in UTC; set `TIME_ZONE` (or only `ELECTION_TIME_ZONE`) to your local zone. Installations that relied on the former default `America/Los_Angeles` must now set it explicitly. |
 | `LANGUAGE_CODE` | `en` | Interface language (`en` or `de`) for visitors whose browser prefers neither. Everyone can switch with the language button. Emails use the language of the person whose action sends them. |
@@ -121,8 +126,9 @@ EMAIL_HOST_PASSWORD=...
 | Variable | Default | Meaning |
 |---|---|---|
 | `DEFAULT_FROM_EMAIL` | `ben@adida.net` ⚠ | Sender address of all mails, as `From:` and as SMTP envelope sender. An authenticating relay often allows a user to send only from certain addresses: make sure this one is allowed. |
-| `DEFAULT_FROM_NAME` | `Ben for Helios` ⚠ | Sender name. |
-| `HELP_EMAIL_ADDRESS` | `help@heliosvoting.org` ⚠ | Contact address shown to users (also the "Contact" link in the footer). |
+| `DEFAULT_FROM_NAME` | `Ben for Helios` ⚠ | Sender name. Emails for an election of an organization with its own `mail.from_name` show that name with the same address ([organizations.md](organizations.md#8-emails)). |
+| `EMAIL_SIGNATURE` | `Helios` | Signature (after `--`) of the emails to voters and trustees. Per language (`EMAIL_SIGNATURE_DE`). An organization can set its own. |
+| `HELP_EMAIL_ADDRESS` | `help@heliosvoting.org` ⚠ | Contact address shown to users (also the "Contact" link in the footer, and in the voting booth for elections without their own help address). |
 | `HELIOS_VOTER_EMAIL_CUTOFF_WEEKS` | `3` | Weeks after the tally from which administrators can no longer email the voters of an election. |
 
 **Other ways to send** (instead of SMTP):
@@ -240,7 +246,9 @@ and the built-in pages. See [section 10](#10-customizing-the-site) for a worked 
 | `ORGANIZATION_LOGO_URL` | empty | Small logo (16 px high) shown instead of the name in the header bar. |
 | `FOOTER_LOGO_URL` | empty | Larger logo in the footer (up to 240 px wide), on the dark footer background: use a light/white version. |
 | `SITE_CSS_URL` | empty | Extra stylesheet, loaded after the default layout (`server_ui/media/layout.css`, served at `/static/layout.css`). Usually sets the CSS variables listed below. |
-| `DARK_MODE` | `auto` without `SITE_CSS_URL`, else `off` | `auto`: the pages follow the visitor's system setting for dark mode (`prefers-color-scheme`); `off`: always light. With a site stylesheet the default is `off`, because such a stylesheet usually sets light colors only. To enable it, give the stylesheet dark values under `@media (prefers-color-scheme: dark) { :root.color-scheme-auto { ... } }` (same variables as below, plus `--accent-color` for links and outlined buttons) and set `DARK_MODE=auto`. The voting booth follows the same setting: it loads `/booth-dark-mode.css` from Django (outside `/booth/`, so it also works when the web server serves the booth's files), which contains the booth's dark colors (`heliosbooth/css/booth-dark.css`) only with `auto`. |
+| `DARK_MODE` | `auto` without `SITE_CSS_URL`, else `off` | `auto`: the pages follow the visitor's system setting for dark mode (`prefers-color-scheme`); `off`: always light. With a site stylesheet the default is `off`, because such a stylesheet usually sets light colors only. To enable it, give the stylesheet dark values under `@media (prefers-color-scheme: dark) { :root.color-scheme-auto { ... } }` (same variables as below, plus `--accent-color` for links and outlined buttons) and set `DARK_MODE=auto`. The voting booth follows the same setting: it loads the stylesheet of its election, `/helios/elections/<uuid>/booth-theme.css`, from Django (outside `/booth/`, so it also works when the web server serves the booth's files), which contains the booth's dark colors (`heliosbooth/css/booth-dark.css`) only with `auto` (without an election: `/booth-dark-mode.css`). |
+| `BOOTH_COLORS` | empty | Colors of the voting booth, as JSON, e.g. `{"primary": "#00447c", "accent": "#e6edf5"}`; keys and rules as `colors` in [organizations.md](organizations.md#7-voting-booth). Without it, the booth keeps its built-in colors. Invalid values stop Helios from starting. |
+| `BOOTH_FONT_URL` | empty | Font of the voting booth's text: a font file on this server, e.g. `/static/site/fonts/sans.woff2`. Fingerprints and ballot trackers keep their monospace font. |
 | `IMPRINT_URL` | empty | Footer link "Imprint". `/imprint` renders `server_ui/templates/imprint.html`, which only exists if the site provides it (otherwise 404); or link an external page. |
 | `PRIVACY_URL` | `/privacy` | Footer link "Privacy". `/privacy` is a built-in, generic description of how Helios handles data; it is not a complete privacy policy. Replace it with your own template or link an external page. Set it empty to hide the link. |
 | `ACCESSIBILITY_URL` | empty | Footer link "Accessibility". `/accessibility` renders `server_ui/templates/accessibility.html`, which only exists if the site provides it (otherwise 404); or link an external page. |
@@ -254,11 +262,12 @@ accessibility, `FOOTER_LINKS`, and "Contact" (`mailto:` `HELP_EMAIL_ADDRESS`; hi
 **Several organizations.** These variables describe the operator of the server (the
 *default organization*). Further organizations sharing the server get their own logos,
 colors, title, legal links and contact address on the pages of their elections for voters
-and trustees:
+and trustees, their own booth colors, and their own sender name, Reply-To and signature in
+the emails of their elections:
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `ORGANIZATIONS_FILE` | empty | Path of a JSON file describing the organizations, their address prefixes and who belongs to them. Each election belongs to one organization (from its creator's login; only site administrators can change it) and its pages for voters and trustees show that organization's corporate identity; all other pages, including the election's administration pages, keep the operator's. With the file, the start page lists only the featured elections of the visitor's own organization (none when not logged in). Read at start: a missing file or an invalid entry stops Helios from starting. Format, rules and migration: [organizations.md](organizations.md). |
+| `ORGANIZATIONS_FILE` | empty | Path of a JSON file describing the organizations, their address prefixes and who belongs to them. Each election belongs to one organization (from its creator's login; only site administrators can change it) and its pages for voters and trustees, its voting booth and its emails to voters and trustees show that organization's corporate identity; all other pages, including the election's administration pages, keep the operator's. With the file, the start page lists only the featured elections of the visitor's own organization (none when not logged in). Read at start: a missing file or an invalid entry stops Helios from starting. Format, rules and migration: [organizations.md](organizations.md). |
 
 **CSS variables** of the default layout, to be set in `SITE_CSS_URL`:
 

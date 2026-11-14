@@ -10,6 +10,7 @@ services, nginx in front of them, PostgreSQL on the same host. For Docker Compos
 | `helios-web.service` | `/etc/systemd/system/helios-web.service` (gunicorn, unix socket) |
 | `helios-worker.service` | `/etc/systemd/system/helios-worker.service` (background tasks) |
 | `nginx-helios.conf` | `/etc/nginx/sites-available/helios` |
+| `nginx-helios-security-headers.conf` | `/etc/nginx/snippets/helios-security-headers.conf` (Content Security Policy etc. for the files nginx serves itself) |
 
 Stack: Debian 12/13 or Ubuntu 24.04, Python 3.13 (installed by uv), PostgreSQL ≥ 13. Background
 tasks are queued in the database, so there is no message broker. Nothing runs as root.
@@ -49,6 +50,7 @@ sudo -u helios sh -c 'set -a; . /etc/helios/helios.env; set +a; .venv/bin/python
 # services
 cp deploy/systemd/helios-web.service deploy/systemd/helios-worker.service /etc/systemd/system/
 cp deploy/systemd/nginx-helios.conf /etc/nginx/sites-available/helios
+install -D -m 0644 deploy/systemd/nginx-helios-security-headers.conf /etc/nginx/snippets/helios-security-headers.conf
 ln -s ../sites-available/helios /etc/nginx/sites-enabled/
 usermod -aG helios www-data               # nginx reaches the gunicorn socket through the group
 nginx -t && systemctl daemon-reload
@@ -68,6 +70,29 @@ systemctl restart helios-web helios-worker
 Don't update while an election is open.
 
 Configuration changes take effect after `systemctl restart helios-web helios-worker`.
+
+## Security headers of the booth and verifier
+
+nginx serves the voting booth (`/booth/`), the verifiers (`/booth/single-ballot-verify.html`,
+`/verifier/`) and the static files directly from the checkout, so the Content Security Policy
+and the other security headers Django sets on its own responses don't reach them.
+`nginx-helios-security-headers.conf` adds the same headers; `nginx-helios.conf` includes it in
+every location that serves files (an `add_header` in a location replaces those of the server
+block, so it must be included in each). The policy allows what the booth needs: inline
+scripts and `eval` (the booth's templates), web workers from this host for the encryption,
+and stylesheets, images and fonts from this host only, including the election's colors from
+`/helios/elections/<uuid>/booth-theme.css` (see [docs/organizations.md](../../docs/organizations.md#7-voting-booth)).
+When you change the `CSP_*` settings, change the snippet too. After updating from a version
+without the snippet, install it as in the fresh install and reload nginx.
+
+Check it after `systemctl reload nginx`:
+
+```sh
+curl -sI https://vote.example.org/booth/vote.html | grep -i -E 'content-security|x-frame|nosniff'
+```
+
+With Docker Compose, Django serves the booth and the static files itself, so they get its
+headers without further configuration.
 
 > These files have not been tested on a real host as part of this repository (`nginx -t`,
 > `systemd-analyze verify`). Check them on a staging system first.

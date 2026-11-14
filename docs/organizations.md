@@ -13,9 +13,12 @@ contact address. The server, its host name and its logins stay the same for ever
   organization**: the operator of the server, configured with the variables of
   [configuration.md, section 5](configuration.md#5-site-and-interface) (`SITE_TITLE`,
   `SITE_CSS_URL`, `ORGANIZATION_NAME`, `IMPRINT_URL`, ...).
-- The voting booth and the ballot verifier are not themed (yet): they look the same for
-  all elections.
-- Emails are not themed yet either: sender, signature and opt-out list are shared.
+- The voting booth shows the colors, font and name or logo of the election's organization
+  ([section 7](#7-voting-booth)). The ballot verifiers stay neutral: they look the same
+  for all elections.
+- Emails to the voters and trustees of an election show the organization as sender name,
+  with its Reply-To address and signature ([section 8](#8-emails)). The sender address and
+  the opt-out list are shared.
 
 CI is not a separation of tenants: all organizations share the database, the site
 administrators, the logins and the email opt-out list. If an organization requires its
@@ -31,6 +34,8 @@ Without `ORGANIZATIONS_FILE`, there is only the default organization and nothing
 4. [Start page](#4-start-page)
 5. [Assigning existing elections](#5-assigning-existing-elections)
 6. [Migrating from a single-organization setup](#6-migrating-from-a-single-organization-setup)
+7. [Voting booth](#7-voting-booth)
+8. [Emails](#8-emails)
 
 ## 1. Configuration file
 
@@ -66,7 +71,18 @@ Example with two universities:
       "footer_links": [
         {"url": "https://www.uni-a.example.org/electoral-office", "text": {"en": "Electoral office", "de": "Wahlamt"}}
       ],
-      "help_email": "elections@uni-a.example.org"
+      "help_email": "elections@uni-a.example.org",
+      "colors": {
+        "primary": "#00447c",
+        "accent": "#e6edf5",
+        "dark": {"primary": "#9cc3ff", "primary_contrast": "#10161d"}
+      },
+      "font_url": "/static/site/unia/sans.woff2",
+      "mail": {
+        "from_name": {"en": "Electoral office, University A", "de": "Wahlamt der Universität A"},
+        "reply_to": "elections@uni-a.example.org",
+        "signature": {"en": "Electoral office\nUniversity A", "de": "Wahlamt\nUniversität A"}
+      }
     },
     "unib": {
       "name": "University B",
@@ -99,7 +115,10 @@ elections use it.
 | `footer_logo_url` | | Logo on the dark footer background (use a light version). Path on this server. |
 | `imprint_url`, `privacy_url`, `accessibility_url` | | Footer links "Imprint", "Privacy", "Accessibility": `https://...` or a path on this server. `""` hides the link. |
 | `footer_links` | | Further footer links: `[{"url": "...", "text": "..."}]`, text or per language. `[]` hides the operator's links. |
-| `help_email` | | Address of the footer link "Contact" and of error hints on the election's pages. `""` hides the link. |
+| `help_email` | | Address of the footer link "Contact" and of error hints on the election's pages, and the help address in the voting booth (unless the election has its own). `""` hides the link. |
+| `colors` | | Colors of the voting booth: `primary`, `primary_contrast`, `accent`, `accent_contrast`, `link`, `background`, and `dark` with the same keys. See [section 7](#7-voting-booth). |
+| `font_url` | | Font of the booth's text: a font file on this server (`.woff2`, `.woff`, `.ttf`, `.otf`). |
+| `mail` | | Emails of its elections: `from_name` (sender name; text or per language), `reply_to` (address), `signature` (text or per language, may have several lines). See [section 8](#8-emails). |
 
 Other keys are refused, so that typos don't go unnoticed.
 
@@ -110,7 +129,9 @@ plain text / the `LANGUAGE_CODE` entry / English.
 
 **What an organization doesn't set** is taken from the default organization for the
 layout: `site_title`, `css_url`, `dark_mode`, `main_logo_url`, the legal links,
-`footer_links` and `help_email`. Set a value to `""` (or `[]`) to hide the operator's item
+`footer_links`, `help_email`, the booth's `colors` (as a whole, from `BOOTH_COLORS`) and
+`font_url` (`BOOTH_FONT_URL`), and in `mail` the sender name (`DEFAULT_FROM_NAME`) and the
+signature (`EMAIL_SIGNATURE`; there is no default Reply-To). Set a value to `""` (or `[]`) to hide the operator's item
 instead; e.g. an organization with its own legal pages usually sets all three links. The
 items that identify an organization are never taken from the operator: `name`, `url`,
 `header_logo_url` and `footer_logo_url`.
@@ -124,6 +145,7 @@ site/static/                     -> SITE_STATIC_DIR, served at /static/site/
 ├── site.css, logo.svg ...       (the operator's)
 ├── unia/
 │   ├── site.css
+│   ├── sans.woff2
 │   ├── logo.svg
 │   ├── logo-small.svg
 │   └── logo-white.svg
@@ -252,3 +274,101 @@ for which no organization is found stay as they are. Deleted elections are skipp
    fingerprints don't change.
 5. For a new organization: add a folder under the site's static directory and an entry in
    the file, and restart.
+
+## 7. Voting booth
+
+The booth (`/booth/vote.html`) is a static page, the same for every election, and with the
+systemd setup served by nginx. It loads the stylesheet of the election it is opened for,
+`/helios/elections/<uuid>/booth-theme.css`, which the server generates from the election's
+organization:
+
+- `colors` become CSS custom properties (`--booth-primary` etc., defined in
+  `heliosbooth/css/booth-ui.css`):
+
+  | Key | Used for |
+  |---|---|
+  | `primary` | filled and outlined buttons, the current step, chosen answers (their hover and background shades are derived from it) |
+  | `primary_contrast` | text on filled buttons |
+  | `accent` | background of the header and footer bars |
+  | `accent_contrast` | their text: the booth's title, the election fingerprint, the exit link |
+  | `link` | links |
+  | `background` | page background around the booth |
+
+  Colors are given as `#rrggbb`, `#rgb` or `rgb(r, g, b)`. Each color must have a contrast of
+  at least 4.5:1 with the color it is shown with (the configured one, else the built-in
+  one): `primary_contrast` with `primary`, `primary` and `link` with the booth's
+  background (white, dark: `#1b222b`), `accent_contrast` with `accent`. Otherwise Helios
+  doesn't start, and the message names both colors and the contrast.
+- `dark` holds the colors in dark mode, with the same keys. They are used only if the
+  organization's dark mode is `auto` (see `dark_mode`); then the booth uses its built-in
+  dark colors with the organization's dark colors on top. In dark mode, `primary` is also
+  the color of outlined buttons on the dark background, so it is usually a light color, with
+  a dark `primary_contrast`. Without `dark`, the booth shows its built-in dark colors.
+- `font_url` becomes an `@font-face` for the booth's text. Election fingerprints and ballot
+  trackers keep their monospace font.
+- The organization's name, or its own `main_logo_url` (never the operator's), is shown in
+  the booth's header. It comes from the election's `/meta`, which isn't part of the
+  election's fingerprint.
+
+Without `colors` and `font_url` (and without `BOOTH_COLORS` / `BOOTH_FONT_URL`), the stylesheet
+contains only the built-in dark colors, as `/booth-dark-mode.css` did before, and the booth
+looks exactly as before.
+
+**Integrity.** The booth must work the same for every election, and nothing an
+organization configures may hide or change the election fingerprint, the audit option or
+the steps of casting a ballot. Therefore:
+
+- there is no stylesheet or script of an organization in the booth: the server writes the
+  stylesheet itself, and only CSS custom properties with a validated color (`#rrggbb` after
+  normalization) and one `@font-face` with a validated path go into it;
+- colors with too little contrast are refused, so the fingerprint in the header and footer
+  bars stays readable;
+- the font gets a fixed family name and is not used for fingerprints and trackers;
+- the name and logo are set as text and attributes, never as HTML;
+- the booth links the stylesheet only for an address of the form `/helios/elections/<uuid>`
+  on the same server; the Content Security Policy allows stylesheets, images and fonts from
+  this server only (`style-src`, `img-src`, `font-src 'self'`).
+
+The stylesheet is checked like the election's other data (private elections only for their
+voters) and revalidated on every load (`Cache-Control: private, no-cache` with an ETag), so
+a change of the election's organization or of the configuration (after a restart) applies
+the next time the booth is opened. If it can't be loaded, the booth works with its built-in
+colors.
+
+The ballot verifiers (`/verifier/verify.html`, `/booth/single-ballot-verify.html`) stay
+neutral: they are independent tools and look the same for all elections.
+
+When nginx serves `/booth/` itself, it must send the Content Security Policy too: see
+[deploy/systemd/README.md](../deploy/systemd/README.md#security-headers-of-the-booth-and-verifier).
+
+## 8. Emails
+
+Emails to the voters and trustees of an election come from its organization:
+
+- the emails to voters (to all, a group or one voter, including password credentials and the
+  "resend credentials" email), the confirmation after a ballot was cast, the notice that a
+  vote was removed, and the trustee's link to their page.
+
+They get:
+
+- **sender name** `mail.from_name` in the language of the email, with the global sender
+  address: `"Electoral office, University A" <DEFAULT_FROM_EMAIL>`. The address stays the
+  same for all organizations, so SPF, DKIM and DMARC keep working; an organization can't
+  set its own sender address.
+- **Reply-To** `mail.reply_to`, so that replies reach the organization rather than the
+  operator.
+- **signature** `mail.signature` (after `--`), instead of `EMAIL_SIGNATURE` (default
+  `Helios`).
+
+The emails of the default organization's elections, and of organizations without `mail`,
+look as before (sender `DEFAULT_FROM_NAME`, no Reply-To, signature `EMAIL_SIGNATURE`).
+
+Not about one election, and so always from the operator: emails to election administrators
+(processed voter files, computed tally, trustee uploads, opted-out voters), opt-out and opt-in
+confirmations, password reminders (signed with the operator's site title). The opt-out list
+is shared: who opts out receives no emails of any organization.
+
+The values are checked at start: `from_name` must be one line without control characters
+(at most 100 characters), so it can't add header lines; `reply_to` must be a plain email
+address. Helios sets the organization when the email is sent, also in the background worker,
+and applies it in its email backend to emails with the default sender address only.
