@@ -33,6 +33,11 @@ body{font-size:var(--fontsize);line-height:var(--lineheight);font-family:var(--f
  * that focused elements and link targets are not scrolled behind it. */
 :root{--footer-position:sticky}
 html{scroll-padding-bottom:var(--footer-height,4rem)}
+/* Reserve the room for the scroll bar on every page: otherwise header, content and
+ * footer (centered, max 1200px) move sideways by half its width when going from a
+ * short page (no scroll bar, e.g. "My elections") to a long one (e.g. the start
+ * page). Overlay scroll bars (phones, macOS default) take no room either way. */
+html{scrollbar-gutter:stable}
 .container{height:auto;min-height:100vh;min-height:100dvh;flex-wrap:nowrap}
 .container main{flex:1 0 auto}
 .container>footer{position:var(--footer-position);bottom:0;z-index:10}
