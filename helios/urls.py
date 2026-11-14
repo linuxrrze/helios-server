@@ -45,4 +45,5 @@ urlpatterns = [
   path('votergroup/admins/<str:votergroup_uuid>', votergroup_views.votergroup_admins, name=names.VOTERGROUP_ADMINS),
   path('votergroup/admins/<str:votergroup_uuid>/add', votergroup_views.votergroup_adminadd, name=names.VOTERGROUP_ADMINS_ADD),
   path('votergroup/admins/<str:votergroup_uuid>/remove', votergroup_views.votergroup_adminremove, name=names.VOTERGROUP_ADMINS_REMOVE),
+  path('votergroup/transfer/<str:votergroup_uuid>', votergroup_views.votergroup_transfer, name=names.VOTERGROUP_TRANSFER),
 ]

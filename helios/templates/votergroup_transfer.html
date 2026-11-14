@@ -1,0 +1,87 @@
+{% extends TEMPLATE_BASE %}
+{% load i18n %}
+{% block title %}{{group.short_name}} &mdash; {% translate "Transfer ownership" %}{% endblock %}
+{% block content %}
+<h1 class="title">{% blocktranslate trimmed with name=group.short_name %}Transfer ownership of voter group {{name}}{% endblocktranslate %}</h1>
+
+{% if confirm %}
+<p>{% blocktranslate trimmed with owner_html=new_owner.display_html_small|safe owner_id=new_owner.user_id name=group.short_name %}Make <strong>{{owner_html}}</strong> ({{owner_id}}) the owner of voter group {{name}}?{% endblocktranslate %}</p>
+<p>{% if form.cleaned_data.keep_previous_owner %}{% if is_owner %}{% translate "You remain an administrator of the group." %}{% else %}{% translate "The previous owner remains an administrator of the group." %}{% endif %}{% else %}{% if is_owner %}{% translate "You will no longer be an administrator of this voter group and will no longer see it." %}{% else %}{% translate "The previous owner will no longer be an administrator of the group." %}{% endif %}{% endif %}</p>
+
+<form class="prettyform" action="" method="POST" id="transfer_form">
+  <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
+  {% if by_email %}
+  <input type="hidden" name="email" value="{{form.cleaned_data.email}}" />
+  <input type="hidden" name="auth_type" value="{{new_owner.user_type}}" />
+  {% else %}
+  <input type="hidden" name="new_owner" value="{{new_owner.pk}}" />
+  {% endif %}
+  {% if form.cleaned_data.keep_previous_owner %}<input type="hidden" name="keep_previous_owner" value="on" />{% endif %}
+  <input type="hidden" name="confirmed" value="1" />
+  <div class="actions">
+    <button type="submit" class="button danger" id="next_button">{% translate "Transfer ownership" %}</button>
+    <a href="{% url "votergroup@view" group.uuid %}">{% translate "cancel" %}</a>
+  </div>
+</form>
+
+{% elif matching_users %}
+<form class="prettyform form-narrow" action="" method="POST" id="transfer_form">
+  <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
+  <input type="hidden" name="email" value="{{form.cleaned_data.email}}" />
+  {% if form.cleaned_data.keep_previous_owner %}<input type="hidden" name="keep_previous_owner" value="on" />{% endif %}
+  <fieldset>
+    <legend>{% blocktranslate trimmed with email=form.cleaned_data.email %}Several users log in with {{email}}. Which one should become the owner?{% endblocktranslate %}</legend>
+    {% for u in matching_users %}
+    <div class="field field-check">
+      <input type="radio" name="auth_type" id="auth_type_{{forloop.counter}}" value="{{u.user_type}}"{% if forloop.first %} checked{% endif %} />
+      <div><label for="auth_type_{{forloop.counter}}">{{u.display_html_small|safe}} ({{u.user_type}})</label></div>
+    </div>
+    {% endfor %}
+  </fieldset>
+  <div class="actions">
+    <button type="submit" class="button" id="next_button">{% translate "Continue" %}</button>
+    <a href="{% url "votergroup@view" group.uuid %}">{% translate "cancel" %}</a>
+  </div>
+</form>
+
+{% elif by_email %}
+<p class="page-lead">{% translate "As a site administrator, you can make any user who can create elections the owner of this voter group, e.g. when the owner has left." %}</p>
+{% include "_votergroup_transfer_email_form.html" with form=form %}
+
+{% elif not candidates %}
+<p class="page-lead">{% translate "The ownership can only be transferred to one of the group's administrators, and this group has none besides its owner." %}</p>
+{% if is_owner %}<p class="actions"><a class="button" href="{% url "votergroup@admins@add" group.uuid %}">{% translate "Add administrator" context "voter group" %}</a></p>{% endif %}
+<p><a href="{% url "votergroup@view" group.uuid %}">{% translate "Back to the voter group" %}</a></p>
+
+{% else %}
+<p class="page-lead">{% translate "The owner of a voter group cannot be removed by the other administrators. The new owner must be one of the group's administrators." %}</p>
+
+{% if form.errors %}
+<div class="callout callout-danger error-summary" role="alert">
+  <span class="callout-title">{% translate "Please correct the following:" %}</span>
+  <ul>{% for error in form.new_owner.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+
+<form class="prettyform form-narrow" action="" method="POST" id="transfer_form">
+  <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
+  <fieldset>
+    <legend>{% translate "New owner" %}</legend>
+    {% for c in candidates %}
+    <div class="field field-check">
+      <input type="radio" name="new_owner" id="new_owner_{{forloop.counter}}" value="{{c.pk}}"{% if form.new_owner.value == c.pk|stringformat:"s" %} checked{% endif %} />
+      <div><label for="new_owner_{{forloop.counter}}">{{c.display_html_small|safe}} ({{c.user_id}})</label></div>
+    </div>
+    {% endfor %}
+  </fieldset>
+  <div class="field field-check">
+    <input type="checkbox" name="keep_previous_owner" id="id_keep_previous_owner"{% if form.keep_previous_owner.value %} checked{% endif %} />
+    <div><label for="id_keep_previous_owner">{% if is_owner %}{% translate "Remain an administrator of the group" %}{% else %}{% translate "Keep the previous owner as an administrator of the group" %}{% endif %}</label></div>
+  </div>
+  <div class="actions">
+    <button type="submit" class="button" id="next_button">{% translate "Continue" %}</button>
+    <a href="{% url "votergroup@view" group.uuid %}">{% translate "cancel" %}</a>
+  </div>
+</form>
+{% endif %}
+{% endblock %}

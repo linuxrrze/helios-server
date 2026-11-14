@@ -20,7 +20,9 @@ provisioned group, and a login keeps a provisioned user's name and email
 log in, lose the roles granted by the source and are left out of provisioned
 voter groups.
 
-Every change is logged (logger "helios.provisioning", addresses masked).
+Every change is logged (logger "helios.provisioning", addresses masked);
+changes to a voter group are also recorded in the group's log
+(helios.models.VoterGroupLog, see log_votergroup).
 """
 
 import dataclasses
@@ -84,10 +86,14 @@ def who(user):
   return '%s:%s %s' % (user.user_type, user.pk, mask_address(user.user_id))
 
 
-def log_votergroup(source, group, message, *args):
-  """Log a change to a provisioned voter group (the one place for such entries,
-  e.g. to also record them with the group)."""
+def log_votergroup(source, group, message, *args, action=None, params=None):
+  """Log a change to a provisioned voter group (the one place for such
+  entries). With ACTION (a helios.models.VoterGroupLog constant), the change is
+  also recorded in the group's log, shown to its administrators, with PARAMS
+  (counts and names, no member data)."""
   logger.info('%s: votergroup %s: ' + message, source, group.uuid, *args)
+  if action:
+    group.append_log(action, source=source, **(params or {}))
 
 
 def is_source_owner(user):
@@ -252,7 +258,7 @@ def sync_votergroup(source, ref, name, members, admins, external_id=''):
   ADMINS as its administrators. Returns the group. Raises ProvisioningConflict
   if another group of SOURCE has this name.
   """
-  from .models import VoterGroup, VoterGroupMember
+  from .models import VoterGroup, VoterGroupLog, VoterGroupMember
   owner = source_owner(source)
   name = name[:100]
   if VoterGroup.objects.filter(admin=owner, short_name=name).exclude(provisioned_ref=ref).exists():
@@ -262,10 +268,10 @@ def sync_votergroup(source, ref, name, members, admins, external_id=''):
   if group is None:
     group = VoterGroup.objects.create(admin=owner, uuid=str(uuid.uuid4()), short_name=name, provisioned_by=source,
                                       provisioned_ref=ref, provisioned_at=_now(), external_id=external_id[:255])
-    log_votergroup(source, group, 'created as %s', name)
+    log_votergroup(source, group, 'created as %s', name, action=VoterGroupLog.CREATED, params={'name': name})
   elif group.short_name != name or group.external_id != external_id:
     if group.short_name != name:
-      log_votergroup(source, group, 'renamed to %s', name)
+      log_votergroup(source, group, 'renamed to %s', name, action=VoterGroupLog.RENAMED, params={'name': name})
     group.short_name, group.external_id = name, external_id[:255]
     group.save(update_fields=['short_name', 'external_id'])
 
@@ -291,7 +297,8 @@ def sync_votergroup(source, ref, name, members, admins, external_id=''):
     group.admins.set(list(new_admins))
   if added or removed or new_admins != old_admins:
     log_votergroup(source, group, '%d member(s) added, %d removed, %d administrator(s)',
-                   added, removed, len(new_admins))
+                   added, removed, len(new_admins), action=VoterGroupLog.PROVISIONED,
+                   params={'added': added, 'removed': removed, 'admins': len(new_admins)})
   return group
 
 

@@ -30,10 +30,30 @@ class VoterGroupAdminForm(forms.Form):
                           help_text=_('The person must have logged in to Helios at least once before they can be added.'))
 
 
+class TransferOwnershipForm(forms.Form):
+  """The new owner, one of the group's additional administrators (CANDIDATES).
+  The template renders the fields itself (a radio list of the candidates)."""
+  new_owner = forms.ChoiceField(label=_('New owner'))
+  keep_previous_owner = forms.BooleanField(required=False, initial=True)
+
+  def __init__(self, *args, candidates=(), **kwargs):
+    super().__init__(*args, **kwargs)
+    self.fields['new_owner'].choices = [(str(u.pk), u.pretty_name) for u in candidates]
+
+
+class TransferOwnershipByEmailForm(forms.Form):
+  """For site administrators: the new owner may be any user who can create
+  elections, found by email (see helios.view_utils.find_user_to_add_as_admin)."""
+  email = forms.CharField(max_length=100, label=_('Email of the new owner'),
+                          help_text=_('The person must have logged in to Helios at least once and be allowed to create elections.'))
+  keep_previous_owner = forms.BooleanField(required=False, initial=True,
+                                           label=_('Keep the previous owner as an administrator of the group'))
+
+
 class PrepareElectionAdminsForm(forms.Form):
   add_group_admins = forms.BooleanField(
     required=False, initial=True,
-    label=_('Also make the other administrators of the voter group administrators of the election'),
+    label=_('Add the other administrators of the group to the election administrators'),
     help_text=_('You become the creator of the election either way. Changes to the group later on do not change the election.'))
 
 

@@ -14,7 +14,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from helios import provisioning
-from helios.models import Election, VoterGroup, VoterGroupMember
+from helios.models import Election, VoterGroup, VoterGroupLog, VoterGroupMember
 from helios.security import user_can_create_election
 from helios_auth.models import User
 from . import filter as scim_filter
@@ -455,6 +455,22 @@ class GroupTests(ScimTestCase):
       self.assertTrue(self.helios_user('jane@example.org').admin_p)
       self.assertFalse(VoterGroup.objects.filter(provisioned_ref=data['id']).exists())
 
+  def test_changes_are_recorded_in_the_group_log(self):
+    data = self.create_group('Council', [self.jane['id']])
+    self.call('PATCH', 'Groups/%s' % data['id'], patch_body(
+      {'op': 'replace', 'path': 'members', 'value': [{'value': self.john['id']}]},
+      {'op': 'replace', 'value': {'id': data['id'], 'displayName': 'Council 2027'}}))
+    log = list(self.votergroup(data['id']).get_log())
+    self.assertTrue(all(e.source == 'scim:idm' and e.actor is None for e in log))
+    self.assertEqual([e.message for e in reversed(log)], [
+      'Voter group Council created',
+      'Members updated: 1 added, 0 removed; 0 administrator(s)',
+      'Renamed to Council 2027',
+      'Members updated: 1 added, 1 removed; 0 administrator(s)',
+    ])
+    # counts only, no member data
+    self.assertNotIn('example.org', str([e.params for e in log]))
+
 
 class LoginTests(ScimTestCase):
 
@@ -523,6 +539,32 @@ class ReadOnlyVoterGroupTests(ScimTestCase):
       self.assertContains(response, 'cannot be changed in Helios', status_code=403)
     self.assertEqual(self.group.get_members().count(), 1)
     self.assertEqual([a.user_id for a in self.group.admins.all()], ['jane@example.org'])
+
+  def test_group_log_shows_the_source(self):
+    response = self.client.get('/helios/votergroup/view/%s' % self.group.uuid)
+    self.assertContains(response, '<td>SCIM: idm</td>', html=False)
+    self.assertContains(response, 'Voter group Council created')
+
+  def test_no_transfer_of_provisioned_groups(self):
+    vg = self.group.uuid
+    # its owner is the source's account; a site administrator is refused, too
+    admin = User.objects.create(user_type='password', user_id='admin', name='Admin', info={'password': 'x'}, admin_p=True)
+    self.login(admin)
+    response = self.client.get('/helios/votergroup/view/%s' % vg)
+    self.assertContains(response, 'only an overview is shown')
+    self.assertNotContains(response, '/helios/votergroup/transfer/')
+    self.assertNotContains(response, 'john@example.org')
+    jane = self.helios_user('jane@example.org')
+    for response in (self.client.get('/helios/votergroup/transfer/%s' % vg),
+                     self.client.post('/helios/votergroup/transfer/%s' % vg, {
+                       'csrf_token': 'tok', 'new_owner': str(jane.pk), 'confirmed': '1'})):
+      self.assertContains(response, 'cannot be changed in Helios', status_code=403)
+      self.assertNotContains(response, 'You can still prepare elections', status_code=403)
+    self.assertTrue(provisioning.is_source_owner(VoterGroup.objects.get(uuid=vg).admin))
+    # the group's (provisioned) administrators can't transfer it either
+    self.login(jane)
+    self.assertEqual(self.client.get('/helios/votergroup/transfer/%s' % vg).status_code, 403)
+    self.assertNotContains(self.client.get('/helios/votergroup/view/%s' % vg), '/helios/votergroup/transfer/')
 
   def test_pages_show_badge_and_hide_edit_actions(self):
     response = self.client.get('/helios/votergroup/administered')

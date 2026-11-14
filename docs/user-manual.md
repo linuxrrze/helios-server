@@ -182,12 +182,31 @@ types for the same address you choose one. All administrators can change the
 members, prepare elections and add or remove administrators; the owner (who
 created the group) cannot be removed. An administrator can remove themself
 with **Leave group**. Whoever prepares an election becomes its creator; with
-the box **Also make the other administrators of the voter group
-administrators of the election** checked (the default), the group's other
-administrators, the owner included, become administrators of the election
-too. Site administrators can open every group, like every election.
+the box **Add the other administrators of the group to the election
+administrators** checked (the default), the group's other administrators, the
+owner included, become administrators of the election too.
 
-Changes to members and administrators are logged by the server (logger
+The owner can hand the group over with **Transfer ownership** (on the group's
+page): choose one of the other administrators, confirm, and they become the
+owner. The previous owner stays an administrator unless they uncheck
+**Remain an administrator of the group**. The new owner must not already own
+a group with the same name.
+
+Unlike elections, site administrators don't see every group in full: the
+member list is personal data. A site administrator who isn't an administrator
+of a group sees only an overview (name, owner, number of members and
+administrators) and can transfer its ownership, e.g. when the owner has left:
+to any user who can create elections, entered by email as when adding an
+administrator (the group's log notes that a site administrator did it).
+Member lists, changes and preparing elections are refused. The admin page's
+**user search** lists the groups a user owns or administers.
+
+The group's page shows its **log** to its administrators, newest first:
+creation, members added or removed, administrators added, removed or leaving,
+ownership transfers and elections prepared from the group. To keep personal
+data to a minimum, members appear only with a masked address
+(`a***@example.org`) and their number of votes; administrators appear with
+name and account. The server logs the same changes (logger
 `helios.votergroup`, email addresses masked as in the mail log).
 
 ## Part 2: Voter guide

@@ -6,7 +6,7 @@
 {% if group.is_provisioned %}
 <p class="page-lead">{% blocktranslate trimmed with source=group.admin.pretty_name %}This voter group is provisioned by the identity management ({{source}}). Its administrators are managed there and can prepare elections from it.{% endblocktranslate %}</p>
 {% else %}
-<p class="page-lead">{% translate "Administrators of a voter group can change its members, prepare elections from it and add or remove administrators. The owner created the group and cannot be removed." %}</p>
+<p class="page-lead">{% translate "Administrators of a voter group can change its members, prepare elections from it and add or remove administrators. The owner cannot be removed, but can transfer the ownership to another administrator." %}</p>
 
 <p class="actions"><a class="button" href="{% url "votergroup@admins@add" group.uuid %}">{% translate "Add administrator" context "voter group" %}</a></p>
 {% endif %}
@@ -21,7 +21,7 @@
     <td>{{group.admin.display_html_small|safe}}{% if group.admin == user %} <em>{% translate "(you)" %}</em>{% endif %}</td>
     <td>{{group.admin.user_id}}</td>
     <td>{% translate "Owner" %}</td>
-    <td></td>
+    <td class="row-actions">{% if can_transfer and admins %}<a href="{% url "votergroup@transfer" group.uuid %}">{% translate "Transfer ownership" %}</a>{% endif %}</td>
   </tr>
   {% for a in admins %}
   <tr>

@@ -5,7 +5,7 @@
 <h1 class="title">{{ group.short_name }}</h1>
 <div class="callout callout-warning" role="alert">
   <p>{% blocktranslate trimmed %}This voter group is provisioned by the identity management ({{source}}). Its name, members and administrators are managed there and cannot be changed in Helios.{% endblocktranslate %}</p>
-  <p>{% translate "You can still prepare elections from it." %}</p>
+  {% if can_prepare %}<p>{% translate "You can still prepare elections from it." %}</p>{% endif %}
 </div>
 <p><a href="{% url "votergroup@view" group.uuid %}">{% translate "Back to the voter group" %}</a></p>
 {% endblock %}

@@ -78,6 +78,11 @@ All in `helios/models.py` except `User`:
 - **`ElectionLog`**: a short audit log of major events (voter file added,
   frozen, trustee added, administrator added or removed, voters removed,
   decryptions combined, deleted/undeleted).
+- **`VoterGroup`**, **`VoterGroupMember`**, **`VoterGroupLog`**: reusable
+  member lists (with votes) from which elections are prepared, with an owner
+  (`admin`), additional administrators (`admins`) and a log of changes shown
+  to the group's administrators. Site administrators who don't administer a
+  group see only its overview (`helios/votergroup_views.py`).
 - **`EmailOptOut`**: SHA-256 hashes of email addresses that asked not to
   receive Helios email.
 
