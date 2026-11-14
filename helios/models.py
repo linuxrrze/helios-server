@@ -1492,11 +1492,27 @@ class VoterGroup(HeliosModel):
   short_name = models.CharField(max_length=100)
   created_at = models.DateTimeField(auto_now_add=True)
 
+  # Provisioning (see helios/provisioning.py): the source that manages this group
+  # ("<kind>:<name>", e.g. "scim:idm") and the source's stable reference for it.
+  # A provisioned group's name, members and administrators come from the source
+  # and cannot be changed here; its owner is the source's account (see
+  # helios.provisioning.source_owner).
+  provisioned_by = models.CharField(max_length=100, blank=True, default='', db_index=True)
+  provisioned_ref = models.CharField(max_length=255, blank=True, default='')
+  provisioned_at = models.DateTimeField(null=True, blank=True)
+  external_id = models.CharField(max_length=255, blank=True, default='')
+
   class Meta:
     app_label = 'helios'
     constraints = [
       models.UniqueConstraint(fields=['admin', 'short_name'], name='votergroup_unique_short_name_per_admin'),
+      models.UniqueConstraint(fields=['provisioned_by', 'provisioned_ref'], condition=~models.Q(provisioned_by=''),
+                              name='votergroup_unique_provisioned_ref'),
     ]
+
+  @property
+  def is_provisioned(self):
+    return bool(self.provisioned_by)
 
   @classmethod
   def get_by_user_as_admin(cls, user):
@@ -1525,6 +1541,8 @@ class VoterGroupMember(HeliosModel):
   last_name = models.CharField(max_length=100)
   email = models.EmailField(max_length=100)
   votes = models.IntegerField(default=1)
+  # the user a member of a provisioned group stands for (empty for members added by hand)
+  user = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE, related_name='votergroup_memberships')
 
   class Meta:
     app_label = 'helios'

@@ -220,13 +220,16 @@ def can_create_election(request):
   return user_can_create_election(get_user(request))
 
 def user_can_create_election(user):
-  if not user:
+  if not user or not user.is_active:
     return False
 
   if helios.ADMIN_ONLY:
     return user.admin_p
-  else:
-    return user.can_create_election()
+  if getattr(settings, 'ELECTION_CREATORS_ONLY', False):
+    # site administrators and users with the election creator role
+    # (granted by provisioning, see helios/provisioning.py)
+    return (user.admin_p or user.election_creator_p) and user.can_create_election()
+  return user.can_create_election()
   
 def user_can_feature_election(user, election):
   if not user:

@@ -114,7 +114,7 @@ def find_user_to_add_as_admin(email, auth_type='', not_found=None):
   """
   Look up the user an administrator wants to add by the email they entered.
   Users are found by user_id, so they must have logged in to Helios at least
-  once, and the same email can exist in several auth systems (google, ldap,
+  once (or have been provisioned, e.g. by SCIM), and the same email can exist in several auth systems (google, ldap,
   ...); then the form asks which one is meant and sends it back as auth_type.
 
   NOT_FOUND replaces the error message for an unknown email.
@@ -127,14 +127,16 @@ def find_user_to_add_as_admin(email, auth_type='', not_found=None):
   if not email:
     return None, None, _('Please enter an email address.')
 
+  # users deactivated by provisioning can't be added
+  candidates = User.objects.filter(deactivated_at__isnull=True)
   auth_type = (auth_type or '').strip()
   if auth_type:
     try:
-      return User.objects.get(user_id=email, user_type=auth_type), None, None
+      return candidates.get(user_id=email, user_type=auth_type), None, None
     except User.DoesNotExist:
       raise Http404("User not found")
 
-  matching_users = list(User.objects.filter(user_id=email))
+  matching_users = list(candidates.filter(user_id=email))
   if not matching_users:
     return None, None, not_found or _('No user found with that email. They must log in to Helios at least once before being added as an administrator.')
   if len(matching_users) > 1:
