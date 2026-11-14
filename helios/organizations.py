@@ -16,6 +16,9 @@ send out an election in another organization's CI. The pages of an election for
 voters and trustees (view_utils.ELECTION_CI_TEMPLATES) show its organization's
 CI; all other pages (start page, login, the lists of one's elections, the
 election's administration pages, site administration) show the default CI.
+The election's voting booth gets its organization's colors from a stylesheet
+generated from validated values (helios/booth_theme.py), and its emails to
+voters and trustees its sender name, Reply-To and signature (mail_context).
 
 One mapping assigns people to organizations, and with that to the prefix of
 their election addresses (see match_user): the rules of the organizations
