@@ -1,0 +1,37 @@
+{% extends TEMPLATE_BASE %}
+{% load i18n %}
+{% block title %}{{group.short_name}} &mdash; {% translate "Add administrator" context "voter group" %}{% endblock %}
+{% block content %}
+<h1 class="title">{% blocktranslate trimmed with name=group.short_name %}Add an administrator to voter group {{name}}{% endblocktranslate %}</h1>
+
+{% if matching_users %}
+<form class="prettyform form-narrow" action="" method="POST" id="add_admin_form">
+  <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
+  <input type="hidden" name="email" value="{{form.cleaned_data.email}}" />
+  <fieldset>
+    <legend>{% blocktranslate trimmed with email=form.cleaned_data.email %}Several users log in with {{email}}. Which one do you want to add?{% endblocktranslate %}</legend>
+    {% for u in matching_users %}
+    <div class="field field-check">
+      <input type="radio" name="auth_type" id="auth_type_{{forloop.counter}}" value="{{u.user_type}}"{% if forloop.first %} checked{% endif %} />
+      <div><label for="auth_type_{{forloop.counter}}">{{u.display_html_small|safe}} ({{u.user_type}})</label></div>
+    </div>
+    {% endfor %}
+  </fieldset>
+  <div class="actions">
+    <button type="submit" class="button" id="next_button">{% translate "Add the selected user" %}</button>
+    <a href="{% url "votergroup@admins" group.uuid %}">{% translate "cancel" %}</a>
+  </div>
+</form>
+{% else %}
+<p class="page-lead">{% translate "The new administrator gets the same rights on this voter group as you: changing members, preparing elections and managing administrators." %}</p>
+
+<form class="prettyform form-narrow" action="" method="POST" id="add_admin_form" novalidate>
+  <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
+  {% include "_form_fields.html" with form=form %}
+  <div class="actions">
+    <button type="submit" class="button" id="next_button">{% translate "Add administrator" context "voter group" %}</button>
+    <a href="{% url "votergroup@admins" group.uuid %}">{% translate "cancel" %}</a>
+  </div>
+</form>
+{% endif %}
+{% endblock %}

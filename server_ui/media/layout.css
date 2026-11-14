@@ -238,7 +238,8 @@ table.pretty .helptext { margin-top: 4px; }
 .content-body table th, .content-body table td { padding: 8px 12px; border-bottom: 1px solid var(--border-color); font-size: .95rem; color: var(--text-color); line-height: 1.4; vertical-align: top; }
 .content-body table th { background: var(--surface-color); font-weight: 600; }
 .content-body table tr:nth-of-type(even) { background: var(--table-stripe); }
-.table-scroll { max-width: 100%; overflow-x: auto; }
+/* also the containing block of hidden texts (.screen-reader-text, absolute) in the table, so they don't widen the page */
+.table-scroll { position: relative; max-width: 100%; overflow-x: auto; }
 
 /* --- boxes ------------------------------------------------------------- */
 .highlight-box, .callout {

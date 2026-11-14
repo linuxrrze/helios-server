@@ -1482,7 +1482,12 @@ class SiteAnnouncement(models.Model):
 ##
 
 class VoterGroup(HeliosModel):
+  # the owner: created the group, cannot be removed; group names are unique per owner
   admin = models.ForeignKey(User, on_delete=models.CASCADE)
+
+  # additional administrators with the same rights on the group as the owner
+  admins = models.ManyToManyField(User, related_name='votergroups_administered', blank=True)
+
   uuid = models.CharField(max_length=50, unique=True)
   short_name = models.CharField(max_length=100)
   created_at = models.DateTimeField(auto_now_add=True)
@@ -1495,7 +1500,19 @@ class VoterGroup(HeliosModel):
 
   @classmethod
   def get_by_user_as_admin(cls, user):
-    return cls.objects.filter(admin=user).order_by('-created_at')
+    """Groups the user owns or is an additional administrator of."""
+    from django.db.models import Q
+    return (cls.objects.filter(Q(admin=user) | Q(admins=user)).distinct()
+            .select_related('admin').order_by('-created_at'))
+
+  def get_admins(self):
+    """The additional administrators (without the owner)."""
+    return self.admins.order_by('name', 'user_id')
+
+  def is_admin(self, user):
+    """Owner or additional administrator (site administrators are handled
+    in helios.security.user_can_admin_votergroup)."""
+    return bool(user) and (self.admin_id == user.pk or self.admins.filter(pk=user.pk).exists())
 
   def get_members(self):
     return self.votergroupmember_set.order_by('last_name', 'first_name', 'id')

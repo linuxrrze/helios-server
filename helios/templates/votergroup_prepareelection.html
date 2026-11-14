@@ -35,6 +35,13 @@
   <div class="form-narrow">
   {% include "_form_fields.html" with form=electionform %}
   </div>
+  {% if other_admins %}
+  <h2>{% translate "Administrators" context "voter group" %}</h2>
+  <p>{% translate "Other administrators of the voter group:" %} {% for a in other_admins %}{{a.pretty_name}}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+  <div class="form-narrow">
+  {% include "_form_fields.html" with form=admins_form %}
+  </div>
+  {% endif %}
   <div class="actions">
     <button type="submit" class="button" id="next_button">{% translate "Create election" %}</button>
     <a href="{% url "votergroup@view" group.uuid %}">{% translate "cancel" %}</a>

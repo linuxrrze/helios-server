@@ -166,6 +166,30 @@ Everyone can now see the result on the election page.
 
 ![The published result](images/manual/results-public.png)
 
+### Voter groups
+
+For bodies that vote again and again (a council, a board), keep the members
+in a **voter group** instead of uploading a file each time: open **Voter
+groups**, create a group and add its members with their number of votes.
+**Start election** on the group's page creates an election with one password
+voter per vote; a vote can be delegated to another member first. After that,
+the election no longer depends on the group.
+
+A group can have several administrators. On the group's page, follow
+**Manage administrators** and add people by the email (or username) they log
+in with; they must have logged in to Helios once, and with several login
+types for the same address you choose one. All administrators can change the
+members, prepare elections and add or remove administrators; the owner (who
+created the group) cannot be removed. An administrator can remove themself
+with **Leave group**. Whoever prepares an election becomes its creator; with
+the box **Also make the other administrators of the voter group
+administrators of the election** checked (the default), the group's other
+administrators, the owner included, become administrators of the election
+too. Site administrators can open every group, like every election.
+
+Changes to members and administrators are logged by the server (logger
+`helios.votergroup`, email addresses masked as in the mail log).
+
 ## Part 2: Voter guide
 
 ### 1. Your email
