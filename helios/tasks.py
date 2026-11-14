@@ -145,11 +145,8 @@ def election_compute_tally(election_id, language=None):
         subject = _("encrypted tally computed")
         body = _("""
 The encrypted tally for election %(election)s has been computed.
-
---
-Helios
 """) % {'election': election.name}
-    election_notify_admin.enqueue(election_id=election_id, subject=subject, body=body)
+    election_notify_admin.enqueue(election_id=election_id, subject=subject, body=body, language=language)
 
     if election.has_helios_trustee():
         tally_helios_decrypt.enqueue(election_id=election.id, language=language)
@@ -164,11 +161,8 @@ def tally_helios_decrypt(election_id, language=None):
         body = _("""
 Helios has decrypted its portion of the tally
 for election %(election)s.
-
---
-Helios
 """) % {'election': election.name}
-    election_notify_admin.enqueue(election_id=election_id, subject=subject, body=body)
+    election_notify_admin.enqueue(election_id=election_id, subject=subject, body=body, language=language)
 
 
 @task()
@@ -207,10 +201,8 @@ Your voter file upload for election %(election)s
 has been processed.
 
 %(created)s
-%(skipped)s
---
-Helios
-""") % {'election': voter_file.election.name, 'created': created, 'skipped': skipped})
+%(skipped)s""") % {'election': voter_file.election.name, 'created': created, 'skipped': skipped},
+                                language=translation.get_language())
 
 
 @task()
@@ -248,15 +240,27 @@ because they have opted out of receiving Helios emails:
 
 These voters will need to opt back in before they can be added to elections.
 They can opt back in at: %(optin_url)s
-
---
-Helios
 """) % {'optin_url': optin_url}
-    
-    election.admin.send_message(subject, body)
+
+    notify_election_admin(election, subject, body)
 
 
 @task()
-def election_notify_admin(election_id, subject, body):
+def election_notify_admin(election_id, subject, body, language=None):
     election = Election.objects.get(id=election_id)
-    election.admin.send_message(subject, body)
+    with _language(language):
+        notify_election_admin(election, subject, body)
+
+
+def notify_election_admin(election, subject, body):
+    """
+    An email to the administrator of ELECTION about it (voter file processed,
+    tally computed, trustee uploads, ...). Like the emails to its voters, it comes
+    from the election's organization: sender name, Reply-To and its signature,
+    which is added here (in the active language). Bodies queued before the
+    signature was added here end with their own one ("--" line) and keep it.
+    """
+    with organizations.mail_context(election):
+        if '\n--\n' not in body:
+            body = '%s\n\n--\n%s\n' % (body.rstrip(), organizations.for_election(election).mail_signature)
+        election.admin.send_message(subject, body)

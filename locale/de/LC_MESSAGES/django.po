@@ -519,38 +519,26 @@ msgstr "verschlüsselte Auszählung berechnet"
 msgid ""
 "\n"
 "The encrypted tally for election %(election)s has been computed.\n"
-"\n"
-"--\n"
-"Helios\n"
 msgstr ""
 "\n"
 "Die verschlüsselte Auszählung für die Wahl %(election)s wurde berechnet.\n"
-"\n"
-"--\n"
-"Helios\n"
 
-#: helios/tasks.py:163
+#: helios/tasks.py:160
 msgid "Helios Decrypt"
 msgstr "Helios-Entschlüsselung"
 
-#: helios/tasks.py:164
+#: helios/tasks.py:161
 #, python-format
 msgid ""
 "\n"
 "Helios has decrypted its portion of the tally\n"
 "for election %(election)s.\n"
-"\n"
-"--\n"
-"Helios\n"
 msgstr ""
 "\n"
 "Helios hat seinen Teil der Auszählung\n"
 "für die Wahl %(election)s entschlüsselt.\n"
-"\n"
-"--\n"
-"Helios\n"
 
-#: helios/tasks.py:189
+#: helios/tasks.py:183
 #, python-format
 msgid ""
 "\n"
@@ -573,18 +561,18 @@ msgstr[1] ""
 "im Wählerverzeichnis standen (oder doppelt in der Datei aufgeführt waren) oder\n"
 "Helios-E-Mails abbestellt haben. Personen, die E-Mails abbestellt haben, werden in einer separaten E-Mail aufgeführt.\n"
 
-#: helios/tasks.py:199
+#: helios/tasks.py:193
 #, python-format
 msgid "%(count)d voter has been created."
 msgid_plural "%(count)d voters have been created."
 msgstr[0] "%(count)d wahlberechtigte Person wurde angelegt."
 msgstr[1] "%(count)d Wahlberechtigte wurden angelegt."
 
-#: helios/tasks.py:204
+#: helios/tasks.py:198
 msgid "voter file processed"
 msgstr "Wählerliste verarbeitet"
 
-#: helios/tasks.py:205
+#: helios/tasks.py:199
 #, python-format
 msgid ""
 "\n"
@@ -592,25 +580,21 @@ msgid ""
 "has been processed.\n"
 "\n"
 "%(created)s\n"
-"%(skipped)s\n"
-"--\n"
-"Helios\n"
+"%(skipped)s"
 msgstr ""
 "\n"
 "Ihre hochgeladene Wählerliste für die Wahl %(election)s\n"
 "wurde verarbeitet.\n"
 "\n"
 "%(created)s\n"
-"%(skipped)s\n"
-"--\n"
-"Helios\n"
+"%(skipped)s"
 
-#: helios/tasks.py:228
+#: helios/tasks.py:220
 #, python-format
 msgid "Opted-out voters not added to election %(election)s"
 msgstr "Wahlberechtigte mit abbestellten E-Mails nicht zur Wahl %(election)s hinzugefügt"
 
-#: helios/tasks.py:230
+#: helios/tasks.py:222
 #, python-format
 msgid ""
 "\n"
@@ -633,29 +617,23 @@ msgstr[1] ""
 "weil sie Helios-E-Mails abbestellt haben:\n"
 "\n"
 
-#: helios/tasks.py:241
+#: helios/tasks.py:233
 #, python-format
 msgid "- %(name)s (%(email)s) [ID: %(voter_id)s, Type: %(voter_type)s]"
 msgstr "- %(name)s (%(email)s) [ID: %(voter_id)s, Typ: %(voter_type)s]"
 
-#: helios/tasks.py:247
+#: helios/tasks.py:239
 #, python-format
 msgid ""
 "\n"
 "\n"
 "These voters will need to opt back in before they can be added to elections.\n"
 "They can opt back in at: %(optin_url)s\n"
-"\n"
-"--\n"
-"Helios\n"
 msgstr ""
 "\n"
 "\n"
 "Diese Personen müssen den E-Mail-Empfang wieder aktivieren, bevor sie zu Wahlen hinzugefügt werden können.\n"
 "Das ist hier möglich: %(optin_url)s\n"
-"\n"
-"--\n"
-"Helios\n"
 
 #: helios/templates/_castconfirm_docast.html:18
 #, python-format
@@ -1497,7 +1475,7 @@ msgstr "Ändern"
 
 #: helios/templates/election_new_guided.html:49 helios/templates/elections_administered.html:8 helios/templates/votergroup_prepareelection.html:46
 #: helios/templatetags/navigation_tags.py:65 helios/templatetags/navigation_tags.py:66 helios/templatetags/navigation_tags.py:72
-#: helios/templatetags/navigation_tags.py:180 server_ui/templates/index.html:34
+#: helios/templatetags/navigation_tags.py:185 server_ui/templates/index.html:34
 msgid "Create election"
 msgstr "Wahl erstellen"
 
@@ -3083,7 +3061,7 @@ msgstr "Ausgewähltes Konto hinzufügen"
 msgid "The new administrator gets the same rights on this voter group as you: changing members, preparing elections and managing administrators."
 msgstr "Die hinzugefügte Person erhält dieselben Rechte an dieser Wählergruppe wie Sie: Mitglieder ändern, Wahlen vorbereiten und Administrator*innen verwalten."
 
-#: helios/templates/votergroup_administered.html:3 helios/templatetags/navigation_tags.py:67 helios/templatetags/navigation_tags.py:181
+#: helios/templates/votergroup_administered.html:3 helios/templatetags/navigation_tags.py:67 helios/templatetags/navigation_tags.py:186
 msgid "Voter groups"
 msgstr "Wählergruppen"
 
@@ -3779,11 +3757,11 @@ msgstr "Wahlleitung entfernen"
 msgid "Partial decryption"
 msgstr "Teilentschlüsselung"
 
-#: helios/templatetags/navigation_tags.py:63 helios/templatetags/navigation_tags.py:179
+#: helios/templatetags/navigation_tags.py:63 helios/templatetags/navigation_tags.py:184
 msgid "My elections"
 msgstr "Meine Wahlen"
 
-#: helios/templatetags/navigation_tags.py:64 helios/templatetags/navigation_tags.py:183
+#: helios/templatetags/navigation_tags.py:64 helios/templatetags/navigation_tags.py:188
 msgid "My votes"
 msgstr "Meine Stimmabgaben"
 
@@ -3791,7 +3769,7 @@ msgstr "Meine Stimmabgaben"
 msgid "Add a member"
 msgstr "Mitglied hinzufügen"
 
-#: helios/templatetags/navigation_tags.py:162 helios/templatetags/navigation_tags.py:174
+#: helios/templatetags/navigation_tags.py:167 helios/templatetags/navigation_tags.py:179
 msgid "Home"
 msgstr "Startseite"
 
@@ -4886,6 +4864,6 @@ msgstr "Bitte versuchen Sie es in einigen Minuten erneut. Wenn Sie gerade einen 
 msgid "There was an error while handling your request."
 msgstr "Bei der Bearbeitung Ihrer Anfrage ist ein Fehler aufgetreten."
 
-#: templates/_error_page.html:20
+#: templates/_error_page.html:23
 msgid "Go to the start page"
 msgstr "Zur Startseite"

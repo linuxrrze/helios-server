@@ -1025,20 +1025,95 @@ class ElectionMailTests(OrganizationTestCase):
       self.assertTrue(message.body.endswith('\n--\nElectoral office\nUniversity C\n'), message.body)
     self.assertIn('/t/%s/trustee@example.net/s3cret' % election.short_name, mail.outbox[0].body)
 
+  def assertFromUnic(self, message, signature='Electoral office\nUniversity C'):
+    self.assertEqual(message.from_email, '"Electoral office, University C" <elections@example.org>')
+    self.assertEqual(message.reply_to, ['elections@uni-c.example.org'])
+    self.assertTrue(message.body.endswith('\n--\n%s\n' % signature), message.body)
+    self.assertNotIn('\n--\nHelios', message.body)
+
   @override_settings(ORGANIZATIONS=ORGS2)
-  def test_admin_notifications_and_other_emails_stay_the_operators(self):
+  def test_admin_notifications_from_the_elections_organization(self):
     from helios import tasks
     from helios.tests import run_queued_tasks
     election = self.make_election(self.unia_user, organization='unic')
+    tasks.election_notify_admin.enqueue(election_id=election.id, subject='voter file processed', body='done\n')
+    run_queued_tasks()
+    self.assertEqual(mail.outbox[0].body, 'done\n\n--\nElectoral office\nUniversity C\n')
+    self.assertFromUnic(mail.outbox[0])
+    # in the language of the person whose action sent it
+    tasks.election_notify_admin.enqueue(election_id=election.id, subject='s', body='erledigt', language='de')
+    run_queued_tasks()
+    from email.header import decode_header, make_header
+    self.assertEqual(str(make_header(decode_header(mail.outbox[1].from_email))),
+                     'Wahlamt der Universität C <elections@example.org>')
+    self.assertEqual(mail.outbox[1].body, 'erledigt\n\n--\nWahlamt\nUniversität C\n')
+    # a body queued before the signature was added here keeps its own
+    tasks.election_notify_admin.enqueue(election_id=election.id, subject='s', body='done\n\n--\nHelios\n')
+    run_queued_tasks()
+    self.assertEqual(mail.outbox[2].body, 'done\n\n--\nHelios\n')
+    self.assertIsNone(organizations.mail_organization())
+
+  @override_settings(ORGANIZATIONS=ORGS2)
+  def test_admin_notifications_of_the_tasks(self):
+    from helios import tasks
+    from helios.models import VoterFile
+    from helios.tests import run_queued_tasks
+    election = self.make_election(self.unia_user, organization='unic')
+    # tally computed
+    with mock.patch.object(Election, 'compute_tally'):
+      tasks.election_compute_tally.enqueue(election_id=election.id, language='en')
+      run_queued_tasks()
+    # voter file processed, with the opted-out voters in their own email
+    from helios.models import EmailOptOut
+    EmailOptOut.add_opt_out('optedout@example.net')
+    voter_file = VoterFile.objects.create(election=election, voter_file_content=(
+      'password,v1,v1@example.net,Voter One\npassword,v2,optedout@example.net,Voter Two\n'))
+    tasks.voter_file_process.enqueue(voter_file_id=voter_file.id, language='en')
+    run_queued_tasks()
+    subjects = sorted(m.subject for m in mail.outbox)
+    self.assertEqual(subjects, ['Opted-out voters not added to election Board election',
+                                'encrypted tally computed', 'voter file processed'])
+    for message in mail.outbox:
+      with self.subTest(subject=message.subject):
+        self.assertEqual(message.to, ['"unia-admin" <unia-admin>'])  # the election's administrator
+        self.assertFromUnic(message)
+
+  @override_settings(ORGANIZATIONS=ORGS2)
+  def test_admin_notification_sent_by_a_view(self):
+    # as the views send the trustee notes (public key uploaded, partial decryption)
+    from helios import tasks
+    election = self.make_election(self.unia_user, organization='unic')
+    tasks.notify_election_admin(election, 'Board election - trustee pk upload', 'trustee Tara uploaded a pk.')
+    self.assertEqual(mail.outbox[0].body, 'trustee Tara uploaded a pk.\n\n--\nElectoral office\nUniversity C\n')
+    self.assertFromUnic(mail.outbox[0])
+    with open(os.path.join(settings.ROOT_PATH, 'helios', 'views.py'), encoding='utf-8') as f:
+      self.assertNotIn('election.admin.send_message', f.read())
+
+  def test_admin_notifications_of_the_default_organization(self):
+    from helios import tasks
+    from helios.tests import run_queued_tasks
+    election = self.make_election(self.unia_user)
     tasks.election_notify_admin.enqueue(election_id=election.id, subject='voter file processed', body='done')
     run_queued_tasks()
     self.assertEqual(mail.outbox[0].from_email, 'Example Elections <elections@example.org>')
     self.assertEqual(mail.outbox[0].reply_to, [])
-    # another sender address is never touched
+    self.assertEqual(mail.outbox[0].body, 'done\n\n--\nHelios\n')
+
+  @override_settings(ORGANIZATIONS=ORGS2)
+  def test_other_sender_addresses_are_not_touched(self):
+    election = self.make_election(self.unia_user, organization='unic')
     from django.core.mail import send_mail
     with organizations.mail_context(election):
       send_mail('s', 'b', 'Other <other@example.org>', ['x@example.net'])
-    self.assertEqual(mail.outbox[1].from_email, 'Other <other@example.org>')
+    self.assertEqual(mail.outbox[0].from_email, 'Other <other@example.org>')
+
+  @override_settings(ORGANIZATIONS=ORGS2)
+  def test_emails_not_about_an_election_stay_the_operators(self):
+    self.client.cookies[ENTRY] = 'unic'  # also for a visitor of an organization's entry link
+    self.client.post('/optout/', {'email': 'someone@example.net'})
+    self.assertEqual(len(mail.outbox), 1)
+    self.assertEqual(mail.outbox[0].from_email, 'elections@example.org')
+    self.assertEqual(mail.outbox[0].reply_to, [])
 
   @override_settings(ORGANIZATIONS=ORGS2)
   def test_preview_shows_the_organizations_signature(self):
