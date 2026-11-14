@@ -1602,6 +1602,7 @@ class VoterGroupLog(models.Model):
   }
   # appended when the flag is set in params
   NOTES = {
+    'by_site_admin': gettext_lazy('Transferred by a site administrator.'),
     'previous_owner_left': gettext_lazy('The previous owner is no longer an administrator.'),
     'admins_added': gettext_lazy('The other administrators of the group were added to the election administrators.'),
   }

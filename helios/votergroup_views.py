@@ -165,7 +165,7 @@ def votergroup_view(request, votergroup_uuid):
     # a site administrator who doesn't administer the group: no member data
     return render_template(request, "votergroup_overview", {
       'group': group, 'num_members': group.votergroupmember_set.count(), 'num_admins': group.admins.count(),
-      'can_transfer': _can_transfer(user, group)})
+      'can_transfer': _can_transfer(user, group), 'transfer_form': vg.TransferOwnershipByEmailForm()})
   log_page = Paginator(group.get_log(), LOG_ENTRIES_PER_PAGE).get_page(request.GET.get('log_page'))
   return render_template(request, "votergroup_view", {
     'group': group, 'members': group.get_members(), 'admins': group.get_admins(), 'log_page': log_page,
@@ -297,10 +297,10 @@ def votergroup_prepareelection(request, votergroup_uuid):
 ## an additional administrator may remove themself ("leave the group"): the
 ## owner always remains, so a group can't end up without an administrator.
 ##
-## The owner, or a site administrator (e.g. when the owner has left), can
-## transfer the ownership to one of the additional administrators; the
-## previous owner then stays an additional administrator unless they choose
-## otherwise. A provisioned group's owner is its source's account, and its
+## The owner can transfer the ownership to one of the additional
+## administrators; a site administrator (e.g. when the owner has left) to any
+## user who can create elections, found by email. The previous owner then
+## stays an additional administrator unless unchecked. A provisioned group's owner is its source's account, and its
 ## administrators come from the source only: no transfer.
 ##
 
@@ -393,6 +393,8 @@ def _can_transfer(user, group):
 
 
 def _transfer_error(group, new_owner):
+  if new_owner == group.admin:
+    return _("This user is the owner of the voter group.")
   # an owner needs the same right as an administrator (see _new_admin_error)
   if not user_can_create_election(new_owner):
     return _("This user cannot create elections and therefore cannot administer voter groups.")
@@ -406,8 +408,15 @@ def _transfer_error(group, new_owner):
 @login_required
 @require_http_methods(["GET", "POST"])
 def votergroup_transfer(request, votergroup_uuid):
-  """Transfer the ownership: choose the new owner, confirm (two POSTs, the
-  second with confirmed=1), done."""
+  """
+  Transfer the ownership: choose the new owner, confirm (two POSTs, the
+  second with confirmed=1), done.
+
+  The owner chooses one of the group's additional administrators. A site
+  administrator may choose any user who can create elections, found by email
+  as when adding an administrator (e.g. when the owner has left and nobody
+  else administers the group); the log marks such a transfer.
+  """
   group = _get_group(request, votergroup_uuid, overview=True)
   user = get_user(request)
   if group.admin_id != user.pk and not user.admin_p:
@@ -417,23 +426,42 @@ def votergroup_transfer(request, votergroup_uuid):
   if refused:
     return refused
 
+  by_email = user.admin_p
   candidates = list(group.get_admins())
-  form = vg.TransferOwnershipForm(request.POST if request.method == "POST" else None, candidates=candidates)
-  new_owner = None
+  data = request.POST if request.method == "POST" else None
+  if by_email:
+    form = vg.TransferOwnershipByEmailForm(data)
+    field = 'email'
+  else:
+    form = vg.TransferOwnershipForm(data, candidates=candidates)
+    field = 'new_owner'
+  new_owner = matching_users = None
   confirm = False
 
   if request.method == "POST":
     check_csrf(request)
     if form.is_valid():
-      new_owner = next(u for u in candidates if str(u.pk) == form.cleaned_data['new_owner'])
+      error = None
+      if by_email:
+        new_owner, matching_users, error = find_user_to_add_as_admin(
+          form.cleaned_data['email'], request.POST.get('auth_type', ''),
+          not_found=_('No user found with that email. They must log in to Helios at least once before they can become the owner.'))
+      else:
+        new_owner = next(u for u in candidates if str(u.pk) == form.cleaned_data['new_owner'])
       keep = form.cleaned_data['keep_previous_owner']
-      error = _transfer_error(group, new_owner)
+      if new_owner:
+        error = _transfer_error(group, new_owner)
       if error:
-        form.add_error('new_owner', error)
+        form.add_error(field, error)
+        new_owner = None
+      elif matching_users:
+        pass  # the site administrator chooses one of several users with this email
       elif request.POST.get('confirmed') != '1':
         confirm = True
       else:
         old_owner = group.admin
+        # a site administrator acting on a group they don't own
+        by_site_admin = old_owner != user
         try:
           with transaction.atomic():
             group.admin = new_owner
@@ -442,18 +470,21 @@ def votergroup_transfer(request, votergroup_uuid):
             if keep:
               group.admins.add(old_owner)
             group.append_log(VoterGroupLog.OWNER_CHANGED, actor=user, old_owner=_admin_label(old_owner),
-                             new_owner=_admin_label(new_owner), previous_owner_left=not keep)
+                             new_owner=_admin_label(new_owner), previous_owner_left=not keep,
+                             by_site_admin=by_site_admin)
         except IntegrityError:
           # a group of the same name, created by the new owner in the meantime
           group.admin = old_owner
-          form.add_error('new_owner', _transfer_error(group, new_owner) or _("The ownership could not be transferred."))
+          form.add_error(field, _transfer_error(group, new_owner) or _("The ownership could not be transferred."))
+          new_owner = None
         else:
-          logger.info('votergroup %s: ownership transferred from %s to %s by %s%s', group.uuid, _who(old_owner),
-                      _who(new_owner), _who(user), '' if keep else ', previous owner no longer an administrator')
+          logger.info('votergroup %s: ownership transferred from %s to %s by %s%s%s', group.uuid, _who(old_owner),
+                      _who(new_owner), 'site administrator ' if by_site_admin else '', _who(user),
+                      '' if keep else ', previous owner no longer an administrator')
           if user_can_see_votergroup_overview(user, group):
             return _redirect(url_names.VOTERGROUP_VIEW, group.uuid)
           return _redirect(url_names.VOTERGROUP_ADMINISTERED)
 
   return render_template(request, "votergroup_transfer", {
     'group': group, 'form': form, 'candidates': candidates, 'confirm': confirm, 'new_owner': new_owner,
-    'is_owner': group.admin_id == user.pk})
+    'matching_users': matching_users, 'by_email': by_email, 'is_owner': group.admin_id == user.pk})

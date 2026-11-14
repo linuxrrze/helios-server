@@ -195,8 +195,10 @@ a group with the same name.
 Unlike elections, site administrators don't see every group in full: the
 member list is personal data. A site administrator who isn't an administrator
 of a group sees only an overview (name, owner, number of members and
-administrators) and can transfer its ownership, e.g. when the owner has left;
-member lists, changes and preparing elections are refused. The admin page's
+administrators) and can transfer its ownership, e.g. when the owner has left:
+to any user who can create elections, entered by email as when adding an
+administrator (the group's log notes that a site administrator did it).
+Member lists, changes and preparing elections are refused. The admin page's
 **user search** lists the groups a user owns or administers.
 
 The group's page shows its **log** to its administrators, newest first:

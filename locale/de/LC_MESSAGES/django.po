@@ -499,10 +499,14 @@ msgid "Members updated: %(added)s added, %(removed)s removed; %(admins)s adminis
 msgstr "Mitglieder aktualisiert: %(added)s hinzugefügt, %(removed)s entfernt; %(admins)s Administrator*in(nen)"
 
 #: helios/models.py:1605
+msgid "Transferred by a site administrator."
+msgstr "Übertragen durch eine Administrator*in der Website."
+
+#: helios/models.py:1606
 msgid "The previous owner is no longer an administrator."
 msgstr "Die bisherige Besitzer*in ist nicht mehr Administrator*in."
 
-#: helios/models.py:1606
+#: helios/models.py:1607
 msgid "The other administrators of the group were added to the election administrators."
 msgstr "Die anderen Administrator*innen der Gruppe wurden zur Wahlleitung hinzugefügt."
 
@@ -674,13 +678,14 @@ msgstr "Sie können beliebig oft einen Stimmzettel abgeben."
 msgid "Are you sure you want to clear this ballot and NOT cast it?"
 msgstr "Möchten Sie diesen Stimmzettel wirklich verwerfen und NICHT abgeben?"
 
-#: helios/templates/_castconfirm_docast.html:27 helios/templates/combine_decryptions.html:26 helios/templates/election_admin_add.html:7
-#: helios/templates/election_admin_remove.html:7 helios/templates/election_edit.html:17 helios/templates/election_extend.html:16
-#: helios/templates/election_new.html:18 helios/templates/election_new_guided.html:60 helios/templates/new_trustee.html:39
-#: helios/templates/release_result.html:24 helios/templates/votergroup_adminadd.html:22 helios/templates/votergroup_adminadd.html:33
-#: helios/templates/votergroup_adminremove.html:20 helios/templates/votergroup_memberadd.html:12 helios/templates/votergroup_new.html:14
-#: helios/templates/votergroup_prepareelection.html:47 helios/templates/votergroup_transfer.html:18 helios/templates/votergroup_transfer.html:54
-#: helios/templates/voters_email.html:70 helios/templates/voters_upload.html:38
+#: helios/templates/_castconfirm_docast.html:27 helios/templates/_votergroup_transfer_email_form.html:11 helios/templates/combine_decryptions.html:26
+#: helios/templates/election_admin_add.html:7 helios/templates/election_admin_remove.html:7 helios/templates/election_edit.html:17
+#: helios/templates/election_extend.html:16 helios/templates/election_new.html:18 helios/templates/election_new_guided.html:60
+#: helios/templates/new_trustee.html:39 helios/templates/release_result.html:24 helios/templates/votergroup_adminadd.html:22
+#: helios/templates/votergroup_adminadd.html:33 helios/templates/votergroup_adminremove.html:20 helios/templates/votergroup_memberadd.html:12
+#: helios/templates/votergroup_new.html:14 helios/templates/votergroup_prepareelection.html:47 helios/templates/votergroup_transfer.html:23
+#: helios/templates/votergroup_transfer.html:43 helios/templates/votergroup_transfer.html:83 helios/templates/voters_email.html:70
+#: helios/templates/voters_upload.html:38
 msgid "cancel"
 msgstr "abbrechen"
 
@@ -729,7 +734,7 @@ msgstr "Sie können beliebig oft einen Stimmzettel abgeben: Nur der letzte zähl
 msgid "log in"
 msgstr "Anmelden"
 
-#: helios/templates/_form_fields.html:9 helios/templates/new_trustee.html:17 helios/templates/votergroup_transfer.html:32
+#: helios/templates/_form_fields.html:9 helios/templates/new_trustee.html:17 helios/templates/votergroup_transfer.html:61
 msgid "Please correct the following:"
 msgstr "Bitte korrigieren Sie Folgendes:"
 
@@ -759,6 +764,11 @@ msgstr "Einrichtung der Wahl &ndash; Schritt %(number)s von %(total)s"
 #: helios/templates/_setup_nav.html:14 helios/templates/election_new_guided.html:15 helios/templates/election_view.html:124
 msgid "done"
 msgstr "erledigt"
+
+#: helios/templates/_votergroup_transfer_email_form.html:10 helios/templates/election_new_guided.html:59 helios/templates/votergroup_transfer.html:42
+#: helios/templates/votergroup_transfer.html:82 helios_auth/auth_systems/saml.py:250
+msgid "Continue"
+msgstr "Fortfahren"
 
 #: helios/templates/cast_done.html:3 helios/templates/election_cast_confirm.html:3 server_ui/templates/confirm.html:3
 #: server_ui/templates/done.html:3
@@ -1494,10 +1504,6 @@ msgstr "Wahl erstellen"
 #: helios/templates/election_new_guided.html:50
 msgid "Start again"
 msgstr "Neu beginnen"
-
-#: helios/templates/election_new_guided.html:59 helios/templates/votergroup_transfer.html:53 helios_auth/auth_systems/saml.py:250
-msgid "Continue"
-msgstr "Fortfahren"
 
 #: helios/templates/election_new_guided.html:60 server_ui/templates/done.html:16 server_ui/templates/election_tallied.html:16
 msgid "Back"
@@ -3019,7 +3025,7 @@ msgid "You should keep the email with your trustee homepage link, which contains
 msgstr "Bewahren Sie die E-Mail mit dem Link zu Ihrer Treuhänder*innen-Seite auf; sie enthält die Zugangsdaten, um hierher zurückzukehren."
 
 #: helios/templates/votergroup_adminadd.html:3 helios/templates/votergroup_adminadd.html:32 helios/templates/votergroup_admins.html:11
-#: helios/templates/votergroup_transfer.html:24 helios/templatetags/navigation_tags.py:74
+#: helios/templates/votergroup_transfer.html:53 helios/templatetags/navigation_tags.py:74
 msgctxt "voter group"
 msgid "Add administrator"
 msgstr "Administrator*in hinzufügen"
@@ -3124,7 +3130,7 @@ msgid "Role"
 msgstr "Rolle"
 
 #: helios/templates/votergroup_admins.html:24 helios/templates/votergroup_overview.html:16 helios/templates/votergroup_transfer.html:3
-#: helios/templates/votergroup_transfer.html:17 helios/templates/votergroup_view.html:12 helios/templatetags/navigation_tags.py:76
+#: helios/templates/votergroup_transfer.html:22 helios/templates/votergroup_view.html:12 helios/templatetags/navigation_tags.py:76
 msgid "Transfer ownership"
 msgstr "Besitz übertragen"
 
@@ -3133,7 +3139,7 @@ msgctxt "voter group"
 msgid "No additional administrators have been added."
 msgstr "Es wurden noch keine weiteren Administrator*innen hinzugefügt."
 
-#: helios/templates/votergroup_admins.html:41 helios/templates/votergroup_provisioned.html:10 helios/templates/votergroup_transfer.html:25
+#: helios/templates/votergroup_admins.html:41 helios/templates/votergroup_provisioned.html:10 helios/templates/votergroup_transfer.html:54
 msgid "Back to the voter group"
 msgstr "Zurück zur Wählergruppe"
 
@@ -3177,6 +3183,10 @@ msgstr "Weitere Administrator*innen"
 #: helios/templates/votergroup_overview.html:12
 msgid "Created"
 msgstr "Erstellt"
+
+#: helios/templates/votergroup_overview.html:17 helios/templates/votergroup_transfer.html:48
+msgid "As a site administrator, you can make any user who can create elections the owner of this voter group, e.g. when the owner has left."
+msgstr "Als Administrator*in der Website können Sie jede Person, die Wahlen erstellen darf, zur Besitzer*in dieser Wählergruppe machen, z. B. wenn die Besitzer*in ausgeschieden ist."
 
 #: helios/templates/votergroup_prepareelection.html:3
 msgid "new election"
@@ -3253,19 +3263,20 @@ msgstr "Sie bleiben Administrator*in der Gruppe."
 msgid "You will no longer be an administrator of this voter group and will no longer see it."
 msgstr "Sie sind dann nicht mehr Administrator*in dieser Wählergruppe und sehen sie nicht mehr."
 
-#: helios/templates/votergroup_transfer.html:23
+#: helios/templates/votergroup_transfer.html:33
+#, python-format
+msgid "Several users log in with %(email)s. Which one should become the owner?"
+msgstr "Unter %(email)s gibt es mehrere Konten. Welches soll Besitzer*in werden?"
+
+#: helios/templates/votergroup_transfer.html:52
 msgid "The ownership can only be transferred to one of the group's administrators, and this group has none besides its owner."
 msgstr "Der Besitz kann nur an eine Administrator*in der Gruppe übertragen werden, und diese Gruppe hat außer ihrer Besitzer*in keine."
 
-#: helios/templates/votergroup_transfer.html:28
+#: helios/templates/votergroup_transfer.html:57
 msgid "The owner of a voter group cannot be removed by the other administrators. The new owner must be one of the group's administrators."
 msgstr "Die Besitzer*in einer Wählergruppe kann von den anderen Administrator*innen nicht entfernt werden. Die neue Besitzer*in muss eine der Administrator*innen der Gruppe sein."
 
-#: helios/templates/votergroup_transfer.html:50
-msgid "Keep the previous owner as an administrator of the group"
-msgstr "Die bisherige Besitzer*in als Administrator*in der Gruppe behalten"
-
-#: helios/templates/votergroup_transfer.html:50
+#: helios/templates/votergroup_transfer.html:79
 msgid "Remain an administrator of the group"
 msgstr "Administrator*in der Gruppe bleiben"
 
@@ -4088,24 +4099,36 @@ msgstr "Stimmen"
 msgid "The person must have logged in to Helios at least once before they can be added."
 msgstr "Die Person muss sich mindestens einmal bei Helios angemeldet haben, bevor sie hinzugefügt werden kann."
 
-#: helios/votergroup.py:36 helios/templates/votergroup_transfer.html:40
+#: helios/votergroup.py:36 helios/templates/votergroup_transfer.html:69
 msgid "New owner"
 msgstr "Neue Besitzer*in"
 
 #: helios/votergroup.py:47
+msgid "Email of the new owner"
+msgstr "E-Mail-Adresse der neuen Besitzer*in"
+
+#: helios/votergroup.py:48
+msgid "The person must have logged in to Helios at least once and be allowed to create elections."
+msgstr "Die Person muss sich mindestens einmal bei Helios angemeldet haben und Wahlen erstellen dürfen."
+
+#: helios/votergroup.py:50 helios/templates/votergroup_transfer.html:79
+msgid "Keep the previous owner as an administrator of the group"
+msgstr "Die bisherige Besitzer*in als Administrator*in der Gruppe behalten"
+
+#: helios/votergroup.py:56
 msgid "Add the other administrators of the group to the election administrators"
 msgstr "Die anderen Administrator*innen der Gruppe zur Wahlleitung hinzufügen"
 
-#: helios/votergroup.py:48
+#: helios/votergroup.py:57
 msgid "You become the creator of the election either way. Changes to the group later on do not change the election."
 msgstr "Sie werden in jedem Fall Ersteller*in der Wahl. Spätere Änderungen an der Gruppe ändern die Wahl nicht."
 
-#: helios/votergroup.py:73
+#: helios/votergroup.py:82
 #, python-format
 msgid "Login IDs must be unique: %(login_id)s is used twice."
 msgstr "Wähler-IDs müssen eindeutig sein: %(login_id)s wird doppelt verwendet."
 
-#: helios/votergroup.py:81
+#: helios/votergroup.py:90
 msgid "No delegation"
 msgstr "Keine Übertragung"
 
@@ -4131,7 +4154,7 @@ msgstr "Wahl für die Wählergruppe %(short_name)s"
 msgid "The voter group has no members."
 msgstr "Die Wählergruppe hat keine Mitglieder."
 
-#: helios/votergroup_views.py:316
+#: helios/votergroup_views.py:316 helios/votergroup_views.py:397
 msgid "This user is the owner of the voter group."
 msgstr "Diese Person ist Besitzer*in der Wählergruppe."
 
@@ -4140,7 +4163,7 @@ msgctxt "voter group"
 msgid "This user is already an administrator."
 msgstr "Diese Person ist bereits Administrator*in der Wählergruppe."
 
-#: helios/votergroup_views.py:321 helios/votergroup_views.py:398
+#: helios/votergroup_views.py:321 helios/votergroup_views.py:400
 msgid "This user cannot create elections and therefore cannot administer voter groups."
 msgstr "Diese Person darf keine Wahlen anlegen und kann deshalb keine Wählergruppen verwalten."
 
@@ -4149,12 +4172,16 @@ msgctxt "voter group"
 msgid "No user found with that email. They must log in to Helios at least once before being added as an administrator."
 msgstr "Kein Konto mit dieser E-Mail-Adresse gefunden. Die Person muss sich mindestens einmal bei Helios anmelden, bevor sie als Administrator*in hinzugefügt werden kann."
 
-#: helios/votergroup_views.py:401
+#: helios/votergroup_views.py:403
 #, python-format
 msgid "%(name)s already owns a voter group named %(short_name)s, so this group cannot be transferred to them."
 msgstr "%(name)s besitzt bereits eine Wählergruppe namens %(short_name)s, daher kann diese Gruppe nicht an diese Person übertragen werden."
 
-#: helios/votergroup_views.py:449
+#: helios/votergroup_views.py:448
+msgid "No user found with that email. They must log in to Helios at least once before they can become the owner."
+msgstr "Keine Person mit dieser E-Mail-Adresse gefunden. Sie muss sich mindestens einmal bei Helios anmelden, bevor sie Besitzer*in werden kann."
+
+#: helios/votergroup_views.py:478
 msgid "The ownership could not be transferred."
 msgstr "Der Besitz konnte nicht übertragen werden."
 

@@ -1,0 +1,13 @@
+{% load i18n %}{% comment %}
+A site administrator's transfer of a voter group to any user who can create
+elections, by email (votergroup_transfer). Usage:
+{% include "_votergroup_transfer_email_form.html" with form=transfer_form %}
+{% endcomment %}
+<form class="prettyform form-narrow" action="{% url "votergroup@transfer" group.uuid %}" method="POST" id="transfer_form" novalidate>
+  <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
+  {% include "_form_fields.html" with form=form %}
+  <div class="actions">
+    <button type="submit" class="button" id="next_button">{% translate "Continue" %}</button>
+    <a href="{% url "votergroup@view" group.uuid %}">{% translate "cancel" %}</a>
+  </div>
+</form>

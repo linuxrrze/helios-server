@@ -2,6 +2,8 @@
 Tests for voter groups.
 """
 
+import datetime
+
 from django.test import TestCase
 
 from helios import votergroup as vg
@@ -520,19 +522,109 @@ class VoterGroupTransferTests(_GroupWithAdminsTestCase):
     self.assertEqual(self.client.get('/helios/votergroup/view/g1').status_code, 404)
     self.assertIn('The previous owner is no longer an administrator.', group.get_log().first().message)
 
-  def test_site_admin_transfers(self):
-    siteadmin = User.objects.create(user_type='password', user_id='siteadmin', name='Sita Admin', info={}, admin_p=True)
+  def site_admin(self):
+    return User.objects.create(user_type='password', user_id='siteadmin', name='Sita Admin',
+                               info={'password': 'x'}, admin_p=True)
+
+  def post_email(self, email, confirmed=True, keep=True, **extra):
+    data = {'csrf_token': 'tok', 'email': email}
+    if keep:
+      data['keep_previous_owner'] = 'on'
+    if confirmed:
+      data['confirmed'] = '1'
+    data.update(extra)
+    return self.client.post(self.URL, data)
+
+  def test_site_admin_transfers_to_any_eligible_user_by_email(self):
+    siteadmin = self.site_admin()
     self.login(siteadmin)
+    # the overview offers the email field
+    response = self.client.get('/helios/votergroup/view/g1')
+    self.assertContains(response, 'action="/helios/votergroup/transfer/g1"')
+    self.assertContains(response, 'name="email"')
     response = self.client.get(self.URL)
+    self.assertContains(response, 'name="email"')
     self.assertContains(response, 'Keep the previous owner as an administrator of the group')
+    self.assertNotContains(response, 'name="new_owner"')
     self.assertNotContains(response, 'anna@example.org')
-    self.assertContains(self.post(confirmed=False), 'The previous owner remains an administrator of the group.')
-    response = self.post(keep=False)
+    # Tina is not an administrator of the group: first the confirmation step
+    response = self.post_email('third', confirmed=False)
+    self.assertContains(response, 'Tina Third')
+    self.assertContains(response, 'The previous owner remains an administrator of the group.')
+    self.assertContains(response, 'name="auth_type" value="password"')
+    self.assertEqual(self.reload().admin, self.owner)
+    with self.assertLogs('helios.votergroup', 'INFO') as logs:
+      response = self.post_email('third', keep=False, auth_type='password')
     self.assertTrue(response['Location'].endswith('/helios/votergroup/view/g1'))
     group = self.reload()
+    self.assertEqual(group.admin, self.third)
+    self.assertEqual(list(group.admins.all()), [self.coadmin])
+    self.assertIn('to password:%d *** by site administrator password:%d ***' % (self.third.pk, siteadmin.pk),
+                  logs.output[0])
+    entry = group.get_log().first()
+    self.assertEqual(entry.actor, siteadmin)
+    self.assertTrue(entry.params['by_site_admin'])
+    self.assertEqual(entry.message, 'Ownership transferred from Olga Owner (owner) to Tina Third (third). '
+                                    'Transferred by a site administrator. The previous owner is no longer an administrator.')
+    # the new owner administers the group, the site administrator still sees the overview only
+    self.assertContains(self.client.get('/helios/votergroup/view/g1'), 'only an overview is shown')
+    self.login(self.third)
+    self.assertContains(self.client.get('/helios/votergroup/view/g1'), 'anna@example.org')
+
+  def test_site_admin_transfer_to_a_coadmin_removes_them_from_the_admins(self):
+    self.login(self.site_admin())
+    self.assertEqual(self.post_email('coadmin').status_code, 302)
+    group = self.reload()
     self.assertEqual(group.admin, self.coadmin)
-    self.assertFalse(group.admins.exists())
-    self.assertEqual(group.get_log().first().actor, siteadmin)
+    self.assertEqual(list(group.admins.all()), [self.owner])
+
+  def test_site_admin_transfer_refuses_unknown_and_ineligible_users(self):
+    from unittest import mock
+    self.login(self.site_admin())
+    for email, message in [('nobody@example.org', 'before they can become the owner'),
+                           ('owner', 'is the owner of the voter group'),
+                           ('', 'This field is required')]:
+      for confirmed in (False, True):
+        self.assertContains(self.post_email(email, confirmed=confirmed), message, msg_prefix=email)
+    with mock.patch('helios.ADMIN_ONLY', True):
+      self.assertContains(self.post_email('third'), 'cannot create elections')
+    # deactivated users are not found
+    self.third.deactivated_at = datetime.datetime.utcnow()
+    self.third.save()
+    self.assertContains(self.post_email('third'), 'before they can become the owner')
+    self.assertEqual(self.reload().admin, self.owner)
+    self.assertFalse(self.group.votergrouplog_set.exists())
+
+  def test_site_admin_transfer_name_clash(self):
+    VoterGroup.objects.create(admin=self.third, uuid='g2', short_name='council')
+    self.login(self.site_admin())
+    for confirmed in (False, True):
+      self.assertContains(self.post_email('third', confirmed=confirmed),
+                          'Tina Third already owns a voter group named council')
+    self.assertEqual(self.reload().admin, self.owner)
+
+  def test_site_admin_transfer_with_several_auth_systems(self):
+    google = User.objects.create(user_type='google', user_id='third', name='Tina G', info={})
+    self.login(self.site_admin())
+    response = self.post_email('third', confirmed=False)
+    self.assertContains(response, 'Which one should become the owner?')
+    self.assertContains(response, 'name="auth_type" id="auth_type_2"')
+    # even with confirmed=1, nothing happens before a user is chosen
+    self.post_email('third')
+    self.assertEqual(self.reload().admin, self.owner)
+    self.assertContains(self.post_email('third', confirmed=False, auth_type='google'), 'Tina G')
+    self.post_email('third', auth_type='google')
+    self.assertEqual(self.reload().admin, google)
+    self.assertEqual(self.post_email('third', auth_type='github').status_code, 404)
+
+  def test_owner_cannot_pick_a_user_by_email(self):
+    self.login(self.owner)
+    self.assertNotContains(self.client.get(self.URL), 'name="email"')
+    # the owner's form ignores an email; a non-administrator can't be chosen
+    response = self.post_email('third')
+    self.assertContains(response, 'This field is required')
+    self.assertContains(self.post(new_owner=self.third), 'Select a valid choice')
+    self.assertEqual(self.reload().admin, self.owner)
 
   def test_only_owner_and_site_admins_may_transfer(self):
     self.login(self.coadmin)
@@ -573,8 +665,6 @@ class VoterGroupTransferTests(_GroupWithAdminsTestCase):
 
   def test_new_owner_who_cannot_create_elections(self):
     from unittest import mock
-    self.owner.admin_p = True
-    self.owner.save()
     self.login(self.owner)
     with mock.patch('helios.ADMIN_ONLY', True):
       response = self.post()

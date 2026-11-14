@@ -13,6 +13,8 @@
 </dl>
 
 {% if can_transfer %}
-<p class="actions"><a class="button secondary" href="{% url "votergroup@transfer" group.uuid %}">{% translate "Transfer ownership" %}</a></p>
+<h2>{% translate "Transfer ownership" %}</h2>
+<p>{% translate "As a site administrator, you can make any user who can create elections the owner of this voter group, e.g. when the owner has left." %}</p>
+{% include "_votergroup_transfer_email_form.html" with form=transfer_form %}
 {% endif %}
 {% endblock %}

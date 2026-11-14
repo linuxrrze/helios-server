@@ -10,7 +10,12 @@
 
 <form class="prettyform" action="" method="POST" id="transfer_form">
   <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
+  {% if by_email %}
+  <input type="hidden" name="email" value="{{form.cleaned_data.email}}" />
+  <input type="hidden" name="auth_type" value="{{new_owner.user_type}}" />
+  {% else %}
   <input type="hidden" name="new_owner" value="{{new_owner.pk}}" />
+  {% endif %}
   {% if form.cleaned_data.keep_previous_owner %}<input type="hidden" name="keep_previous_owner" value="on" />{% endif %}
   <input type="hidden" name="confirmed" value="1" />
   <div class="actions">
@@ -18,6 +23,30 @@
     <a href="{% url "votergroup@view" group.uuid %}">{% translate "cancel" %}</a>
   </div>
 </form>
+
+{% elif matching_users %}
+<form class="prettyform form-narrow" action="" method="POST" id="transfer_form">
+  <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
+  <input type="hidden" name="email" value="{{form.cleaned_data.email}}" />
+  {% if form.cleaned_data.keep_previous_owner %}<input type="hidden" name="keep_previous_owner" value="on" />{% endif %}
+  <fieldset>
+    <legend>{% blocktranslate trimmed with email=form.cleaned_data.email %}Several users log in with {{email}}. Which one should become the owner?{% endblocktranslate %}</legend>
+    {% for u in matching_users %}
+    <div class="field field-check">
+      <input type="radio" name="auth_type" id="auth_type_{{forloop.counter}}" value="{{u.user_type}}"{% if forloop.first %} checked{% endif %} />
+      <div><label for="auth_type_{{forloop.counter}}">{{u.display_html_small|safe}} ({{u.user_type}})</label></div>
+    </div>
+    {% endfor %}
+  </fieldset>
+  <div class="actions">
+    <button type="submit" class="button" id="next_button">{% translate "Continue" %}</button>
+    <a href="{% url "votergroup@view" group.uuid %}">{% translate "cancel" %}</a>
+  </div>
+</form>
+
+{% elif by_email %}
+<p class="page-lead">{% translate "As a site administrator, you can make any user who can create elections the owner of this voter group, e.g. when the owner has left." %}</p>
+{% include "_votergroup_transfer_email_form.html" with form=form %}
 
 {% elif not candidates %}
 <p class="page-lead">{% translate "The ownership can only be transferred to one of the group's administrators, and this group has none besides its owner." %}</p>
