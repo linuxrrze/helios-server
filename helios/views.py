@@ -1272,7 +1272,7 @@ def one_election_set_organization(request, election):
   if slug and slug not in organizations.configured():
     return HttpResponseBadRequest(_('Unknown organization.'))
   election.organization = slug
-  election.save()
+  election.save(update_fields=['organization'])
 
   return HttpResponseRedirect(settings.SECURE_URL_HOST + reverse(url_names.election.ELECTION_VIEW, args=[election.uuid]))
 
