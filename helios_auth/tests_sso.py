@@ -112,6 +112,7 @@ class OIDCTests(TestCase):
     self.assertEqual(user['user_id'], 'Erika.Mustermann@example.org')  # provider case kept
     self.assertEqual(user['name'], 'Erika Mustermann')
     self.assertEqual(user['info']['email'], 'Erika.Mustermann@example.org')
+    self.assertEqual(user['info']['issuer'], ISSUER)
     # PKCE: the verifier sent to the token endpoint matches the challenge sent to the IdP
     import hashlib
     sent = post.call_args.kwargs['data']['code_verifier']
@@ -434,6 +435,7 @@ class SAMLTests(_SAMLBase):
     self.assertEqual(user['user_id'], 'Erika.Mustermann@example.org')
     self.assertEqual(user['name'], 'Erika Mustermann')
     self.assertEqual(user['info']['email'], 'Erika.Mustermann@example.org')
+    self.assertEqual(user['info']['issuer'], IDP_ENTITY)
     self.assertTrue(self.system.CASE_INSENSITIVE_USER_ID)
 
   def test_unsigned_assertion_rejected(self):

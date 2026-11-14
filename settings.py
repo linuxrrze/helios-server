@@ -317,15 +317,20 @@ ALLOW_ELECTION_INFO_URL = (get_from_env('ALLOW_ELECTION_INFO_URL', '0') == '1')
 
 # Election addresses (<URL_HOST>/helios/e/<short name>). On a server shared by several
 # organizations, each can get its own prefix, so that their chosen addresses don't
-# collide: ELECTION_SHORT_NAME_PREFIXES maps the email domain of the person creating
-# the election (subdomains included) to a prefix, ELECTION_SHORT_NAME_PREFIX applies to
-# everyone else. The prefix only separates the names; it grants no permissions.
+# collide. The prefix of the person creating the election comes from
+# ELECTION_SHORT_NAME_PREFIXES_BY_IDP (their identity provider: issuer / entity ID, then
+# auth system name), else from ELECTION_SHORT_NAME_PREFIXES (their email domain,
+# subdomains included), else ELECTION_SHORT_NAME_PREFIX. The prefix only separates the
+# names; it grants no permissions.
+SHORT_NAME_PREFIX_RE = r'^[a-z0-9]{1,20}$'
+SHORT_NAME_PREFIX_RULE = "1 to 20 lowercase letters or digits"
+
 def parse_short_name_prefixes(mapping_json, default_prefix):
   """(domain -> prefix, default prefix) from the two variables; ImproperlyConfigured if invalid"""
   import re
   from django.core.exceptions import ImproperlyConfigured
-  prefix_re = re.compile(r'^[a-z0-9]{1,20}$')
-  rule = "1 to 20 lowercase letters or digits"
+  prefix_re = re.compile(SHORT_NAME_PREFIX_RE)
+  rule = SHORT_NAME_PREFIX_RULE
 
   default_prefix = (default_prefix or '').strip()
   if default_prefix and not prefix_re.match(default_prefix):
@@ -351,6 +356,38 @@ def parse_short_name_prefixes(mapping_json, default_prefix):
 
 ELECTION_SHORT_NAME_PREFIXES, ELECTION_SHORT_NAME_PREFIX = parse_short_name_prefixes(
   get_from_env('ELECTION_SHORT_NAME_PREFIXES', ''), get_from_env('ELECTION_SHORT_NAME_PREFIX', ''))
+
+def idp_key(value):
+  """an auth system name or issuer as compared: without surrounding spaces and trailing slashes"""
+  return value.strip().rstrip('/')
+
+def parse_short_name_prefixes_by_idp(mapping_json):
+  """identity provider (auth system name or issuer) -> prefix; ImproperlyConfigured if invalid"""
+  import re
+  from django.core.exceptions import ImproperlyConfigured
+  prefix_re = re.compile(SHORT_NAME_PREFIX_RE)
+  example = "{\"saml\": \"unia\", \"https://idp.uni-b.example.org/realms/staff\": \"unib\"}"
+  try:
+    raw = json.loads(mapping_json or '{}')
+  except ValueError as e:
+    raise ImproperlyConfigured("ELECTION_SHORT_NAME_PREFIXES_BY_IDP is not valid JSON (%s). Expected an object "
+                               "such as %s." % (e, example))
+  if not isinstance(raw, dict):
+    raise ImproperlyConfigured("ELECTION_SHORT_NAME_PREFIXES_BY_IDP must be a JSON object mapping auth system "
+                               "names or issuers to prefixes, such as %s." % example)
+  mapping = {}
+  for idp, prefix in raw.items():
+    key = idp_key(idp)
+    if not key or any(c.isspace() for c in key):
+      raise ImproperlyConfigured("ELECTION_SHORT_NAME_PREFIXES_BY_IDP: %r is not an auth system name or issuer." % idp)
+    if not isinstance(prefix, str) or not prefix_re.match(prefix):
+      raise ImproperlyConfigured("ELECTION_SHORT_NAME_PREFIXES_BY_IDP: the prefix %r for %r is not valid: use %s."
+                                 % (prefix, idp, SHORT_NAME_PREFIX_RULE))
+    mapping[key] = prefix
+  return mapping
+
+ELECTION_SHORT_NAME_PREFIXES_BY_IDP = parse_short_name_prefixes_by_idp(
+  get_from_env('ELECTION_SHORT_NAME_PREFIXES_BY_IDP', ''))
 
 # Layout and branding of the operating organization. Everything below is optional;
 # without it the site shows only the Helios logo and the built-in pages.
