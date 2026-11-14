@@ -13,7 +13,8 @@ from django.utils.translation import gettext as _
 from functools import update_wrapper
 
 import helios
-from . import utils
+from . import organizations, utils
+from .models import Election
 from helios_auth.models import User
 from helios_auth.security import get_user
 
@@ -47,6 +48,12 @@ def prepare_vars(request, values):
   vars_with_user['TEMPLATE_BASE'] = helios.TEMPLATE_BASE
   vars_with_user['CURRENT_URL'] = request.path
   vars_with_user['SECURE_URL_HOST'] = settings.SECURE_URL_HOST
+
+  # the pages of an election (for voters, trustees and its administrators) show
+  # the corporate identity of the election's organization; all others the default
+  election = vars_with_user.get('election')
+  if 'ci' not in vars_with_user and isinstance(election, Election):
+    vars_with_user['ci'] = organizations.for_election(election)
 
   return vars_with_user
 

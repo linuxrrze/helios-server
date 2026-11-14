@@ -21,7 +21,7 @@ from django.views.decorators.http import require_http_methods, require_POST
 from helios_auth.models import User
 from helios_auth.security import check_csrf, get_user, login_required
 from . import forms as election_forms
-from . import short_names, url_names
+from . import organizations, short_names, url_names
 from . import votergroup as vg
 from .mail_backend import mask_address
 from .models import Election, Voter, VoterGroup, VoterGroupMember
@@ -211,6 +211,7 @@ def votergroup_prepareelection(request, votergroup_uuid):
         election_params['cast_url'] = settings.SECURE_URL_HOST + reverse(one_election_cast, args=[election_params['uuid']])
         election_params['openreg'] = False
         election_params['admin'] = user
+        election_params['organization'] = organizations.organization_for_user(user)
         try:
           with transaction.atomic():
             election = Election.objects.create(**election_params)

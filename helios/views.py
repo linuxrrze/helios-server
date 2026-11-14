@@ -32,6 +32,7 @@ from helios_auth.utils import same_site_path
 from . import datatypes
 from . import election_progress
 from . import forms
+from . import organizations
 from . import short_names
 from . import tasks
 from .crypto import algs, electionalgs, elgamal
@@ -40,7 +41,8 @@ from .models import User, Election, CastVote, Voter, VoterFile, Trustee, Audited
 from .security import (election_view, election_admin,
                        trustee_check, set_logged_in_trustee,
                        can_create_election, user_can_see_election, get_voter,
-                       user_can_admin_election, user_can_feature_election)
+                       user_can_admin_election, user_can_feature_election,
+                       user_can_set_election_organization)
 from .view_utils import success, failure, return_json, render_template, render_text_template, find_user_to_add_as_admin
 from .workflows import homomorphic
 
@@ -233,6 +235,8 @@ def create_election(user, cleaned_data):
   # registration starts closed
   election_params['openreg'] = False
   election_params['admin'] = user
+  # the creator's organization gives the election's corporate identity
+  election_params['organization'] = organizations.organization_for_user(user)
   try:
     with transaction.atomic():
       election = Election.objects.create(**election_params)
@@ -345,6 +349,7 @@ def one_election_view(request, election):
   user = get_user(request)
   admin_p = user_can_admin_election(user, election)
   can_feature_p = user_can_feature_election(user, election)
+  can_set_organization_p = organizations.enabled() and user_can_set_election_organization(user)
   
   notregistered = False
   eligible_p = True
@@ -406,7 +411,11 @@ def one_election_view(request, election):
                           'admin_steps': admin_steps, 'freeze_issues': freeze_issues,
                           'can_send_emails': can_send_emails, 'email_disabled_reason': email_disabled_reason,
                           'voter': voter, 'votes': votes, 'notregistered': notregistered, 'eligible_p': eligible_p,
-                          'can_feature_p': can_feature_p, 'election_url' : election_url, 
+                          'can_feature_p': can_feature_p, 'election_url' : election_url,
+                          'organizations_p': organizations.enabled(),
+                          'organization': organizations.for_election(election),
+                          'can_set_organization_p': can_set_organization_p,
+                          'organization_choices': organizations.all_organizations() if can_set_organization_p else [],
                           'vote_url': vote_url, 'election_badge_url' : election_badge_url,
                           'show_result': show_result,
                           'test_cookie_url': test_cookie_url})
@@ -1248,6 +1257,26 @@ def one_election_set_featured(request, election):
   return HttpResponseRedirect(settings.SECURE_URL_HOST + reverse(url_names.election.ELECTION_VIEW, args=[election.uuid]))
 
 @election_admin()
+def one_election_set_organization(request, election):
+  """
+  Set the organization whose corporate identity the election's pages show (site
+  administrators only). Allowed at any time: the organization is not part of
+  the election's fingerprint.
+  """
+  check_csrf(request)
+
+  if not user_can_set_election_organization(get_user(request)):
+    raise PermissionDenied()
+
+  slug = request.POST.get('organization', '')
+  if slug and slug not in organizations.configured():
+    return HttpResponseBadRequest(_('Unknown organization.'))
+  election.organization = slug
+  election.save()
+
+  return HttpResponseRedirect(settings.SECURE_URL_HOST + reverse(url_names.election.ELECTION_VIEW, args=[election.uuid]))
+
+@election_admin()
 def one_election_archive(request, election):
   check_csrf(request)
 
@@ -1303,7 +1332,9 @@ def one_election_copy(request, election):
     registration_starts_at = election.registration_starts_at,
     voting_starts_at = election.voting_starts_at,
     voting_ends_at = election.voting_ends_at,
-    cast_url = settings.SECURE_URL_HOST + reverse(one_election_cast, args=[new_uuid])
+    cast_url = settings.SECURE_URL_HOST + reverse(one_election_cast, args=[new_uuid]),
+    # same creator, same organization (also when a site administrator changed it)
+    organization = election.organization,
   )
   
 

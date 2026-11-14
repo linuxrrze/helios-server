@@ -175,6 +175,12 @@ class Election(HeliosModel):
   # downloadable election info
   election_info_url = models.CharField(max_length=300, null=True)
 
+  # the organization whose corporate identity the election's pages show: a slug
+  # from ORGANIZATIONS_FILE, '' for the default organization (helios/organizations.py).
+  # Set from the creator's identity; only site administrators change it. Not part
+  # of the election's JSON, so it doesn't affect the fingerprint.
+  organization = models.CharField(max_length=50, blank=True, default='')
+
   # Custom managers
   objects = ElectionManager()  # default manager excludes deleted elections
   objects_with_deleted = models.Manager()  # includes all elections

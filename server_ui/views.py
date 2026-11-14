@@ -11,6 +11,7 @@ from django.template import TemplateDoesNotExist
 from django.template.loader import get_template
 
 import helios_auth.views as auth_views
+from helios import organizations
 from helios.models import Election
 from helios.security import can_create_election
 from helios_auth.security import get_user
@@ -24,10 +25,12 @@ def get_election():
   return None
   
 def home(request):
-  # load the featured elections
-  featured_elections = Election.get_featured()
-  
   user = get_user(request)
+
+  # the featured elections: with organizations configured, those of the
+  # visitor's organization only, and none for visitors who are not logged in
+  featured_elections = organizations.featured_elections_for(user)
+
   create_p = can_create_election(request)
 
   if create_p:
@@ -51,6 +54,7 @@ def home(request):
                                             'elections_administered' : elections_administered,
                                             'elections_voted' : elections_voted,
                                             'create_p':create_p,
+                                            'featured_by_organization_p': organizations.enabled(),
                                             'login_box' : login_box})
   
 def about(request):

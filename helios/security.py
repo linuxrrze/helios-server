@@ -236,4 +236,12 @@ def user_can_feature_election(user, election):
     return False
     
   return user.admin_p
+
+def user_can_set_election_organization(user):
+  """
+  Only site administrators choose an election's organization (its corporate
+  identity); otherwise anyone could send out an election that looks like
+  another organization's.
+  """
+  return bool(user and user.admin_p)
   

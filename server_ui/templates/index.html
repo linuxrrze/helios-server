@@ -76,7 +76,7 @@
       <li><a href="{% url "shortcut@election" election.short_name %}">{{election.name}}</a>{% if settings.SHOW_USER_INFO %} (&mdash; {{election.admin.display_html_small|safe}}){% endif %}</li>
       {% endfor %}
     </ul>
-    {% else %}
+    {% elif not featured_by_organization_p %}
     <div class="alert alert-info">
 	{% translate "There are currently no elections available." %}
     </div>
