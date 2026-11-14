@@ -205,7 +205,9 @@ class SAMLAuthSystem:
     name = first('SAML_ATTRIBUTE_NAME') or " ".join(
       p for p in (first('SAML_ATTRIBUTE_GIVEN_NAME'), first('SAML_ATTRIBUTE_SURNAME')) if p) or user_id
 
-    info = {'name': name}
+    # the IdP's entity ID (strict validation has checked the response's Issuer
+    # against it); used e.g. for election address prefixes
+    info = {'name': name, 'issuer': auth.get_settings().get_idp_data()['entityId']}
     if email:
       info['email'] = email
     return {'type': self.name, 'user_id': user_id, 'name': name, 'info': info, 'token': {}}

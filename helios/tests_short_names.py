@@ -1,6 +1,7 @@
 """
 Tests for election addresses: optional short names (default: the election's UUID)
-and per-organization prefixes (ELECTION_SHORT_NAME_PREFIXES, helios/short_names.py).
+and per-organization prefixes (ELECTION_SHORT_NAME_PREFIXES_BY_IDP,
+ELECTION_SHORT_NAME_PREFIXES, helios/short_names.py).
 """
 
 import datetime
@@ -22,6 +23,8 @@ from helios.models import Election, Trustee, Voter, VoterGroup, VoterGroupMember
 from helios_auth.models import User
 
 UNIS = {'uni-a.example.org': 'unia', 'uni-b.example.org': 'unib', 'med.uni-a.example.org': 'unimed'}
+IDP_B = 'https://idp.uni-b.example.org/realms/staff'
+IDPS = {'saml': 'unia', IDP_B: 'unib', 'ldap': 'unic'}
 BASE = 'http://localhost:8000/helios/e/'
 
 
@@ -56,15 +59,53 @@ class PrefixSettingTests(TestCase):
 
   def test_read_from_environment(self):
     env = dict(os.environ, DEBUG='1', ELECTION_SHORT_NAME_PREFIXES='{"uni-a.example.org": "unia"}',
-               ELECTION_SHORT_NAME_PREFIX='site')
+               ELECTION_SHORT_NAME_PREFIX='site', ELECTION_SHORT_NAME_PREFIXES_BY_IDP='{"saml": "unia"}')
     with mock.patch.dict(os.environ, env, clear=True), mock.patch('sys.argv', ['manage.py', 'runserver']):
       values = runpy.run_path(os.path.join(settings.ROOT_PATH, 'settings.py'))
     self.assertEqual(values['ELECTION_SHORT_NAME_PREFIXES'], {'uni-a.example.org': 'unia'})
     self.assertEqual(values['ELECTION_SHORT_NAME_PREFIX'], 'site')
+    self.assertEqual(values['ELECTION_SHORT_NAME_PREFIXES_BY_IDP'], {'saml': 'unia'})
 
 
-def _user(email=None, user_id='jdoe'):
-  return SimpleNamespace(info={'email': email} if email else {}, user_id=user_id)
+class PrefixByIdPSettingTests(TestCase):
+
+  def test_empty(self):
+    self.assertEqual(project_settings.parse_short_name_prefixes_by_idp(''), {})
+    self.assertEqual(settings.ELECTION_SHORT_NAME_PREFIXES_BY_IDP, {})
+
+  def test_mapping_is_normalized(self):
+    mapping = project_settings.parse_short_name_prefixes_by_idp(
+      '{" saml ": "unia", "https://idp.uni-b.example.org/realms/staff/": "unib", "urn:example:idp": "unic"}')
+    # auth system names and issuers are kept as they are, apart from spaces and trailing slashes
+    self.assertEqual(mapping, {'saml': 'unia', IDP_B: 'unib', 'urn:example:idp': 'unic'})
+
+  def test_invalid_values(self):
+    for mapping_json, message in [
+        ('{"saml": "unia"', 'ELECTION_SHORT_NAME_PREFIXES_BY_IDP is not valid JSON'),
+        ('["unia"]', 'must be a JSON object'),
+        ('{"saml": "Uni-A"}', 'is not valid'),
+        ('{"saml": ""}', 'is not valid'),
+        ('{"saml": null}', 'is not valid'),
+        ('{"": "unia"}', 'is not an auth system name or issuer'),
+        ('{"/": "unia"}', 'is not an auth system name or issuer'),
+        ('{"my saml": "unia"}', 'is not an auth system name or issuer'),
+    ]:
+      with self.subTest(mapping_json=mapping_json):
+        with self.assertRaisesMessage(ImproperlyConfigured, message):
+          project_settings.parse_short_name_prefixes_by_idp(mapping_json)
+
+  def test_invalid_json_stops_start(self):
+    env = dict(os.environ, DEBUG='1', ELECTION_SHORT_NAME_PREFIXES_BY_IDP="{'saml': 'unia'}")
+    with mock.patch.dict(os.environ, env, clear=True), mock.patch('sys.argv', ['manage.py', 'runserver']):
+      with self.assertRaisesMessage(ImproperlyConfigured, 'ELECTION_SHORT_NAME_PREFIXES_BY_IDP is not valid JSON'):
+        runpy.run_path(os.path.join(settings.ROOT_PATH, 'settings.py'))
+
+
+def _user(email=None, user_id='jdoe', user_type='password', issuer=None):
+  info = {'email': email} if email else {}
+  if issuer is not None:
+    info['issuer'] = issuer
+  return SimpleNamespace(info=info, user_id=user_id, user_type=user_type)
 
 
 class PrefixForUserTests(TestCase):
@@ -98,6 +139,80 @@ class PrefixForUserTests(TestCase):
     self.assertEqual(short_names.prefix_for_user(_user('jdoe@uni-a.example.org')), 'unia')
     self.assertEqual(short_names.prefix_for_user(_user('jdoe@elsewhere.example.net')), 'site')
     self.assertEqual(short_names.prefix_for_user(_user(None)), 'site')
+
+
+@override_settings(ELECTION_SHORT_NAME_PREFIXES_BY_IDP=IDPS)
+class PrefixByIdPTests(TestCase):
+
+  def prefix(self, *args, **kwargs):
+    return short_names.prefix_for_user(_user(*args, **kwargs))
+
+  def test_auth_system(self):
+    self.assertEqual(self.prefix(None, user_type='saml'), 'unia')
+    self.assertEqual(self.prefix(None, user_type='ldap'), 'unic')
+    # names are compared exactly, like Helios' auth system names
+    self.assertEqual(self.prefix(None, user_type='SAML'), '')
+    self.assertEqual(self.prefix(None, user_type='password'), '')
+
+  def test_issuer_before_auth_system(self):
+    # e.g. the auth system "saml" with the IdP of another organization
+    self.assertEqual(self.prefix(None, user_type='saml', issuer=IDP_B), 'unib')
+    self.assertEqual(self.prefix(None, user_type='saml', issuer=IDP_B + '/'), 'unib')
+    # an issuer without an entry: the auth system decides
+    self.assertEqual(self.prefix(None, user_type='saml', issuer='https://idp.example.net'), 'unia')
+    # logged in before the issuer was stored
+    self.assertEqual(self.prefix(None, user_type='oidc'), '')
+    self.assertEqual(self.prefix(None, user_type='oidc', issuer=IDP_B), 'unib')
+
+  @override_settings(ELECTION_SHORT_NAME_PREFIXES=UNIS, ELECTION_SHORT_NAME_PREFIX='site')
+  def test_identity_provider_before_email_domain(self):
+    self.assertEqual(self.prefix('jdoe@uni-b.example.org', user_type='saml'), 'unia')
+    self.assertEqual(self.prefix('jdoe@uni-a.example.org', user_type='oidc', issuer=IDP_B), 'unib')
+    # nothing configured for the identity provider: email domain, then the default prefix
+    self.assertEqual(self.prefix('jdoe@uni-b.example.org', user_type='oidc', issuer='https://idp.example.net'), 'unib')
+    self.assertEqual(self.prefix(None, 'jdoe@med.uni-a.example.org', user_type='google'), 'unimed')
+    self.assertEqual(self.prefix('jdoe@elsewhere.example.net', user_type='google'), 'site')
+
+  def test_odd_info(self):
+    for info in (None, [], {'issuer': None}, {'issuer': 42}, {'issuer': ' '}):
+      with self.subTest(info=info):
+        user = SimpleNamespace(info=info, user_id='jdoe', user_type='saml')
+        self.assertEqual(short_names.prefix_for_user(user), 'unia')
+    self.assertEqual(short_names.prefix_for_user(None), '')
+
+  @override_settings(ELECTION_SHORT_NAME_PREFIXES=UNIS, ELECTION_SHORT_NAME_PREFIX='site')
+  def test_all_prefixes_are_reserved(self):
+    self.assertEqual(short_names.all_prefixes(), {'unia', 'unib', 'unic', 'unimed', 'site'})
+    self.assertEqual(short_names.reserved_prefix('unic-board'), 'unic')
+    self.assertIsNone(short_names.reserved_prefix('unicorn-board'))
+
+
+class CaseTests(TestCase):
+  """addresses that differ only in case collide; they are stored as entered"""
+
+  def setUp(self):
+    self.admin = User.objects.create(user_type='password', user_id='a', name='a', info={})
+
+  def test_reserved_prefix_in_any_case(self):
+    with override_settings(ELECTION_SHORT_NAME_PREFIXES=UNIS):
+      for name in ('unia-board', 'UNIA-board', 'UniA-Board'):
+        with self.subTest(name=name):
+          self.assertEqual(short_names.reserved_prefix(name), 'unia')
+      self.assertIsNone(short_names.reserved_prefix('unia_board'))
+
+  def test_is_taken_in_any_case(self):
+    election = Election.objects.create(admin=self.admin, uuid='e1', short_name='Board-2026', name='x')
+    for name in ('Board-2026', 'board-2026', 'BOARD-2026'):
+      with self.subTest(name=name):
+        self.assertTrue(short_names.is_taken(name))
+    self.assertFalse(short_names.is_taken('board-2027'))
+    # the election itself: changing the case of its own address is fine
+    self.assertFalse(short_names.is_taken('board-2026', election))
+
+  def test_deleted_election_in_any_case(self):
+    election = Election.objects.create(admin=self.admin, uuid='e1', short_name='board', name='x')
+    election.soft_delete()
+    self.assertTrue(short_names.is_taken('BOARD'))
 
 
 class AddressTestCase(TestCase):
@@ -179,6 +294,40 @@ class SingleFormTests(AddressTestCase):
     self.assertNotContains(response, 'Secret ballot of B')
     self.assertEqual(Election.objects.count(), 1)
 
+  def test_taken_in_another_case(self):
+    Election.objects.create(admin=self.unib, uuid='e0', short_name='board-2026', name='x')
+    response = self.create(self.unia, 'Board-2026')
+    self.assertContains(response, 'This address is already taken.')
+    self.assertEqual(Election.objects.count(), 1)
+
+  def test_stored_as_entered(self):
+    self.create(self.unia, 'Board-2026')
+    self.assertEqual(Election.objects.get().short_name, 'Board-2026')
+
+  @override_settings(ELECTION_SHORT_NAME_PREFIXES=UNIS)
+  def test_prefixes_are_reserved_in_any_case(self):
+    response = self.create(self.other, 'UNIA-board')
+    self.assertContains(response, 'Addresses starting with &quot;unia-&quot; are reserved for another organization')
+    self.assertFalse(Election.objects.exists())
+
+  @override_settings(ELECTION_SHORT_NAME_PREFIXES=UNIS, ELECTION_SHORT_NAME_PREFIXES_BY_IDP={'password': 'local'})
+  def test_prefix_by_identity_provider(self):
+    # the auth system decides before the email domain
+    self.create(self.unia, 'board')
+    self.assertEqual(Election.objects.get().short_name, 'local-board')
+
+  @override_settings(ELECTION_SHORT_NAME_PREFIXES=UNIS)
+  def test_site_administrators_follow_the_same_rules(self):
+    # no way around the prefixes for site administrators (admin_p) either
+    for user in (self.unia, self.other):
+      user.admin_p = True
+      user.save()
+    response = self.create(self.other, 'unia-board')
+    self.assertContains(response, 'are reserved for another organization')
+    self.assertFalse(Election.objects.exists())
+    self.create(self.unia, 'board')
+    self.assertEqual(Election.objects.get().short_name, 'unia-board')
+
   def test_taken_by_deleted_election(self):
     election = Election.objects.create(admin=self.unib, uuid='e0', short_name='board-2026', name='x')
     election.soft_delete()
@@ -253,6 +402,28 @@ class EditTests(AddressTestCase):
     self.login(self.unia)
     response = self.edit(election, 'senate')
     self.assertContains(response, 'This address is already taken.')
+    self.assertEqual(self.reload(election).short_name, 'board')
+
+  def test_change_of_case(self):
+    election = self.make_election(self.unia, 'board')
+    self.login(self.unia)
+    self.edit(election, 'Board')
+    self.assertEqual(self.reload(election).short_name, 'Board')
+
+  def test_taken_in_another_case(self):
+    self.make_election(self.unib, 'senate', uuid='e0')
+    election = self.make_election(self.unia, 'board')
+    self.login(self.unia)
+    response = self.edit(election, 'Senate')
+    self.assertContains(response, 'This address is already taken.')
+    self.assertEqual(self.reload(election).short_name, 'board')
+
+  def test_existing_names_differing_in_case_are_kept(self):
+    # from before the check: both stay, and both can still be saved unchanged
+    self.make_election(self.unib, 'Board', uuid='e0')
+    election = self.make_election(self.unia, 'board')
+    self.login(self.unia)
+    self.assertEqual(self.edit(election, 'board').status_code, 302)
     self.assertEqual(self.reload(election).short_name, 'board')
 
   @override_settings(ELECTION_SHORT_NAME_PREFIXES=UNIS)

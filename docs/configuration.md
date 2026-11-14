@@ -176,10 +176,25 @@ empty, the election's UUID is used. When several organizations share one Helios 
 each a prefix, so that their chosen addresses can't collide: the address is then stored as
 `<prefix>-<chosen part>`, and the form shows the prefix in front of the box.
 
+The prefix of the person creating the election is determined in this order:
+
+1. by the identity provider they logged in with (`ELECTION_SHORT_NAME_PREFIXES_BY_IDP`):
+   first its issuer, then the name of the auth system;
+2. by their email domain (`ELECTION_SHORT_NAME_PREFIXES`);
+3. otherwise `ELECTION_SHORT_NAME_PREFIX`.
+
 | Variable | Default | Meaning |
 |---|---|---|
-| `ELECTION_SHORT_NAME_PREFIXES` | empty | JSON object mapping an email domain to a prefix (1&ndash;20 lowercase letters or digits). It applies to elections created by people whose email address is in that domain or one of its subdomains; with several matching entries, the most specific one wins. If a user has no email address, a login ID of the form `name@domain` (e.g. a scoped `eduPersonPrincipalName`) is used. Addresses starting with a configured prefix and a hyphen can't be chosen by anyone else. Invalid JSON or prefixes stop Helios from starting. |
-| `ELECTION_SHORT_NAME_PREFIX` | empty | Prefix for everyone who matches no entry of `ELECTION_SHORT_NAME_PREFIXES`, e.g. on a server used by a single organization that wants to keep the namespace for later. |
+| `ELECTION_SHORT_NAME_PREFIXES_BY_IDP` | empty | JSON object mapping an identity provider to a prefix (1&ndash;20 lowercase letters or digits). A key is either the issuer of an OIDC provider (the `issuer` of its discovery document) or the entity ID of a SAML IdP, or the name of an auth system as in `AUTH_ENABLED_SYSTEMS` (e.g. `saml`, `oidc`, `ldap`, `cas`, `google`, `password`, or the name set with `OIDC_AUTH_SYSTEM_NAME` / `SAML_AUTH_SYSTEM_NAME`). An entry for the issuer takes precedence over one for the auth system. Keys are compared exactly, apart from a trailing `/`. Helios stores the issuer when someone logs in with OIDC or SAML; for people who have not logged in since this was added, only the auth system name is known. Invalid JSON or prefixes stop Helios from starting. |
+| `ELECTION_SHORT_NAME_PREFIXES` | empty | JSON object mapping an email domain to a prefix. It applies to elections created by people whose identity provider has no entry above and whose email address is in that domain or one of its subdomains; with several matching entries, the most specific one wins. If a user has no email address, a login ID of the form `name@domain` (e.g. a scoped `eduPersonPrincipalName`) is used. Invalid JSON or prefixes stop Helios from starting. |
+| `ELECTION_SHORT_NAME_PREFIX` | empty | Prefix for everyone who matches no entry of the two settings above, e.g. on a server used by a single organization that wants to keep the namespace for later. |
+
+Addresses starting with any configured prefix and a hyphen (in any case, e.g. `UNIA-`) can't be
+chosen by anyone else. These rules apply to site administrators too. Addresses are unique
+regardless of case: if `board-2026` exists, `Board-2026` is refused as taken (also if the other
+election was deleted). They are stored as entered; addresses created before this check are kept,
+even if two of them differ only in case. Links are looked up exactly as stored, so
+`/helios/e/Board-2026` does not find `board-2026`.
 
 Example for two universities and a medical faculty with its own prefix:
 
@@ -194,6 +209,19 @@ elections is decided by the login system). It belongs to the election's creator,
 another administrator edits the election. Prefixes apply to new and changed addresses only:
 existing addresses, and the links already sent with them, stay valid. Elections without a
 chosen address use their UUID, without a prefix (it is unique anyway).
+
+If the organizations log in through their own identity providers, map those instead, e.g. one
+university using the SAML auth system and another a separate OIDC provider:
+
+```
+ELECTION_SHORT_NAME_PREFIXES_BY_IDP='{"saml": "unia", "https://idp.uni-b.example.org/realms/staff": "unib"}'
+```
+
+Everyone logging in through SAML then gets `unia-`, everyone whose OIDC issuer is
+`https://idp.uni-b.example.org/realms/staff` gets `unib-`, and all others fall back to
+`ELECTION_SHORT_NAME_PREFIXES` and `ELECTION_SHORT_NAME_PREFIX`. The issuer is useful as a key
+when an auth system name is kept while the provider behind it changes (e.g. `campus` moving
+from SAML to OIDC), or to give one provider a prefix of its own.
 
 **Organization and layout.** All optional: without them the site shows only the Helios logo
 and the built-in pages. See [section 10](#10-customizing-the-site) for a worked example.

@@ -32,6 +32,12 @@ the same, the protocol can change without anyone losing access. If either change
 or `sub` instead of the email address as user id), Helios sees new users: administrators would
 no longer see their elections.
 
+At each login Helios also records which IdP the user came from: the OIDC issuer or the SAML
+IdP's entity ID. It identifies no one and grants nothing; it only lets
+`ELECTION_SHORT_NAME_PREFIXES_BY_IDP` give the users of one IdP their own prefix for election
+addresses, even when the auth system name stays the same while the IdP behind it changes (see
+[configuration.md](configuration.md)).
+
 Only one protocol can be configured under a name at a time. If both `SAML_IDP_*` and
 `OIDC_DISCOVERY_URL` are set with the same name, Helios refuses to start.
 

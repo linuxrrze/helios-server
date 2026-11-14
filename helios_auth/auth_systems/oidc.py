@@ -191,7 +191,9 @@ class OIDCAuthSystem:
     user_id = str(user_id)
 
     name = claims.get('name') or " ".join(p for p in (claims.get('given_name'), claims.get('family_name')) if p) or user_id
-    info = {'name': name}
+    # issuer: verified against the discovery document; identifies the IdP even if
+    # the auth system name is kept across a change of provider (election address prefixes)
+    info = {'name': name, 'issuer': claims['iss']}
     if email:
       info['email'] = email
     return {'type': self.name, 'user_id': user_id, 'name': name, 'info': info, 'token': {}}
