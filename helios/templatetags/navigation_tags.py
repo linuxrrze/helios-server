@@ -128,6 +128,11 @@ def _other_crumb(name, context):
   return label, _reverse(name)
 
 
+def _home_url(context):
+  """the start page: the entry link of the visitor's organization, else /"""
+  return context.get('home_url') or '/'
+
+
 def build_breadcrumbs(context):
   """The trail for the current page as a list of (label, url); the last entry
   is the current page. Empty on the start page and on pages that are not known."""
@@ -159,7 +164,7 @@ def build_breadcrumbs(context):
     return []
   # the last entry is the page itself: shown, not linked
   trail[-1] = (trail[-1][0], None)
-  return [(_('Home'), '/')] + trail
+  return [(_('Home'), _home_url(context))] + trail
 
 
 @register.inclusion_tag('server_ui/templates/_breadcrumbs.html', takes_context=True)
@@ -171,7 +176,7 @@ def build_site_nav(context):
   """Entries of the main navigation as dicts with label, url and current."""
   request = getattr(context, 'request', None)
   path = getattr(request, 'path', None)
-  items = [(_('Home'), '/')]
+  items = [(_('Home'), _home_url(context))]
   user = get_user(request) if request is not None else None
   if user:
     if can_create_election(request):
@@ -188,7 +193,7 @@ def build_site_nav(context):
 def site_nav(context):
   from helios import organizations
   return {'items': build_site_nav(context), 'settings': context.get('settings'),
-          'ci': context.get('ci') or organizations.default()}
+          'ci': context.get('ci') or organizations.default(), 'home_url': _home_url(context)}
 
 
 @register.simple_tag(takes_context=True)

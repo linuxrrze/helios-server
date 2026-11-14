@@ -15,7 +15,7 @@
   {% include "_form_fields.html" with form=election_form %}
   <div class="actions">
     <button class="button" type="submit" id="next_button">{% translate "Create election and continue" %}</button>
-    <a href="/">{% translate "cancel" %}</a>
+    <a href="{{ home_url|default:"/" }}">{% translate "cancel" %}</a>
   </div>
 </form>
 <p class="muted">{% url "elections@new@guided" as guided_url %}{% blocktranslate trimmed %}Prefer to be guided step by step? Use the <a href="{{ guided_url }}">guided setup</a>.{% endblocktranslate %}</p>

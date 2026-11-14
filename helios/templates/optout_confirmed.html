@@ -37,6 +37,6 @@
   {% endif %}
   
   <div style="margin-top: 30px; text-align: center;">
-    <a href="/">← {% translate "Return to Helios" %}</a>
+    <a href="{{ home_url|default:"/" }}">← {% translate "Return to Helios" %}</a>
   </div>
 {% endblock %}

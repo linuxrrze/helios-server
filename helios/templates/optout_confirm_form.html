@@ -46,6 +46,6 @@
   </form>
 
   <div style="margin-top: 20px; text-align: center;">
-    <a href="/" style="color: #666;">{% translate "Cancel and return to Helios" %}</a>
+    <a href="{{ home_url|default:"/" }}" style="color: #666;">{% translate "Cancel and return to Helios" %}</a>
   </div>
 {% endblock %}

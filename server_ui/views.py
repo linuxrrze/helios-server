@@ -6,6 +6,7 @@ import copy
 
 from django.conf import settings
 from django.http import Http404, HttpResponse
+from django.shortcuts import render
 from django.template import TemplateDoesNotExist
 from django.template.loader import get_template
 
@@ -22,13 +23,42 @@ glue.glue()  # actually apply glue helios.view <-> helios.signals
 
 def get_election():
   return None
-  
+
+
 def home(request):
+  """
+  The start page in the operator's CI. Opening it ends a visit through an
+  organization's entry link (the entry cookie is removed).
+  """
+  clear_cookie = organizations.ENTRY_COOKIE_NAME in request.COOKIES
+  if clear_cookie:
+    organizations.set_entry_organization(request, None)
+  response = _home(request)
+  if clear_cookie:
+    organizations.delete_entry_cookie(response)
+  return response
+
+
+def organization_home(request, slug):
+  """
+  The entry link /<slug>/ of an organization: its start page with its featured
+  elections, and its CI on the following pages (entry cookie, see
+  helios.organizations.entry_organization)
+  """
+  organization = organizations.get(slug)
+  organizations.set_entry_organization(request, organization)
+  response = _home(request, organization)
+  organizations.set_entry_cookie(request, response, organization)
+  return response
+
+
+def _home(request, entry=None):
   user = get_user(request)
 
-  # the featured elections: with organizations configured, those of the
-  # visitor's organization only, and none for visitors who are not logged in
-  featured_elections = organizations.featured_elections_for(user)
+  # the featured elections: on an entry link those of its organization; else, with
+  # organizations configured, those of the visitor's organization only, and none
+  # for visitors who are not logged in
+  featured_elections = organizations.featured_elections_for(user, entry)
 
   create_p = can_create_election(request)
 
@@ -41,21 +71,21 @@ def home(request):
     elections_voted = Election.get_by_user_as_voter(user, archived_p=False, limit=5)
   else:
     elections_voted = None
- 
+
   auth_systems = copy.copy(settings.AUTH_ENABLED_SYSTEMS)
   try:
     auth_systems.remove('password')
   except: pass
 
-  login_box = auth_views.login_box_raw(request, return_url="/", auth_systems=auth_systems)
+  login_box = auth_views.login_box_raw(request, return_url=organizations.home_url(request), auth_systems=auth_systems)
 
   return render_template(request, "index", {'elections': featured_elections,
                                             'elections_administered' : elections_administered,
                                             'elections_voted' : elections_voted,
                                             'create_p':create_p,
-                                            'featured_by_organization_p': organizations.enabled(),
+                                            'featured_by_organization_p': organizations.enabled() and entry is None,
                                             'login_box' : login_box})
-  
+
 def about(request):
   return render_template(request, "about")
 
@@ -65,9 +95,12 @@ def docs(request):
 def faq(request):
   return render_template(request, "faq")
 
+# The operator's legal pages: always in the operator's CI, also for visitors who
+# came through an organization's entry link (whose own pages are below).
+
 def privacy(request):
-  return render_template(request, "privacy")
-    
+  return render_template(request, "privacy", {'ci': organizations.default()})
+
 
 def _site_page(request, name):
   # imprint and accessibility statement are site-specific: the installation
@@ -76,13 +109,37 @@ def _site_page(request, name):
     get_template('server_ui/templates/%s.html' % name)
   except TemplateDoesNotExist:
     raise Http404
-  return render_template(request, name)
+  return render_template(request, name, {'ci': organizations.default()})
 
 def imprint(request):
   return _site_page(request, "imprint")
 
 def accessibility(request):
   return _site_page(request, "accessibility")
+
+
+# the legal pages an organization can have on this server, see organization_page
+ORGANIZATION_PAGES = ('imprint', 'privacy', 'accessibility')
+
+
+def organization_page(request, slug, page):
+  """
+  /<slug>/imprint, /<slug>/privacy, /<slug>/accessibility: an organization's own
+  legal page from SITE_TEMPLATES_DIR/organizations/<slug>/<page>.html, in its CI;
+  "page not found" if the organization has none
+  """
+  if page not in ORGANIZATION_PAGES:
+    raise Http404
+  # slug: a configured slug (organizations.EntrySlugConverter), page: one of the names above
+  template_name = 'organizations/%s/%s.html' % (slug, page)
+  try:
+    get_template(template_name)
+  except TemplateDoesNotExist:
+    raise Http404
+  return render(request, template_name, {
+    'user': get_user(request), 'settings': settings, 'CURRENT_URL': request.path,
+    'ci': organizations.get(slug), 'organization_page': page,
+  })
 
 
 def booth_dark_mode_css(request):

@@ -15,7 +15,9 @@ its creator, and only site administrators can change it: otherwise anyone could
 send out an election in another organization's CI. The pages of an election for
 voters and trustees (view_utils.ELECTION_CI_TEMPLATES) show its organization's
 CI; all other pages (start page, login, the lists of one's elections, the
-election's administration pages, site administration) show the default CI.
+election's administration pages, site administration) show the CI of the
+visitor's entry organization, chosen with its entry link /<slug>/ (see
+entry_organization), else the default CI.
 The election's voting booth gets its organization's colors from a stylesheet
 generated from validated values (helios/booth_theme.py), and its emails to
 voters and trustees its sender name, Reply-To and signature (mail_context).
@@ -300,9 +302,150 @@ def apply_mail_identity(message, organization=None):
   return message
 
 
+##
+## entry links: /<slug>/ selects the visitor's "entry organization"
+##
+
+# A visitor who opens an organization's entry link /<slug>/ sees all pages that are
+# not an election's pages for voters and trustees in that organization's CI: the
+# start page (with its featured elections), login, the lists of one's elections,
+# creating and administering elections, voter groups, site administration, the
+# static pages and the "page not found" page. The choice is kept in a small cookie
+# of its own, not in the session: visitors who are not logged in get no session,
+# and it survives logging out. It holds the slug only (no personal data), and is
+# checked against the configured slugs on every request, so an unknown or
+# tampered value is ignored. Opening / returns to the operator's CI and removes it.
+# The pages of an election for voters and trustees (view_utils.ELECTION_CI_TEMPLATES)
+# keep the election's organization whatever the cookie says, so that nobody can
+# make an election look like another organization's.
+ENTRY_COOKIE_NAME = 'helios_organization'
+ENTRY_COOKIE_MAX_AGE = 90 * 24 * 60 * 60  # 90 days
+
+_UNSET = object()
+
+
+def from_entry_cookie(request):
+  """the configured organization named by the entry cookie of REQUEST, else None"""
+  slug = getattr(request, 'COOKIES', {}).get(ENTRY_COOKIE_NAME)
+  if not slug or not isinstance(slug, str):
+    return None
+  config = configured().get(slug)
+  return Organization(slug, config) if config is not None else None
+
+
+def entry_organization(request):
+  """
+  The visitor's entry organization (an Organization, never the default), or None:
+  set by the entry link of this request, else read from the entry cookie.
+  """
+  if request is None:
+    return None
+  organization = getattr(request, '_helios_entry_organization', _UNSET)
+  if organization is _UNSET:
+    organization = from_entry_cookie(request)
+    request._helios_entry_organization = organization
+  return organization
+
+
+def set_entry_organization(request, organization):
+  """the entry organization for the rest of this request (None: the operator's)"""
+  request._helios_entry_organization = organization
+
+
+def page_ci(request):
+  """the CI of a page that is not an election's page for voters and trustees"""
+  return entry_organization(request) or default()
+
+
+def home_url(request):
+  """the start page: the entry link of the entry organization, else /"""
+  organization = entry_organization(request)
+  return '/%s/' % organization.slug if organization else '/'
+
+
+def set_entry_cookie(request, response, organization):
+  response.set_cookie(ENTRY_COOKIE_NAME, organization.slug, max_age=ENTRY_COOKIE_MAX_AGE, path='/',
+                      secure=request.is_secure() or settings.SESSION_COOKIE_SECURE, httponly=True, samesite='Lax')
+
+
+def delete_entry_cookie(response):
+  response.delete_cookie(ENTRY_COOKIE_NAME, path='/', samesite='Lax')
+
+
+class EntrySlugConverter:
+  """
+  <organization:slug> in a URL pattern: matches the configured slugs only, so that
+  without an organizations file /<anything>/ stays "page not found" (and is not
+  redirected by APPEND_SLASH)
+  """
+  regex = '[a-z0-9](?:[a-z0-9-]{0,48}[a-z0-9])?'
+
+  def to_python(self, value):
+    if value not in configured():
+      raise ValueError(value)
+    return value
+
+  def to_url(self, value):
+    return value
+
+
+def reserved_paths():
+  """the first path segments of the root URL configuration (e.g. "helios", "auth", "about")"""
+  import re
+  from django.urls import URLResolver, get_resolver
+
+  segments = set()
+
+  def walk(patterns):
+    for pattern in patterns:
+      route = str(pattern.pattern).lstrip('^')
+      if not route and isinstance(pattern, URLResolver):
+        walk(pattern.url_patterns)  # an include at the root, e.g. server_ui's pages
+        continue
+      match = re.match(r'[A-Za-z0-9_.-]+', route)
+      if match:
+        segments.add(match.group(0).rstrip('.').lower())
+
+  walk(get_resolver().url_patterns)
+  return segments
+
+
+def check_entry_slugs():
+  """ImproperlyConfigured if an organization's entry link /<slug>/ would collide with a path of this server"""
+  from django.core.exceptions import ImproperlyConfigured
+  collisions = sorted(set(configured()) & (reserved_paths() | set(getattr(settings, 'RESERVED_ORGANIZATION_SLUGS', ()))))
+  if collisions:
+    raise ImproperlyConfigured(
+      'ORGANIZATIONS_FILE: the organization slug(s) %s collide with paths of this server: '
+      'their entry links /<slug>/ would not work. Rename the organization(s).' % ', '.join(collisions))
+
+
+class EntryOrganizationMiddleware:
+  """
+  Checks the slugs against the URL configuration when the web server starts, and
+  marks the pages as depending on the entry cookie (Vary: Cookie) for caches.
+  """
+
+  def __init__(self, get_response):
+    self.get_response = get_response
+    check_entry_slugs()
+
+  def __call__(self, request):
+    response = self.get_response(request)
+    if enabled() and response.get('Content-Type', '').startswith('text/html'):
+      from django.utils.cache import patch_vary_headers
+      patch_vary_headers(response, ('Cookie',))
+    return response
+
+
 def context_processor(request):
-  """`ci` in every template rendered with a request; an election's pages for voters and trustees replace it (see view_utils)"""
-  return {'ci': default()}
+  """
+  `ci` (the corporate identity) and `home_url` in every template rendered with a
+  request: the visitor's entry organization, else the default organization. An
+  election's pages for voters and trustees replace `ci` by the election's
+  organization (see view_utils), as do the operator's legal pages by the default.
+  """
+  return {'ci': page_ci(request), 'home_url': home_url(request)}
 
 
 ##
@@ -408,15 +551,18 @@ def all_prefixes():
           | ({settings.ELECTION_SHORT_NAME_PREFIX} - {''}))
 
 
-def featured_elections_for(user):
+def featured_elections_for(user, entry=None):
   """
-  The featured elections on the start page. With organizations configured,
-  people see those of their own organization only (the default organization
-  also gets those of organizations no longer configured), and visitors who are
-  not logged in none.
+  The featured elections on the start page. On an organization's entry link
+  (ENTRY), everyone sees those of that organization, also visitors who are not
+  logged in. Otherwise, with organizations configured, people see those of their
+  own organization only (the default organization also gets those of
+  organizations no longer configured), and visitors who are not logged in none.
   """
   from helios.models import Election
   elections = Election.get_featured()
+  if entry is not None and not entry.is_default:
+    return elections.filter(organization=entry.slug)
   if not enabled():
     return elections
   if not user:

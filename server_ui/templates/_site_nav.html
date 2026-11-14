@@ -5,7 +5,7 @@ phones; the stylesheet shows one of them, so only one is ever announced.
 {% endcomment %}
 <nav class="site-nav" aria-label="{% translate "Main navigation" %}">
   <div class="site-nav-inner{% if items|length > 2 %} has-menu{% endif %}">
-    <a class="site-name" href="/">{{ ci.site_title }}</a>
+    <a class="site-name" href="{{ home_url|default:"/" }}">{{ ci.site_title }}</a>
     <ul class="site-nav-links">{% for item in items %}
       <li><a href="{{ item.url }}"{% if item.current %} aria-current="page"{% endif %}>{{ item.label }}</a></li>{% endfor %}
     </ul>{% if items|length > 2 %}
