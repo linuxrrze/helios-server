@@ -153,7 +153,7 @@ msgstr "Neue Frage hinzufügen"
 msgid "Add Question"
 msgstr "Frage hinzufügen"
 
-#: heliosbooth/single-ballot-verify.html:12 heliosbooth/vote.html:36 heliosverifier/verify.html:10
+#: heliosbooth/single-ballot-verify.html:12 heliosbooth/vote.html:57 heliosverifier/verify.html:10
 msgctxt "HTML lang attribute, the language code of this translation"
 msgid "en"
 msgstr "de"
@@ -449,73 +449,73 @@ msgstr "PROBLEM = Beweise sind ungültig."
 msgid "problem parsing election or ballot data structures, malformed inputs:"
 msgstr "Problem beim Verarbeiten der Wahl- oder Stimmzetteldaten, fehlerhafte Eingaben:"
 
-#: heliosbooth/vote.html:68 heliosbooth/vote.html:70
+#: heliosbooth/vote.html:89 heliosbooth/vote.html:91
 msgid "Helios Voting Booth"
 msgstr "Helios-Wahlkabine"
 
-#: heliosbooth/vote.html:71
+#: heliosbooth/vote.html:92
 msgid "exit"
 msgstr "verlassen"
 
-#: heliosbooth/vote.html:72
+#: heliosbooth/vote.html:93
 msgid "Select"
 msgstr "Auswählen"
 
-#: heliosbooth/vote.html:73
+#: heliosbooth/vote.html:94
 msgid "Review"
 msgstr "Überprüfen"
 
-#: heliosbooth/vote.html:74
+#: heliosbooth/vote.html:95
 msgid "Submit"
 msgstr "Absenden"
 
-#: heliosbooth/vote.html:75
+#: heliosbooth/vote.html:96
 msgid "Checking capabilities and loading election booth..."
 msgstr "Browserfunktionen werden geprüft und die Wahlkabine wird geladen..."
 
-#: heliosbooth/vote.html:76
+#: heliosbooth/vote.html:97
 msgid "This may take up to 10 seconds"
 msgstr "Dies kann bis zu 10 Sekunden dauern"
 
-#: heliosbooth/vote.html:77 heliosbooth/vote.html:426 heliosbooth/templates/seal.html:28
+#: heliosbooth/vote.html:98 heliosbooth/vote.html:467 heliosbooth/templates/seal.html:28
 msgid "Processing..."
 msgstr "Wird verarbeitet..."
 
-#: heliosbooth/vote.html:78
+#: heliosbooth/vote.html:99
 msgid "Helios is now encrypting your ballot"
 msgstr "Helios verschlüsselt jetzt Ihren Stimmzettel"
 
-#: heliosbooth/vote.html:79
+#: heliosbooth/vote.html:100
 msgid "This may take up to two minutes."
 msgstr "Dies kann bis zu zwei Minuten dauern."
 
-#: heliosbooth/vote.html:83
+#: heliosbooth/vote.html:104
 msgid "Steps of voting"
 msgstr "Schritte der Stimmabgabe"
 
-#: heliosbooth/vote.html:126
+#: heliosbooth/vote.html:167
 msgid "If you leave this page with an in-progress ballot, your ballot will be lost."
 msgstr "Wenn Sie diese Seite mit einem nicht abgegebenen Stimmzettel verlassen, geht Ihr Stimmzettel verloren."
 
-#: heliosbooth/vote.html:136
+#: heliosbooth/vote.html:177
 msgid "Are you sure you want to exit the booth and lose all information about your current ballot?"
 msgstr "Möchten Sie die Wahlkabine wirklich verlassen? Alle Angaben zu Ihrem aktuellen Stimmzettel gehen dabei verloren."
 
-#: heliosbooth/vote.html:297
+#: heliosbooth/vote.html:338
 #, python-format
 msgid "You need to select at least %(min)s answer(s)."
 msgstr "Sie müssen mindestens %(min)s Antwort(en) auswählen."
 
-#: heliosbooth/vote.html:411
+#: heliosbooth/vote.html:452
 msgid "Maximum number of options selected.<br />To change your selection, please de-select a current selection first."
 msgstr "Die maximale Anzahl an Antworten ist ausgewählt.<br />Um Ihre Auswahl zu ändern, heben Sie bitte zuerst eine bestehende Auswahl auf."
 
-#: heliosbooth/vote.html:420
+#: heliosbooth/vote.html:461
 #, python-format
 msgid "You may select up to %(max)s choices total."
 msgstr "Sie können insgesamt bis zu %(max)s Antworten auswählen."
 
-#: heliosbooth/vote.html:556
+#: heliosbooth/vote.html:598
 #, python-format
 msgid ""
 "there appears to be a problem with the encryption process.\n"
@@ -524,7 +524,7 @@ msgstr ""
 "Bei der Verschlüsselung ist offenbar ein Problem aufgetreten.\n"
 "Bitte schreiben Sie eine E-Mail an %(email)s und geben Sie an, dass die Verschlüsselung bei %(percent)s stehen geblieben ist."
 
-#: heliosbooth/vote.html:599
+#: heliosbooth/vote.html:641
 msgid ""
 "This audited ballot has been posted.\n"
 "Remember, this vote will only be used for auditing and will not be tallied.\n"
@@ -534,7 +534,7 @@ msgstr ""
 "Denken Sie daran: Diese Stimme dient nur der Prüfung und wird nicht ausgezählt.\n"
 "Klicken Sie auf „Zurück zur Stimmabgabe“ und geben Sie einen neuen Stimmzettel ab, damit Ihre Stimme zählt."
 
-#: heliosbooth/vote.html:628
+#: heliosbooth/vote.html:670
 #, python-format
 msgid "Your ballot tracker for %(name)s: %(tracker)s"
 msgstr "Ihr Stimmzettel-Tracker für %(name)s: %(tracker)s"
