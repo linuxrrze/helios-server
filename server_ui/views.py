@@ -99,7 +99,13 @@ def faq(request):
 # came through an organization's entry link (whose own pages are below).
 
 def privacy(request):
-  return render_template(request, "privacy", {'ci': organizations.default()})
+  # the generic privacy notes mention the entry cookie when organizations are configured
+  slugs = list(organizations.configured())
+  return render_template(request, "privacy", {
+    'ci': organizations.default(),
+    'entry_link_example': '%s/%s/' % (settings.URL_HOST, slugs[0]) if slugs else '',
+    'entry_cookie_days': organizations.ENTRY_COOKIE_MAX_AGE // 86400,
+  })
 
 
 def _site_page(request, name):

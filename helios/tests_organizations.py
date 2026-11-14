@@ -1349,6 +1349,11 @@ class EntryLinkTests(OrganizationTestCase):
     self.enter()
     self.assertCI(self.client.get('/privacy'), unia=False)
 
+  def test_privacy_notes_mention_the_cookie(self):
+    self.assertContains(self.client.get('/privacy'), 'a cookie stores for 90 days in which organization')
+    with self.settings(ORGANIZATIONS={}):
+      self.assertNotContains(self.client.get('/privacy'), 'organization&#x27;s design')
+
   def write_page(self, site_dir, slug, page, text):
     directory = os.path.join(site_dir, 'organizations', slug)
     os.makedirs(directory, exist_ok=True)

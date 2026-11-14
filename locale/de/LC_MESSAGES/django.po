@@ -4840,6 +4840,19 @@ msgstr "Für die Wahlleitung"
 msgid "To create and administer elections, you log in with a login service of this installation. Helios keeps only what it needs to recognize you the next time: your name, email address and user ID, and uses your email address to notify you about your elections."
 msgstr "Um Wahlen anzulegen und zu verwalten, melden Sie sich über einen Anmeldedienst dieser Installation an. Helios speichert nur, was nötig ist, um Sie beim nächsten Mal wiederzuerkennen: Ihren Namen, Ihre E-Mail-Adresse und Benutzer-ID. Ihre E-Mail-Adresse verwendet Helios, um Sie über Ihre Wahlen zu benachrichtigen."
 
+#: server_ui/templates/privacy.html:50
+msgid "Cookies"
+msgstr "Cookies"
+
+#: server_ui/templates/privacy.html:53
+msgid "Helios uses only technically necessary cookies: a session cookie that keeps you logged in and protects forms against misuse, and, if you choose a language, a cookie with that language."
+msgstr "Helios verwendet nur technisch notwendige Cookies: ein Sitzungs-Cookie, das Sie angemeldet hält und Formulare vor Missbrauch schützt, und, wenn Sie eine Sprache wählen, ein Cookie mit dieser Sprache."
+
+#: server_ui/templates/privacy.html:54
+#, python-format
+msgid "If you open this site through the address of an organization (e.g. %(example)s), a cookie stores for %(days)s days in which organization's design the pages are shown. It contains only the organization's short name, no personal data. Opening the start page removes it."
+msgstr "Wenn Sie diese Seite über die Adresse einer Organisation aufrufen (z. B. %(example)s), speichert ein Cookie für %(days)s Tage, im Erscheinungsbild welcher Organisation die Seiten angezeigt werden. Es enthält nur das Kurzzeichen der Organisation, keine personenbezogenen Daten. Der Aufruf der Startseite entfernt es."
+
 #: templates/404.html:3 templates/404.html:4
 msgid "Page not found"
 msgstr "Seite nicht gefunden"
