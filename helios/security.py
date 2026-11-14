@@ -141,8 +141,23 @@ def user_can_admin_election(user, election):
   
 def user_can_admin_votergroup(user, group):
   """
-  Same rule as for elections: the site administrator, the group's owner or
-  one of its additional administrators.
+  The group's owner or one of its additional administrators: they see and
+  change the members, prepare elections and manage the administrators.
+
+  Unlike elections, site administrators are not included: a voter group's
+  member list is personal data. They get the overview only, see
+  user_can_see_votergroup_overview.
+  """
+  if not user:
+    return False
+
+  return group.is_admin(user)
+
+def user_can_see_votergroup_overview(user, group):
+  """
+  The group's administrators, and site administrators: a site administrator
+  who does not administer the group sees only its overview (name, owner,
+  number of members) and may transfer its ownership, nothing else.
   """
   if not user:
     return False

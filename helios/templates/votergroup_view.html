@@ -8,7 +8,8 @@
 {% endif %}
 <p class="muted">{% if not group.is_provisioned %}{% blocktranslate trimmed with admin=group.admin.display_html_small|safe %}created by {{admin}}{% endblocktranslate %}{% else %}{% blocktranslate trimmed with source=group.admin.pretty_name %}managed by {{source}}{% endblocktranslate %}{% endif %}{% if admins %}
   &middot; {% blocktranslate trimmed count counter=admins|length %}{{counter}} more administrator{% plural %}{{counter}} more administrators{% endblocktranslate %}{% endif %}
-  &middot; <a href="{% url "votergroup@admins" group.uuid %}">{% if group.is_provisioned %}{% translate "Administrators" context "voter group" %}{% else %}{% translate "Manage administrators" %}{% endif %}</a></p>
+  &middot; <a href="{% url "votergroup@admins" group.uuid %}">{% if group.is_provisioned %}{% translate "Administrators" context "voter group" %}{% else %}{% translate "Manage administrators" %}{% endif %}</a>{% if can_transfer %}
+  &middot; <a href="{% url "votergroup@transfer" group.uuid %}">{% translate "Transfer ownership" %}</a>{% endif %}</p>
 
 <p class="actions">
   {% if members %}<a class="button" href="{% url "votergroup@prepareelection" group.uuid %}">{% translate "Start election" %}</a>{% endif %}
@@ -46,5 +47,34 @@
 </div>
 {% else %}
 <div class="callout empty-state"><p>{% translate "no members yet" %}</p></div>
+{% endif %}
+
+<h2 id="votergroup-log">{% translate "Log" context "voter group" %}</h2>
+{% if log_page.object_list %}
+<div class="table-scroll">
+<table class="voters-table">
+  <thead>
+  <tr><th scope="col">{% translate "Date" %}</th><th scope="col">{% translate "By" context "voter group log" %}</th><th scope="col">{% translate "Change" context "voter group log" %}</th></tr>
+  </thead>
+  <tbody>
+  {% for entry in log_page %}
+  <tr>
+    <td>{{entry.at|date:"Y-m-d H:i"}}</td>
+    <td>{% if entry.actor %}{{entry.actor.pretty_name}}{% elif entry.source %}{{entry.source|source_label}}{% else %}&mdash;{% endif %}</td>
+    <td>{{entry.message}}{% if entry.params.election_uuid %} <a href="{% url "election@view" entry.params.election_uuid %}">{% translate "open election" %}</a>{% endif %}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% if log_page.has_other_pages %}
+<nav class="pager" aria-label="{% translate "Pages" %}">
+{% if log_page.has_previous %}<a href="?log_page={{log_page.previous_page_number}}#votergroup-log">&larr; {% translate "newer entries" %}</a>{% endif %}
+<span>{% blocktranslate trimmed with start=log_page.start_index end=log_page.end_index total=log_page.paginator.count %}Entries {{start}} - {{end}} (of {{total}}){% endblocktranslate %}</span>
+{% if log_page.has_next %}<a href="?log_page={{log_page.next_page_number}}#votergroup-log">{% translate "older entries" %} &rarr;</a>{% endif %}
+</nav>
+{% endif %}
+{% else %}
+<div class="callout empty-state"><p>{% translate "no entries yet" %}</p></div>
 {% endif %}
 {% endblock %}

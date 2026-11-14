@@ -73,6 +73,7 @@ OTHER_PAGES = {
   names.VOTERGROUP_ADMINS: (pgettext_lazy('voter group', 'Administrators'), names.VOTERGROUP_VIEW),
   names.VOTERGROUP_ADMINS_ADD: (pgettext_lazy('voter group', 'Add administrator'), names.VOTERGROUP_ADMINS),
   names.VOTERGROUP_ADMINS_REMOVE: (pgettext_lazy('voter group', 'Remove administrator'), names.VOTERGROUP_ADMINS),
+  names.VOTERGROUP_TRANSFER: (gettext_lazy('Transfer ownership'), names.VOTERGROUP_VIEW),
   stats_names.STATS_HOME: (gettext_lazy('Admin'), None),
   stats_names.STATS_ELECTIONS: (gettext_lazy('Elections'), stats_names.STATS_HOME),
   stats_names.STATS_ELECTIONS_PROBLEMS: (gettext_lazy('Problematic Elections'), stats_names.STATS_HOME),
@@ -83,7 +84,8 @@ OTHER_PAGES = {
 
 # pages of one voter group: their URLs take the group's uuid
 GROUP_PAGES = (names.VOTERGROUP_VIEW, names.VOTERGROUP_MEMBERADD, names.VOTERGROUP_PREPAREELECTION,
-               names.VOTERGROUP_ADMINS, names.VOTERGROUP_ADMINS_ADD, names.VOTERGROUP_ADMINS_REMOVE)
+               names.VOTERGROUP_ADMINS, names.VOTERGROUP_ADMINS_ADD, names.VOTERGROUP_ADMINS_REMOVE,
+               names.VOTERGROUP_TRANSFER)
 
 
 def _url_name(context):

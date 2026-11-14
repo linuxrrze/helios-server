@@ -1533,6 +1533,15 @@ class VoterGroup(HeliosModel):
   def get_members(self):
     return self.votergroupmember_set.order_by('last_name', 'first_name', 'id')
 
+  def append_log(self, action, actor=None, source='', **params):
+    """Record ACTION (a VoterGroupLog constant) in the group's log; PARAMS fill
+    the action's message."""
+    return VoterGroupLog.objects.create(group=self, action=action, actor=actor, source=source, params=params)
+
+  def get_log(self):
+    """The group's log, newest first."""
+    return self.votergrouplog_set.select_related('actor').order_by('-at', '-id')
+
 
 class VoterGroupMember(HeliosModel):
   group = models.ForeignKey(VoterGroup, on_delete=models.CASCADE)
@@ -1550,3 +1559,75 @@ class VoterGroupMember(HeliosModel):
   @property
   def full_name(self):
     return "%s %s" % (self.first_name, self.last_name)
+
+
+class VoterGroupLog(models.Model):
+  """
+  The history of a voter group, shown to its administrators (not to site
+  administrators who don't administer the group). The server log
+  ("helios.votergroup", "helios.provisioning") records the same changes.
+
+  Personal data is kept to what the group's administrators need to follow its
+  history: the acting user is a reference to the account (no copy); members
+  appear only with their masked address ("a***@example.org") and number of
+  votes, so the log does not keep a copy of former members; administrators
+  appear with name and account, as on the group's administrators page
+  (accountability for who had access to the member list); provisioning and
+  prepared elections are recorded as counts.
+  """
+
+  CREATED = 'created'
+  RENAMED = 'renamed'
+  MEMBER_ADDED = 'member added'
+  MEMBER_REMOVED = 'member removed'
+  ADMIN_ADDED = 'admin added'
+  ADMIN_REMOVED = 'admin removed'
+  ADMIN_LEFT = 'admin left'
+  OWNER_CHANGED = 'owner changed'
+  ELECTION_PREPARED = 'election prepared'
+  PROVISIONED = 'provisioned'
+
+  # action -> message, filled from params
+  MESSAGES = {
+    CREATED: gettext_lazy('Voter group %(name)s created'),
+    RENAMED: gettext_lazy('Renamed to %(name)s'),
+    MEMBER_ADDED: gettext_lazy('Member %(email)s added with %(votes)s vote(s)'),
+    MEMBER_REMOVED: gettext_lazy('Member %(email)s removed'),
+    ADMIN_ADDED: gettext_lazy('Administrator %(admin)s added'),
+    ADMIN_REMOVED: gettext_lazy('Administrator %(admin)s removed'),
+    ADMIN_LEFT: gettext_lazy('Administrator %(admin)s left the group'),
+    OWNER_CHANGED: gettext_lazy('Ownership transferred from %(old_owner)s to %(new_owner)s'),
+    ELECTION_PREPARED: gettext_lazy('Election %(name)s prepared with %(voters)s voter(s)'),
+    PROVISIONED: gettext_lazy('Members updated: %(added)s added, %(removed)s removed; %(admins)s administrator(s)'),
+  }
+  # appended when the flag is set in params
+  NOTES = {
+    'previous_owner_left': gettext_lazy('The previous owner is no longer an administrator.'),
+    'admins_added': gettext_lazy('The other administrators of the group were added to the election administrators.'),
+  }
+
+  group = models.ForeignKey(VoterGroup, on_delete=models.CASCADE)
+  at = models.DateTimeField(auto_now_add=True)
+  # who made the change (empty for a provisioning source, or a deleted user)
+  actor = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='+')
+  # the provisioning source that made the change, e.g. "scim:idm" (see helios/provisioning.py)
+  source = models.CharField(max_length=100, blank=True, default='')
+  action = models.CharField(max_length=50)
+  params = models.JSONField(default=dict, blank=True)
+
+  class Meta:
+    app_label = 'helios'
+    indexes = [
+      models.Index(fields=['group', 'at'], name='helios_vglog_group_at_idx'),
+    ]
+
+  @property
+  def message(self):
+    """The entry in the current language."""
+    template = self.MESSAGES.get(self.action)
+    try:
+      text = str(template) % self.params if template else self.action
+    except (KeyError, TypeError, ValueError):
+      text = self.action
+    notes = [str(note) for flag, note in self.NOTES.items() if self.params.get(flag)]
+    return ". ".join([text, " ".join(notes)]) if notes else text

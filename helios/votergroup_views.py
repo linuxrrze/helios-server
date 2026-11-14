@@ -1,17 +1,24 @@
 """
 Voter group views.
 
-Every view checks that the logged-in user administers the group (owner,
-additional administrator or site administrator, see
-helios.security.user_can_admin_votergroup), and every state-changing request
-is POST-only and CSRF-checked. Changes to members and administrators are
-logged (logger "helios.votergroup", addresses masked as in the mail log).
+Every view checks that the logged-in user administers the group (owner or
+additional administrator, see helios.security.user_can_admin_votergroup), and
+every state-changing request is POST-only and CSRF-checked. A site
+administrator who doesn't administer the group sees only its overview (name,
+owner, number of members) and may transfer its ownership; every other page of
+the group is refused (403), since the member list is personal data.
+
+Changes are logged (logger "helios.votergroup", addresses masked as in the mail
+log) and recorded in the group's log (VoterGroupLog), shown on the group's page
+to its administrators.
 """
 
 import logging
 import uuid
 
 from django.conf import settings
+from django.core.exceptions import PermissionDenied
+from django.core.paginator import Paginator
 from django.db import IntegrityError, transaction
 from django.http import Http404, HttpResponseForbidden, HttpResponseRedirect
 from django.urls import reverse
@@ -24,9 +31,10 @@ from . import forms as election_forms
 from . import short_names, url_names
 from . import votergroup as vg
 from .mail_backend import mask_address
-from .models import Election, Voter, VoterGroup, VoterGroupMember
+from .models import Election, Voter, VoterGroup, VoterGroupLog, VoterGroupMember
 from .provisioning import is_source_owner, source_label
-from .security import can_create_election, user_can_admin_votergroup, user_can_create_election
+from .security import (can_create_election, user_can_admin_votergroup, user_can_create_election,
+                       user_can_see_votergroup_overview)
 from .view_utils import find_user_to_add_as_admin, render_template
 
 logger = logging.getLogger('helios.votergroup')
@@ -41,15 +49,38 @@ def _who(user):
   return '%s:%s %s' % (user.user_type, user.pk, mask_address(user.user_id))
 
 
-def _get_group(request, votergroup_uuid):
-  """Return the group if the current user administers it; raise 404 otherwise
-  (no distinction between missing and foreign groups, to avoid leaking uuids)."""
+def _admin_label(user):
+  """An administrator in the group's log: name and account, as on the
+  administrators page."""
+  return '%s (%s)' % (user.pretty_name, user.user_id)
+
+
+def _check_access(request, group, overview=False):
+  """
+  Raise unless the current user administers GROUP. With OVERVIEW, a site
+  administrator is let through, too (the overview and the transfer of
+  ownership); otherwise a site administrator gets 403, everybody else 404 (no
+  distinction between missing and foreign groups, to avoid leaking uuids).
+  """
+  user = get_user(request)
+  if user_can_admin_votergroup(user, group):
+    return
+  if user_can_see_votergroup_overview(user, group):
+    if overview:
+      return
+    logger.info('votergroup %s: access refused, %s is a site administrator but not an administrator of the group',
+                group.uuid, _who(user))
+    raise PermissionDenied
+  raise Http404
+
+
+def _get_group(request, votergroup_uuid, overview=False):
+  """Return the group if the current user may see this page of it (see _check_access)."""
   try:
     group = VoterGroup.objects.select_related('admin').get(uuid=votergroup_uuid)
   except VoterGroup.DoesNotExist:
     raise Http404
-  if not user_can_admin_votergroup(get_user(request), group):
-    raise Http404
+  _check_access(request, group, overview=overview)
   return group
 
 
@@ -65,7 +96,8 @@ def _refuse_if_provisioned(request, group):
   logger.info('votergroup %s: change refused, provisioned by %s (%s)', group.uuid, group.provisioned_by,
               _who(get_user(request)))
   response = render_template(request, "votergroup_provisioned", {
-    'group': group, 'source': source_label(group.provisioned_by)})
+    'group': group, 'source': source_label(group.provisioned_by),
+    'can_prepare': user_can_admin_votergroup(get_user(request), group)})
   response.status_code = 403
   return response
 
@@ -76,13 +108,15 @@ def _other_admins(group, user):
   return [a for a in [group.admin] + list(group.get_admins()) if a != user and not is_source_owner(a)]
 
 
-def _add_election_admins(group, election, user, admins):
-  """Make ADMINS administrators of the election just prepared from GROUP."""
+def _add_election_admins(group, election, user, admins, num_voters):
+  """Make ADMINS administrators of the election just prepared from GROUP, and log it."""
   election.admins.add(*admins)
   for a in admins:
     election.append_log("Administrator %s (%s) added" % (a.user_id, a.user_type))
   logger.info('votergroup %s: election %s prepared by %s, %d group administrator(s) added to it',
               group.uuid, election.uuid, _who(user), len(admins))
+  group.append_log(VoterGroupLog.ELECTION_PREPARED, actor=user, name=election.name, election_uuid=election.uuid,
+                   voters=num_voters, admins_added=bool(admins))
 
 
 @login_required
@@ -111,6 +145,7 @@ def votergroup_new(request):
           group = VoterGroup.objects.create(
             admin=get_user(request), uuid=str(uuid.uuid4()),
             short_name=form.cleaned_data['short_name'])
+          group.append_log(VoterGroupLog.CREATED, actor=group.admin, name=group.short_name)
         logger.info('votergroup %s: created by %s', group.uuid, _who(group.admin))
         return _redirect(url_names.VOTERGROUP_VIEW, group.uuid)
       except IntegrityError:
@@ -119,11 +154,22 @@ def votergroup_new(request):
   return render_template(request, "votergroup_new", {'votergroup_form': form, 'error': error})
 
 
+LOG_ENTRIES_PER_PAGE = 20
+
+
 @login_required
 def votergroup_view(request, votergroup_uuid):
-  group = _get_group(request, votergroup_uuid)
+  group = _get_group(request, votergroup_uuid, overview=True)
+  user = get_user(request)
+  if not user_can_admin_votergroup(user, group):
+    # a site administrator who doesn't administer the group: no member data
+    return render_template(request, "votergroup_overview", {
+      'group': group, 'num_members': group.votergroupmember_set.count(), 'num_admins': group.admins.count(),
+      'can_transfer': _can_transfer(user, group)})
+  log_page = Paginator(group.get_log(), LOG_ENTRIES_PER_PAGE).get_page(request.GET.get('log_page'))
   return render_template(request, "votergroup_view", {
-    'group': group, 'members': group.get_members(), 'admins': group.get_admins()})
+    'group': group, 'members': group.get_members(), 'admins': group.get_admins(), 'log_page': log_page,
+    'can_transfer': _can_transfer(user, group)})
 
 
 @login_required
@@ -139,7 +185,10 @@ def votergroup_memberadd(request, votergroup_uuid):
     check_csrf(request)
     form = vg.VoterGroupMemberForm(request.POST)
     if form.is_valid():
-      member = VoterGroupMember.objects.create(group=group, uuid=str(uuid.uuid4()), **form.cleaned_data)
+      with transaction.atomic():
+        member = VoterGroupMember.objects.create(group=group, uuid=str(uuid.uuid4()), **form.cleaned_data)
+        group.append_log(VoterGroupLog.MEMBER_ADDED, actor=get_user(request), email=mask_address(member.email),
+                         votes=member.votes)
       logger.info('votergroup %s: member %s (%s, %d vote(s)) added by %s', group.uuid, member.uuid,
                   mask_address(member.email), member.votes, _who(get_user(request)))
       return _redirect(url_names.VOTERGROUP_VIEW, group.uuid)
@@ -156,16 +205,17 @@ def votergroup_memberdelete(request, member_uuid):
   except VoterGroupMember.DoesNotExist:
     raise Http404
   user = get_user(request)
-  if not user_can_admin_votergroup(user, member.group):
-    raise Http404
-  refused = _refuse_if_provisioned(request, member.group)
+  group = member.group
+  _check_access(request, group)
+  refused = _refuse_if_provisioned(request, group)
   if refused:
     return refused
-  group_uuid = member.group.uuid
-  logger.info('votergroup %s: member %s (%s) deleted by %s', group_uuid, member.uuid,
+  logger.info('votergroup %s: member %s (%s) deleted by %s', group.uuid, member.uuid,
               mask_address(member.email), _who(user))
-  member.delete()
-  return _redirect(url_names.VOTERGROUP_VIEW, group_uuid)
+  with transaction.atomic():
+    group.append_log(VoterGroupLog.MEMBER_REMOVED, actor=user, email=mask_address(member.email))
+    member.delete()
+  return _redirect(url_names.VOTERGROUP_VIEW, group.uuid)
 
 
 @login_required
@@ -216,7 +266,7 @@ def votergroup_prepareelection(request, votergroup_uuid):
             election = Election.objects.create(**election_params)
             election.generate_trustee(ELGAMAL_PARAMS)
             add_admins = admins_form.is_valid() and admins_form.cleaned_data['add_group_admins']
-            _add_election_admins(group, election, user, other_admins if add_admins else [])
+            _add_election_admins(group, election, user, other_admins if add_admins else [], len(seats))
             for num, seat in enumerate(seats, start=1):
               voter = Voter(uuid=str(uuid.uuid4()), user=None, election=election,
                             voter_login_id=seat['login_id'],
@@ -247,11 +297,18 @@ def votergroup_prepareelection(request, votergroup_uuid):
 ## an additional administrator may remove themself ("leave the group"): the
 ## owner always remains, so a group can't end up without an administrator.
 ##
+## The owner, or a site administrator (e.g. when the owner has left), can
+## transfer the ownership to one of the additional administrators; the
+## previous owner then stays an additional administrator unless they choose
+## otherwise. A provisioned group's owner is its source's account, and its
+## administrators come from the source only: no transfer.
+##
 
 @login_required
 def votergroup_admins(request, votergroup_uuid):
   group = _get_group(request, votergroup_uuid)
-  return render_template(request, "votergroup_admins", {'group': group, 'admins': group.get_admins()})
+  return render_template(request, "votergroup_admins", {
+    'group': group, 'admins': group.get_admins(), 'can_transfer': _can_transfer(get_user(request), group)})
 
 
 def _new_admin_error(group, new_admin):
@@ -289,7 +346,9 @@ def votergroup_adminadd(request, votergroup_uuid):
       if error:
         form.add_error('email', error)
       elif new_admin:
-        group.admins.add(new_admin)
+        with transaction.atomic():
+          group.admins.add(new_admin)
+          group.append_log(VoterGroupLog.ADMIN_ADDED, actor=get_user(request), admin=_admin_label(new_admin))
         logger.info('votergroup %s: administrator %s added by %s', group.uuid, _who(new_admin), _who(get_user(request)))
         return _redirect(url_names.VOTERGROUP_ADMINS, group.uuid)
 
@@ -318,8 +377,83 @@ def votergroup_adminremove(request, votergroup_uuid):
       'group': group, 'admin_to_remove': admin_to_remove, 'leaving': leaving})
 
   check_csrf(request)
-  group.admins.remove(admin_to_remove)
+  with transaction.atomic():
+    group.admins.remove(admin_to_remove)
+    group.append_log(VoterGroupLog.ADMIN_LEFT if leaving else VoterGroupLog.ADMIN_REMOVED, actor=user,
+                     admin=_admin_label(admin_to_remove))
   logger.info('votergroup %s: administrator %s removed by %s', group.uuid, _who(admin_to_remove), _who(user))
   if leaving:
     return _redirect(url_names.VOTERGROUP_ADMINISTERED)
   return _redirect(url_names.VOTERGROUP_ADMINS, group.uuid)
+
+
+def _can_transfer(user, group):
+  """The owner and site administrators may transfer the ownership of a local group."""
+  return bool(user) and not group.is_provisioned and (group.admin_id == user.pk or user.admin_p)
+
+
+def _transfer_error(group, new_owner):
+  # an owner needs the same right as an administrator (see _new_admin_error)
+  if not user_can_create_election(new_owner):
+    return _("This user cannot create elections and therefore cannot administer voter groups.")
+  # group names are unique per owner
+  if VoterGroup.objects.filter(admin=new_owner, short_name=group.short_name).exists():
+    return _("%(name)s already owns a voter group named %(short_name)s, so this group cannot be transferred to them.") % {
+      'name': new_owner.pretty_name, 'short_name': group.short_name}
+  return None
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def votergroup_transfer(request, votergroup_uuid):
+  """Transfer the ownership: choose the new owner, confirm (two POSTs, the
+  second with confirmed=1), done."""
+  group = _get_group(request, votergroup_uuid, overview=True)
+  user = get_user(request)
+  if group.admin_id != user.pk and not user.admin_p:
+    # an additional administrator: only the owner hands the group over
+    raise PermissionDenied
+  refused = _refuse_if_provisioned(request, group)
+  if refused:
+    return refused
+
+  candidates = list(group.get_admins())
+  form = vg.TransferOwnershipForm(request.POST if request.method == "POST" else None, candidates=candidates)
+  new_owner = None
+  confirm = False
+
+  if request.method == "POST":
+    check_csrf(request)
+    if form.is_valid():
+      new_owner = next(u for u in candidates if str(u.pk) == form.cleaned_data['new_owner'])
+      keep = form.cleaned_data['keep_previous_owner']
+      error = _transfer_error(group, new_owner)
+      if error:
+        form.add_error('new_owner', error)
+      elif request.POST.get('confirmed') != '1':
+        confirm = True
+      else:
+        old_owner = group.admin
+        try:
+          with transaction.atomic():
+            group.admin = new_owner
+            group.save(update_fields=['admin'])
+            group.admins.remove(new_owner)
+            if keep:
+              group.admins.add(old_owner)
+            group.append_log(VoterGroupLog.OWNER_CHANGED, actor=user, old_owner=_admin_label(old_owner),
+                             new_owner=_admin_label(new_owner), previous_owner_left=not keep)
+        except IntegrityError:
+          # a group of the same name, created by the new owner in the meantime
+          group.admin = old_owner
+          form.add_error('new_owner', _transfer_error(group, new_owner) or _("The ownership could not be transferred."))
+        else:
+          logger.info('votergroup %s: ownership transferred from %s to %s by %s%s', group.uuid, _who(old_owner),
+                      _who(new_owner), _who(user), '' if keep else ', previous owner no longer an administrator')
+          if user_can_see_votergroup_overview(user, group):
+            return _redirect(url_names.VOTERGROUP_VIEW, group.uuid)
+          return _redirect(url_names.VOTERGROUP_ADMINISTERED)
+
+  return render_template(request, "votergroup_transfer", {
+    'group': group, 'form': form, 'candidates': candidates, 'confirm': confirm, 'new_owner': new_owner,
+    'is_owner': group.admin_id == user.pk})

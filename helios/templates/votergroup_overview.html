@@ -1,0 +1,18 @@
+{% extends TEMPLATE_BASE %}
+{% load i18n provisioning_tags %}
+{% block title %}{{group.short_name}}{% endblock %}
+{% block content %}
+<h1 class="title">{{ group.short_name }} {% provisioned_badge group %}</h1>
+<p class="callout callout-info">{% translate "You are a site administrator, but not an administrator of this voter group. To protect the members' personal data, only an overview is shown." %}</p>
+
+<dl class="facts">
+  <div><dt>{% translate "Owner" %}</dt><dd>{% if group.is_provisioned %}{{group.admin.pretty_name}}{% else %}{{group.admin.display_html_small|safe}} ({{group.admin.user_id}}){% endif %}</dd></div>
+  <div><dt>{% translate "Members" %}</dt><dd>{{num_members}}</dd></div>
+  <div><dt>{% translate "Additional administrators" %}</dt><dd>{{num_admins}}</dd></div>
+  <div><dt>{% translate "Created" %}</dt><dd>{{group.created_at|date:"Y-m-d"}}</dd></div>
+</dl>
+
+{% if can_transfer %}
+<p class="actions"><a class="button secondary" href="{% url "votergroup@transfer" group.uuid %}">{% translate "Transfer ownership" %}</a></p>
+{% endif %}
+{% endblock %}

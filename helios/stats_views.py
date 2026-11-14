@@ -15,7 +15,7 @@ from django_tasks_db.models import DBTaskResult
 
 from helios import tasks, url_names
 from helios.management.commands.requeue_stuck_tasks import STUCK_AFTER_MINUTES
-from helios.models import CastVote, Election, SiteAnnouncement
+from helios.models import CastVote, Election, SiteAnnouncement, VoterGroup
 from helios_auth.models import User
 from helios_auth.security import get_user, check_csrf
 from .security import PermissionDenied
@@ -131,11 +131,16 @@ def user_search(request):
       trustee__email__iexact=found_user.user_id
     ).distinct()
 
+    # voter groups the user owns or co-administers; the site administrator sees
+    # only their overview (see helios.votergroup_views)
+    votergroups = VoterGroup.get_by_user_as_admin(found_user).annotate(num_members=Count('votergroupmember', distinct=True))
+
     users_with_elections.append({
       'user': found_user,
       'elections_as_admin': elections_as_admin,
       'elections_as_voter': elections_as_voter,
       'elections_as_trustee': elections_as_trustee,
+      'votergroups': votergroups,
     })
 
   return render_template(request, "stats_user_search", {

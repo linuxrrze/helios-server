@@ -72,6 +72,21 @@
       {% else %}
         <p class="muted">{% translate "None" %}</p>
       {% endif %}
+
+      <h3>{% blocktranslate trimmed with n=item.votergroups|length %}Voter groups as owner or administrator ({{n}}){% endblocktranslate %}</h3>
+      {% if item.votergroups %}
+        <ul class="election-list">
+        {% for group in item.votergroups %}
+          <li>
+            <a href="{% url "votergroup@view" group.uuid %}">{{group.short_name}}</a> {% provisioned_badge group %}
+            ({% if group.admin == item.user %}{% translate "Owner" %}{% else %}{% translate "Administrator" context "voter group" %}{% endif %};
+            {% blocktranslate trimmed count counter=group.num_members %}{{counter}} member{% plural %}{{counter}} members{% endblocktranslate %})
+          </li>
+        {% endfor %}
+        </ul>
+      {% else %}
+        <p class="muted">{% translate "None" %}</p>
+      {% endif %}
     </section>
     {% endfor %}
   {% else %}
