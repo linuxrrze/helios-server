@@ -1,15 +1,18 @@
 {% extends TEMPLATE_BASE %}
-{% load i18n %}
+{% load i18n provisioning_tags %}
 {% block title %}{{group.short_name}}{% endblock %}
 {% block content %}
-<h1 class="title">{{ group.short_name }}</h1>
-<p class="muted">{% blocktranslate trimmed with admin=group.admin.display_html_small|safe %}created by {{admin}}{% endblocktranslate %}{% if admins %}
+<h1 class="title">{{ group.short_name }} {% provisioned_badge group %}</h1>
+{% if group.is_provisioned %}
+<p class="callout callout-info">{% blocktranslate trimmed with source=group.admin.pretty_name %}This voter group is provisioned by the identity management ({{source}}): its name, members and administrators are managed there and cannot be changed here.{% endblocktranslate %}</p>
+{% endif %}
+<p class="muted">{% if not group.is_provisioned %}{% blocktranslate trimmed with admin=group.admin.display_html_small|safe %}created by {{admin}}{% endblocktranslate %}{% else %}{% blocktranslate trimmed with source=group.admin.pretty_name %}managed by {{source}}{% endblocktranslate %}{% endif %}{% if admins %}
   &middot; {% blocktranslate trimmed count counter=admins|length %}{{counter}} more administrator{% plural %}{{counter}} more administrators{% endblocktranslate %}{% endif %}
-  &middot; <a href="{% url "votergroup@admins" group.uuid %}">{% translate "Manage administrators" %}</a></p>
+  &middot; <a href="{% url "votergroup@admins" group.uuid %}">{% if group.is_provisioned %}{% translate "Administrators" context "voter group" %}{% else %}{% translate "Manage administrators" %}{% endif %}</a></p>
 
 <p class="actions">
   {% if members %}<a class="button" href="{% url "votergroup@prepareelection" group.uuid %}">{% translate "Start election" %}</a>{% endif %}
-  <a class="button{% if members %} secondary{% endif %}" href="{% url "votergroup@memberadd" group.uuid %}">{% translate "Add a new member" %}</a>
+  {% if not group.is_provisioned %}<a class="button{% if members %} secondary{% endif %}" href="{% url "votergroup@memberadd" group.uuid %}">{% translate "Add a new member" %}</a>{% endif %}
 </p>
 
 <h2>{% translate "Members" %}</h2>
@@ -29,10 +32,12 @@
     <td>{{member.email}}</td>
     <td class="num">{{member.votes}}</td>
     <td class="row-actions">
+      {% if not group.is_provisioned %}
       <form class="inline-action" method="POST" action="{% url "votergroup@memberdelete" member.uuid %}" onsubmit="return confirm('{% filter escapejs %}{% translate "Remove this member from the group?" %}{% endfilter %}');">
         <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
         <button type="submit" class="link-button danger">{% translate "Delete" %}<span class="screen-reader-text"> {{member.first_name}} {{member.last_name}}</span></button>
       </form>
+      {% endif %}
     </td>
   </tr>
   {% endfor %}

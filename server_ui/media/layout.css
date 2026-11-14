@@ -279,6 +279,10 @@ table.pretty .helptext { margin-top: 4px; }
 .status-closed, .status-tallying { color: var(--warning-color); background: var(--warning-bg); }
 .status-released { color: var(--info-color); background: var(--info-bg); }
 .status-archived { color: var(--muted-color); background: var(--card-bg); }
+/* entities managed by provisioning (SCIM), see helios/templatetags/provisioning_tags.py */
+.provisioned-badge, .deactivated-badge { margin-left: 4px; padding: 0 8px; font-size: .75rem; font-weight: 500; }
+.provisioned-badge { color: var(--info-color); background: var(--info-bg); }
+.deactivated-badge { color: var(--warning-color); background: var(--warning-bg); }
 
 /* --- phones and tablets ------------------------------------------------- */
 @media only screen and (max-width: 64em) {

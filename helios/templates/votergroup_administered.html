@@ -1,5 +1,5 @@
 {% extends TEMPLATE_BASE %}
-{% load i18n %}
+{% load i18n provisioning_tags %}
 {% block title %}{% translate "Voter groups" %}{% endblock %}
 {% block content %}
 <h1 class="title">{% translate "Voter groups you administer" %}</h1>
@@ -10,7 +10,7 @@
 {% if votergroups %}
 <ul class="election-list">
 {% for group in votergroups %}
-  <li><a href="{% url "votergroup@view" group.uuid %}">{{group.short_name}}</a>{% if group.admin != user %} <span class="muted">{% blocktranslate trimmed with owner=group.admin.pretty_name %}(managed by {{owner}}){% endblocktranslate %}</span>{% endif %}</li>
+  <li><a href="{% url "votergroup@view" group.uuid %}">{{group.short_name}}</a> {% provisioned_badge group %}{% if group.admin != user and not group.is_provisioned %} <span class="muted">{% blocktranslate trimmed with owner=group.admin.pretty_name %}(managed by {{owner}}){% endblocktranslate %}</span>{% endif %}</li>
 {% endfor %}
 </ul>
 {% else %}

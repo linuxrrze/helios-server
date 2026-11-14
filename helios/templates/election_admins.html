@@ -1,5 +1,5 @@
 {% extends TEMPLATE_BASE %}
-{% load i18n %}
+{% load i18n provisioning_tags %}
 
 {% block title %}{% blocktranslate trimmed with name=election.name %}Administrators for {{name}}{% endblocktranslate %}{% endblock %}
 
@@ -16,7 +16,7 @@
 
 <h4>{% translate "Election Creator" %}</h4>
 <p>
-  <strong>{{admin.display_html_small|safe}}</strong> ({{admin.user_id}})<br />
+  <strong>{{admin.display_html_small|safe}}</strong> ({{admin.user_id}}) {% provisioned_badge admin %} {% deactivated_badge admin %}<br />
   <em>{% translate "The election creator cannot be removed." %}</em>
 </p>
 
@@ -25,7 +25,7 @@
 <ul>
 {% for a in additional_admins %}
 <li>
-  {{a.display_html_small|safe}} ({{a.user_id}})
+  {{a.display_html_small|safe}} ({{a.user_id}}) {% provisioned_badge a %} {% deactivated_badge a %}
   {% if a.pk != current_user.pk %}
   [<a href="{% url "election@admins@remove" election.uuid %}?email={{a.user_id}}&user_type={{a.user_type}}">{% translate "remove" %}</a>]
   {% else %}
