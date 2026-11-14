@@ -20,7 +20,7 @@ visitor's entry organization, chosen with its entry link /<slug>/ (see
 entry_organization), else the default CI.
 The election's voting booth gets its organization's colors from a stylesheet
 generated from validated values (helios/booth_theme.py), and its emails to
-voters and trustees its sender name, Reply-To and signature (mail_context).
+voters, trustees and administrators its sender name, Reply-To and signature (mail_context).
 
 One mapping assigns people to organizations, and with that to the prefix of
 their election addresses (see match_user): the rules of the organizations
