@@ -183,6 +183,12 @@ The prefix of the person creating the election is determined in this order:
 2. by their email domain (`ELECTION_SHORT_NAME_PREFIXES`);
 3. otherwise `ELECTION_SHORT_NAME_PREFIX`.
 
+With an organizations file (`ORGANIZATIONS_FILE`, below), the organizations' own rules
+(`match`) and prefixes (`short_name_prefix`) take part in the same lookup and win over these
+variables for the same identity provider or domain; the variables keep working, and their
+prefixes then also select the organization with that prefix. See
+[organizations.md, section 3](organizations.md#3-one-mapping-for-organizations-and-address-prefixes).
+
 | Variable | Default | Meaning |
 |---|---|---|
 | `ELECTION_SHORT_NAME_PREFIXES_BY_IDP` | empty | JSON object mapping an identity provider to a prefix (1&ndash;20 lowercase letters or digits). A key is either the issuer of an OIDC provider (the `issuer` of its discovery document) or the entity ID of a SAML IdP, or the name of an auth system as in `AUTH_ENABLED_SYSTEMS` (e.g. `saml`, `oidc`, `ldap`, `cas`, `google`, `password`, or the name set with `OIDC_AUTH_SYSTEM_NAME` / `SAML_AUTH_SYSTEM_NAME`). An entry for the issuer takes precedence over one for the auth system. Keys are compared exactly, apart from a trailing `/`. Helios stores the issuer when someone logs in with OIDC or SAML; for people who have not logged in since this was added, only the auth system name is known. Invalid JSON or prefixes stop Helios from starting. |
@@ -242,7 +248,15 @@ and the built-in pages. See [section 10](#10-customizing-the-site) for a worked 
 | `SITE_STATIC_DIR` | empty | Directory served at `/static/site/` (logos, stylesheets, images). `login-icons/<name>.png` (or `.svg`) in it is the icon of the auth system `<name>`, e.g. `oidc`, `saml` or a custom name such as `campus`; without one, a neutral default icon is shown. |
 
 Footer links appear only when their URL is set, in this order: imprint, privacy,
-accessibility, `FOOTER_LINKS`, and "Contact" (`mailto:` `HELP_EMAIL_ADDRESS`).
+accessibility, `FOOTER_LINKS`, and "Contact" (`mailto:` `HELP_EMAIL_ADDRESS`; hidden if empty).
+
+**Several organizations.** These variables describe the operator of the server (the
+*default organization*). Further organizations sharing the server get their own logos,
+colors, title, legal links and contact address on the pages of their elections:
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `ORGANIZATIONS_FILE` | empty | Path of a JSON file describing the organizations, their address prefixes and who belongs to them. Each election belongs to one organization (from its creator's login; only site administrators can change it) and its pages show that organization's corporate identity; all other pages keep the operator's. With the file, the start page lists only the featured elections of the visitor's own organization (none when not logged in). Read at start: a missing file or an invalid entry stops Helios from starting. Format, rules and migration: [organizations.md](organizations.md). |
 
 **CSS variables** of the default layout, to be set in `SITE_CSS_URL`:
 

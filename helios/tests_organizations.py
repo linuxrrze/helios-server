@@ -182,6 +182,14 @@ class ConfigurationTests(TestCase):
         with self.assertRaisesMessage(ImproperlyConfigured, message):
           project_settings.parse_organizations(config)
 
+  def test_documented_example_is_valid(self):
+    with open(os.path.join(settings.ROOT_PATH, 'docs', 'organizations.md'), encoding='utf-8') as f:
+      example = re.search(r'```json\n(.*?)```', f.read(), re.S).group(1)
+    orgs = project_settings.parse_organizations(example)
+    self.assertEqual(list(orgs), ['unia', 'unib'])
+    with override_settings(ORGANIZATIONS=orgs):
+      self.assertEqual(organizations.match_user(_user(user_type='saml')), ('unib', 'unib'))
+
   def test_missing_file(self):
     with self.assertRaisesMessage(ImproperlyConfigured, 'cannot be read'):
       project_settings.load_organizations_file('/nonexistent/organizations.json')
