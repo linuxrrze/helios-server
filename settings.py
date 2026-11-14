@@ -250,7 +250,9 @@ TEMPLATES = [
             # os.path.join(ROOT_PATH, 'server_ui/templates'),  # covered by APP_DIRS:True
         ],
         'OPTIONS': {
-            'debug': DEBUG
+            'debug': DEBUG,
+            # `ci`: the corporate identity of the page (helios/organizations.py)
+            'context_processors': ['helios.organizations.context_processor'],
         }
     },
 ]

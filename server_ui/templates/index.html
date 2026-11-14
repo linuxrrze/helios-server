@@ -1,18 +1,18 @@
 {% extends 'server_ui/templates/base.html' %}
 {% load i18n localized_settings election_tags %}
-{% block title %}{% localized_setting "SITE_TITLE" %}{% endblock %}
+{% block title %}{{ ci.site_title }}{% endblock %}
 
 {% block header %}
-<h2>{% localized_setting "SITE_TITLE" %}</h2>
+<h2>{{ ci.site_title }}</h2>
 {% endblock %}
 
 {% block layout_class %}{% if user %}userlogin{% elif voter %}voterlogin{% elif settings.SHOW_LOGIN_OPTIONS %}login{% endif %}{% endblock %}
 {% block content %}
 {% localized_setting "WELCOME_MESSAGE" as welcome_message %}
 {% if user %}
-<h1>{% localized_setting "SITE_TITLE" %}</h1>
+<h1>{{ ci.site_title }}</h1>
 {% else %}
-<h1 class="screen-reader-text">{% localized_setting "SITE_TITLE" %}</h1>
+<h1 class="screen-reader-text">{{ ci.site_title }}</h1>
 {% endif %}
 {% if welcome_message %}<p class="welcome">{{ welcome_message|safe }}</p>{% endif %}
 

@@ -1,10 +1,10 @@
-{% load i18n localized_settings %}<!DOCTYPE html>
-{% get_current_language as LANGUAGE_CODE %}{% color_scheme_class as color_scheme %}<html lang="{{ LANGUAGE_CODE }}" class="{{ color_scheme }}">
+{% load i18n localized_settings organization_tags %}<!DOCTYPE html>
+{% current_ci as ci %}{% get_current_language as LANGUAGE_CODE %}{% color_scheme_class as color_scheme %}<html lang="{{ LANGUAGE_CODE }}" class="{{ color_scheme }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   {% if color_scheme %}<meta name="color-scheme" content="light dark">{% endif %}
-  <title>{% block title %}{% endblock %} &ndash; {% localized_setting "SITE_TITLE" %}</title>
+  <title>{% block title %}{% endblock %} &ndash; {{ ci.site_title }}</title>
   <link rel="stylesheet" href="/static/layout.css">
 </head>
 <body>

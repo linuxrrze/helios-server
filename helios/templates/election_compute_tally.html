@@ -12,7 +12,7 @@
   <span class="callout-title">{% blocktranslate trimmed count counter=num_pending_votes %}{{ counter }} vote still being processed.{% plural %}{{ counter }} votes still being processed.{% endblocktranslate %}</span>
   <p>
     {% translate "All votes must be verified before computing the tally. Please wait and try again shortly." %}
-    {% blocktranslate trimmed with email=settings.HELP_EMAIL_ADDRESS %}If this persists, contact <a href="mailto:{{email}}">{{email}}</a>.{% endblocktranslate %}
+    {% blocktranslate trimmed with email=ci.help_email %}If this persists, contact <a href="mailto:{{email}}">{{email}}</a>.{% endblocktranslate %}
   </p>
 </div>
 <div class="actions">

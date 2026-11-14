@@ -1,15 +1,15 @@
-{% load announcement_tags i18n localized_settings navigation_tags %}<!DOCTYPE html>
-{% get_current_language as LANGUAGE_CODE %}{% color_scheme_class as color_scheme %}<html lang="{{ LANGUAGE_CODE }}" class="no-js {{ color_scheme }}">
+{% load announcement_tags i18n localized_settings navigation_tags organization_tags %}<!DOCTYPE html>
+{% current_ci as ci %}{% get_current_language as LANGUAGE_CODE %}{% color_scheme_class as color_scheme %}<html lang="{{ LANGUAGE_CODE }}" class="no-js {{ color_scheme }}">
     <head>
     <title>{% block title %}{% endblock %}</title>  
     <meta http-equiv="X-UA-Compatible" content="IE=edge,Chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <meta name="description" content="{% localized_setting "SITE_TITLE" %}">
+    <meta name="description" content="{{ ci.site_title }}">
     {% if color_scheme %}<meta name="color-scheme" content="light dark">{% endif %}
     <link rel="stylesheet" href="/static/layout.css">
     <link rel="stylesheet" href="/static/navigation.css">
-    {% if settings.SITE_CSS_URL %}<link rel="stylesheet" href="{{ settings.SITE_CSS_URL }}">{% endif %}
+    {% if ci.css_url %}<link rel="stylesheet" href="{{ ci.css_url }}">{% endif %}
     <link rel="stylesheet" href="/static/helios/timezone-display.css">
     <script src="/static/20140302-helios-combined.js"></script>
     <script src="/static/helios/timezone-display.js"></script>
@@ -24,12 +24,11 @@
  <div class="container">
     <header>
 	 <div class="meta-header">
-	    {% localized_setting "ORGANIZATION_NAME" as organization_name %}
 	    <nav class="meta-links" aria-labelledby="meta-links-title">
 		<h2 id="meta-links-title" class="screen-reader-text">{% translate "Meta navigation" %}</h2>
-		{% if settings.ORGANIZATION_URL and organization_name %}
+		{% if ci.url and ci.name %}
 		<ul class="orgalist">
-		    <li class="orghome"><a href="{{ settings.ORGANIZATION_URL }}">{% if settings.ORGANIZATION_LOGO_URL %}<img src="{{ settings.ORGANIZATION_LOGO_URL }}" height="16" alt="{{ organization_name }}">{% else %}{{ organization_name }}{% endif %}</a></li>
+		    <li class="orghome"><a href="{{ ci.url }}">{% if ci.header_logo_url %}<img src="{{ ci.header_logo_url }}" height="16" alt="{{ ci.name }}">{% else %}{{ ci.name }}{% endif %}</a></li>
 		</ul>
 		{% endif %}
 	    </nav>
@@ -72,7 +71,7 @@
      <div class="content">
 	<div class="row">    
 	    <p class="logo">
-		<a href="/"><img src="{{ settings.MAIN_LOGO_URL }}" class="helios-logo" alt="{% localized_setting "SITE_TITLE" %}"></a> 
+		<a href="/"><img src="{{ ci.main_logo_url }}" class="helios-logo" alt="{{ ci.site_title }}"></a> 
 	    </p>
 	    {% block breadcrumbs %}{% breadcrumbs %}{% endblock %}
       {% block content %}{% endblock %}
@@ -81,19 +80,19 @@
     </main>
     <footer>
 	 <div class="content-footer">
-	    {% if settings.FOOTER_LOGO_URL %}<div class="logo">
-		{% if settings.ORGANIZATION_URL %}<a href="{{ settings.ORGANIZATION_URL }}">{% endif %}<img src="{{ settings.FOOTER_LOGO_URL }}" alt="{{ organization_name }}">{% if settings.ORGANIZATION_URL %}</a>{% endif %}
+	    {% if ci.footer_logo_url %}<div class="logo">
+		{% if ci.url %}<a href="{{ ci.url }}">{% endif %}<img src="{{ ci.footer_logo_url }}" alt="{{ ci.name }}">{% if ci.url %}</a>{% endif %}
 	    </div>{% endif %}
 	    <div class="meta">
 		<nav aria-labelledby="footer-nav-title">
 		    <h2 class="screen-reader-text" id="footer-nav-title">{% translate "Contact, imprint and further information" %}</h2>
 		    <ul>
 			<li><a href="/about">{% translate "About Helios" %}</a></li>
-			{% if settings.IMPRINT_URL %}<li><a href="{{ settings.IMPRINT_URL }}">{% translate "Imprint" %}</a></li>{% endif %}
-			{% if settings.PRIVACY_URL %}<li><a href="{{ settings.PRIVACY_URL }}">{% translate "Privacy" %}</a></li>{% endif %}
-			{% if settings.ACCESSIBILITY_URL %}<li><a href="{{ settings.ACCESSIBILITY_URL }}">{% translate "Accessibility" %}</a></li>{% endif %}
-			{% for link in settings.FOOTER_LINKS %}<li><a href="{{ link.url }}">{{ link.text }}</a></li>{% endfor %}
-			<li><a href="mailto:{{settings.HELP_EMAIL_ADDRESS}}">{% translate "Contact" %}</a></li>
+			{% if ci.imprint_url %}<li><a href="{{ ci.imprint_url }}">{% translate "Imprint" %}</a></li>{% endif %}
+			{% if ci.privacy_url %}<li><a href="{{ ci.privacy_url }}">{% translate "Privacy" %}</a></li>{% endif %}
+			{% if ci.accessibility_url %}<li><a href="{{ ci.accessibility_url }}">{% translate "Accessibility" %}</a></li>{% endif %}
+			{% for link in ci.footer_links %}<li><a href="{{ link.url }}">{{ link.text }}</a></li>{% endfor %}
+			{% if ci.help_email %}<li><a href="mailto:{{ ci.help_email }}">{% translate "Contact" %}</a></li>{% endif %}
 		    </ul>
 		</nav>
 	    </div>

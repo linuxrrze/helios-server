@@ -1,8 +1,8 @@
 {% extends TEMPLATE_BASE %}
-{% load i18n localized_settings %}
+{% load i18n %}
 
 {% block header %}
-<h2>{% localized_setting "SITE_TITLE" %} &mdash; {% translate "Password Forgotten" %}</h2>
+<h2>{{ ci.site_title }} &mdash; {% translate "Password Forgotten" %}</h2>
 {% endblock %}
 
 {% block layout_class %}{% if user %}userlogin{% elif voter %}voterlogin{% elif settings.SHOW_LOGIN_OPTIONS %}login{% endif %}{% endblock %}
