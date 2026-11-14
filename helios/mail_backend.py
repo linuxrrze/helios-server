@@ -9,12 +9,18 @@ Recipient addresses are masked (first character of the local part and the
 domain), so the log shows where mail went without listing every voter's
 address. "sent" means the mail server accepted the email; delivery after that
 is up to the mail server.
+
+Emails sent for an election (inside organizations.mail_context) get the sender
+name and Reply-To of the election's organization here, in one place for all auth
+systems and background tasks.
 """
 import logging
 
 from django.conf import settings
 from django.core.mail import get_connection
 from django.core.mail.backends.base import BaseEmailBackend
+
+from helios import organizations
 
 logger = logging.getLogger('helios.mail')
 
@@ -53,6 +59,7 @@ class LoggingEmailBackend(BaseEmailBackend):
     sent = 0
     # one at a time, so that the log says which email failed
     for message in email_messages:
+      message = organizations.apply_mail_identity(message)
       try:
         count = self.inner.send_messages([message])
       except Exception as e:

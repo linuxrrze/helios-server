@@ -7,6 +7,7 @@ Ben Adida (ben@adida.net)
 
 import base64
 import datetime
+import hashlib
 import logging
 import os
 import uuid
@@ -19,6 +20,7 @@ from django.db import transaction, IntegrityError
 from django.http import HttpResponse, Http404, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest
 from django.urls import reverse
 from django.utils import translation
+from django.utils.cache import get_conditional_response, quote_etag
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_http_methods
 
@@ -29,6 +31,7 @@ from helios_auth.auth_systems import AUTH_SYSTEMS, can_list_categories
 from helios_auth.models import AuthenticationExpired
 from helios_auth.security import check_csrf, login_required, get_user, save_in_session_across_logouts
 from helios_auth.utils import same_site_path
+from . import booth_theme
 from . import datatypes
 from . import election_progress
 from . import forms
@@ -319,6 +322,24 @@ def one_election_meta(request, election):
   if not election:
     raise Http404
   return election.metadata
+
+@election_view()
+def one_election_booth_theme(request, election):
+  """
+  The voting booth's stylesheet for this election: the colors of its organization,
+  generated from validated values only (helios/booth_theme.py). The static booth
+  (heliosbooth/vote.html) links it for the election it is opened for.
+  """
+  css = booth_theme.css_for(organizations.for_election(election))
+  etag = quote_etag(hashlib.sha256(css.encode('utf-8')).hexdigest()[:32])
+  response = get_conditional_response(request, etag=etag)
+  if response is None:
+    response = HttpResponse(css, content_type='text/css; charset=utf-8')
+  response['ETag'] = etag
+  # revalidated on every load: the organization of an election, or its colors after
+  # a restart, can change; private elections' stylesheets stay out of shared caches
+  response['Cache-Control'] = 'private, no-cache'
+  return response
 
 @election_view()
 def election_badge(request, election):
@@ -659,20 +680,24 @@ def trustee_send_url(request, election, trustee_uuid):
   trustee = Trustee.get_by_election_and_uuid(election, trustee_uuid)
 
   url = settings.SECURE_URL_HOST + reverse(url_names.TRUSTEE_LOGIN, args=[election.short_name, trustee.email, trustee.secret])
-  
-  body = """
 
-You are a trustee for %s.
+  # from the election's organization: sender name, Reply-To and signature
+  organization = organizations.for_election(election)
+  subject = _("your trustee homepage for %(election)s") % {'election': election.name}
+  body = _("""
+
+You are a trustee for %(election)s.
 
 Your trustee dashboard is at
 
-  %s
-  
---
-Helios  
-""" % (election.name, url)
+  %(url)s
 
-  utils.send_email(settings.SERVER_EMAIL, ["%s <%s>" % (trustee.name, trustee.email)], 'your trustee homepage for %s' % election.name, body)
+--
+%(signature)s
+""") % {'election': election.name, 'url': url, 'signature': organization.mail_signature}
+
+  with organizations.mail_context(election):
+    utils.send_email(settings.SERVER_EMAIL, ["%s <%s>" % (trustee.name, trustee.email)], subject, body)
 
   logging.info("URL %s " % url)
   return HttpResponseRedirect(settings.SECURE_URL_HOST + reverse(url_names.election.ELECTION_TRUSTEES_VIEW, args = [election.uuid]))
@@ -1189,9 +1214,11 @@ Election URL: %(election_url)s
 If you believe this was done in error, please contact the election administrator.
 
 --
-Helios
-""") % {'election': election.name, 'election_url': election_url}
-      voter.send_message(subject, body)
+%(signature)s
+""") % {'election': election.name, 'election_url': election_url,
+        'signature': organizations.for_election(election).mail_signature}
+      with organizations.mail_context(election):
+        voter.send_message(subject, body)
 
       # log it
       election.append_log("Voter %s/%s and their vote were removed after election was frozen" % (voter.voter_type,voter.voter_id))

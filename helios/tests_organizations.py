@@ -14,6 +14,7 @@ from types import SimpleNamespace
 from unittest import mock
 
 from django.conf import settings
+from django.core import mail
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management import call_command
 from django.core.management.base import CommandError
@@ -520,16 +521,21 @@ class ElectionPagesTests(OrganizationTestCase):
     self.login(self.site_admin)
     self.assertCI(self.client.get('/helios/stats/elections'), unia=False)
 
-  def test_verifier_and_booth_stay_neutral(self):
-    election = self.make_election(self.unia_user, organization='unia')
+  def test_static_booth_and_verifier_are_the_same_for_all(self):
+    # the booth gets its election's colors from the server (booth-theme.css, /meta,
+    # see BoothThemeTests); its files and the verifiers stay the same for everyone
+    self.make_election(self.unia_user, organization='unia')
     for path in ['/verifier/verify.html', '/booth/vote.html', '/booth/single-ballot-verify.html']:
       with self.subTest(path=path):
         response = self.client.get(path)
         content = b''.join(response.streaming_content).decode()
         self.assertNotIn('/static/site/', content)
         self.assertNotIn('University A', content)
-    meta = self.client.get('/helios/elections/%s/meta' % election.uuid).content.decode()
-    self.assertNotIn('unia', meta)
+    for path in ['heliosverifier/verify.html', 'heliosbooth/single-ballot-verify.html']:
+      with open(os.path.join(settings.ROOT_PATH, path), encoding='utf-8') as f:
+        content = f.read()
+      self.assertNotIn('booth-theme.css', content)
+      self.assertNotIn('booth-ui.css', content)
 
 
 @override_settings(ORGANIZATIONS=ORGS)
@@ -670,3 +676,381 @@ class StatsElectionsTests(OrganizationTestCase):
   def test_site_administrators_only(self):
     self.login(self.unia_user)
     self.assertEqual(self.client.get('/helios/stats/elections').status_code, 403)
+
+
+##
+## phase 2: voting booth and emails
+##
+
+UNIC = {
+  'name': {'en': 'University C', 'de': 'Universität C'},
+  'main_logo_url': '/static/site/unic/logo.svg',
+  'help_email': 'elections@uni-c.example.org',
+  'dark_mode': 'auto',
+  'colors': {'primary': '#00447C', 'primary_contrast': '#fff', 'accent': 'rgb(0, 68, 124)', 'accent_contrast': '#ffffff',
+             'link': '#00447c', 'background': '#eef3f8',
+             'dark': {'primary': '#9cc3ff', 'primary_contrast': '#10161d', 'link': '#9cc3ff'}},
+  'font_url': '/static/site/unic/sans.woff2',
+  'mail': {'from_name': {'en': 'Electoral office, University C', 'de': 'Wahlamt der Universität C'},
+           'reply_to': 'elections@uni-c.example.org',
+           'signature': {'en': 'Electoral office\nUniversity C', 'de': 'Wahlamt\nUniversität C'}},
+}
+ORGS2 = project_settings.parse_organizations(_config(unia=UNIA, unib=UNIB, unic=UNIC))
+
+
+class PhaseTwoConfigurationTests(TestCase):
+
+  def test_normalized(self):
+    unic = ORGS2['unic']
+    self.assertEqual(unic['colors'], {
+      'primary': '#00447c', 'primary_contrast': '#ffffff', 'accent': '#00447c', 'accent_contrast': '#ffffff',
+      'link': '#00447c', 'background': '#eef3f8',
+      'dark': {'primary': '#9cc3ff', 'primary_contrast': '#10161d', 'link': '#9cc3ff'}})
+    self.assertEqual(unic['font_url'], '/static/site/unic/sans.woff2')
+    self.assertEqual(unic['mail']['reply_to'], 'elections@uni-c.example.org')
+    self.assertEqual(unic['mail']['signature'], {'en': 'Electoral office\nUniversity C', 'de': 'Wahlamt\nUniversität C'})
+
+  def test_invalid(self):
+    def org(**keys):
+      return _config(unia=dict({'name': 'A'}, **keys))
+    for config, message in [
+        # only colors: nothing that could end the declaration and add CSS
+        (org(colors={'primary': 'red'}), '"colors" of "unia": "primary" must be a color'),
+        (org(colors={'primary': '#fff; } #election_hash { display: none'}), 'must be a color'),
+        (org(colors={'primary': '#00447c;'}), 'must be a color'),
+        (org(colors={'primary': 'rgb(0, 0, 300)'}), 'must be a color'),
+        (org(colors={'primary': 'var(--x)'}), 'must be a color'),
+        (org(colors={'primary': 'url(/static/x.svg)'}), 'must be a color'),
+        (org(colors={'primary': 1}), 'must be a color'),
+        (org(colors={'secondary': '#000000'}), 'unknown color(s) secondary'),
+        (org(colors={'dark': {'hover': '#000000'}}), '"dark": unknown color(s) hover'),
+        (org(colors='#00447c'), 'must be an object'),
+        (org(colors={'dark': '#000'}), '"dark": must be an object'),
+        # the fingerprint (header and footer bars) and the buttons stay readable
+        (org(colors={'accent': '#1f2933'}), '"accent_contrast" #1f2933 on "accent" #1f2933 has a contrast of 1.0:1'),
+        (org(colors={'accent': '#00447c', 'accent_contrast': '#003366'}), 'at least 4.5:1'),
+        (org(colors={'primary': '#dddddd', 'primary_contrast': '#000000'}), '"primary" #dddddd on the booth background #ffffff'),
+        (org(colors={'primary_contrast': '#2c4f7c'}), '"primary_contrast" #2c4f7c on "primary"'),
+        (org(colors={'link': '#ffff00'}), '"link" #ffff00'),
+        (org(colors={'dark': {'link': '#1d4f91'}}), '"dark": "link" #1d4f91 on the booth background #1b222b'),
+        (org(font_url='https://fonts.example.net/a.woff2'), '"font_url" of "unia" must be the path of a font file'),
+        (org(font_url='/static/site/a.woff2") ; } body { display: none'), 'must be the path of a font file'),
+        (org(font_url='/static/site/a.css'), 'must be the path of a font file'),
+        (org(font_url='/static/site/../a.woff2'), 'must be the path of a font file'),
+        (org(mail='x'), '"mail" of "unia" must be an object'),
+        (org(mail={'from': 'x@example.org'}), 'must be an object with "from_name"'),
+        # one header line: no header injection
+        (org(mail={'from_name': 'Office\r\nBcc: everyone@example.org'}), 'from_name must not contain line breaks'),
+        (org(mail={'from_name': {'en': 'Office', 'de': 'Wahlamt\nX'}}), 'from_name must not contain line breaks'),
+        (org(mail={'from_name': 'Office‮'}), 'from_name must not contain line breaks'),
+        (org(mail={'from_name': 'x' * 101}), 'at most 100 characters'),
+        (org(mail={'from_name': ''}), 'from_name must be a text'),
+        (org(mail={'reply_to': 'office@example.org\r\nBcc: x@example.org'}), 'reply_to must be an email address'),
+        (org(mail={'reply_to': 'Office <office@example.org>'}), 'reply_to must be an email address'),
+        (org(mail={'reply_to': ''}), 'reply_to must be an email address'),
+        (org(mail={'signature': 'Office\x00'}), 'signature must not contain'),
+    ]:
+      with self.subTest(config=config):
+        with self.assertRaisesMessage(ImproperlyConfigured, message):
+          project_settings.parse_organizations(config)
+
+  def test_global_booth_settings(self):
+    values = ConfigurationTests._run_settings(self, BOOTH_COLORS='{"primary": "#00447c"}', BOOTH_FONT_URL='/static/site/a.woff2',
+                                              EMAIL_SIGNATURE='Example Elections', EMAIL_SIGNATURE_DE='Beispielwahlen')
+    self.assertEqual(values['BOOTH_COLORS'], {'primary': '#00447c'})
+    self.assertEqual(values['BOOTH_FONT_URL'], '/static/site/a.woff2')
+    self.assertEqual(values['EMAIL_SIGNATURE'], 'Example Elections')
+    self.assertEqual(values['LOCALIZED_SETTINGS']['EMAIL_SIGNATURE']['de'], 'Beispielwahlen')
+    with self.assertRaisesMessage(ImproperlyConfigured, 'BOOTH_COLORS: "primary" must be a color'):
+      ConfigurationTests._run_settings(self, BOOTH_COLORS='{"primary": "blue"}')
+    with self.assertRaisesMessage(ImproperlyConfigured, 'BOOTH_FONT_URL: must be the path of a font file'):
+      ConfigurationTests._run_settings(self, BOOTH_FONT_URL='https://fonts.example.net/a.woff2')
+
+
+class BoothThemeTests(OrganizationTestCase):
+
+  def theme(self, election):
+    response = self.client.get('/helios/elections/%s/booth-theme.css' % election.uuid)
+    self.assertEqual(response.status_code, 200)
+    return response
+
+  def test_without_configuration_same_as_dark_mode_stylesheet(self):
+    election = self.make_election(self.unia_user)
+    for dark_mode in ('auto', 'off'):
+      with self.subTest(dark_mode=dark_mode), self.settings(DARK_MODE=dark_mode):
+        self.assertEqual(self.theme(election).content, self.client.get('/booth-dark-mode.css').content)
+
+  @override_settings(ORGANIZATIONS=ORGS2, DARK_MODE='auto')
+  def test_organization_without_colors_keeps_the_built_in_ones(self):
+    # unia has its own stylesheet for the pages: like there, dark mode is off unless set
+    election = self.make_election(self.unia_user, organization='unia')
+    self.assertEqual(self.theme(election).content.decode(), booth_dark_mode('off'))
+    election = self.make_election(self.unia_user, organization='unib')
+    self.assertEqual(self.theme(election).content.decode(), booth_dark_mode('auto'))
+
+  @override_settings(ORGANIZATIONS=ORGS2)
+  def test_organization_colors(self):
+    election = self.make_election(self.unia_user, organization='unic')
+    response = self.theme(election)
+    self.assertEqual(response['Content-Type'], 'text/css; charset=utf-8')
+    self.assertEqual(response['Cache-Control'], 'private, no-cache')
+    self.assertEqual(response['X-Content-Type-Options'], 'nosniff')
+    css = response.content.decode()
+    light, rest = css.split(booth_dark_mode('auto'))
+    self.assertIn('  --booth-primary: #00447c;\n', light)
+    self.assertIn('  --booth-outline: #00447c;\n', light)
+    self.assertIn('  --booth-accent: #00447c;\n', light)
+    self.assertIn('  --booth-accent-contrast: #ffffff;\n', light)
+    self.assertIn('  --booth-background: #eef3f8;\n', light)
+    self.assertIn('  --booth-primary-hover: #00335d;\n', light)
+    # the organization's dark colors after the built-in ones, in the same media query
+    self.assertTrue(rest.startswith('@media (prefers-color-scheme: dark) {\n  :root {\n    --booth-primary: #9cc3ff;\n'))
+    self.assertIn('    --booth-primary-contrast: #10161d;\n', rest)
+    self.assertIn('@font-face {\n  font-family: "booth-organization-font";\n  src: url("/static/site/unic/sans.woff2") format("woff2");', rest)
+    self.assertIn('--booth-font: "booth-organization-font", system-ui,', rest)
+
+  @override_settings(ORGANIZATIONS=ORGS2)
+  def test_only_custom_properties_and_a_font(self):
+    """Nothing but --booth-* properties with a hex color (and the font): no selectors that could hide anything"""
+    election = self.make_election(self.unia_user, organization='unic')
+    generated = self.theme(election).content.decode().replace(booth_dark_mode('auto'), '')
+    allowed = re.compile(r'^\s*(/\* [^*]* \*/|:root \{|\}|@media \(prefers-color-scheme: dark\) \{|@font-face \{'
+                         r'|--booth-[a-z-]+: #[0-9a-f]{6};|--booth-font: "booth-organization-font", [^;{}<>]*;'
+                         r'|font-family: "booth-organization-font";|src: url\("/static/site/unic/sans\.woff2"\) format\("woff2"\);'
+                         r'|font-display: swap;|)$')
+    for line in generated.splitlines():
+      self.assertRegex(line, allowed)
+    # the fingerprint and trackers keep their own font
+    with open(os.path.join(settings.ROOT_PATH, 'heliosbooth', 'css', 'booth-ui.css'), encoding='utf-8') as f:
+      booth_ui = f.read()
+    self.assertIn('#election_hash { font-family: ui-monospace', booth_ui)
+    self.assertNotIn('ui-monospace', generated)
+
+  def test_fingerprint_readable_on_the_accent(self):
+    from helios.booth_theme import css_for
+    organization = organizations.Organization('unia', {'name': {'': 'A'}, 'colors': {'accent': '#c0c8d0'}, 'dark_mode': 'off'})
+    css = css_for(organization)
+    self.assertIn('  --booth-accent: #c0c8d0;\n  --booth-accent-muted: #1f2933;\n  --booth-accent-link: #1f2933;\n', css)
+
+  @override_settings(ORGANIZATIONS=ORGS2)
+  def test_dark_colors_only_with_dark_mode(self):
+    orgs = project_settings.parse_organizations(_config(unic=dict(UNIC, dark_mode='off')))
+    election = self.make_election(self.unia_user, organization='unic')
+    with self.settings(ORGANIZATIONS=orgs):
+      css = self.theme(election).content.decode()
+    self.assertNotIn('prefers-color-scheme', css)
+    self.assertIn('--booth-primary: #00447c;', css)
+
+  @override_settings(BOOTH_COLORS={'primary': '#00447c'}, ORGANIZATIONS=ORGS2, DARK_MODE='off')
+  def test_default_organization_colors_are_inherited(self):
+    for slug in ('', 'unib'):
+      with self.subTest(slug=slug):
+        self.assertIn('--booth-primary: #00447c;', self.theme(self.make_election(self.unia_user, organization=slug)).content.decode())
+    # an organization with its own colors doesn't get the operator's
+    self.assertIn('--booth-primary: #00447c;\n  --booth-outline', self.theme(self.make_election(self.unia_user, organization='unic')).content.decode())
+    orgs = project_settings.parse_organizations(_config(unib=dict(UNIB, colors={})))
+    with self.settings(ORGANIZATIONS=orgs):
+      self.assertEqual(self.theme(self.make_election(self.unia_user, organization='unib')).content.decode(), booth_dark_mode('off'))
+
+  @override_settings(ORGANIZATIONS=ORGS2)
+  def test_revalidated_with_etag(self):
+    election = self.make_election(self.unia_user, organization='unic')
+    etag = self.theme(election)['ETag']
+    response = self.client.get('/helios/elections/%s/booth-theme.css' % election.uuid, HTTP_IF_NONE_MATCH=etag)
+    self.assertEqual(response.status_code, 304)
+    self.assertEqual(response['ETag'], etag)
+
+  @override_settings(ORGANIZATIONS=ORGS2)
+  def test_private_election_like_its_metadata(self):
+    election = self.make_election(self.unia_user, organization='unic', private_p=True)
+    for path in ('booth-theme.css', 'meta'):
+      response = self.client.get('/helios/elections/%s/%s' % (election.uuid, path))
+      self.assertEqual(response.status_code, 302)
+    self.assertEqual(self.client.get('/helios/elections/%s/booth-theme.css' % uuid.uuid4()).status_code, 404)
+
+  def test_booth_links_the_theme_of_its_election_only(self):
+    with open(os.path.join(settings.ROOT_PATH, 'heliosbooth', 'vote.html'), encoding='utf-8') as f:
+      booth = f.read()
+    self.assertIn(r'var match = /^\/helios\/elections\/([0-9a-fA-F-]{36})$/.exec(election_url);', booth)
+    self.assertIn('href = "/helios/elections/" + match[1] + "/booth-theme.css";', booth)
+    # the organization's name and logo are set as text and attributes, never as HTML
+    show = booth[booth.index('BOOTH.show_organization = function'):booth.index('BOOTH.tracker_html')]
+    self.assertNotIn('.html(', show)
+    self.assertNotIn('innerHTML', show)
+    self.assertIn("box.appendChild(document.createTextNode(organization.name));", show)
+    with open(os.path.join(settings.ROOT_PATH, 'helios', 'election_urls.py'), encoding='utf-8') as f:
+      self.assertIn("path('/booth-theme.css'", f.read())
+
+  @override_settings(ORGANIZATIONS=ORGS2, HELP_EMAIL_ADDRESS='help@example.org')
+  def test_metadata(self):
+    def meta(election):
+      return json.loads(self.client.get('/helios/elections/%s/meta' % election.uuid).content)
+    # no organization: as before, with the default help address instead of a fixed one
+    data = meta(self.make_election(self.unia_user))
+    self.assertNotIn('organization', data)
+    self.assertEqual(data['help_email'], 'help@example.org')
+    data = meta(self.make_election(self.unia_user, help_email='board@example.org'))
+    self.assertEqual(data['help_email'], 'board@example.org')
+    # an organization's name and its own logo, for the booth's header; its help address
+    data = meta(self.make_election(self.unia_user, organization='unic'))
+    self.assertEqual(data['organization'], {'name': 'University C', 'logo_url': '/static/site/unic/logo.svg'})
+    self.assertEqual(data['help_email'], 'elections@uni-c.example.org')
+    election = self.make_election(self.unia_user, organization='unic')
+    response = self.client.get('/helios/elections/%s/meta' % election.uuid, HTTP_ACCEPT_LANGUAGE='de')
+    self.assertEqual(json.loads(response.content)['organization']['name'], 'Universität C')
+    # never the operator's logo
+    self.assertEqual(meta(self.make_election(self.unia_user, organization='unib'))['organization'],
+                     {'name': 'University B', 'logo_url': ''})
+    # an organization hiding the help address hides it in the booth too
+    orgs = project_settings.parse_organizations(_config(unib=dict(UNIB, help_email='')))
+    with self.settings(ORGANIZATIONS=orgs):
+      self.assertEqual(meta(self.make_election(self.unia_user, organization='unib'))['help_email'], '')
+    # not part of the election's data or fingerprint
+    election = self.make_election(self.unia_user, organization='unic')
+    self.assertNotIn('University C', self.client.get('/helios/elections/%s' % election.uuid).content.decode())
+
+
+def booth_dark_mode(dark_mode):
+  from helios.booth_theme import dark_mode_css
+  return dark_mode_css(dark_mode)
+
+
+@override_settings(EMAIL_BACKEND='helios.mail_backend.LoggingEmailBackend',
+                   HELIOS_EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+                   DEFAULT_FROM_EMAIL='elections@example.org', DEFAULT_FROM_NAME='Example Elections',
+                   SERVER_EMAIL='Example Elections <elections@example.org>')
+class ElectionMailTests(OrganizationTestCase):
+  """Emails for an election come from its organization: sender name, Reply-To and signature."""
+
+  def make_voter(self, election, email='voter@example.net'):
+    from helios.models import Voter
+    voter = Voter.objects.create(uuid=str(uuid.uuid4()), election=election, voter_login_id='v1',
+                                 voter_email=email, voter_name='Erika Muster')
+    voter.generate_password()
+    voter.save()
+    return voter
+
+  def send_voter_email(self, election, template='vote', language=None):
+    from helios import tasks
+    from helios.tests import run_queued_tasks
+    voter = self.make_voter(election)
+    tasks.single_voter_email.enqueue(voter.uuid, 'email/%s_subject.txt' % template, 'email/%s_body.txt' % template,
+                                     {'custom_subject': 'Board election', 'custom_message': 'Please vote.',
+                                      'election_vote_url': 'https://vote.example.org/v', 'election_url': 'https://vote.example.org/e'},
+                                     language=language)
+    run_queued_tasks()
+    self.assertEqual(len(mail.outbox), 1)
+    return mail.outbox[0]
+
+  def test_default_organization_unchanged(self):
+    message = self.send_voter_email(self.make_election(self.unia_user))
+    self.assertEqual(message.from_email, 'Example Elections <elections@example.org>')
+    self.assertEqual(message.reply_to, [])
+    self.assertIn('\n--\nHelios\n', message.body)
+    self.assertNotIn('Reply-To', message.message())
+
+  @override_settings(ORGANIZATIONS=ORGS2)
+  def test_organization_from_a_background_task(self):
+    for template in ('vote', 'info', 'result', 'simple', 'password_resend'):
+      with self.subTest(template=template):
+        mail.outbox = []
+        message = self.send_voter_email(self.make_election(self.unia_user, organization='unic'), template)
+        self.assertEqual(message.from_email, '"Electoral office, University C" <elections@example.org>')
+        self.assertEqual(message.reply_to, ['elections@uni-c.example.org'])
+        self.assertIn('\n--\nElectoral office\nUniversity C\n', message.body)
+        self.assertNotIn('\n--\nHelios', message.body)
+        headers = message.message()
+        self.assertEqual(headers['From'], '"Electoral office, University C" <elections@example.org>')
+        self.assertEqual(headers['Reply-To'], 'elections@uni-c.example.org')
+    # the context ends with the task
+    self.assertIsNone(organizations.mail_organization())
+
+  @override_settings(ORGANIZATIONS=ORGS2)
+  def test_language_of_the_email(self):
+    message = self.send_voter_email(self.make_election(self.unia_user, organization='unic'), language='de')
+    self.assertIn('\n--\nWahlamt\nUniversität C\n', message.body)
+    # the address stays the same, the name is encoded in the header
+    from email.header import decode_header, make_header
+    sender = message.message()['From']
+    self.assertTrue(sender.startswith('=?utf-8?'), sender)
+    self.assertEqual(str(make_header(decode_header(sender))), 'Wahlamt der Universität C <elections@example.org>')
+
+  @override_settings(ORGANIZATIONS=ORGS2, EMAIL_SIGNATURE='Example Elections')
+  def test_inherits_the_default_organization(self):
+    message = self.send_voter_email(self.make_election(self.unia_user, organization='unib'))
+    self.assertEqual(message.from_email, 'Example Elections <elections@example.org>')
+    self.assertEqual(message.reply_to, [])
+    self.assertIn('\n--\nExample Elections\n', message.body)
+    orgs = project_settings.parse_organizations(_config(unib=dict(UNIB, mail={'reply_to': 'office@uni-b.example.org'})))
+    mail.outbox = []
+    with self.settings(ORGANIZATIONS=orgs):
+      message = self.send_voter_email(self.make_election(self.unia_user, organization='unib'))
+    self.assertEqual(message.from_email, 'Example Elections <elections@example.org>')
+    self.assertEqual(message.reply_to, ['office@uni-b.example.org'])
+
+  @override_settings(ORGANIZATIONS=ORGS2)
+  def test_vote_cast_confirmation_from_the_task(self):
+    from helios import tasks
+    from helios.models import CastVote
+    from helios.tests import run_queued_tasks
+    election = self.make_election(self.unia_user, organization='unic')
+    voter = self.make_voter(election)
+    cast_vote = CastVote.objects.create(voter=voter, vote_hash='HASH123', vote_tinyhash='tiny123')
+    with mock.patch.object(CastVote, 'verify_and_store', return_value=True):
+      tasks.cast_vote_verify_and_store.enqueue(cast_vote.id)
+      run_queued_tasks()
+    self.assertEqual(len(mail.outbox), 1)
+    message = mail.outbox[0]
+    self.assertIn('HASH123', message.body)
+    self.assertEqual(message.from_email, '"Electoral office, University C" <elections@example.org>')
+    self.assertEqual(message.reply_to, ['elections@uni-c.example.org'])
+    self.assertIn('\n--\nElectoral office\nUniversity C\n', message.body)
+
+  @override_settings(ORGANIZATIONS=ORGS2)
+  def test_trustee_and_removed_vote_emails(self):
+    election = self.make_election(self.unia_user, organization='unic')
+    trustee = Trustee.objects.create(election=election, uuid=str(uuid.uuid4()), name='Tara Trustee',
+                                     email='trustee@example.net', secret='s3cret')
+    self.login(self.unia_user)
+    self.client.post('/helios/elections/%s/trustees/%s/sendurl' % (election.uuid, trustee.uuid), {'csrf_token': 'tok'})
+    voter = self.make_voter(election)
+    voter.vote_hash = 'HASH'
+    voter.save()
+    self.client.post('/helios/elections/%s/voters/%s/delete' % (election.uuid, voter.uuid), {'csrf_token': 'tok'})
+    self.assertEqual([m.subject for m in mail.outbox],
+                     ['your trustee homepage for Board election', 'Your vote has been removed - Board election'])
+    for message in mail.outbox:
+      self.assertEqual(message.from_email, '"Electoral office, University C" <elections@example.org>')
+      self.assertEqual(message.reply_to, ['elections@uni-c.example.org'])
+      self.assertTrue(message.body.endswith('\n--\nElectoral office\nUniversity C\n'), message.body)
+    self.assertIn('/t/%s/trustee@example.net/s3cret' % election.short_name, mail.outbox[0].body)
+
+  @override_settings(ORGANIZATIONS=ORGS2)
+  def test_admin_notifications_and_other_emails_stay_the_operators(self):
+    from helios import tasks
+    from helios.tests import run_queued_tasks
+    election = self.make_election(self.unia_user, organization='unic')
+    tasks.election_notify_admin.enqueue(election_id=election.id, subject='voter file processed', body='done')
+    run_queued_tasks()
+    self.assertEqual(mail.outbox[0].from_email, 'Example Elections <elections@example.org>')
+    self.assertEqual(mail.outbox[0].reply_to, [])
+    # another sender address is never touched
+    from django.core.mail import send_mail
+    with organizations.mail_context(election):
+      send_mail('s', 'b', 'Other <other@example.org>', ['x@example.net'])
+    self.assertEqual(mail.outbox[1].from_email, 'Other <other@example.org>')
+
+  @override_settings(ORGANIZATIONS=ORGS2)
+  def test_preview_shows_the_organizations_signature(self):
+    election = self.make_election(self.unia_user, organization='unic', frozen_at=datetime.datetime.utcnow())
+    self.make_voter(election)
+    self.login(self.unia_user)
+    response = self.client.get('/helios/elections/%s/voters/email?template=vote' % election.uuid)
+    self.assertContains(response, 'Electoral office\nUniversity C')
+
+  def test_password_reminder_signed_with_the_site_title(self):
+    User.objects.create(user_type='password', user_id='jdoe', name='J', info={'password': 'pw', 'email': 'j@example.net', 'name': 'J'})
+    self.login(self.unia_user)
+    with self.settings(SITE_TITLE='Example Elections', LOCALIZED_SETTINGS={'SITE_TITLE': {'de': 'Beispielwahlen'}}):
+      self.client.post('/auth/password/forgot', {'username': 'jdoe', 'csrf_token': 'tok'}, HTTP_ACCEPT_LANGUAGE='de')
+    self.assertTrue(mail.outbox[0].body.rstrip().endswith('Beispielwahlen'), mail.outbox[0].body)

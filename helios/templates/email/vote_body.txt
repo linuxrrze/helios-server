@@ -39,7 +39,7 @@ the screen when you vote: {{ hash }}
 {% endblocktranslate %}
 
 --
-Helios
+{{ ci.mail_signature }}
 
 {% if unsubscribe_url %}
 {% translate "To stop receiving all emails from Helios, click here:" %}

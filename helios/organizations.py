@@ -27,7 +27,11 @@ CI is not a separation of tenants: data, site administrators, logins and the
 email opt-out list stay shared.
 """
 
+import contextlib
+import contextvars
+import copy
 from collections import namedtuple
+from email.utils import formataddr, parseaddr
 
 from django.conf import settings
 from django.utils import translation
@@ -171,6 +175,45 @@ class Organization:
     """the "Contact" address in the footer and on error messages"""
     return self._layout('help_email', lambda: settings.HELP_EMAIL_ADDRESS)
 
+  # voting booth (helios/booth_theme.py)
+
+  @property
+  def booth_colors(self):
+    """{'primary': '#rrggbb', ..., 'dark': {...}}, validated at start (settings.parse_booth_colors)"""
+    return self._layout('colors', lambda: getattr(settings, 'BOOTH_COLORS', {}))
+
+  @property
+  def font_url(self):
+    """a self-hosted web font for the booth's text (not for fingerprints and trackers)"""
+    return self._layout('font_url', lambda: getattr(settings, 'BOOTH_FONT_URL', ''))
+
+  @property
+  def booth_logo_url(self):
+    """the organization's own main logo, shown in the booth's header; never the operator's"""
+    return '' if self.is_default else self._config.get('main_logo_url', '')
+
+  # emails (see mail_context): the sender address stays DEFAULT_FROM_EMAIL
+
+  def _mail(self, key):
+    return self._config.get('mail', {}).get(key)
+
+  @property
+  def mail_from_name(self):
+    """display name of the sender of the election's emails"""
+    from_name = self._mail('from_name')
+    return localize(from_name) if from_name else settings.DEFAULT_FROM_NAME
+
+  @property
+  def mail_reply_to(self):
+    """Reply-To of the election's emails ('' for none)"""
+    return self._mail('reply_to') or ''
+
+  @property
+  def mail_signature(self):
+    """the signature after "-- " in the emails to voters and trustees"""
+    signature = self._mail('signature')
+    return localize(signature) if signature else (localized_setting('EMAIL_SIGNATURE') or 'Helios')
+
   @property
   def label(self):
     """how the organization is named in lists: its name, else its slug (or the site title for the default)"""
@@ -205,6 +248,53 @@ def all_organizations():
 
 def for_election(election):
   return get(getattr(election, 'organization', ''))
+
+
+##
+## emails in the context of an election
+##
+
+# The organization whose election an email is sent for. Set around sending (in the
+# view or inside the background task, as tasks run without the request), and
+# applied by helios.mail_backend.LoggingEmailBackend to every email sent with the
+# default sender, so that the auth systems' send_message need not know about it.
+_mail_organization = contextvars.ContextVar('helios_mail_organization', default=None)
+
+
+@contextlib.contextmanager
+def mail_context(election):
+  """emails sent inside come from the election's organization (sender name, Reply-To)"""
+  token = _mail_organization.set(for_election(election))
+  try:
+    yield
+  finally:
+    _mail_organization.reset(token)
+
+
+def mail_organization():
+  """the organization set by mail_context, else None"""
+  return _mail_organization.get()
+
+
+def apply_mail_identity(message, organization=None):
+  """
+  The email as the organization sends it: the display name of the sender
+  ("<from_name>" <DEFAULT_FROM_EMAIL>) and its Reply-To. Only for emails sent with
+  the default sender address, which stays the same for SPF and DKIM; others and
+  emails of the default organization are returned unchanged. Names and addresses
+  were validated at start (no line breaks); formataddr quotes and encodes the name.
+  """
+  organization = organization or mail_organization()
+  if organization is None or organization.is_default:
+    return message
+  sender = parseaddr(str(message.from_email or ''))[1]
+  if sender.lower() != settings.DEFAULT_FROM_EMAIL.lower():
+    return message
+  message = copy.copy(message)
+  message.from_email = formataddr((organization.mail_from_name, settings.DEFAULT_FROM_EMAIL))
+  if organization.mail_reply_to and not message.reply_to:
+    message.reply_to = [organization.mail_reply_to]
+  return message
 
 
 def context_processor(request):

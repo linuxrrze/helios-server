@@ -191,12 +191,22 @@ class Election(HeliosModel):
   # metadata for the election
   @property
   def metadata(self):
-    return {
-      'help_email': self.help_email or 'help@heliosvoting.org',
+    """
+    Election data that need not be verified (not part of the fingerprint), for the
+    booth. An election of a configured organization also gets its name and logo
+    (for the booth's header); they never go into toJSONDict.
+    """
+    from helios import organizations
+    organization = organizations.for_election(self)
+    metadata = {
+      'help_email': self.help_email or organization.help_email,
       'private_p': self.private_p,
       'use_advanced_audit_features': self.use_advanced_audit_features,
       'randomize_answer_order': self.randomize_answer_order
       }
+    if not organization.is_default:
+      metadata['organization'] = {'name': organization.name, 'logo_url': organization.booth_logo_url}
+    return metadata
 
   @property
   def pretty_type(self):

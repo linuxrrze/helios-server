@@ -13,6 +13,7 @@ from django.utils.translation import gettext as _, ngettext
 from django_tasks import task
 from urllib.parse import urlparse
 
+from . import organizations
 from . import signals
 from . import utils
 from .models import CastVote, Election, Voter, VoterFile, EmailOptOut
@@ -63,8 +64,9 @@ def _cast_vote_verify_and_store(cast_vote_id, status_update_message):
     user = voter.get_user()
 
     if result:
-        # send the signal
-        signals.vote_cast.send(sender=election, election=election, user=user, voter=voter, cast_vote=cast_vote)
+        # send the signal (its receiver mails the voter a confirmation, server_ui/glue.py)
+        with organizations.mail_context(election):
+            signals.vote_cast.send(sender=election, election=election, user=user, voter=voter, cast_vote=cast_vote)
 
         if status_update_message and user.can_update_status():
             user.update_status(status_update_message)
@@ -114,11 +116,12 @@ def single_voter_email(voter_uuid, subject_template, body_template, extra_vars={
     the_vars.update({'voter': voter})
     the_vars.update(voter_unsubscribe_vars(voter))
 
-    with _language(language):
+    # the email comes from the election's organization (sender name, Reply-To and
+    # signature, in the language of the email); set here, as the task runs without the request
+    with _language(language), organizations.mail_context(voter.election):
         subject = render_text_template(subject_template, the_vars)
         body = render_text_template(body_template, the_vars)
-
-    voter.send_message(subject, body)
+        voter.send_message(subject, body)
 
 
 @task()
@@ -128,10 +131,9 @@ def single_voter_notify(voter_uuid, notification_template, extra_vars={}, langua
     the_vars = copy.copy(extra_vars)
     the_vars.update({'voter': voter})
 
-    with _language(language):
+    with _language(language), organizations.mail_context(voter.election):
         notification = render_text_template(notification_template, the_vars)
-
-    voter.send_notification(notification)
+        voter.send_notification(notification)
 
 
 @task()

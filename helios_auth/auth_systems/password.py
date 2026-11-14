@@ -11,7 +11,7 @@ from django.urls import re_path
 from django.utils.translation import gettext as _, gettext_lazy
 
 from helios_auth import url_names
-from helios_auth.utils import format_recipient, same_site_path
+from helios_auth.utils import format_recipient, localized_setting, same_site_path
 
 import logging
 
@@ -108,7 +108,9 @@ Your password: %(password)s
 
 --
 %(site_title)s
-""") % {'username': user.user_id, 'password': user.info['password'], 'site_title': settings.SITE_TITLE}
+""") % {'username': user.user_id, 'password': user.info['password'],
+           # not about an election: signed with the operator's (default organization's) site title
+           'site_title': localized_setting('SITE_TITLE') or ''}
 
     # FIXME: make this a task
     send_mail(_('password reminder'), body, settings.SERVER_EMAIL, [format_recipient(user.info['name'], user.info['email'])], fail_silently=False)

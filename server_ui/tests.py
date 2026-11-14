@@ -294,8 +294,11 @@ class DarkModeTests(TestCase):
         from django.test import override_settings
         with open(os.path.join(settings.ROOT_PATH, 'heliosbooth', 'vote.html')) as f:
             booth = f.read()
-        self.assertIn('<link rel="stylesheet" type="text/css" href="/booth-dark-mode.css" />', booth)
-        # after the booth's own stylesheets, so that it overrides their colors
+        # the booth opened for an election loads its stylesheet (helios/booth_theme.py, which
+        # includes the dark colors), else this one; after the booth's own stylesheets, so
+        # that it overrides their colors
+        self.assertIn('var href = "/booth-dark-mode.css";', booth)
+        self.assertIn('href = "/helios/elections/" + match[1] + "/booth-theme.css";', booth)
         self.assertGreater(booth.index('/booth-dark-mode.css'), booth.index('css/booth-ui.css'))
         with override_settings(DARK_MODE='auto'):
             response = self.client.get('/booth-dark-mode.css')

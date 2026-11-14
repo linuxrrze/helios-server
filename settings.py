@@ -300,6 +300,9 @@ VOTER_UPLOAD_REL_PATH = "voters/%Y/%m/%d"
 DEFAULT_FROM_EMAIL = get_from_env('DEFAULT_FROM_EMAIL', 'ben@adida.net')
 DEFAULT_FROM_NAME = get_from_env('DEFAULT_FROM_NAME', 'Ben for Helios')
 SERVER_EMAIL = '%s <%s>' % (DEFAULT_FROM_NAME, DEFAULT_FROM_EMAIL)
+# signature (after "-- ") of the emails to voters and trustees; per language as
+# EMAIL_SIGNATURE_DE etc. An organization can set its own (docs/organizations.md).
+EMAIL_SIGNATURE = get_from_env('EMAIL_SIGNATURE', 'Helios')
 
 LOGIN_URL = '/auth/'
 LOGOUT_ON_CONFIRMATION = True
@@ -420,6 +423,108 @@ ACCESSIBILITY_URL = get_from_env('ACCESSIBILITY_URL', '')
 # further footer links, JSON: [{"url": "https://...", "text": "..."}]
 FOOTER_LINKS = json.loads(get_from_env('FOOTER_LINKS', '[]'))
 
+# Colors of the voting booth. The booth is a static page: it gets them from a
+# stylesheet the server generates per election (helios/booth_theme.py) from these
+# validated values only, never from free CSS, so that nothing can hide or change
+# the election fingerprint, the audit option or the steps of casting a ballot.
+# JSON: {"primary": "#00447c", ..., "dark": {"primary": "#9cc3ff", ...}}; see
+# docs/organizations.md, "Voting booth". The default organization uses BOOTH_COLORS
+# and BOOTH_FONT_URL; organizations without their own "colors" inherit them.
+BOOTH_COLOR_NAMES = ('primary', 'primary_contrast', 'accent', 'accent_contrast', 'link', 'background')
+# the built-in colors (heliosbooth/css/booth-ui.css and booth-dark.css), to check the
+# contrast of a configured color against the one it is shown with
+BOOTH_BUILT_IN_COLORS = {
+  'light': {'primary': '#2c4f7c', 'primary_contrast': '#ffffff', 'accent': '#e9edf2',
+            'accent_contrast': '#1f2933', 'link': '#1d4f91', 'background': '#f4f6f8', 'surface': '#ffffff'},
+  'dark': {'primary': '#3f71b0', 'primary_contrast': '#ffffff', 'accent': '#232c37',
+           'accent_contrast': '#e6eaee', 'link': '#9cc3ff', 'background': '#12171d', 'surface': '#1b222b'},
+}
+BOOTH_MIN_CONTRAST = 4.5  # WCAG AA for text
+
+def parse_color(value):
+  """'#rgb', '#rrggbb' or 'rgb(r, g, b)' -> '#rrggbb'; None if it is none of them"""
+  import re
+  if not isinstance(value, str):
+    return None
+  value = value.strip()
+  match = re.fullmatch(r'#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})', value)
+  if match:
+    digits = match.group(1).lower()
+    return '#' + (''.join(c * 2 for c in digits) if len(digits) == 3 else digits)
+  match = re.fullmatch(r'rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)', value)
+  if match and all(int(c) <= 255 for c in match.groups()):
+    return '#' + ''.join('%02x' % int(c) for c in match.groups())
+  return None
+
+def color_contrast(color1, color2):
+  """WCAG contrast ratio of two '#rrggbb' colors (1 to 21)"""
+  def luminance(color):
+    channels = [int(color[i:i + 2], 16) / 255 for i in (1, 3, 5)]
+    r, g, b = [c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4 for c in channels]
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+  lighter, darker = sorted([luminance(color1), luminance(color2)], reverse=True)
+  return (lighter + 0.05) / (darker + 0.05)
+
+def parse_booth_colors(value):
+  """
+  The booth colors {"primary": ..., "dark": {...}} -> normalized ('#rrggbb'); raises
+  ValueError with the problem. Each color given must be readable with the color it is
+  shown with (contrast at least 4.5:1, configured or built-in): text on primary
+  buttons, outlined buttons and links on the booth's background, and the header and
+  footer text, which includes the election fingerprint, on the accent color.
+  """
+  def check_mode(colors, mode, where):
+    if not isinstance(colors, dict):
+      raise ValueError('%smust be an object with the colors %s.' % (where, ', '.join(BOOTH_COLOR_NAMES)))
+    unknown = sorted(set(colors) - set(BOOTH_COLOR_NAMES))
+    if unknown:
+      raise ValueError('%sunknown color(s) %s; known are %s.' % (where, ', '.join(unknown), ', '.join(BOOTH_COLOR_NAMES)))
+    normalized = {}
+    for name, color in colors.items():
+      normalized[name] = parse_color(color)
+      if not normalized[name]:
+        raise ValueError('%s"%s" must be a color as "#rrggbb", "#rgb" or "rgb(r, g, b)" (%r).' % (where, name, color))
+    effective = dict(BOOTH_BUILT_IN_COLORS[mode], **normalized)
+    pairs = [('primary_contrast', 'primary'), ('primary', 'surface'), ('link', 'surface'), ('accent_contrast', 'accent')]
+    for foreground, background in pairs:
+      if foreground in normalized or background in normalized:
+        ratio = color_contrast(effective[foreground], effective[background])
+        if ratio < BOOTH_MIN_CONTRAST:
+          raise ValueError('%s"%s" %s on %s %s has a contrast of %.1f:1, at least %.1f:1 is needed so that it stays readable.'
+                           % (where, foreground, effective[foreground],
+                              'the booth background' if background == 'surface' else '"%s"' % background,
+                              effective[background], ratio, BOOTH_MIN_CONTRAST))
+    return normalized
+
+  if not isinstance(value, dict):
+    raise ValueError('must be an object {"primary": "#rrggbb", ..., "dark": {...}}.')
+  light = {k: v for k, v in value.items() if k != 'dark'}
+  normalized = check_mode(light, 'light', '')
+  if 'dark' in value:
+    normalized['dark'] = check_mode(value['dark'], 'dark', '"dark": ')
+  return normalized
+
+def check_font_url(value):
+  """a self-hosted web font (path on this site): '/static/site/....woff2'; raises ValueError"""
+  import re
+  if isinstance(value, str) and (value == '' or (
+      re.fullmatch(r'/[A-Za-z0-9._~/-]+\.(woff2|woff|ttf|otf)', value) and '//' not in value and '..' not in value)):
+    return value
+  raise ValueError('must be the path of a font file on this site such as "/static/site/font.woff2" (%r).' % (value,))
+
+def _booth_setting(name, parse, default):
+  from django.core.exceptions import ImproperlyConfigured
+  raw = get_from_env(name, '')
+  if not raw:
+    return default
+  try:
+    return parse(json.loads(raw) if name == 'BOOTH_COLORS' else raw)
+  except ValueError as e:
+    raise ImproperlyConfigured('%s: %s' % (name, e))
+
+BOOTH_COLORS = _booth_setting('BOOTH_COLORS', parse_booth_colors, {})
+BOOTH_FONT_URL = _booth_setting('BOOTH_FONT_URL', check_font_url, '')
+
 # Organizations sharing this server, each with its own corporate identity (CI) on
 # the pages of its elections, and the rules that assign people to them (identity
 # provider, email domain), which also give the prefix of their election addresses.
@@ -512,6 +617,47 @@ def parse_organizations(config_json, source='ORGANIZATIONS_FILE'):
       return value
     fail('%s %r is not a valid prefix: use %s.', where, value, SHORT_NAME_PREFIX_RULE)
 
+  def booth_colors(where, value):
+    try:
+      return parse_booth_colors(value)
+    except ValueError as e:
+      fail('%s: %s', where, e)
+
+  def font_url(where, value):
+    try:
+      return check_font_url(value)
+    except ValueError as e:
+      fail('%s %s', where, e)
+
+  def no_control_characters(where, texts, allowed=''):
+    import unicodedata
+    for value in texts.values():
+      if any(unicodedata.category(c) in ('Cc', 'Cf', 'Zl', 'Zp') and c not in allowed for c in value):
+        fail('%s must not contain line breaks or other control characters.', where)
+
+  def mail(where, value):
+    # the sender address stays DEFAULT_FROM_EMAIL (SPF, DKIM): an organization gives
+    # the display name, a Reply-To address and the signature only
+    if not isinstance(value, dict) or set(value) - {'from_name', 'reply_to', 'signature'}:
+      fail('%s must be an object with "from_name", "reply_to" and/or "signature".', where)
+    normalized = {}
+    if 'from_name' in value:
+      normalized['from_name'] = text(where + ' from_name', value['from_name'])
+      # one header line: no line breaks (header injection), no bidi or other invisible characters
+      no_control_characters(where + ' from_name', normalized['from_name'])
+      if any(len(v) > 100 for v in normalized['from_name'].values()):
+        fail('%s from_name must be at most 100 characters.', where)
+    if 'reply_to' in value:
+      if not value['reply_to']:
+        fail('%s reply_to must be an email address (%r).', where, value['reply_to'])
+      normalized['reply_to'] = email(where + ' reply_to', value['reply_to'])
+    if 'signature' in value:
+      normalized['signature'] = text(where + ' signature', value['signature'])
+      no_control_characters(where + ' signature', normalized['signature'], allowed='\n')
+      if any(len(v) > 1000 for v in normalized['signature'].values()):
+        fail('%s signature must be at most 1000 characters.', where)
+    return normalized
+
   fields = {
     'name': text, 'url': url, 'short_name_prefix': prefix, 'match': None,
     'site_title': text, 'css_url': local_path, 'dark_mode': choice('auto', 'off'),
@@ -519,6 +665,7 @@ def parse_organizations(config_json, source='ORGANIZATIONS_FILE'):
     'header_logo_url': local_path, 'footer_logo_url': local_path,
     'imprint_url': link, 'privacy_url': link, 'accessibility_url': link,
     'footer_links': footer_links, 'help_email': email,
+    'colors': booth_colors, 'font_url': font_url, 'mail': mail,
   }
   organizations = {}
   owners = {}  # prefix / identity provider / email domain -> slug, to find duplicates
@@ -755,7 +902,8 @@ AUTH_LDAP_ALWAYS_UPDATE_USER = False
 # Per-language variants of display texts set above: e.g. WELCOME_MESSAGE_DE is
 # shown instead of WELCOME_MESSAGE when the page is in German. Read with
 # helios_auth.utils.localized_setting().
-LOCALIZED_SETTING_NAMES = ('SITE_TITLE', 'WELCOME_MESSAGE', 'ORGANIZATION_NAME', 'OIDC_LOGIN_MESSAGE', 'SAML_LOGIN_MESSAGE')
+LOCALIZED_SETTING_NAMES = ('SITE_TITLE', 'WELCOME_MESSAGE', 'ORGANIZATION_NAME', 'OIDC_LOGIN_MESSAGE', 'SAML_LOGIN_MESSAGE',
+                           'EMAIL_SIGNATURE')
 LOCALIZED_SETTINGS = {
     name: {code: get_from_env('%s_%s' % (name, code.upper().replace('-', '_')), None) for code, _name in LANGUAGES}
     for name in LOCALIZED_SETTING_NAMES

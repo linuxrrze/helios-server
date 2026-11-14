@@ -3,7 +3,6 @@ server_ui specific views
 """
 
 import copy
-import os
 
 from django.conf import settings
 from django.http import Http404, HttpResponse
@@ -11,7 +10,7 @@ from django.template import TemplateDoesNotExist
 from django.template.loader import get_template
 
 import helios_auth.views as auth_views
-from helios import organizations
+from helios import booth_theme, organizations
 from helios.models import Election
 from helios.security import can_create_election
 from helios_auth.security import get_user
@@ -90,13 +89,11 @@ def booth_dark_mode_css(request):
   """
   The dark colors of the voting booth (heliosbooth/css/booth-dark.css) with
   DARK_MODE=auto, an empty stylesheet otherwise: the booth is a static page
-  (usually served by the web server), so it gets the setting this way.
+  (usually served by the web server), so it gets the setting this way. The booth
+  opened for an election loads that election's stylesheet instead
+  (/helios/elections/<uuid>/booth-theme.css), which contains the same colors.
   """
-  if getattr(settings, 'DARK_MODE', 'off') == 'auto':
-    with open(os.path.join(settings.ROOT_PATH, 'heliosbooth', 'css', 'booth-dark.css'), encoding='utf-8') as f:
-      css = f.read()
-  else:
-    css = "/* DARK_MODE is off: the voting booth stays light */\n"
+  css = booth_theme.dark_mode_css(getattr(settings, 'DARK_MODE', 'off'))
   response = HttpResponse(css, content_type='text/css; charset=utf-8')
   # the setting can change with a restart; the file is small
   response['Cache-Control'] = 'no-cache'

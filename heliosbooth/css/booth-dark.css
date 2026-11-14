@@ -5,35 +5,50 @@
  * stylesheet otherwise, so that an installation with dark mode off (e.g. with
  * its own light site stylesheet) keeps a light booth. The colors are those of
  * the dark mode of the other pages (server_ui/media/layout.css). Loaded after
- * booth.css, forms.css and booth-ui.css; only colors change.
+ * booth.css, forms.css and booth-ui.css; only colors change. The colors an
+ * organization can change are the --booth-* properties of booth-ui.css; the
+ * election's booth stylesheet (helios/booth_theme.py) contains this file and
+ * may set its own dark values after it.
  *
  * Contrast (WCAG): text #e6eaee 13:1 on #1b222b, muted #a9b5c1 7.6:1, links
  * and outlined buttons #9cc3ff 8.6:1, white on the filled button #3f71b0 5:1.
  */
 @media (prefers-color-scheme: dark) {
-  :root { color-scheme: dark; }
-  body { background: #12171d; color: #e6eaee; }
+  :root {
+    color-scheme: dark;
+    --booth-primary: #3f71b0;
+    --booth-primary-hover: #2f5a91;
+    --booth-primary-contrast: #fff;
+    --booth-outline: #9cc3ff;
+    --booth-button-hover: #232c37;
+    --booth-selected: #1c2f47;
+    --booth-link: #9cc3ff;
+    --booth-accent: #232c37;
+    --booth-accent-contrast: #e6eaee;
+    --booth-accent-muted: #a9b5c1;
+    --booth-accent-link: #9cc3ff;
+    --booth-background: #12171d;
+  }
+  body { color: #e6eaee; }
   #wrapper { background: #1b222b; border-color: #3d4957; }
-  .edge { background: #232c37; color: #e6eaee; }
-  #footer, .booth-start-note, .question-rules, .review-count, .audit-box .optional { color: #a9b5c1; }
+  .booth-start-note, .question-rules, .review-count, .audit-box .optional { color: #a9b5c1; }
 
-  a, #banner .exit-button, #page button.link, .audit-box summary { color: #9cc3ff; }
   a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible, [tabindex]:focus-visible { outline-color: #8ab4ff; }
 
   .booth-progress li { border-bottom-color: #3d4957; color: #a9b5c1; }
-  .booth-progress li.selected { border-bottom-color: #9cc3ff; color: #e6eaee; }
+  .booth-progress li.selected { color: #e6eaee; }
 
-  #page button { border-color: #9cc3ff; background: transparent; color: #9cc3ff; }
-  #page button:hover { background: #232c37; }
-  #page button.primary { border-color: #3f71b0; background: #3f71b0; color: #fff; }
-  #page button.primary:hover { border-color: #2f5a91; background: #2f5a91; }
+  #page button { background: transparent; }
+  #page button:hover { background: var(--booth-button-hover); }
+  #page button.primary { background: var(--booth-primary); }
+  #page button.primary:hover { background: var(--booth-primary-hover); }
   #page button.link, #page button.link:hover { background: none; }
   button { background: #232c37; color: #e6eaee; }
 
   .answer-row { border-color: #7d8a98; background: #1b222b; }
-  .answer-row:hover { border-color: #9cc3ff; }
-  .answer-row input.ballot_answer { accent-color: #9cc3ff; }
-  div.selected, div.answer-row.selected { border-color: #9cc3ff; background: #1c2f47; }
+  .answer-row:hover { border-color: var(--booth-outline); }
+  div.selected { border-color: #9cc3ff; background: #1c2f47; }
+  div.answer-row.selected { border-color: var(--booth-outline); background: var(--booth-selected); }
   .answer-row:has(input:disabled) label.answer { color: #a9b5c1; }
   .warning-box { color: #7fd69b; }
   .warning-box.error { border-left-color: #ff9a92; background: #3b1717; color: #ff9a92; }

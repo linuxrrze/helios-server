@@ -20,7 +20,7 @@ Please contact us if you believe you did.
 {% endblocktranslate %}
 {% endif %}
 --
-Helios
+{{ ci.mail_signature }}
 
 {% if unsubscribe_url %}
 {% translate "To stop receiving all emails from Helios, click here:" %}

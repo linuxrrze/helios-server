@@ -1,6 +1,7 @@
 ELECTION_HOME="election@home"
 ELECTION_VIEW="election@view"
 ELECTION_META="election@meta"
+ELECTION_BOOTH_THEME="election@booth-theme"
 ELECTION_EDIT="election@edit"
 ELECTION_SCHEDULE="election@schedule"
 ELECTION_EXTEND="election@extend"

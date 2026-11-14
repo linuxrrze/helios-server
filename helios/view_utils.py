@@ -95,9 +95,18 @@ def render_text_template(template_name, values=None):
   """
   Render a plain-text template (email, notification) without HTML autoescaping,
   so names and URLs with &, ' or < come out as typed rather than as entities.
+
+  `ci` is the organization of the election in VALUES (else of the surrounding
+  organizations.mail_context, else the default): emails end with its signature.
   """
+  values = dict(values or {})
+  if 'ci' not in values:
+    if values.get('election') is not None:
+      values['ci'] = organizations.for_election(values['election'])
+    else:
+      values['ci'] = organizations.mail_organization() or organizations.default()
   t = loader.get_template(template_name)
-  return t.template.render(Context(values or {}, autoescape=False))
+  return t.template.render(Context(values, autoescape=False))
 
 
 def render_json(json_txt):

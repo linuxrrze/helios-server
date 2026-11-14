@@ -15,6 +15,8 @@ urlpatterns = [
 
     # metadata that need not be verified
     path('/meta', views.one_election_meta, name=names.ELECTION_META),
+    # colors of the voting booth, from the election's organization (helios/booth_theme.py)
+    path('/booth-theme.css', views.one_election_booth_theme, name=names.ELECTION_BOOTH_THEME),
     
     # edit election params
     path('/edit', views.one_election_edit, name=names.ELECTION_EDIT),
