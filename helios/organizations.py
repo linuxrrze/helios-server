@@ -12,9 +12,10 @@ ORGANIZATIONS_FILE (settings.ORGANIZATIONS, see docs/organizations.md).
 Each election belongs to an organization (Election.organization, a slug; ''
 for the default). It is set when the election is created, from the identity of
 its creator, and only site administrators can change it: otherwise anyone could
-send out an election in another organization's CI. The pages of an election
-show its organization's CI; all other pages (start page, login, the lists of
-one's elections, site administration) show the default CI.
+send out an election in another organization's CI. The pages of an election for
+voters and trustees (view_utils.ELECTION_CI_TEMPLATES) show its organization's
+CI; all other pages (start page, login, the lists of one's elections, the
+election's administration pages, site administration) show the default CI.
 
 One mapping assigns people to organizations, and with that to the prefix of
 their election addresses (see match_user): the rules of the organizations
@@ -207,7 +208,7 @@ def for_election(election):
 
 
 def context_processor(request):
-  """`ci` in every template rendered with a request; the pages of an election replace it (see view_utils)"""
+  """`ci` in every template rendered with a request; an election's pages for voters and trustees replace it (see view_utils)"""
   return {'ci': default()}
 
 

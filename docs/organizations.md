@@ -5,10 +5,11 @@ server and still show their own corporate identity (CI) to their voters: logos, 
 site title, imprint, privacy policy, accessibility statement, further footer links and the
 contact address. The server, its host name and its logins stay the same for everyone.
 
-- Every election belongs to one organization. Its pages (for voters, trustees and its
-  administrators) show that organization's CI.
+- Every election belongs to one organization. Its pages for voters and trustees, and its
+  public pages, show that organization's CI.
 - All other pages (start page, login, "My elections", creating an election, voter groups,
-  site administration, the operator's legal pages) show the CI of the **default
+  the administration pages of an election, site administration, the operator's legal
+  pages) show the CI of the **default
   organization**: the operator of the server, configured with the variables of
   [configuration.md, section 5](configuration.md#5-site-and-interface) (`SITE_TITLE`,
   `SITE_CSS_URL`, `ORGANIZATION_NAME`, `IMPRINT_URL`, ...).
@@ -149,10 +150,25 @@ operator and linking the organizations' pages on their own websites.
 - An election whose slug is no longer in the file is shown in the default CI, and stays
   reachable.
 
-The CI is shown on all pages rendered for an election: the election's page, questions,
-voter list, trustees, results, the voters' password login, the trustees' pages, and the
-administrators' pages of the election (edit, voters, trustees, administrators, freeze,
-tally).
+The organization's CI is shown on the pages of an election meant for voters and trustees:
+
+- the public pages: the election's page (with its results), questions, voter list,
+  trustees, the bulletin board and audited ballots, the cast-vote and "not started" /
+  "tallied" pages;
+- for voters: the password login and its "resend" page, confirming and having cast the
+  vote;
+- for trustees: their home page, key generation, key check, decryption.
+
+The election's administrators see these pages in the same CI (e.g. the election's page
+with its administration steps). The election's administration pages keep the operator's
+CI: edit, uploading voters and emailing them, adding trustees, administrators, freeze,
+extend, tally and releasing the result. The list of pages is in
+`ELECTION_CI_TEMPLATES` (`helios/view_utils.py`): a page shows the organization's CI only
+if it is listed there.
+
+**Site administrators** see the organization of each election in the list of elections
+(`/helios/stats/elections`) and can filter it by organization; "default organization"
+there includes elections whose slug is no longer in the file.
 
 ## 3. One mapping for organizations and address prefixes
 

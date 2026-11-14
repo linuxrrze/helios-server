@@ -2,6 +2,7 @@
 Tests for the corporate identity (CI) of organizations (helios/organizations.py).
 """
 
+import datetime
 import io
 import json
 import os
@@ -21,7 +22,11 @@ from django.utils import translation
 
 import settings as project_settings
 from helios import organizations, short_names
-from helios.models import Election
+from django.template.loader import get_template
+
+from helios.models import Election, Trustee
+from helios.security import HELIOS_TRUSTEE_UUID
+from helios.view_utils import ELECTION_CI_TEMPLATES
 from helios_auth.models import User
 
 
@@ -443,17 +448,54 @@ class ElectionPagesTests(OrganizationTestCase):
     for mark in self.DEFAULT_MARKS:
       (self.assertNotIn if unia else self.assertIn)(mark, content)
 
-  def test_election_pages(self):
+  def test_voter_and_trustee_pages(self):
     election = self.make_election(self.unia_user, organization='unia')
     base = '/helios/elections/%s' % election.uuid
     for path in ['/view', '/questions', '/voters/list', '/trustees/view']:
       with self.subTest(path=path):
         self.assertCI(self.client.get(base + path), unia=True)
-    # also for its administrators
+    # the public pages look the same for the election's administrators
     self.login(self.unia_user)
-    for path in ['/view', '/edit', '/voters/list', '/admins/']:
+    for path in ['/view', '/questions', '/voters/list']:
       with self.subTest(path=path, admin=True):
         self.assertCI(self.client.get(base + path), unia=True)
+
+  def test_voter_login_of_a_private_election(self):
+    election = self.make_election(self.unia_user, organization='unia', private_p=True)
+    self.assertCI(self.client.get('/helios/elections/%s/password_voter_login' % election.uuid), unia=True)
+
+  def test_trustee_pages(self):
+    election = self.make_election(self.unia_user, organization='unia')
+    trustee = Trustee.objects.create(election=election, uuid=str(uuid.uuid4()), name='Trustee', email='t@example.org',
+                                     secret='s')
+    self.client.get('/')
+    session = self.client.session
+    session[HELIOS_TRUSTEE_UUID] = trustee.uuid
+    session.save()
+    base = '/helios/elections/%s/trustees/%s' % (election.uuid, trustee.uuid)
+    for path in ['/home', '/check-sk', '/keygenerator']:
+      with self.subTest(path=path):
+        self.assertCI(self.client.get(base + path), unia=True)
+
+  def test_administration_pages_keep_the_default(self):
+    """The election's own administration pages are the operator's, like the rest of the administration."""
+    election = self.make_election(self.unia_user, organization='unia')
+    base = '/helios/elections/%s' % election.uuid
+    self.login(self.unia_user)
+    for path in ['/edit', '/admins/', '/admins/add', '/trustees/new', '/voters/upload', '/freeze', '/extend']:
+      with self.subTest(path=path):
+        self.assertCI(self.client.get(base + path), unia=False)
+    election.frozen_at = datetime.datetime.utcnow()
+    election.questions = []
+    election.save()
+    for path in ['/compute_tally', '/voters/email']:
+      with self.subTest(path=path):
+        self.assertCI(self.client.get(base + path), unia=False)
+
+  def test_opted_in_templates_exist(self):
+    for name in ELECTION_CI_TEMPLATES:
+      with self.subTest(name=name):
+        get_template('helios/templates/%s.html' % name)
 
   def test_german(self):
     election = self.make_election(self.unia_user, organization='unia')
@@ -580,3 +622,51 @@ class AssignCommandTests(OrganizationTestCase):
     with override_settings(ORGANIZATIONS={}):
       with self.assertRaisesMessage(CommandError, 'No organizations are configured'):
         self.run_command()
+
+
+@override_settings(ORGANIZATIONS=ORGS, SITE_TITLE='Example Elections')
+class StatsElectionsTests(OrganizationTestCase):
+  """The site administrators' list of elections shows and filters by organization."""
+
+  def setUp(self):
+    super().setUp()
+    self.make_election(self.unia_user, organization='unia', name='A election')
+    self.make_election(self.other_user, organization='unib', name='B election')
+    self.make_election(self.other_user, name='Default election')
+    self.make_election(self.other_user, organization='gone', name='Gone election')
+    self.login(self.site_admin)
+
+  def listed(self, **params):
+    content = self.client.get('/helios/stats/elections', params).content.decode()
+    return sorted(name for name in ['A election', 'B election', 'Default election', 'Gone election']
+                  if '>%s</a>' % name in content)
+
+  def test_organization_shown(self):
+    response = self.client.get('/helios/stats/elections')
+    self.assertContains(response, 'Organization: University A</span>')
+    self.assertContains(response, 'Organization: Example Elections (default organization)</span>', count=2)
+    self.assertContains(response, '<select id="search-organization" name="organization">')
+    self.assertContains(response, '<option value="_default">Example Elections (default organization)</option>', html=False)
+
+  def test_filter(self):
+    self.assertEqual(self.listed(), ['A election', 'B election', 'Default election', 'Gone election'])
+    self.assertEqual(self.listed(organization='unia'), ['A election'])
+    self.assertEqual(self.listed(organization='_default'), ['Default election', 'Gone election'])
+    self.assertEqual(self.listed(organization='unknown'), ['A election', 'B election', 'Default election', 'Gone election'])
+    self.assertEqual(self.listed(organization='unib', q='Default'), [])
+
+  def test_pager_keeps_the_filter(self):
+    response = self.client.get('/helios/stats/elections', {'organization': 'unib', 'limit': 1, 'q': 'election'})
+    self.assertContains(response, 'B election')
+    response = self.client.get('/helios/stats/elections', {'organization': '_default', 'limit': 1})
+    self.assertContains(response, 'organization=_default">next 1</a>')
+
+  @override_settings(ORGANIZATIONS={})
+  def test_nothing_shown_without_configuration(self):
+    response = self.client.get('/helios/stats/elections', {'organization': 'unia'})
+    self.assertNotContains(response, 'Organization')
+    self.assertEqual(self.listed(organization='unia'), ['A election', 'B election', 'Default election', 'Gone election'])
+
+  def test_site_administrators_only(self):
+    self.login(self.unia_user)
+    self.assertEqual(self.client.get('/helios/stats/elections').status_code, 403)

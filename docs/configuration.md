@@ -252,11 +252,12 @@ accessibility, `FOOTER_LINKS`, and "Contact" (`mailto:` `HELP_EMAIL_ADDRESS`; hi
 
 **Several organizations.** These variables describe the operator of the server (the
 *default organization*). Further organizations sharing the server get their own logos,
-colors, title, legal links and contact address on the pages of their elections:
+colors, title, legal links and contact address on the pages of their elections for voters
+and trustees:
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `ORGANIZATIONS_FILE` | empty | Path of a JSON file describing the organizations, their address prefixes and who belongs to them. Each election belongs to one organization (from its creator's login; only site administrators can change it) and its pages show that organization's corporate identity; all other pages keep the operator's. With the file, the start page lists only the featured elections of the visitor's own organization (none when not logged in). Read at start: a missing file or an invalid entry stops Helios from starting. Format, rules and migration: [organizations.md](organizations.md). |
+| `ORGANIZATIONS_FILE` | empty | Path of a JSON file describing the organizations, their address prefixes and who belongs to them. Each election belongs to one organization (from its creator's login; only site administrators can change it) and its pages for voters and trustees show that organization's corporate identity; all other pages, including the election's administration pages, keep the operator's. With the file, the start page lists only the featured elections of the visitor's own organization (none when not logged in). Read at start: a missing file or an invalid entry stops Helios from starting. Format, rules and migration: [organizations.md](organizations.md). |
 
 **CSS variables** of the default layout, to be set in `SITE_CSS_URL`:
 

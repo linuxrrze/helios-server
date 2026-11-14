@@ -3,6 +3,7 @@ Helios stats views
 """
 
 import datetime
+from urllib.parse import urlencode
 
 from django.core.paginator import Paginator
 from django.urls import reverse
@@ -13,7 +14,7 @@ from django.views.decorators.http import require_http_methods
 from django_tasks import TaskResultStatus
 from django_tasks_db.models import DBTaskResult
 
-from helios import tasks, url_names
+from helios import organizations, tasks, url_names
 from helios.management.commands.requeue_stuck_tasks import STUCK_AFTER_MINUTES
 from helios.models import CastVote, Election, SiteAnnouncement
 from helios_auth.models import User
@@ -21,6 +22,9 @@ from helios_auth.security import get_user, check_csrf
 from .security import PermissionDenied
 from .view_utils import render_template
 
+
+# value of the organization filter for the default organization (not a valid slug)
+DEFAULT_ORGANIZATION_FILTER = '_default'
 
 def require_admin(request):
   user = get_user(request)
@@ -71,13 +75,34 @@ def elections(request):
   q = request.GET.get('q','')
 
   elections = Election.objects.filter(name__icontains = q).order_by('-created_at')
+
+  # with organizations configured: filter by organization, DEFAULT_ORGANIZATION_FILTER
+  # for the default one (including slugs no longer configured, shown in its CI)
+  organizations_p = organizations.enabled()
+  organization = request.GET.get('organization', '') if organizations_p else ''
+  if organization == DEFAULT_ORGANIZATION_FILTER:
+    elections = elections.exclude(organization__in=list(organizations.configured()))
+  elif organization in organizations.configured():
+    elections = elections.filter(organization=organization)
+  else:
+    organization = ''
+
   elections_paginator = Paginator(elections, limit)
   elections_page = elections_paginator.page(page)
+  if organizations_p:
+    for election in elections_page.object_list:
+      election.organization_ci = organizations.for_election(election)
 
   total_elections = elections_paginator.count
+  filter_query = urlencode({'q': q, 'organization': organization} if organization else {'q': q})
 
   return render_template(request, "stats_elections", {'elections' : elections_page.object_list, 'elections_page': elections_page,
-                                                      'limit' : limit, 'total_elections': total_elections, 'q': q})
+                                                      'limit' : limit, 'total_elections': total_elections, 'q': q,
+                                                      'filter_query': filter_query,
+                                                      'organizations_p': organizations_p, 'organization': organization,
+                                                      'organization_choices': organizations.all_organizations(),
+                                                      'default_organization': organizations.default(),
+                                                      'default_organization_filter': DEFAULT_ORGANIZATION_FILTER})
     
 def recent_votes(request):
   user = require_admin(request)
