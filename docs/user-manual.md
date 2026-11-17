@@ -174,10 +174,19 @@ is a trustee, it decrypts its share automatically. Other trustees now open
 their trustee link, click **decrypt with your key**, enter their secret key
 and upload their partial decryption.
 
+**If Helios is the only trustee** (the default, unless you added trustees),
+there is nothing to wait for: the button is simply called **tally**, and one
+click counts the votes and computes the result. The election page shows
+**Tallying…** until the result is there, and you get an email when it is.
+The result is then shown to you only; releasing it (step 10) is still up to
+you. Should computing the result fail, the election page says so and offers
+**compute results** to do it by hand.
+
 ### 10. Compute and release the result
 
 Once every trustee has decrypted, click **compute results** under Next Step,
-then **compute the tally!**. The result is now shown to you only.
+then **compute the tally!**. The result is now shown to you only. (With Helios
+as the only trustee, this has already happened after **tally**.)
 
 ![The result, before release](images/manual/results-admin.png)
 

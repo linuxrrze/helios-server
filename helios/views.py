@@ -464,6 +464,8 @@ def one_election_view(request, election):
                           'show_result': show_result,
                           'close_when_all_voted': close_when_all_voted,
                           'voting_auto_closed': election.voting_auto_closed if close_when_all_voted else None,
+                          'one_step_tally': election.helios_is_only_trustee(trustees),
+                          'automatic_tally_failed': admin_p and election.encrypted_tally is not None and election.automatic_tally_failed,
                           'test_cookie_url': test_cookie_url})
 
 def test_cookie(request):
@@ -1471,7 +1473,8 @@ def one_election_compute_tally(request, election):
   if request.method == "GET":
     return render_template(request, 'election_compute_tally', {
       'election': election,
-      'num_pending_votes': num_pending_votes
+      'num_pending_votes': num_pending_votes,
+      'one_step_tally': election.helios_is_only_trustee(),
     })
 
   check_csrf(request)
@@ -1480,7 +1483,8 @@ def one_election_compute_tally(request, election):
   if num_pending_votes > 0:
     return render_template(request, 'election_compute_tally', {
       'election': election,
-      'num_pending_votes': num_pending_votes
+      'num_pending_votes': num_pending_votes,
+      'one_step_tally': election.helios_is_only_trustee(),
     })
 
   if not election.voting_ended_at:

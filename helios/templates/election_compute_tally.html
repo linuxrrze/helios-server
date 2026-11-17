@@ -31,14 +31,18 @@
 
 <ul>
   <li>{% blocktranslate trimmed count counter=election.num_cast_votes %}{{ counter }} ballot has been cast so far.{% plural %}{{ counter }} ballots have been cast so far.{% endblocktranslate %}</li>
+  {% if one_step_tally %}
+  <li>{% translate "The encrypted ballots are added up without decrypting any of them. Helios, the only trustee, then decrypts the totals and the result is computed, all in one go." %}</li>
+  {% else %}
   <li>{% translate "The encrypted ballots are added up without decrypting any of them. Then each trustee decrypts their share of the totals." %}</li>
+  {% endif %}
   <li>{% translate "The result is visible only to you until you release it." %}</li>
 </ul>
 
 <form method="post" action="">
 <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
 <div class="actions">
-  <button class="button" type="submit">{% translate "compute encrypted tally!" %}</button>
+  <button class="button" type="submit">{% if one_step_tally %}{% translate "tally!" %}{% else %}{% translate "compute encrypted tally!" %}{% endif %}</button>
   <a href="{% url "election@view" election.uuid %}">{% translate "never mind" %}</a>
 </div>
 </form>

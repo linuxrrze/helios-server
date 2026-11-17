@@ -45,7 +45,8 @@ administrators, voters and trustees. For the technical design, see
    Every trustee must take part; the totals can't be decrypted otherwise.
 7. **Results.** The administrator combines the trustees' shares to get the
    counts, then releases them. The administrator can email voters when the
-   results are out.
+   results are out. When Helios is the only trustee, steps 5 to 7 up to the
+   counts run in one go after a single click; releasing stays a separate step.
 
 ## Voting
 

@@ -70,11 +70,16 @@
   {% endif %}
 {% elif not election.encrypted_tally %}
   {% if election.tallying_started_at %}
+  {% if one_step_tally %}
+  <span class="callout-title" id="tally-progress">{% translate "Tallying…" %}</span>
+  <p>{% translate "The votes are being counted and the result computed. Reload this page in a couple of minutes." %}</p>
+  {% else %}
   <span class="callout-title">{% translate "Tally computation is under way." %}</span>
   <p>{% translate "Reload this page in a couple of minutes." %}</p>
+  {% endif %}
   {% else %}
   {% if election.voting_has_stopped %}
-  <span class="callout-title">{% translate "Next step:" %} {% translate "compute the encrypted tally" %}</span>
+  <span class="callout-title">{% translate "Next step:" %} {% if one_step_tally %}{% translate "tally the votes" %}{% else %}{% translate "compute the encrypted tally" %}{% endif %}</span>
   {% if voting_auto_closed %}<p id="voting-auto-closed"><strong>{{ voting_auto_closed.message }}</strong> &ndash; {{ voting_auto_closed.at|utc_time }}</p>{% endif %}
   {% elif election.voting_has_started %}
   <span class="callout-title">{% translate "Voting is open." %}</span>
@@ -87,13 +92,17 @@
   <p id="close-when-all-voted">{% translate "Voting closes automatically as soon as every voter has voted. Nobody can change their vote after that." %}</p>
   {% endif %}
   <p>
+  {% if one_step_tally %}
+  {% translate "With one click, the encrypted votes are added up and only the totals decrypted. The result is then shown to you only, until you release it." %}
+  {% else %}
   {% blocktranslate trimmed %}The encrypted votes will be combined into an encrypted tally. Once this is done,<br />
   trustees will be asked to provide their share of the decryption.{% endblocktranslate %}
+  {% endif %}
   {% if not election.voting_has_stopped %}<strong>{% translate "Computing the tally ends voting." %}</strong>{% endif %}
   </p>
   <p class="actions">
     {% if not election.voting_has_stopped and settings.HELIOS_VOTERS_EMAIL %}{% if can_send_emails %}<a class="button" href="{% url "election@voters@email" election.uuid %}">{% translate "email voters" %}</a>{% else %}<button type="button" class="button" disabled title="{{email_disabled_reason}}">{% blocktranslate trimmed with reason=email_disabled_reason %}email voters (disabled: {{ reason }}){% endblocktranslate %}</button>{% endif %}{% endif %}
-    <a class="button{% if not election.voting_has_stopped %} secondary{% endif %}" href="{% url "election@compute-tally" election.uuid %}">{% translate "compute encrypted tally" %}</a>
+    <a class="button{% if not election.voting_has_stopped %} secondary{% endif %}" href="{% url "election@compute-tally" election.uuid %}">{% if one_step_tally %}{% translate "tally" context "button: count the votes and compute the result" %}{% else %}{% translate "compute encrypted tally" %}{% endif %}</a>
     {% if election.voting_ends_at and not election.voting_ended_at and not election.tallying_started_at %}<a href="{% url "election@extend" election.uuid %}">{% translate "extend voting" %}</a>{% endif %}
   </p>
   {% endif %}
@@ -102,8 +111,16 @@
   <p>{% translate "The result displayed below is visible only to you." %}
   {% translate "Once you release the result, it will be visible to everyone." %}</p>
   <p class="actions"><a class="button" href="{% url "election@release-result" election.uuid %}">{% translate "release result" %}</a></p>
+{% elif one_step_tally and not election.result and not automatic_tally_failed %}
+  <span class="callout-title" id="tally-progress">{% translate "Tallying…" %}</span>
+  <p>{% translate "The votes are being counted and the result computed. Reload this page in a couple of minutes." %}</p>
+  {% if election.ready_for_decryption_combination %}
+  {% url "election@combine-decryptions" election.uuid as combine_url %}
+  <p class="muted">{% blocktranslate trimmed %}If no result appears after a few minutes, <a href="{{ combine_url }}">compute it yourself</a>.{% endblocktranslate %}</p>
+  {% endif %}
 {% elif election.ready_for_decryption_combination %}
   <span class="callout-title">{% translate "Next step:" %} {% translate "compute the result" %}</span>
+  {% if automatic_tally_failed %}<p class="error" id="automatic-tally-failed">{% translate "The result could not be computed automatically. Please compute it here." %}</p>{% endif %}
   <p>
   {% if election.num_trustees == 1 %}
   {% translate "The result will be computed and shown to you, the administrator, only." %}

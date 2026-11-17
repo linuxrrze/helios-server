@@ -785,6 +785,45 @@ class Election(HeliosModel):
   def has_helios_trustee(self):
     return self.get_helios_trustee() is not None
 
+  def helios_is_only_trustee(self, trustees=None):
+    """
+    Is Helios the election's one and only trustee? Then the tally runs through
+    to the result in one go (tasks.tally_helios_decrypt). TRUSTEES: the
+    election's trustees, if the caller has them already.
+    """
+    if trustees is None:
+      trustees = list(self.trustee_set.all())
+    return len(trustees) == 1 and trustees[0].secret_key is not None
+
+  def combine_decryptions_automatically(self):
+    """
+    The last step of the one-step tally (Helios the only trustee), after its
+    decryption: combine the decryptions into the result, as the administrator
+    does with "compute results" (combine_decryptions). Not released.
+
+    Returns True if the result was computed, False if there was nothing to do
+    (no tally or decryption yet, or already a result). Raises the error of
+    combine_decryptions, which leaves the election as it was, so the
+    administrator can still compute the result by hand.
+    """
+    with transaction.atomic():
+      # the administrator may combine by hand at the same time
+      election = Election.objects.select_for_update().get(pk=self.pk)
+      if election.has_complete_result or election.encrypted_tally is None:
+        return False
+      if not election.ready_for_decryption_combination():
+        return False
+      election.combine_decryptions()
+    self.result = election.result
+    return True
+
+  @property
+  def automatic_tally_failed(self):
+    """did the one-step tally fail to combine the decryptions (and no result since)?"""
+    if self.has_complete_result:
+      return False
+    return self.electionlog_set.filter(log=ElectionLog.AUTOMATIC_TALLY_FAILED).exists()
+
   def helios_trustee_decrypt(self):
     tally = self.encrypted_tally
     tally.init_election(self)
@@ -882,11 +921,13 @@ class ElectionLog(models.Model):
   DELETED = "deleted"
   UNDELETED = "undeleted"
   VOTING_AUTO_CLOSED = "voting closed automatically: all voters have voted"
+  AUTOMATIC_TALLY_FAILED = "automatic tally failed: decryptions could not be combined"
 
   # entries shown on the election page, in the current language (the log
   # itself keeps the English text)
   MESSAGES = {
     VOTING_AUTO_CLOSED: gettext_lazy('Voting closed automatically: all voters have voted'),
+    AUTOMATIC_TALLY_FAILED: gettext_lazy('The result could not be computed automatically'),
   }
 
   election = models.ForeignKey(Election, on_delete=models.CASCADE)

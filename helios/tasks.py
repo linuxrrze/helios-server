@@ -18,7 +18,7 @@ from . import mail
 from . import organizations
 from . import signals
 from .mail_messages import voter_unsubscribe_vars  # noqa: F401 (imported from here before)
-from .models import CastVote, EmailBatch, Election, OutgoingEmail, Voter, VoterFile
+from .models import CastVote, ElectionLog, EmailBatch, Election, OutgoingEmail, Voter, VoterFile
 from .view_utils import render_text_template
 
 
@@ -194,12 +194,58 @@ def tally_helios_decrypt(election_id, language=None):
     election = Election.objects.get(id=election_id)
     election.helios_trustee_decrypt()
 
+    # Helios the only trustee: on to the result in one go (released by hand, as always)
+    if election.helios_is_only_trustee():
+        tally_combine_decryptions.enqueue(election_id=election.id, language=language)
+        return
+
     with _language(language):
         subject = _('Helios Decrypt')
         body = _("""
 Helios has decrypted its portion of the tally
 for election %(election)s.
 """) % {'election': election.name}
+    election_notify_admin.enqueue(election_id=election_id, subject=subject, body=body, language=language)
+
+
+@task()
+def tally_combine_decryptions(election_id, language=None):
+    """
+    The last step of the one-step tally, when Helios is the only trustee:
+    combine the decryptions into the result, as "compute results" does
+    (views.combine_decryptions). The result is not released.
+
+    If combining fails, the election stays as it was, ready for the
+    administrator's "compute results"; the failure is logged (server log and
+    election log) and the administrator told.
+    """
+    election = Election.objects.get(id=election_id)
+    try:
+        computed = election.combine_decryptions_automatically()
+    except Exception:
+        logging.getLogger(__name__).exception(
+            "automatic tally: could not combine the decryptions of election %s" % election.uuid)
+        election.append_log(ElectionLog.AUTOMATIC_TALLY_FAILED)
+        with _language(language):
+            subject = _('%(election)s: the result could not be computed') % {'election': election.name}
+            body = _("""
+The votes of election %(election)s have been counted, but the result could not
+be computed automatically. Please compute it on the election page with
+"compute results":
+%(url)s
+""") % {'election': election.name, 'url': election.url}
+        election_notify_admin.enqueue(election_id=election_id, subject=subject, body=body, language=language)
+        return
+
+    if not computed:
+        return
+    with _language(language):
+        subject = _('%(election)s: result computed') % {'election': election.name}
+        body = _("""
+The result of election %(election)s has been computed. Only the administrators
+can see it, on the election page, until you release it:
+%(url)s
+""") % {'election': election.name, 'url': election.url}
     election_notify_admin.enqueue(election_id=election_id, subject=subject, body=body, language=language)
 
 

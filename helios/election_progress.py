@@ -107,8 +107,14 @@ def admin_steps(election, trustees):
                 'done': frozen and voting_stopped})
 
   has_result = bool(election.result) and election.has_complete_result
+  # Helios the only trustee: counted and decrypted in one go (tasks.tally_combine_decryptions)
+  one_step = election.helios_is_only_trustee(trustees)
   if has_result:
     detail = _('Done: only you can see the result so far') if not election.result_released_at else _('Done')
+  elif one_step and election.encrypted_tally and election.automatic_tally_failed:
+    detail = _('The result could not be computed automatically')
+  elif one_step and not election.result and (election.tallying_started_at or election.encrypted_tally):
+    detail = _('Under way')
   elif election.encrypted_tally:
     num_decrypted = len([t for t in trustees if t.decryption_factors])
     detail = ngettext('%(done)d of %(total)d trustee has decrypted their share', '%(done)d of %(total)d trustees have decrypted their share',
@@ -117,8 +123,12 @@ def admin_steps(election, trustees):
     detail = _('Under way')
   else:
     detail = _('Not yet')
+  if one_step:
+    hint = _('Ends voting, adds up the encrypted ballots and decrypts only the totals, in one go.')
+  else:
+    hint = _('Ends voting and adds up the encrypted ballots; the trustees then decrypt only the totals.')
   steps.append({'key': 'tally', 'title': _('Count the votes'), 'detail': detail,
-                'hint': _('Ends voting and adds up the encrypted ballots; the trustees then decrypt only the totals.'),
+                'hint': hint,
                 'url': None, 'done': has_result})
 
   steps.append({'key': 'release', 'title': _('Release the result'),

@@ -1,18 +1,20 @@
 """
 Tests for closing voting automatically once every voter has voted
-(Election.close_when_all_voted).
+(Election.close_when_all_voted) and for the one-step tally when Helios is the
+election's only trustee.
 """
 
 import datetime
 import uuid
+from unittest import mock
 
 from django.core import mail
 from django.test import TestCase
 
 from helios import datatypes, forms, tasks, views
 from helios import votergroup as vg
-from helios.models import (CastVote, Election, ElectionLog, OutgoingEmail, Trustee, Voter, VoterGroup,
-                           VoterGroupMember)
+from helios.models import (CastVote, Election, ElectionLog, OutgoingEmail, TallyDecryptionError, Trustee, Voter,
+                           VoterGroup, VoterGroupMember)
 from helios.tests import run_queued_tasks
 from helios.wizard_views import STEPS_BY_KEY
 from helios.workflows import homomorphic
@@ -323,5 +325,127 @@ class AutoCloseTests(ElectionSetup, TestCase):
     run_queued_tasks()
     election = self.reload(election)
     self.assertEqual(election.voting_ended_at, ended_at)
-    self.assertIsNotNone(election.encrypted_tally)
+    self.assertTrue(election.has_complete_result)
 
+
+class OneStepTallyTests(ElectionSetup, TestCase):
+
+  def tally(self, election):
+    response = self.client.post('/helios/elections/%s/compute_tally' % election.uuid, {'csrf_token': 'tok'})
+    self.assertEqual(response.status_code, 302)
+
+  def test_helios_only_trustee_runs_through_to_the_result(self):
+    election = self.make_election(close_when_all_voted=False, voters=('a', 'b', 'c'))
+    a, b, c = self.voters(election)
+    self.cast(a, 0)
+    self.cast(b, 0)
+    self.cast(c, 1)
+    self.assertTrue(election.helios_is_only_trustee())
+
+    response = self.client.get('/helios/elections/%s/view' % election.uuid)
+    self.assertContains(response, '>tally</a>')
+
+    self.tally(election)
+    # until the worker has run: in progress
+    response = self.client.get('/helios/elections/%s/view' % election.uuid)
+    self.assertContains(response, 'id="tally-progress"')
+
+    run_queued_tasks()
+    election = self.reload(election)
+    self.assertEqual(election.result, [[2, 1]])
+    self.assertTrue(ElectionLog.objects.filter(election=election, log=ElectionLog.DECRYPTIONS_COMBINED).exists())
+    # releasing stays a step of its own
+    self.assertIsNone(election.result_released_at)
+    self.assertEqual(len(self.admin_mails(election, 'result computed')), 1)
+    self.assertEqual(self.admin_mails(election, 'Helios Decrypt'), [])
+
+    response = self.client.get('/helios/elections/%s/view' % election.uuid)
+    self.assertNotContains(response, 'id="tally-progress"')
+    self.assertContains(response, '/release_result"')
+
+  def test_with_another_trustee_the_old_flow_is_unchanged(self):
+    election = self.make_election(close_when_all_voted=False, extra_trustee=True)
+    a, b = self.voters(election)
+    self.cast(a, 0)
+    self.cast(b, 1)
+    self.assertFalse(election.helios_is_only_trustee())
+    response = self.client.get('/helios/elections/%s/view' % election.uuid)
+    self.assertContains(response, 'compute encrypted tally')
+
+    self.tally(election)
+    run_queued_tasks()
+    election = self.reload(election)
+    helios_trustee = election.get_helios_trustee()
+    other = election.trustee_set.exclude(pk=helios_trustee.pk).get()
+    # Helios decrypted its share; the result waits for the other trustee and the administrator
+    self.assertIsNotNone(helios_trustee.decryption_factors)
+    self.assertIsNone(other.decryption_factors)
+    self.assertIsNone(election.result)
+    self.assertEqual(len(self.admin_mails(election, 'Helios Decrypt')), 1)
+    self.assertEqual(self.admin_mails(election, 'result computed'), [])
+    response = self.client.get('/helios/elections/%s/view' % election.uuid)
+    self.assertContains(response, 'Waiting for the trustees')
+    self.assertNotContains(response, 'id="tally-progress"')
+
+    # the other trustee decrypts, the administrator combines by hand
+    tally = election.encrypted_tally
+    tally.init_election(election)
+    other.decryption_factors, other.decryption_proofs = tally.decryption_factors_and_proofs(self.extra_secret_key)
+    other.save()
+    election = self.reload(election)
+    self.assertIsNone(election.result)
+    response = self.client.post('/helios/elections/%s/combine_decryptions' % election.uuid, {'csrf_token': 'tok'})
+    self.assertEqual(response.status_code, 302)
+    election = self.reload(election)
+    self.assertEqual(election.result, [[1, 1]])
+    self.assertIsNone(election.result_released_at)
+
+  def test_failed_combination_leaves_the_manual_step(self):
+    election = self.make_election(close_when_all_voted=False)
+    a, b = self.voters(election)
+    self.cast(a, 0)
+    self.cast(b, 0)
+    self.tally(election)
+    with mock.patch('helios.models.Election.combine_decryptions', side_effect=TallyDecryptionError('no')), \
+         self.assertLogs('helios.tasks', 'ERROR'):
+      run_queued_tasks()
+    election = self.reload(election)
+    self.assertIsNone(election.result)
+    self.assertTrue(election.ready_for_decryption_combination())
+    self.assertTrue(election.automatic_tally_failed)
+    self.assertEqual(len(self.admin_mails(election, 'could not be computed')), 1)
+
+    response = self.client.get('/helios/elections/%s/view' % election.uuid)
+    self.assertContains(response, 'id="automatic-tally-failed"')
+    self.assertContains(response, '/combine_decryptions"')
+    self.assertNotContains(response, 'id="tally-progress"')
+
+    # the existing manual step still works
+    self.client.post('/helios/elections/%s/combine_decryptions' % election.uuid, {'csrf_token': 'tok'})
+    election = self.reload(election)
+    self.assertEqual(election.result, [[2, 0]])
+    self.assertFalse(election.automatic_tally_failed)
+
+  def test_combination_runs_only_once(self):
+    election = self.make_election(close_when_all_voted=False)
+    for voter in self.voters(election):
+      self.cast(voter)
+    self.tally(election)
+    run_queued_tasks()
+    election = self.reload(election)
+    self.assertTrue(election.has_complete_result)
+    # a second run (e.g. a requeued task) finds the result and does nothing
+    self.assertFalse(election.combine_decryptions_automatically())
+    self.assertEqual(ElectionLog.objects.filter(election=election, log=ElectionLog.DECRYPTIONS_COMBINED).count(), 1)
+
+  def test_auto_close_then_one_click_tally(self):
+    election = self.make_election()
+    for voter in self.voters(election):
+      self.cast(voter, 1)
+    election = self.reload(election)
+    self.assertTrue(election.voting_has_stopped())
+    self.tally(election)
+    run_queued_tasks()
+    election = self.reload(election)
+    self.assertEqual(election.result, [[0, 2]])
+    self.assertIsNone(election.result_released_at)
