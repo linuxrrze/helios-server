@@ -145,6 +145,22 @@ To check the setup, send an email to a voter with a non-existent address at a do
 control (e.g. `nobody-12345@example.org`): after the next run, the election's "email delivery"
 page lists the voter as bounced ("5.1.1 recipient unknown") and the address as suppressed.
 
+## Deleting old elections
+
+Once a ballot has been cast, election administrators can no longer delete an election, only
+archive it; site administrators still can (the election's log records it). Deleted elections
+are only hidden. To delete elections from the database for good after a retention period, set
+`HELIOS_ELECTION_RETENTION_DAYS` ([docs/configuration.md](docs/configuration.md#3-database);
+default `0`: never) and run daily
+
+```
+uv run python manage.py purge_elections --yes
+```
+
+Without `--yes` it lists what it would delete. With systemd: `deploy/systemd/helios-purge.timer`
+([deploy/systemd/README.md](deploy/systemd/README.md#deleting-old-elections-optional)).
+With Docker Compose: a cron job on the host (`docker compose exec -T worker python manage.py purge_elections --yes`).
+
 ## Upgrading from Celery and RabbitMQ
 
 Older versions of Helios used Celery with RabbitMQ. To upgrade:

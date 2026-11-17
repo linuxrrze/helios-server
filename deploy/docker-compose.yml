@@ -123,5 +123,9 @@ services:
   #     migrate:
   #       condition: service_completed_successfully
 
+  # Deleting old elections (optional, with HELIOS_ELECTION_RETENTION_DAYS in .env; see
+  # ../docs/configuration.md, "Database"): once a day, as a cron job on the host:
+  #   30 3 * * *  cd /path/to/deploy && docker compose exec -T worker python manage.py purge_elections --yes
+
 volumes:
   pgdata:

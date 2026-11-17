@@ -1,0 +1,13 @@
+# /etc/systemd/system/helios-purge.timer
+# Runs helios-purge.service once a day, at night (a run missed while the host was down is
+# made up after booting).
+[Unit]
+Description=Delete Helios elections past their retention period, daily
+
+[Timer]
+OnCalendar=*-*-* 03:30:00
+RandomizedDelaySec=30min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

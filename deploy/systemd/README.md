@@ -10,6 +10,7 @@ services, nginx in front of them, PostgreSQL on the same host. For Docker Compos
 | `helios-web.service` | `/etc/systemd/system/helios-web.service` (gunicorn, unix socket) |
 | `helios-worker.service` | `/etc/systemd/system/helios-worker.service` (background tasks) |
 | `helios-bounces.service`, `helios-bounces.timer` | `/etc/systemd/system/` (optional: reads the bounce mailbox every 5 minutes, see below) |
+| `helios-purge.service`, `helios-purge.timer` | `/etc/systemd/system/` (optional: deletes elections past their retention period once a day, see below) |
 | `nginx-helios.conf` | `/etc/nginx/sites-available/helios` |
 | `nginx-helios-security-headers.conf` | `/etc/nginx/snippets/helios-security-headers.conf` (Content Security Policy etc. for the files nginx serves itself) |
 
@@ -71,7 +72,7 @@ systemctl restart helios-web helios-worker
 Don't update while an election is open.
 
 Configuration changes take effect after `systemctl restart helios-web helios-worker` (the
-bounce timer's runs read the file anew each time).
+bounce and purge timers' runs read the file anew each time).
 
 ## Bounces (optional)
 
@@ -92,6 +93,26 @@ systemctl list-timers helios-bounces.timer
 A run that fails (mailbox unreachable, wrong password, not configured) shows up as a failed
 unit in `systemctl --failed` and in the journal; the next run tries again. The service needs no
 restart after configuration changes (each run reads `/etc/helios/helios.env`).
+
+## Deleting old elections (optional)
+
+With `HELIOS_ELECTION_RETENTION_DAYS` set in `/etc/helios/helios.env` (see
+[docs/configuration.md](../../docs/configuration.md#3-database)), `manage.py purge_elections --yes`
+deletes elections for good once their retention period has passed. The timer runs it once a
+day at night:
+
+```sh
+# first see what it would delete (a dry run without --yes)
+sudo -u helios sh -c 'set -a; . /etc/helios/helios.env; set +a; .venv/bin/python manage.py purge_elections'
+cp deploy/systemd/helios-purge.service deploy/systemd/helios-purge.timer /etc/systemd/system/
+systemctl daemon-reload
+systemctl enable --now helios-purge.timer
+systemctl list-timers helios-purge.timer
+journalctl -u helios-purge.service -n 20     # "... 0 election(s) deleted (retention period 365 days)"
+```
+
+Without the setting (or with `0`) the command refuses to run, so the unit fails: don't enable the
+timer then. Each deleted election is listed in the journal with its UUID and counts.
 
 ## Security headers of the booth and verifier
 

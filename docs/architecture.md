@@ -60,6 +60,8 @@ All in `helios/models.py` except `User`:
   (`admins`). Deleting an election is a soft delete (`deleted_at`); the
   default manager hides deleted elections. Once a ballot has been cast, only
   site administrators may delete it (`Election.can_be_deleted_by`).
+  `manage.py purge_elections` deletes elections for good after
+  `HELIOS_ELECTION_RETENTION_DAYS` (`helios/retention.py`).
 - **`Voter`**: one entry on an election's voter list. Either linked to a
   `User` (Google, GitHub, CAS, ...) or, for password voters, holding a
   login ID and a generated password directly. Keeps a copy of the voter's

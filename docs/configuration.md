@@ -11,7 +11,7 @@ same Helios settings; they differ only where the setup differs.
 | | Docker Compose | systemd + nginx |
 |---|---|---|
 | File | `deploy/.env` (template [deploy/.env.example](../deploy/.env.example)) | `/etc/helios/helios.env` (template [deploy/systemd/helios.env.example](../deploy/systemd/helios.env.example)) |
-| Read by | Compose, for `${...}` in `docker-compose.yml` and as the containers' environment | `helios-web.service`, `helios-worker.service` and `helios-bounces.service` (`EnvironmentFile`), and by `sh` for `manage.py` commands |
+| Read by | Compose, for `${...}` in `docker-compose.yml` and as the containers' environment | `helios-web.service`, `helios-worker.service`, `helios-bounces.service` and `helios-purge.service` (`EnvironmentFile`), and by `sh` for `manage.py` commands |
 | Only here | `HELIOS_IMAGE`, `POSTGRES_PASSWORD` (Compose itself, not Helios) | `DATABASE_URL`, e.g. `postgres://helios@/helios` over the local socket |
 | Database | `DATABASE_URL` is set by `docker-compose.yml` (overrides the file) | in the file |
 | Local mail server | `EMAIL_HOST=host.docker.internal` (`localhost` is the container itself) | `EMAIL_HOST=localhost` |
@@ -89,6 +89,36 @@ Helios needs PostgreSQL.
 |---|---|---|
 | `DATABASE_URL` | – | Connection URL, e.g. `postgres://helios:PASSWORD@db/helios`, or `postgres://helios@/helios` for the local unix socket. Without it: database `helios` via the local socket as the current OS user. |
 | `DATABASE_SSL_REQUIRE` | `1` | `1`: require TLS to the database. Set it to `0` for the local socket or a database container on the same host without TLS, otherwise the connection fails. Only used together with `DATABASE_URL`. |
+
+**Deleting old elections for good.** Election administrators can delete an
+election only as long as no ballot has been cast; after that they can only archive it. Deleted
+elections are hidden, not removed: site administrators can restore them on the statistics page.
+To remove elections from the database after a retention period, set:
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `HELIOS_ELECTION_RETENTION_DAYS` | `0` | Days after which `manage.py purge_elections --yes` deletes an election for good. `0`: never (nothing is deleted, and the command refuses to run without `--days`). |
+
+The period starts at the election's *reference date*, the latest of: the end of voting (when it
+was closed, else the scheduled or extended end), the release of the result, archiving and
+deletion. For an election that was never opened (ballot not frozen), it is its last change
+(last edit, log entry or voter upload). Elections whose voting is still open, or whose tally has
+started but has no result yet, are never deleted. Deleted elections are deleted for good, too,
+counting from their deletion at the earliest.
+
+Deleting an election for good removes its voters, ballots, audited ballots, trustees (including
+Helios' secret key), log, voter files (also files of old uploads in `media/`), mailings and
+emails with their bounces. User accounts stay, and so does the list of suppressed addresses (it
+applies to all elections; a suppression lifted by the election's administrator no longer names
+the election). Each deleted election is logged by `helios.retention` with its UUID and counts.
+
+Run the command daily: with systemd `deploy/systemd/helios-purge.timer`
+([deploy/systemd/README.md](../deploy/systemd/README.md#deleting-old-elections-optional)), with
+Docker Compose a cron job on the host (`docker compose exec -T worker python manage.py purge_elections --yes`).
+Without `--yes` it only lists what it would delete (UUID, address, reference date and the
+number of voters and ballots); `--days N` sets the period for one run, e.g. to try it out or for
+a one-off cleanup while `HELIOS_ELECTION_RETENTION_DAYS` is `0`. Site administrators see on an
+election's page, and in the list of deleted elections, when it will be deleted.
 
 ## 4. Email
 

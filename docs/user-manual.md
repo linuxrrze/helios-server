@@ -206,7 +206,9 @@ Under **More actions**, **archive it** hides the election from your list of
 elections; **unarchive it** brings it back. An archived election can be
 deleted, but only as long as nobody has cast a ballot: once ballots have been
 cast, you can archive it but no longer delete it (site administrators still
-can, and the election's log records it).
+can, and the election's log records it). Your Helios server may delete
+elections for good some time after voting has ended; ask its operators how long
+they are kept.
 
 ### Voter groups
 

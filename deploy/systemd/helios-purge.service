@@ -1,0 +1,25 @@
+# /etc/systemd/system/helios-purge.service
+# Deletes elections for good whose retention period (HELIOS_ELECTION_RETENTION_DAYS) has
+# passed, with their voters, ballots, logs and emails. Started by helios-purge.timer; only
+# install it with HELIOS_ELECTION_RETENTION_DAYS set (with 0, the default, the run fails
+# on purpose: nothing is ever deleted). See docs/configuration.md and README.md.
+[Unit]
+Description=Helios election retention (delete old elections for good)
+After=postgresql.service
+Requires=postgresql.service
+
+[Service]
+Type=oneshot
+User=helios
+Group=helios
+WorkingDirectory=/opt/helios/helios-server
+EnvironmentFile=/etc/helios/helios.env
+ExecStart=/opt/helios/helios-server/.venv/bin/python manage.py purge_elections --yes
+TimeoutStartSec=3600
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+# files of old voter uploads may be under media/ in the checkout (-: if it exists)
+ReadWritePaths=-/opt/helios/helios-server/media
