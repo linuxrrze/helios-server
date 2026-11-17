@@ -693,27 +693,10 @@ def trustee_send_url(request, election, trustee_uuid):
 
   trustee = Trustee.get_by_election_and_uuid(election, trustee_uuid)
 
-  url = settings.SECURE_URL_HOST + reverse(url_names.TRUSTEE_LOGIN, args=[election.short_name, trustee.email, trustee.secret])
+  # sent in the background (helios.mail_messages has the text, with the secret link)
+  mail.queue(OutgoingEmail.KIND_TRUSTEE, election=election, trustee=trustee)
 
-  # from the election's organization: sender name, Reply-To and signature
-  organization = organizations.for_election(election)
-  subject = _("your trustee homepage for %(election)s") % {'election': election.name}
-  body = _("""
-
-You are a trustee for %(election)s.
-
-Your trustee dashboard is at
-
-  %(url)s
-
---
-%(signature)s
-""") % {'election': election.name, 'url': url, 'signature': organization.mail_signature}
-
-  with organizations.mail_context(election):
-    utils.send_email(settings.SERVER_EMAIL, ["%s <%s>" % (trustee.name, trustee.email)], subject, body)
-
-  logging.info("URL %s " % url)
+  logging.info("trustee link queued for trustee %s" % trustee.uuid)
   return HttpResponseRedirect(settings.SECURE_URL_HOST + reverse(url_names.election.ELECTION_TRUSTEES_VIEW, args = [election.uuid]))
 
 @trustee_check
@@ -937,13 +920,11 @@ def password_voter_resend(request, election):
   if voter and voter.voter_type == 'password' and voter.voter_email:
     # Queue the email
     election_vote_url = get_election_govote_url(election)
-    tasks.single_voter_email.enqueue(
-      voter_uuid=voter.uuid,
-      subject_template='email/password_resend_subject.txt',
-      body_template='email/password_resend_body.txt',
-      extra_vars={'election_vote_url': election_vote_url},
-      language=translation.get_language(),
-    )
+    mail.queue(OutgoingEmail.KIND_VOTER_PASSWORD, voter=voter, params={
+      'subject_template': 'email/password_resend_subject.txt',
+      'body_template': 'email/password_resend_body.txt',
+      'extra_vars': {'election_vote_url': election_vote_url},
+    })
 
   return render_template(request, 'password_voter_resend', {
     'election': election,
@@ -1231,8 +1212,9 @@ If you believe this was done in error, please contact the election administrator
 %(signature)s
 """) % {'election': election.name, 'election_url': election_url,
         'signature': organizations.for_election(election).mail_signature}
-      with organizations.mail_context(election):
-        mail.send_now(OutgoingEmail.KIND_VOTE_REMOVED, None, subject, body, election=election, voter=voter)
+      # sent in the background, after the voter is gone: to the address they have now
+      mail.queue(OutgoingEmail.KIND_VOTE_REMOVED, election=election, voter=voter,
+                 recipient=mail.recipient_of(voter.get_user()), params={'subject': subject, 'body': body})
 
       # log it
       election.append_log("Voter %s/%s and their vote were removed after election was frozen" % (voter.voter_type,voter.voter_id))
@@ -2025,8 +2007,7 @@ def voters_email(request, election):
         batch = mail.create_batch(election, subject_template, body_template, extra_vars,
                                   language=language, triggered_by=get_user(request))
         if voter:
-          email = mail.new_email(OutgoingEmail.KIND_BULK, voter=voter, batch=batch)
-          tasks.single_voter_email.enqueue(voter_uuid = voter.uuid, language = language, outgoing_email_id = email.id)
+          mail.queue(OutgoingEmail.KIND_BULK, voter=voter, batch=batch)
         else:
           voter_constraints_include, voter_constraints_exclude = VOTERS_EMAIL_CONSTRAINTS[email_form.cleaned_data['send_to']]
           tasks.voters_email.enqueue(election_id = election.id, batch_id = batch.id, voter_constraints_include = voter_constraints_include, voter_constraints_exclude = voter_constraints_exclude, language = language)
@@ -2129,7 +2110,6 @@ def ballot_list(request, election):
 
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
-from django.core.mail import send_mail
 from django.conf import settings
 from validate_email import validate_email
 from .models import EmailOptOut
@@ -2174,41 +2154,10 @@ def optout_form(request):
             'error': _('Invalid email address')
         })
     
-    # Generate confirmation code
-    confirmation_code = utils.generate_email_confirmation_code(email, 'optout')
-    
-    # Send confirmation email
-    subject = _("Confirm your opt-out from Helios emails")
-    confirmation_path = reverse('optout_confirm', kwargs={'email': email, 'code': confirmation_code})
-    confirmation_url = request.build_absolute_uri(confirmation_path)
-    
-    body = _("""
-Please confirm that you want to opt out of all Helios voting system emails.
-
-Click this link to confirm: %(confirmation_url)s
-
-If you did not request this, please ignore this email.
-
---
-Helios Voting System
-""") % {'confirmation_url': confirmation_url}
-    
-    try:
-        send_mail(
-            subject,
-            body,
-            settings.DEFAULT_FROM_EMAIL,
-            [email],
-            fail_silently=False
-        )
-        return HttpResponseRedirect(reverse('optout_success'))
-    except Exception as e:
-        return render_template(request, 'optout_form', {
-            'action': 'optout',
-            'title': _('Opt Out of Helios Emails'),
-            'description': _('Enter your email address to stop receiving all emails from Helios voting system.'),
-            'error': _('Failed to send confirmation email: %(error)s') % {'error': str(e)}
-        })
+    # Send the confirmation email (in the background, with retries; its text and
+    # link are in helios.mail_messages). The address is kept only until it is sent.
+    mail.queue(OutgoingEmail.KIND_OPTOUT_CONFIRM, recipient=email)
+    return HttpResponseRedirect(reverse('optout_success'))
 
 
 @require_http_methods(["GET"])
@@ -2286,41 +2235,10 @@ def optin_form(request):
     if not EmailOptOut.is_opted_out(email):
         return render_template(request, 'optout_not_opted_out', {'email': email})
     
-    # Generate confirmation code
-    confirmation_code = utils.generate_email_confirmation_code(email, 'optin')
-    
-    # Send confirmation email
-    subject = _("Confirm your opt-in to Helios emails")
-    confirmation_path = reverse('optin_confirm', kwargs={'email': email, 'code': confirmation_code})
-    confirmation_url = request.build_absolute_uri(confirmation_path)
-    
-    body = _("""
-Please confirm that you want to opt back in to Helios voting system emails.
-
-Click this link to confirm: %(confirmation_url)s
-
-If you did not request this, please ignore this email.
-
---
-Helios Voting System
-""") % {'confirmation_url': confirmation_url}
-    
-    try:
-        send_mail(
-            subject,
-            body,
-            settings.DEFAULT_FROM_EMAIL,
-            [email],
-            fail_silently=False
-        )
-        return HttpResponseRedirect(reverse('optin_success'))
-    except Exception as e:
-        return render_template(request, 'optout_form', {
-            'action': 'optin',
-            'title': _('Opt Back Into Helios Emails'),
-            'description': _('Enter your email address to resume receiving emails from Helios voting system.'),
-            'error': _('Failed to send confirmation email: %(error)s') % {'error': str(e)}
-        })
+    # Send the confirmation email (in the background, with retries; its text and
+    # link are in helios.mail_messages). The address is kept only until it is sent.
+    mail.queue(OutgoingEmail.KIND_OPTIN_CONFIRM, recipient=email)
+    return HttpResponseRedirect(reverse('optin_success'))
 
 
 @require_http_methods(["GET"])

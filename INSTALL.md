@@ -75,7 +75,7 @@ emails aren't sent and tallies aren't computed, in development too.
 uv run python manage.py prune_db_task_results
 ```
 
-* A worker killed mid-task leaves that task stuck as running. Put tasks running longer than 120 minutes back in the queue (a bulk voter email then sends only its emails still missing):
+* A worker killed mid-task leaves that task stuck as running. Put tasks running longer than 120 minutes back in the queue (a bulk voter email then sends only its emails still missing); this also queues again emails still to be sent whose task is gone:
 
 ```
 uv run python manage.py requeue_stuck_tasks --older-than 120
@@ -84,6 +84,21 @@ uv run python manage.py requeue_stuck_tasks --older-than 120
 * The stats page shows how many tasks are waiting, running, stuck and failed in
   the last day, and how many votes are waiting for verification; "force it"
   re-queues them.
+
+* Each email is sent by its own task. When the mail server does not take it for
+  now (greylisting, mailbox full, server unreachable), the email is deferred and
+  tried again later, with growing waits (`HELIOS_EMAIL_RETRY_BASE`,
+  `HELIOS_EMAIL_RETRY_CAP`), until `HELIOS_EMAIL_MAX_ATTEMPTS` or
+  `HELIOS_EMAIL_MAX_AGE` ([docs/configuration.md](docs/configuration.md#4-email)). When
+  the mail server cannot be reached or refuses the login or sender address,
+  sending is paused for all emails and resumes by itself; a refused login is also
+  reported to `ADMIN_EMAIL` (as far as that mail gets through) and Rollbar, and
+  logged as an error. After fixing the mail settings, send the waiting emails
+  right away:
+
+```
+uv run python manage.py resume_email
+```
 
 ## Upgrading from Celery and RabbitMQ
 

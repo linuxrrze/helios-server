@@ -1503,20 +1503,36 @@ class EmailBatch(models.Model):
 
 class OutgoingEmail(models.Model):
   """
-  One email to one recipient: of a bulk mailing (batch), the confirmation of a
-  cast vote, or information for an election administrator. Records what became
-  of it; the email itself (subject and body) is not stored.
+  One email to one recipient, sent by its own background task
+  (helios.tasks.send_outgoing_email, see helios.mail): of a bulk mailing (batch),
+  the confirmation of a cast vote, information for an election administrator or
+  a trustee, an opt-out/opt-in confirmation or a password reminder. Records what
+  became of it; the email itself (subject and body) is rendered when it is sent
+  and not stored, as some contain a password or a secret link.
   """
   KIND_BULK = 'bulk'
   KIND_VOTE_CAST = 'vote_cast'
   KIND_VOTE_REMOVED = 'vote_removed'
   KIND_ADMIN_INFO = 'admin_info'
+  KIND_VOTER_PASSWORD = 'voter_password'
+  KIND_TRUSTEE = 'trustee'
+  KIND_OPTOUT_CONFIRM = 'optout_confirm'
+  KIND_OPTIN_CONFIRM = 'optin_confirm'
+  KIND_PASSWORD_REMINDER = 'password_reminder'
   KINDS = [
     (KIND_BULK, 'bulk mailing'),
     (KIND_VOTE_CAST, 'vote-cast confirmation'),
     (KIND_VOTE_REMOVED, 'vote removed'),
     (KIND_ADMIN_INFO, 'information for the administrator'),
+    (KIND_VOTER_PASSWORD, 'voter password resent'),
+    (KIND_TRUSTEE, 'trustee homepage link'),
+    (KIND_OPTOUT_CONFIRM, 'opt-out confirmation'),
+    (KIND_OPTIN_CONFIRM, 'opt-in confirmation'),
+    (KIND_PASSWORD_REMINDER, 'account password reminder'),
   ]
+  # the address of these is not kept once they are final (only masked, e***@example.org):
+  # it would tell which hashed EmailOptOut belongs to whom
+  KINDS_ADDRESS_NOT_KEPT = (KIND_OPTOUT_CONFIRM, KIND_OPTIN_CONFIRM)
 
   QUEUED = 'queued'
   SENDING = 'sending'
@@ -1528,6 +1544,7 @@ class OutgoingEmail(models.Model):
   SKIPPED_OPTOUT = 'skipped_optout'
   SKIPPED_SUPPRESSED = 'skipped_suppressed'
   SKIPPED_NOADDRESS = 'skipped_noaddress'
+  SKIPPED_OBSOLETE = 'skipped_obsolete'
   STATUSES = [
     (QUEUED, 'queued'),
     (SENDING, 'sending'),
@@ -1539,6 +1556,7 @@ class OutgoingEmail(models.Model):
     (SKIPPED_OPTOUT, 'not sent: opted out'),
     (SKIPPED_SUPPRESSED, 'not sent: address suppressed'),
     (SKIPPED_NOADDRESS, 'not sent: no email address'),
+    (SKIPPED_OBSOLETE, 'not sent: no longer applicable'),
   ]
   # (still) to be sent; a task finding its email in another status leaves it alone.
   # SENDING here: the worker died while sending, and a duplicate email is better than a lost one
@@ -1546,16 +1564,29 @@ class OutgoingEmail(models.Model):
 
   batch = models.ForeignKey(EmailBatch, on_delete=models.CASCADE, null=True, blank=True, related_name='emails')
   election = models.ForeignKey(Election, on_delete=models.CASCADE, null=True, blank=True, related_name='+')
-  # kept when the voter is removed (the "vote removed" email is sent just before that)
+  # kept when the voter is removed (the "vote removed" email is sent after that)
   voter = models.ForeignKey(Voter, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
   user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+  trustee = models.ForeignKey('Trustee', on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
   kind = models.CharField(max_length=20, choices=KINDS)
   # as given to the mail server ("Name" <address>); empty until sent, and when
-  # nothing was sent (no address of an opted-out voter is stored)
+  # nothing was sent (no address of an opted-out voter is stored). Set when queued
+  # for emails whose recipient is not in the database otherwise (vote removed,
+  # opt-out/opt-in confirmation; of the latter only masked once final).
   recipient = models.CharField(max_length=500, blank=True, default='')
+  # the language the email is rendered in (of a bulk mailing: its batch's)
+  language = models.CharField(max_length=16, blank=True, default='')
+  # what the email is rendered from, besides the objects above (e.g. the id of the
+  # cast vote; subject and body of an email to an administrator); never a password.
+  # Emptied once the email is final.
+  params = models.JSONField(default=dict, blank=True)
   status = models.CharField(max_length=20, choices=STATUSES, default=QUEUED, db_index=True)
   attempts = models.PositiveIntegerField(default=0)
+  # DEFERRED: when it is tried again; SENDING: from when on the attempt counts as
+  # died with its worker (see helios.mail.SENDING_LEASE)
   next_attempt_at = models.DateTimeField(null=True, blank=True)
+  # the error of the last attempt ("550 5.1.1", "SMTPServerDisconnected"), or why
+  # the email is no longer sent (SKIPPED_OBSOLETE: "voting_closed", ...)
   last_error_code = models.CharField(max_length=32, blank=True, default='')
   last_error_text = models.TextField(blank=True, default='')
   created_at = models.DateTimeField(auto_now_add=True)
@@ -1574,6 +1605,27 @@ class OutgoingEmail(models.Model):
 
   def __str__(self):
     return 'OutgoingEmail %s (%s, %s)' % (self.id, self.kind, self.status)
+
+
+class EmailSendingPause(models.Model):
+  """
+  Sending paused for all emails (a single row, pk=1), because the mail server
+  could not be reached or refused our configuration (login, sender address); see
+  helios.mail. Emails due meanwhile wait until PAUSED_UNTIL; the first one sent
+  after that tests the mail server, and a success ends the pause.
+  """
+  paused_until = models.DateTimeField(null=True, blank=True)
+  # mail server failures in a row (makes each pause longer); 0 once an email went out again
+  failures = models.PositiveIntegerField(default=0)
+  since = models.DateTimeField(null=True, blank=True)
+  error_code = models.CharField(max_length=32, blank=True, default='')
+  error_text = models.TextField(blank=True, default='')
+
+  class Meta:
+    app_label = 'helios'
+
+  def __str__(self):
+    return 'EmailSendingPause until %s (%d failures)' % (self.paused_until, self.failures)
 
 
 class SiteAnnouncement(models.Model):

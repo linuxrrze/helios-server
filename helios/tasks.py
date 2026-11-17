@@ -17,7 +17,7 @@ from urllib.parse import urlparse
 from . import mail
 from . import organizations
 from . import signals
-from . import utils
+from .mail_messages import voter_unsubscribe_vars  # noqa: F401 (imported from here before)
 from .models import CastVote, EmailBatch, Election, OutgoingEmail, Voter, VoterFile
 from .view_utils import render_text_template
 
@@ -26,19 +26,6 @@ def _language(language):
     """Messages are rendered in the language of the person whose action sends
     them (passed in by the view), or the site default for older queued tasks."""
     return translation.override(language or settings.LANGUAGE_CODE)
-
-
-def voter_unsubscribe_vars(voter):
-    """Template variables for the unsubscribe link at the end of a voter email."""
-    voter_email = mail.voter_email_address(voter)
-    if not voter_email:
-        return {}
-    unsubscribe_code = utils.generate_email_confirmation_code(voter_email, 'optout')
-    unsubscribe_path = reverse('optout_confirm', kwargs={'email': voter_email, 'code': unsubscribe_code})
-    return {
-        'unsubscribe_url': f"{settings.URL_HOST}{unsubscribe_path}",
-        'unsubscribe_code': unsubscribe_code,
-    }
 
 
 @task(priority=10)  # ahead of bulk voter emails
@@ -78,7 +65,7 @@ def voters_email(election_id, subject_template=None, body_template=None, extra_v
     voter_constraints_exclude are conditions on excluding voters
 
     Safe to run again (requeue_stuck_tasks): it adds and queues only the emails
-    that are still missing, in one transaction with their tasks.
+    that are still missing, in one transaction with their tasks (send_outgoing_email).
     Tasks queued before EmailBatch existed pass the templates instead of BATCH_ID.
     """
     election = Election.objects.get(id=election_id)
@@ -101,10 +88,9 @@ def voters_email(election_id, subject_template=None, body_template=None, extra_v
             [OutgoingEmail(batch=batch, election=election, voter_id=voter_id, user_id=user_id, kind=OutgoingEmail.KIND_BULK)
              for voter_id, user_id in voters.values_list('id', 'user_id') if voter_id not in queued_voters],
             batch_size=1000)
-        for email_id, voter_uuid in batch.emails.filter(voter__isnull=False).values_list('id', 'voter__uuid'):
+        for email_id in batch.emails.filter(voter__isnull=False).values_list('id', flat=True):
             if email_id not in already:
-                single_voter_email.enqueue(voter_uuid, language=language or batch.language or None,
-                                           outgoing_email_id=email_id)
+                mail.enqueue(email_id, OutgoingEmail.KIND_BULK)
 
 
 @task()
@@ -115,41 +101,29 @@ def voters_notify(election_id, notification_template, extra_vars={}, language=No
 
 
 @task()
+def send_outgoing_email(outgoing_email_id):
+    """
+    Send one email (an OutgoingEmail, see helios.mail). On a temporary error the
+    email is deferred and this task queued again for later; the task itself
+    only fails on a bug, not on an error of the mail server.
+    """
+    mail.send_queued(outgoing_email_id)
+
+
+@task()
 def single_voter_email(voter_uuid, subject_template=None, body_template=None, extra_vars=None, language=None,
                        outgoing_email_id=None):
     """
-    The email to one voter: of a bulk mailing (OUTGOING_EMAIL_ID, whose batch has
-    the templates and variables), or of the templates given here.
+    Queued before send_outgoing_email existed: the email to one voter, of a bulk
+    mailing (OUTGOING_EMAIL_ID) or of the templates given here.
     """
-    voter = Voter.objects.get(uuid=voter_uuid)
-
     if outgoing_email_id is None:
-        email = mail.new_email(OutgoingEmail.KIND_BULK, voter=voter)
-    else:
-        email = OutgoingEmail.objects.select_related('batch').get(id=outgoing_email_id)
-        if email.status not in OutgoingEmail.SENDABLE:
-            # already sent (or not to be sent): this task ran before
-            logging.getLogger(__name__).info("email %s already %s", email.id, email.status)
-            return
-        subject_template = email.batch.subject_template
-        body_template = email.batch.body_template
-        extra_vars = email.batch.extra_vars
-        language = language or email.batch.language or None
-
-    if mail.skip_opted_out(email, voter):
-        return
-
-    the_vars = copy.copy(extra_vars or {})
-    the_vars.update({'election': voter.election})
-    the_vars.update({'voter': voter})
-    the_vars.update(voter_unsubscribe_vars(voter))
-
-    # the email comes from the election's organization (sender name, Reply-To and
-    # signature, in the language of the email); set here, as the task runs without the request
-    with _language(language), organizations.mail_context(voter.election):
-        subject = render_text_template(subject_template, the_vars)
-        body = render_text_template(body_template, the_vars)
-        mail.deliver(email, voter.get_user(), subject, body)
+        voter = Voter.objects.get(uuid=voter_uuid)
+        email = mail.new_email(OutgoingEmail.KIND_BULK, voter=voter, language=language or '',
+                               params={'subject_template': subject_template, 'body_template': body_template,
+                                       'extra_vars': extra_vars or {}})
+        outgoing_email_id = email.id
+    mail.send_queued(outgoing_email_id)
 
 
 @task()
@@ -283,12 +257,13 @@ def election_notify_admin(election_id, subject, body, language=None):
 def notify_election_admin(election, subject, body):
     """
     An email to the administrator of ELECTION about it (voter file processed,
-    tally computed, trustee uploads, ...). Like the emails to its voters, it comes
-    from the election's organization: sender name, Reply-To and its signature,
-    which is added here (in the active language). Bodies queued before the
-    signature was added here end with their own one ("--" line) and keep it.
+    tally computed, trustee uploads, ...), queued to be sent in the background.
+    Like the emails to its voters, it comes from the election's organization:
+    sender name, Reply-To and its signature, which is added here (in the active
+    language). Bodies queued before the signature was added here end with their
+    own one ("--" line) and keep it.
     """
-    with organizations.mail_context(election):
-        if '\n--\n' not in body:
-            body = '%s\n\n--\n%s\n' % (body.rstrip(), organizations.for_election(election).mail_signature)
-        mail.send_now(OutgoingEmail.KIND_ADMIN_INFO, election.admin, subject, body, election=election)
+    if '\n--\n' not in body:
+        body = '%s\n\n--\n%s\n' % (body.rstrip(), organizations.for_election(election).mail_signature)
+    return mail.queue(OutgoingEmail.KIND_ADMIN_INFO, election=election, user=election.admin,
+                      params={'subject': subject, 'body': body})

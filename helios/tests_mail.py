@@ -67,7 +67,7 @@ class MailLogTests(TestCase):
 
   @override_settings(HELIOS_EMAIL_BACKEND='helios.tests_mail.FailingBackend')
   def test_silenced_failure_is_still_logged(self):
-    # helios.utils.send_email uses fail_silently=True; the failure must not vanish
+    # a caller passing fail_silently=True must not make the failure vanish
     with self.assertLogs('helios.mail', level='WARNING') as logs:
       self.assertEqual(mail.send_mail('subject', 'body', 'helios@example.org', ['erika@example.org'], fail_silently=True), 0)
     self.assertIn('email NOT sent: to=e***@example.org', logs.output[0])
@@ -193,14 +193,14 @@ class OutgoingEmailTests(TestCase):
     self.assertIsNone(email.sent_at)
 
   @override_settings(EMAIL_BACKEND='helios.tests_mail.FailingBackend')
-  def test_mail_server_error_fails_the_task(self):
+  def test_mail_server_error_fails_the_email_not_the_task(self):
     batch = self.make_batch()
     tasks.voters_email.enqueue(election_id=self.election.id, batch_id=batch.id, language='en')
-    with mock.patch('django_tasks_db.management.commands.db_worker.logger'):  # quieten the worker's log
-      run_tasks_allowing_failures()
-    failed = DBTaskResult.objects.failed()
-    self.assertEqual(sorted(t.task_path for t in failed), ['helios.tasks.single_voter_email'] * 3)
+    run_tasks_allowing_failures()
+    self.assertFalse(DBTaskResult.objects.failed().exists())
+    self.assertEqual(DBTaskResult.objects.filter(task_path='helios.tasks.send_outgoing_email').count(), 3)
     for email in batch.emails.all():
+      # 550: permanent, not tried again
       self.assertEqual(email.status, OutgoingEmail.FAILED)
       self.assertEqual(email.last_error_code, '550')
       self.assertIn('SMTPRecipientsRefused', email.last_error_text)
@@ -259,9 +259,9 @@ class OutgoingEmailTests(TestCase):
   def test_vote_cast_confirmation_failure_keeps_the_vote(self):
     from helios.tests import run_queued_tasks
     cast_vote = CastVote.objects.create(voter=self.voters[0], vote_hash='HASH123', vote_tinyhash='tiny123')
-    with mock.patch.object(CastVote, 'verify_and_store', return_value=True), self.assertLogs('server_ui.glue'):
+    with mock.patch.object(CastVote, 'verify_and_store', return_value=True):
       tasks.cast_vote_verify_and_store.enqueue(cast_vote.id)
-      run_queued_tasks()   # the task does not fail
+      run_queued_tasks()   # no task fails
     self.assertEqual(OutgoingEmail.objects.get().status, OutgoingEmail.FAILED)
 
   def test_vote_cast_confirmation_opted_out(self):
@@ -285,13 +285,19 @@ class OutgoingEmailTests(TestCase):
     self.assertEqual(email.recipient, '"Ada Admin" <admin@example.org>')
 
   @override_settings(EMAIL_BACKEND='helios.tests_mail.FailingBackend')
-  def test_admin_information_failure_raises(self):
-    with self.assertRaises(smtplib.SMTPRecipientsRefused):
-      tasks.election_notify_admin.call(election_id=self.election.id, subject='s', body='b')
-    self.assertEqual(OutgoingEmail.objects.get().status, OutgoingEmail.FAILED)
+  def test_admin_information_failure_is_recorded(self):
+    from helios.tests import run_queued_tasks
+    tasks.election_notify_admin.call(election_id=self.election.id, subject='s', body='b')
+    run_queued_tasks()
+    email = OutgoingEmail.objects.get()
+    self.assertEqual((email.status, email.last_error_code), (OutgoingEmail.FAILED, '550'))
+    self.assertEqual(email.params, {})   # subject and body are not kept
 
   def test_subject_is_one_line(self):
-    helios_mail.send_now(OutgoingEmail.KIND_ADMIN_INFO, self.admin, 'first\nsecond', 'body', election=self.election)
+    from helios.tests import run_queued_tasks
+    helios_mail.queue(OutgoingEmail.KIND_ADMIN_INFO, user=self.admin, election=self.election,
+                      params={'subject': 'first\nsecond', 'body': 'body'})
+    run_queued_tasks()
     self.assertEqual(mail.outbox[0].subject, 'first')
 
   def test_error_code(self):

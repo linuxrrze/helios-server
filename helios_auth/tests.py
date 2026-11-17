@@ -617,7 +617,11 @@ class ReturnUrlTests(TestCase):
         response = self.client.post(reverse(password_views.PASSWORD_FORGOTTEN_URL_NAME), {
             'csrf_token': self._csrf_token(), 'username': 'forgetful',
             'return_url': 'https://example.com/elsewhere'})
+        from helios.tests import run_queued_tasks
+        run_queued_tasks()   # the reminder is sent in the background
         self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ['"Forgetful User" <forgetful@example.com>'])
+        self.assertIn('foobaz', mail.outbox[0].body)
         self.assertEqual(response['Location'], '/')
 
 

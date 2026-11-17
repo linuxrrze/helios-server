@@ -231,7 +231,8 @@ election creator).
 - `cast_vote_verify_and_store` has a higher priority, so vote verification
   runs ahead of bulk voter emails.
 - Arguments must be JSON-serializable (ids, UUID strings, template names).
-- There are no automatic retries. Finished tasks stay in the table until
+- There are no automatic retries of tasks (emails retry themselves, see
+  Email). Finished tasks stay in the table until
   `manage.py prune_db_task_results` deletes them. The `/helios/stats/` page
   shows how many tasks are waiting, running, stuck and failed in the last
   day, and re-queues cast votes still waiting for verification.
@@ -240,7 +241,9 @@ election creator).
   the queue. A bulk voter email (`voters_email`) can run again: it adds and
   queues only the emails of its mailing still missing. `voters_notify` and
   bulk emails queued before mailings were recorded are only listed, since
-  rerunning one would reach every voter again.
+  rerunning one would reach every voter again. The command also queues again
+  every email still to be sent whose task is gone (queued, deferred or
+  "sending" since before the cutoff, with no waiting or running task).
 - Tests use the same database queue: `run_queued_tasks()` in
   `helios/tests.py` runs the worker until the queue is empty, and fails the
   test if any task failed.
@@ -256,19 +259,71 @@ Mailgun or Amazon SES depending on settings) through
 `helios.mail_backend.LoggingEmailBackend`.
 
 Each email gets an `OutgoingEmail` row (kind, recipient, status, attempts,
-error, `sent_at`, Message-ID); a bulk mailing from the "email voters" page is
-an `EmailBatch` with the templates and variables and one `OutgoingEmail` per
-voter. The rendered email is not stored (it may contain the voter's password).
-An email is marked "sending" before it goes to the mail server, so a worker
-that dies in between sends it again rather than losing it. There are no
-automatic retries yet.
+error, `sent_at`, Message-ID) and is sent by its own task,
+`send_outgoing_email(id)`. Kinds: bulk mailing, vote-cast confirmation, vote
+removed, information for the administrator, voter password resent, trustee
+homepage link, opt-out and opt-in confirmation, account password reminder. A
+bulk mailing from the "email voters" page is an `EmailBatch` with the templates
+and variables and one `OutgoingEmail` per voter. Subject and body are rendered
+when the email is sent (`helios/mail_messages.py`) and not stored, as they may
+contain a password or a secret link; only emails without secrets (to the
+administrator, vote removed) keep theirs in `params` until they are final.
+Views and other tasks only queue emails: an error of the mail server never
+fails a request, the cast-vote verification or another task.
 
-Emails sent from the administrator's "email voters" page, and password
-resends, go through `single_voter_email`: it skips opted-out addresses and
-adds a signed opt-out link (`EMAIL_OPTOUT_SECRET`). Opted-out addresses are
-also refused when voters are uploaded. Two voter messages bypass this: the
-cast receipt (`server_ui/glue.py`, templates in `server_ui/templates/email/`)
-and the notice sent when an administrator removes a voter who has voted.
+Right before sending, the task locks the row and checks again: an email that
+is no longer queued, deferred or "sending" is left alone (no duplicates); one
+whose voter or trustee was removed, whose election was deleted, a bulk mailing
+past `HELIOS_VOTER_EMAIL_CUTOFF_WEEKS`, or an invitation to vote or voter
+password after voting closed is not sent (status `skipped_obsolete`, the reason
+in `last_error_code`: `voter_removed`, `trustee_removed`, `election_deleted`,
+`voter_email_cutoff`, `voting_closed`); opted-out voters are skipped
+(`skipped_optout`, without their address). A hook for a suppression list
+(`helios.mail.suppressed`) is there, the list itself not yet.
+
+`helios/mail_errors.py` judges errors of the mail server. RFC 3463 enhanced
+status codes (`5.1.1`, `4.2.2`) win over the three-digit reply code:
+
+| Error | Meaning | Then |
+|---|---|---|
+| 5xx / 5.x.x (unknown mailbox, rejected), HTTP 4xx | permanent | `failed` |
+| 4xx / 4.x.x (greylisting, mailbox full, throttling), HTTP 429/5xx | temporary | `deferred`, retried |
+| disconnected, connection refused, timeout, DNS, TLS, 421 | mail server unreachable | `deferred`, sending paused |
+| `SMTPAuthenticationError`, `SMTPSenderRefused`, HTTP 401/403 | our configuration | `deferred` longer, sending paused, `ADMINS` and Rollbar told |
+| anything else | temporary | `deferred`, retried |
+
+A deferred email gets `next_attempt_at`, and its task queues itself again for
+then (`send_outgoing_email.using(run_after=...)`) and ends successfully; the
+state lives in the `OutgoingEmail`, not in the task table. The n-th retry waits
+`min(HELIOS_EMAIL_RETRY_BASE * 2^n, HELIOS_EMAIL_RETRY_CAP) * random(0.5, 1.5)`
+(configuration errors as if three more attempts had failed); after
+`HELIOS_EMAIL_MAX_ATTEMPTS` attempts or `HELIOS_EMAIL_MAX_AGE` after it was
+queued the email is `failed`. A task that finds its email deferred to later is
+an outdated one and does nothing.
+
+When the mail server cannot be reached or refuses our configuration, sending
+is paused for all emails (`EmailSendingPause`, one row): emails due meanwhile
+are deferred to the end of the pause without an attempt, so that not every
+email runs into the same wall. The first email after the pause tests the mail
+server; a success ends the pause, another failure starts a longer one.
+`manage.py resume_email` ends a pause at once and sends the deferred emails.
+
+An email is marked "sending" (with a lease of 15 minutes in `next_attempt_at`)
+right before it goes to the mail server and "sent" right after: a worker that
+dies in between leaves it "sending", and it is sent again after the lease
+(a duplicate rather than a lost email). `requeue_stuck_tasks` queues such
+emails again if their task is gone. Single emails run ahead of bulk mailings
+(task priority 5, bulk 0, cast-vote verification 10). Tasks queued before
+`send_outgoing_email` existed (`single_voter_email`, `election_notify_admin`)
+still run and go the same way.
+
+Emails to voters (bulk mailings, password resends, the cast receipt in
+`server_ui/templates/email/`) skip opted-out addresses and add a signed
+opt-out link (`EMAIL_OPTOUT_SECRET`). Opted-out addresses are also refused when
+voters are uploaded. The notice sent when an administrator removes a voter who
+has voted goes out regardless. Opt-out and opt-in confirmations keep the
+address only until they are final, then only masked (`e***@example.org`), so
+that it cannot be matched to the hashed `EmailOptOut`.
 
 `Election.can_send_voter_emails` turns voter emails off
 `HELIOS_VOTER_EMAIL_CUTOFF_WEEKS` weeks after `tallying_finished_at`. Nothing
@@ -323,7 +378,9 @@ All settings are in `settings.py` and read from environment variables.
 - `ALLOWED_HOSTS`, `SSL`, `HSTS`.
 - `AUTH_ENABLED_SYSTEMS` and `AUTH_DEFAULT_SYSTEM`, plus each login system's
   client ID and secret.
-- Email: `EMAIL_HOST` etc., `MAILGUN_API_KEY`, or `EMAIL_USE_AWS`.
+- Email: `EMAIL_HOST` etc., `MAILGUN_API_KEY`, or `EMAIL_USE_AWS`; retries:
+  `HELIOS_EMAIL_RETRY_BASE`, `HELIOS_EMAIL_RETRY_CAP`, `HELIOS_EMAIL_MAX_ATTEMPTS`,
+  `HELIOS_EMAIL_MAX_AGE`.
 - Branding: `SITE_TITLE`, `WELCOME_MESSAGE`, `FOOTER_LINKS`, ...
 - `ROLLBAR_ACCESS_TOKEN` for error reporting.
 

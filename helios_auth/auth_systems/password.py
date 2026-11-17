@@ -99,7 +99,20 @@ def password_forgotten_view(request):
     except User.DoesNotExist:
       return render_template(request, 'password/forgot', {'return_url': request.GET.get('return_url', ''), 'error': _('no such username')})
     
-    body = _("""
+    # sent in the background, with retries (helios.mail); the text is password_reminder below
+    from helios import mail
+    from helios.models import OutgoingEmail
+    mail.queue(OutgoingEmail.KIND_PASSWORD_REMINDER, user=user)
+
+    return HttpResponseRedirect(return_url)
+  
+def password_reminder(user):
+  """
+  (subject, body, recipient) of the password reminder to USER, rendered when it is
+  sent (helios.mail), so that the password is not stored with the email.
+  recipient None: the address get_email_address gives.
+  """
+  body = _("""
 
 This is a password reminder:
 
@@ -109,14 +122,12 @@ Your password: %(password)s
 --
 %(site_title)s
 """) % {'username': user.user_id, 'password': user.info['password'],
-           # not about an election: signed with the operator's (default organization's) site title
-           'site_title': localized_setting('SITE_TITLE') or ''}
+         # not about an election: signed with the operator's (default organization's) site title
+         'site_title': localized_setting('SITE_TITLE') or ''}
+  address = user.info.get('email')
+  recipient = format_recipient(user.info.get('name'), address) if address else None
+  return _('password reminder'), body, recipient
 
-    # FIXME: make this a task
-    send_mail(_('password reminder'), body, settings.SERVER_EMAIL, [format_recipient(user.info['name'], user.info['email'])], fail_silently=False)
-    
-    return HttpResponseRedirect(return_url)
-  
 def get_auth_url(request, redirect_url = None):
   return reverse(PASSWORD_LOGIN_URL_NAME)
     

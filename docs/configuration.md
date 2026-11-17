@@ -129,7 +129,23 @@ EMAIL_HOST_PASSWORD=...
 | `DEFAULT_FROM_NAME` | `Ben for Helios` ⚠ | Sender name. Emails for an election of an organization with its own `mail.from_name` show that name with the same address ([organizations.md](organizations.md#8-emails)). |
 | `EMAIL_SIGNATURE` | `Helios` | Signature (after `--`) of the emails to voters and trustees. Per language (`EMAIL_SIGNATURE_DE`). An organization can set its own. |
 | `HELP_EMAIL_ADDRESS` | `help@heliosvoting.org` ⚠ | Contact address shown to users (also the "Contact" link in the footer, and in the voting booth for elections without their own help address). |
-| `HELIOS_VOTER_EMAIL_CUTOFF_WEEKS` | `3` | Weeks after the tally from which administrators can no longer email the voters of an election. |
+| `HELIOS_VOTER_EMAIL_CUTOFF_WEEKS` | `3` | Weeks after the tally from which administrators can no longer email the voters of an election. Emails of a mailing still waiting then are not sent. |
+
+**Retries.** An email the mail server does not take for now (greylisting, mailbox full,
+throttling, server unreachable) is deferred and tried again; one it refuses for good
+(unknown mailbox) fails at once. The n-th retry waits min(`HELIOS_EMAIL_RETRY_BASE` · 2ⁿ,
+`HELIOS_EMAIL_RETRY_CAP`) · random(0.5…1.5) seconds; with the defaults 5, 10, 20, 40, 80, 160 and
+320 minutes (about 10 hours for all 8 attempts). When the mail server cannot be reached or
+refuses the login or sender address, sending is paused for all emails, and a refused login is
+reported to `ADMIN_EMAIL` and Rollbar. `manage.py resume_email` ends a pause after fixing the
+settings.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `HELIOS_EMAIL_RETRY_BASE` | `300` | Seconds before the first retry; each further retry waits twice as long. |
+| `HELIOS_EMAIL_RETRY_CAP` | `21600` | Longest wait between two attempts, in seconds (6 hours). |
+| `HELIOS_EMAIL_MAX_ATTEMPTS` | `8` | Attempts after which an email counts as failed. |
+| `HELIOS_EMAIL_MAX_AGE` | `172800` | Seconds after queueing (48 hours) after which an email that has not gone out counts as failed. |
 
 **Other ways to send** (instead of SMTP):
 
@@ -146,6 +162,9 @@ there, with the recipient masked:
 INFO email sent: to=e***@example.org subject="Election XY - vote cast"
 ERROR email NOT sent: to=e***@example.org subject="..." error=SMTPRecipientsRefused: ...
 ```
+
+Each email is also recorded in the database (`OutgoingEmail`: kind, status such as `sent`,
+`deferred`, `failed`, attempts, last error, next attempt).
 
 "sent" means the mail server accepted the email; whatever happens afterwards (spam filter,
 bounce) is in the mail server's logs. No line at all means no mail was triggered: creating an

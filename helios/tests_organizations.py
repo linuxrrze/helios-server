@@ -1017,6 +1017,8 @@ class ElectionMailTests(OrganizationTestCase):
     voter.vote_hash = 'HASH'
     voter.save()
     self.client.post('/helios/elections/%s/voters/%s/delete' % (election.uuid, voter.uuid), {'csrf_token': 'tok'})
+    from helios.tests import run_queued_tasks
+    run_queued_tasks()   # sent in the background
     self.assertEqual([m.subject for m in mail.outbox],
                      ['your trustee homepage for Board election', 'Your vote has been removed - Board election'])
     for message in mail.outbox:
@@ -1083,7 +1085,9 @@ class ElectionMailTests(OrganizationTestCase):
     # as the views send the trustee notes (public key uploaded, partial decryption)
     from helios import tasks
     election = self.make_election(self.unia_user, organization='unic')
+    from helios.tests import run_queued_tasks
     tasks.notify_election_admin(election, 'Board election - trustee pk upload', 'trustee Tara uploaded a pk.')
+    run_queued_tasks()
     self.assertEqual(mail.outbox[0].body, 'trustee Tara uploaded a pk.\n\n--\nElectoral office\nUniversity C\n')
     self.assertFromUnic(mail.outbox[0])
     with open(os.path.join(settings.ROOT_PATH, 'helios', 'views.py'), encoding='utf-8') as f:
@@ -1111,8 +1115,10 @@ class ElectionMailTests(OrganizationTestCase):
   def test_emails_not_about_an_election_stay_the_operators(self):
     self.client.cookies[ENTRY] = 'unic'  # also for a visitor of an organization's entry link
     self.client.post('/optout/', {'email': 'someone@example.net'})
+    from helios.tests import run_queued_tasks
+    run_queued_tasks()
     self.assertEqual(len(mail.outbox), 1)
-    self.assertEqual(mail.outbox[0].from_email, 'elections@example.org')
+    self.assertEqual(mail.outbox[0].from_email, settings.SERVER_EMAIL)
     self.assertEqual(mail.outbox[0].reply_to, [])
 
   @override_settings(ORGANIZATIONS=ORGS2)
@@ -1128,6 +1134,8 @@ class ElectionMailTests(OrganizationTestCase):
     self.login(self.unia_user)
     with self.settings(SITE_TITLE='Example Elections', LOCALIZED_SETTINGS={'SITE_TITLE': {'de': 'Beispielwahlen'}}):
       self.client.post('/auth/password/forgot', {'username': 'jdoe', 'csrf_token': 'tok'}, HTTP_ACCEPT_LANGUAGE='de')
+      from helios.tests import run_queued_tasks
+      run_queued_tasks()   # rendered when sent, in the language of the request
     self.assertTrue(mail.outbox[0].body.rstrip().endswith('Beispielwahlen'), mail.outbox[0].body)
 
 

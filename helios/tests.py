@@ -2307,12 +2307,17 @@ class EmailOptOutViewTests(WebTest):
             response = self.client.post('/optout/', {'email': 'test@example.com'})
             self.assertEqual(response.status_code, 302)
             self.assertEqual(response.url, '/optout/success/')
-            
-            # Check that email was sent
+
+            # Check that email was sent (in the background)
+            run_queued_tasks()
             self.assertEqual(len(mail.outbox), 1)
             self.assertEqual(mail.outbox[0].subject, 'Confirm your opt-out from Helios emails')
             self.assertIn('test@example.com', mail.outbox[0].to)
             self.assertIn('/optout/confirm/test@example.com/', mail.outbox[0].body)
+            # recorded, without the address that asked to opt out (only masked)
+            email = models.OutgoingEmail.objects.get()
+            self.assertEqual((email.kind, email.status, email.recipient),
+                             (models.OutgoingEmail.KIND_OPTOUT_CONFIRM, models.OutgoingEmail.SENT, 't***@example.com'))
 
     def test_optout_success_page_renders(self):
         """Test that opt-out success page renders correctly"""
@@ -2367,12 +2372,16 @@ class EmailOptOutViewTests(WebTest):
             response = self.client.post('/optin/', {'email': email})
             self.assertEqual(response.status_code, 302)
             self.assertEqual(response.url, '/optin/success/')
-            
-            # Check that email was sent
+
+            # Check that email was sent (in the background)
+            run_queued_tasks()
             self.assertEqual(len(mail.outbox), 1)
             self.assertEqual(mail.outbox[0].subject, 'Confirm your opt-in to Helios emails')
             self.assertIn(email, mail.outbox[0].to)
             self.assertIn(f'/optin/confirm/{email}/', mail.outbox[0].body)
+            outgoing = models.OutgoingEmail.objects.get()
+            self.assertEqual((outgoing.kind, outgoing.status, outgoing.recipient),
+                             (models.OutgoingEmail.KIND_OPTIN_CONFIRM, models.OutgoingEmail.SENT, 't***@example.com'))
 
     def test_optin_request_for_non_opted_out_email(self):
         """Test that opt-in request shows message for non-opted-out address"""
@@ -3523,13 +3532,13 @@ class VotersEmailOpenRegTests(WebTest):
         response = self.client.get(self.email_url(query))
         self.assertStatusCode(response, 200)
         self.assertContains(response, 'id="email_form"')
-        with mock.patch('helios.views.tasks.single_voter_email') as single_voter_email:
-            response = self.post_email(query=query)
+        response = self.post_email(query=query)
         self.assertRedirects(response, f'/helios/elections/{self.election.uuid}/view')
-        self.assertEqual(single_voter_email.enqueue.call_args.kwargs['voter_uuid'], voter.uuid)
-        # a mailing of one email (helios.mail)
-        email = models.OutgoingEmail.objects.get(id=single_voter_email.enqueue.call_args.kwargs['outgoing_email_id'])
+        # a mailing of one email (helios.mail), with its task
+        email = models.OutgoingEmail.objects.get()
         self.assertEqual((email.voter, email.batch.election, email.status), (voter, self.election, 'queued'))
+        task_result = DBTaskResult.objects.get(task_path='helios.tasks.send_outgoing_email')
+        self.assertEqual(task_result.args_kwargs['args'], [email.id])
 
 
 class DateTimeLocalWidgetTests(TestCase):

@@ -115,12 +115,18 @@ class VoteCastEmailTests(TestCase):
         self.voter = models.Voter.objects.create(
             uuid=str(uuid.uuid4()), election=self.election,
             voter_email='voter@example.com', voter_name='Erika Muster')
-        self.cast_vote = models.CastVote(voter=self.voter, vote_hash='HASH123', vote_tinyhash='tiny123')
+        self.cast_vote = models.CastVote.objects.create(voter=self.voter, vote_hash='HASH123', vote_tinyhash='tiny123')
 
-    def _send(self):
+    def _queue(self):
         from server_ui.glue import vote_cast_send_message
         vote_cast_send_message(user=self.voter.get_user(), voter=self.voter,
                                election=self.election, cast_vote=self.cast_vote)
+
+    def _send(self):
+        # queued by the signal handler, sent by its own task
+        from helios.tests import run_queued_tasks
+        self._queue()
+        run_queued_tasks()
 
     def test_voter_without_account_gets_mail(self):
         from django.core import mail
@@ -148,9 +154,19 @@ class VoteCastEmailTests(TestCase):
 
     def test_mail_failure_does_not_raise(self):
         from unittest import mock
+        from django.core import mail
+        from helios.models import OutgoingEmail
         with mock.patch('helios.mail.EmailMultiAlternatives.send', side_effect=OSError('SMTP down')):
+            self._send()   # neither the handler nor the task fails
+        email = OutgoingEmail.objects.get()
+        self.assertEqual((email.status, email.last_error_code), (OutgoingEmail.DEFERRED, 'OSError'))
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_queue_failure_does_not_raise(self):
+        from unittest import mock
+        with mock.patch('helios.mail.queue', side_effect=RuntimeError('database gone')):
             with self.assertLogs('server_ui.glue', level='ERROR'):
-                self._send()
+                self._queue()
 
 
 class EmailSettingsFromEnvironmentTests(TestCase):

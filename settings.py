@@ -758,6 +758,14 @@ HELIOS_VOTERS_EMAIL = True
 # Number of weeks after tallying when voter emails should be disabled
 HELIOS_VOTER_EMAIL_CUTOFF_WEEKS = int(get_from_env('HELIOS_VOTER_EMAIL_CUTOFF_WEEKS', '3'))
 
+# Retrying emails the mail server did not take (helios.mail), in seconds: the
+# n-th retry waits min(BASE * 2^n, CAP) * random(0.5, 1.5); an email is given up
+# (failed) after MAX_ATTEMPTS attempts or MAX_AGE after it was queued.
+HELIOS_EMAIL_RETRY_BASE = int(get_from_env('HELIOS_EMAIL_RETRY_BASE', '300'))
+HELIOS_EMAIL_RETRY_CAP = int(get_from_env('HELIOS_EMAIL_RETRY_CAP', '21600'))
+HELIOS_EMAIL_MAX_ATTEMPTS = int(get_from_env('HELIOS_EMAIL_MAX_ATTEMPTS', '8'))
+HELIOS_EMAIL_MAX_AGE = int(get_from_env('HELIOS_EMAIL_MAX_AGE', '172800'))
+
 # are elections private by default?
 HELIOS_PRIVATE_DEFAULT = False
 
