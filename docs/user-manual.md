@@ -34,6 +34,10 @@ Click **create election** and fill in the form:
 - **Help Email Address:** where voters can ask for help.
 - **Voting starts at / ends at:** optional, in UTC. Leave them empty to open
   voting as soon as you freeze the election (step 6) and close it yourself.
+- **Close voting when everyone has voted** (off by default): once every voter
+  on your voter list has cast a ballot, voting ends automatically, even before
+  the end time, and nobody can change their vote any more. Suited to votes of
+  a board or committee; see step 8. It has no effect with open registration.
 
 Click **Next**. You now have the election's page, which always shows the
 **Next Step**.
@@ -148,6 +152,15 @@ The **voters & ballots** page shows how many votes have been cast and each
 voter's ballot tracker. If you set an end time, you can **extend voting**
 until you compute the tally.
 
+With **Close voting when everyone has voted**, the election page says so
+while voting is open. As soon as the last voter on the list has cast their
+ballot (a voter with several votes has to cast each of them), voting ends:
+the election page notes that voting was closed automatically because all
+voters have voted, the election log records it, and you get an email. Voters
+who come to the booth after that are told that voting has ended. The tally
+is not computed automatically: that is still your step 9. Once voting has
+ended this way, it cannot be extended.
+
 ### 9. Close voting and compute the tally
 
 When you're ready to stop voting, click **compute encrypted tally** under
@@ -184,7 +197,9 @@ in a **voter group** instead of uploading a file each time: open **Voter
 groups**, create a group and add its members with their number of votes.
 **Start election** on the group's page creates an election with one password
 voter per vote; a vote can be delegated to another member first. After that,
-the election no longer depends on the group.
+the election no longer depends on the group. For such elections, **Close
+voting when everyone has voted** is checked in advance; uncheck it if the
+vote should stay open until its end time.
 
 A group can have several administrators. On the group's page, follow
 **Manage administrators** and add people by the email (or username) they log

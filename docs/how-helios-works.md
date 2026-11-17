@@ -32,7 +32,10 @@ administrators, voters and trustees. For the technical design, see
    questions, trustees and encryption key can't change. Voters can still be
    added or removed until the tally starts. Voting opens at the scheduled
    time, or right away if none was set.
-4. **Voting.** Voters fill in and cast their ballots (see below).
+4. **Voting.** Voters fill in and cast their ballots (see below). Voting ends
+   at the scheduled time or when the administrator starts the tally; if the
+   administrator chose so, it also ends as soon as every voter on the list
+   has voted.
 5. **Tally.** When voting ends, the administrator starts the tally. Helios
    adds up all the encrypted ballots without decrypting any of them, giving
    an encrypted total for each answer.

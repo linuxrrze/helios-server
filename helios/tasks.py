@@ -49,9 +49,37 @@ def _cast_vote_verify_and_store(cast_vote_id, status_update_message):
 
         if status_update_message and user.can_update_status():
             user.update_status(status_update_message)
+
+        # the ballot is stored (and committed): it may have been the last one missing
+        close_voting_if_all_voted(election)
     else:
         logger = logging.getLogger(__name__)
         logger.error("Failed to verify and store %d" % cast_vote_id)
+
+
+def close_voting_if_all_voted(election):
+    """
+    End voting if the election closes when all voters have voted and they all
+    have (Election.close_voting_if_all_voted), and tell its administrator, in
+    the same transaction. The tally is not computed: that stays the
+    administrator's step. The email is in the site's language, since a voter's
+    ballot triggers it.
+    """
+    with transaction.atomic():
+        if not election.close_voting_if_all_voted():
+            return False
+        with _language(None):
+            subject = _("%(election)s: voting closed, all voters have voted") % {'election': election.name}
+            body = _("""
+All voters of election %(election)s have cast their ballot, so voting was
+closed automatically, as set for this election. Nobody can cast or change a
+ballot any more.
+
+The next step is to compute the tally, on the election page:
+%(url)s
+""") % {'election': election.name, 'url': election.url}
+            notify_election_admin(election, subject, body)
+    return True
 
 
 @task()
@@ -165,6 +193,7 @@ The encrypted tally for election %(election)s has been computed.
 def tally_helios_decrypt(election_id, language=None):
     election = Election.objects.get(id=election_id)
     election.helios_trustee_decrypt()
+
     with _language(language):
         subject = _('Helios Decrypt')
         body = _("""

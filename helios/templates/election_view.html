@@ -75,12 +75,16 @@
   {% else %}
   {% if election.voting_has_stopped %}
   <span class="callout-title">{% translate "Next step:" %} {% translate "compute the encrypted tally" %}</span>
+  {% if voting_auto_closed %}<p id="voting-auto-closed"><strong>{{ voting_auto_closed.message }}</strong> &ndash; {{ voting_auto_closed.at|utc_time }}</p>{% endif %}
   {% elif election.voting_has_started %}
   <span class="callout-title">{% translate "Voting is open." %}</span>
   <p>{% translate "Invite the voters by email, and follow the turnout in the ballot tracking center." %}</p>
   {% else %}
   <span class="callout-title">{% translate "The ballot is frozen; voting has not started yet." %}</span>
   <p>{% translate "You can already send the voters their invitation." %}</p>
+  {% endif %}
+  {% if close_when_all_voted and not election.voting_has_stopped %}
+  <p id="close-when-all-voted">{% translate "Voting closes automatically as soon as every voter has voted. Nobody can change their vote after that." %}</p>
   {% endif %}
   <p>
   {% blocktranslate trimmed %}The encrypted votes will be combined into an encrypted tally. Once this is done,<br />
@@ -90,7 +94,7 @@
   <p class="actions">
     {% if not election.voting_has_stopped and settings.HELIOS_VOTERS_EMAIL %}{% if can_send_emails %}<a class="button" href="{% url "election@voters@email" election.uuid %}">{% translate "email voters" %}</a>{% else %}<button type="button" class="button" disabled title="{{email_disabled_reason}}">{% blocktranslate trimmed with reason=email_disabled_reason %}email voters (disabled: {{ reason }}){% endblocktranslate %}</button>{% endif %}{% endif %}
     <a class="button{% if not election.voting_has_stopped %} secondary{% endif %}" href="{% url "election@compute-tally" election.uuid %}">{% translate "compute encrypted tally" %}</a>
-    {% if election.voting_ends_at and not election.tallying_started_at %}<a href="{% url "election@extend" election.uuid %}">{% translate "extend voting" %}</a>{% endif %}
+    {% if election.voting_ends_at and not election.voting_ended_at and not election.tallying_started_at %}<a href="{% url "election@extend" election.uuid %}">{% translate "extend voting" %}</a>{% endif %}
   </p>
   {% endif %}
 {% elif election.has_complete_result %}
@@ -159,7 +163,7 @@
 <button type="submit" class="button danger secondary small">{% translate "delete it" %}</button>
 </form>
 {% endif %}
-{% if election.voting_ends_at and not election.tallying_started_at %}
+{% if election.voting_ends_at and not election.voting_ended_at and not election.tallying_started_at %}
 <a class="button secondary small" href="{% url "election@extend" election.uuid %}">{% translate "extend voting" %}</a>
 {% endif %}
 </div>

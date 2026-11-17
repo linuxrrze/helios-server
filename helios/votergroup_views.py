@@ -242,6 +242,8 @@ def votergroup_prepareelection(request, votergroup_uuid):
     election_form = election_forms.ElectionForm(initial={
       'description': _("Election for voter group %(short_name)s") % {'short_name': group.short_name},
       'private_p': True,
+      # a board or committee: voting ends once all members have voted
+      'close_when_all_voted': True,
       'help_email': user.info.get("email", '')}, short_name_prefix=prefix)
   else:
     check_csrf(request)

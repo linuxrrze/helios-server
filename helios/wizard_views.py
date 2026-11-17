@@ -26,7 +26,7 @@ STEPS = [
   ('basics', gettext_lazy('Name and description'), ['name', 'short_name', 'description']),
   ('schedule', gettext_lazy('Voting period'), ['voting_starts_at', 'voting_ends_at']),
   ('options', gettext_lazy('Options'), ['election_type', 'private_p', 'use_voter_aliases', 'randomize_answer_order',
-                                        'help_email', 'election_info_url']),
+                                        'close_when_all_voted', 'help_email', 'election_info_url']),
   ('review', gettext_lazy('Check and create'), []),
 ]
 STEP_KEYS = [key for key, _title, _fields in STEPS]

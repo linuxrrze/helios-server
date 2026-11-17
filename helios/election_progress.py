@@ -95,8 +95,14 @@ def admin_steps(election, trustees):
                         num_voters) % {'cast': num_cast, 'total': num_voters}
   else:
     detail = _('Not yet')
+  hint = _('Send voters their invitation and follow the turnout in the ballot tracking center.')
+  if election.close_when_all_voted and not election.openreg:
+    if voting_stopped and election.voting_auto_closed:
+      detail = '%s. %s' % (detail, _('Voting was closed automatically: all voters have voted.'))
+    else:
+      hint = '%s %s' % (hint, _('Voting closes automatically once every voter has voted.'))
   steps.append({'key': 'voting', 'title': _('Voting'), 'detail': detail,
-                'hint': _('Send voters their invitation and follow the turnout in the ballot tracking center.'),
+                'hint': hint,
                 'url': _url(names.ELECTION_VOTERS_LIST_PRETTY, election) if frozen else None,
                 'done': frozen and voting_stopped})
 

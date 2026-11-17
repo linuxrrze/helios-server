@@ -272,6 +272,9 @@ def one_election_edit(request, election):
 
   if settings.ALLOW_ELECTION_INFO_URL:
     RELEVANT_FIELDS += ['election_info_url']
+  # only with a fixed voter list (the form leaves it out with open registration)
+  if not election.openreg:
+    RELEVANT_FIELDS += ['close_when_all_voted']
   
   # the address belongs to the organization of the election's creator, also when
   # another administrator edits it
@@ -308,6 +311,10 @@ def one_election_schedule(request, election):
 
 @election_admin()
 def one_election_extend(request, election):
+  # voting has been ended (tally computed, or everyone has voted): that is final
+  if election.voting_ended_at:
+    return HttpResponseRedirect(settings.SECURE_URL_HOST + reverse(url_names.election.ELECTION_VIEW, args=[election.uuid]))
+
   if request.method == "GET":
     election_form = forms.ElectionTimeExtensionForm({'voting_extended_until': election.voting_extended_until})
   else:
@@ -432,6 +439,8 @@ def one_election_view(request, election):
   show_result = election.result_released_at or (election.result and admin_p)
 
   status_key, status_label = election_progress.election_status(election)
+  # set for elections with a fixed voter list only
+  close_when_all_voted = election.close_when_all_voted and not election.openreg
   if admin_p:
     admin_steps = election_progress.admin_steps(election, trustees)
     freeze_issues = election_progress.issues_with_links(election) if not election.frozen_at else []
@@ -453,6 +462,8 @@ def one_election_view(request, election):
                           'organization_choices': organizations.all_organizations() if can_set_organization_p else [],
                           'vote_url': vote_url, 'election_badge_url' : election_badge_url,
                           'show_result': show_result,
+                          'close_when_all_voted': close_when_all_voted,
+                          'voting_auto_closed': election.voting_auto_closed if close_when_all_voted else None,
                           'test_cookie_url': test_cookie_url})
 
 def test_cookie(request):
@@ -1352,6 +1363,7 @@ def one_election_copy(request, election):
     use_voter_aliases = election.use_voter_aliases,
     use_advanced_audit_features = election.use_advanced_audit_features,
     randomize_answer_order = election.randomize_answer_order,
+    close_when_all_voted = election.close_when_all_voted,
     registration_starts_at = election.registration_starts_at,
     voting_starts_at = election.voting_starts_at,
     voting_ends_at = election.voting_ends_at,

@@ -85,6 +85,11 @@ class ElectionForm(LocalTimesMixin, forms.Form):
                                    required=False)
   voting_ends_at = LocalDateTimeField(label=_('Voting ends at'), help_text = _('Leave empty to end voting yourself, by computing the tally.'),
                                    required=False)
+  close_when_all_voted = forms.BooleanField(
+    required=False, initial=False, label=_('Close voting when everyone has voted'),
+    help_text=_('Once every voter on the voter list has cast a ballot, voting ends automatically, even before '
+                'the end time, and nobody can change their vote any more. Suited to votes of a board or '
+                'committee. Has no effect with open registration.'))
 
   def __init__(self, *args, short_name_prefix='', election=None, **kwargs):
     """
@@ -94,6 +99,9 @@ class ElectionForm(LocalTimesMixin, forms.Form):
     super().__init__(*args, **kwargs)
     self.short_name_prefix = short_name_prefix
     self.election = election
+    # meaningless without a fixed voter list
+    if election and election.openreg:
+      self.fields.pop('close_when_all_voted', None)
     if 'short_name' in self.fields:
       widget = self.fields['short_name'].widget
       widget.address_prefix = short_name_prefix

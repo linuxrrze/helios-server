@@ -114,6 +114,10 @@ class Election(HeliosModel):
   # randomize candidate order?
   randomize_answer_order = models.BooleanField(default=False, null=False)
 
+  # end voting as soon as every voter on the list has cast a ballot (e.g. a vote
+  # of a board): see close_voting_if_all_voted. Ignored with open registration.
+  close_when_all_voted = models.BooleanField(default=False, null=False)
+
   # where votes should be cast
   cast_url = models.CharField(max_length = 500)
 
@@ -570,6 +574,44 @@ class Election(HeliosModel):
 
     return (True, None)
 
+  def close_voting_if_all_voted(self):
+    """
+    With close_when_all_voted, end voting once every voter on the list has a
+    cast ballot (a voter with several votes has several Voter rows, each of
+    which must have voted), the same way computing the tally does: by setting
+    voting_ended_at. Called after a ballot is verified and stored.
+
+    Safe against two last ballots stored at the same time: the check runs with
+    the election row locked, after the caller's ballot was committed, so the
+    last of them sees all ballots; once voting has ended, a later call does
+    nothing. Returns True if this call ended voting (and logged it).
+    """
+    if not self.close_when_all_voted or self.openreg:
+      return False
+
+    with transaction.atomic():
+      election = Election.objects.select_for_update().get(pk=self.pk)
+      if not election.close_when_all_voted or election.openreg:
+        return False
+      if not election.frozen_at or election.tallying_started_at or election.voting_has_stopped():
+        return False
+      if not election.voter_set.exists() or election.voter_set.filter(vote=None).exists():
+        return False
+
+      election.voting_ended_at = datetime.datetime.utcnow()
+      election.save(update_fields=['voting_ended_at'])
+      election.append_log(ElectionLog.VOTING_AUTO_CLOSED)
+
+    self.voting_ended_at = election.voting_ended_at
+    return True
+
+  @property
+  def voting_auto_closed(self):
+    """the log entry of close_voting_if_all_voted, or None"""
+    if not self.voting_ended_at:
+      return None
+    return self.electionlog_set.filter(log=ElectionLog.VOTING_AUTO_CLOSED).order_by('at').first()
+
   def ready_for_tallying(self):
     return datetime.datetime.utcnow() >= self.tallying_starts_at
 
@@ -839,6 +881,13 @@ class ElectionLog(models.Model):
   DECRYPTIONS_COMBINED = "decryptions combined"
   DELETED = "deleted"
   UNDELETED = "undeleted"
+  VOTING_AUTO_CLOSED = "voting closed automatically: all voters have voted"
+
+  # entries shown on the election page, in the current language (the log
+  # itself keeps the English text)
+  MESSAGES = {
+    VOTING_AUTO_CLOSED: gettext_lazy('Voting closed automatically: all voters have voted'),
+  }
 
   election = models.ForeignKey(Election, on_delete=models.CASCADE)
   log = models.CharField(max_length=500)
@@ -849,6 +898,12 @@ class ElectionLog(models.Model):
     indexes = [
       models.Index(fields=['election', 'at'], name='helios_eleclog_elec_at_idx'),
     ]
+
+  @property
+  def message(self):
+    """the entry in the current language, where there is a translation"""
+    message = self.MESSAGES.get(self.log)
+    return str(message) if message else self.log
 
 
 class VoterFile(models.Model):
