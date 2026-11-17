@@ -138,8 +138,8 @@ msgid "Yes / No / Abstain"
 msgstr "Ja / Nein / Enthaltung"
 
 #: helios/media/static_templates/question.html:109 helios/media/static_templates/question.html:188
-msgid "“Yes / No / Abstain” fills in these three answers; voters then choose exactly one of them."
-msgstr "„Ja / Nein / Enthaltung“ trägt diese drei Antworten ein; Wahlberechtigte wählen dann genau eine davon."
+msgid "“Yes / No / Abstain” fills in these three answers; voters then choose exactly one of them. With the result type “absolute”, abstentions count as ballots cast: “Yes” needs more than half of all ballots."
+msgstr "„Ja / Nein / Enthaltung“ trägt diese drei Antworten ein; Wahlberechtigte wählen dann genau eine davon. Bei der Ergebnisart „absolut“ zählen Enthaltungen als abgegebene Stimmen: „Ja“ braucht mehr als die Hälfte aller Stimmzettel."
 
 #: helios/media/static_templates/question.html:115
 msgid "Update Question"

@@ -106,7 +106,7 @@
         </button>
         <button type="button" class="btn-secondary answer-preset" onclick="preset_yes_no_abstain(this)" aria-describedby="q{$T.question$index}_preset_hint">{gettext("Yes / No / Abstain")}</button>
       </div>
-      <p class="field-hint" id="q{$T.question$index}_preset_hint">{gettext("“Yes / No / Abstain” fills in these three answers; voters then choose exactly one of them.")}</p>
+      <p class="field-hint" id="q{$T.question$index}_preset_hint">{gettext("“Yes / No / Abstain” fills in these three answers; voters then choose exactly one of them. With the result type “absolute”, abstentions count as ballots cast: “Yes” needs more than half of all ballots.")}</p>
     </fieldset>
 
     <div class="callout callout-danger form-error" role="alert" hidden></div>
@@ -185,7 +185,7 @@
         </button>
         <button type="button" class="btn-secondary answer-preset" onclick="preset_yes_no_abstain(this)" aria-describedby="new_question_preset_hint">{gettext("Yes / No / Abstain")}</button>
       </div>
-      <p class="field-hint" id="new_question_preset_hint">{gettext("“Yes / No / Abstain” fills in these three answers; voters then choose exactly one of them.")}</p>
+      <p class="field-hint" id="new_question_preset_hint">{gettext("“Yes / No / Abstain” fills in these three answers; voters then choose exactly one of them. With the result type “absolute”, abstentions count as ballots cast: “Yes” needs more than half of all ballots.")}</p>
     </fieldset>
 
     <div class="callout callout-danger form-error" role="alert" hidden></div>
