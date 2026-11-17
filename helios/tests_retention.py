@@ -402,3 +402,73 @@ class PurgeTests(DeleteSetup, TestCase):
     self.assertContains(response, 'Permanent deletion after:')
     expected = (election.deleted_at + datetime.timedelta(days=30)).strftime('%Y-%m-%dT%H:%MZ')
     self.assertContains(response, expected)
+
+
+class StaleSessionTests(DeleteSetup, TestCase):
+  """ids kept in the session whose rows are gone (a removed voter or trustee, an election deleted for good)"""
+
+  def voter_session(self, voter_id):
+    """a password voter's session (no user logged in)"""
+    session = self.client.session
+    session.pop('user', None)
+    session['CURRENT_VOTER_ID'] = voter_id
+    session.save()
+
+  def test_removed_voter(self):
+    election = self.make_election(freeze=False)
+    voter = self.voters(election)[0]
+    self.voter_session(voter.id)
+    voter.delete()
+    self.page(election)
+    self.assertNotIn('CURRENT_VOTER_ID', self.client.session)
+
+  def test_voter_of_purged_election(self):
+    purged, other = self.make_election(freeze=False), self.make_election(freeze=False)
+    self.voter_session(self.voters(purged)[0].id)
+    Election.objects.filter(pk=purged.pk).delete()
+    self.page(other)
+    self.assertNotIn('CURRENT_VOTER_ID', self.client.session)
+
+  def test_voter_of_other_election_kept(self):
+    first, other = self.make_election(freeze=False), self.make_election(freeze=False)
+    self.voter_session(self.voters(first)[0].id)
+    self.page(other)
+    self.assertIn('CURRENT_VOTER_ID', self.client.session)
+
+  def test_removed_trustee(self):
+    election = self.make_election(freeze=False)
+    Election.objects.filter(pk=election.pk).update(private_p=True)
+    trustee = election.trustee_set.first()
+    session = self.client.session
+    session['helios_trustee_uuid'] = trustee.uuid
+    del session['user']
+    session.save()
+    trustee.delete()
+    response = self.client.get('/helios/elections/%s/view' % election.uuid)
+    # not logged in: on to the voter login of the private election
+    self.assertEqual(response.status_code, 302)
+    self.assertNotIn('helios_trustee_uuid', self.client.session)
+
+  def test_voter_upload_gone(self):
+    from django_tasks_db.models import DBTaskResult
+    election = self.make_election(freeze=False)
+    voter_file = VoterFile.objects.create(election=election, voter_file_content='password,x,x@example.org,X')
+    for path, data in (('upload-cancel', {}), ('upload', {'confirm_p': '1'})):
+      session = self.client.session
+      session['voter_file_id'] = voter_file.id + 1000
+      session.save()
+      response = self.client.post('/helios/elections/%s/voters/%s' % (election.uuid, path),
+                                  dict(data, csrf_token='tok'))
+      self.assertEqual(response.status_code, 302, path)
+      self.assertNotIn('voter_file_id', self.client.session)
+    self.assertFalse(DBTaskResult.objects.filter(task_path='helios.tasks.voter_file_process').exists())
+    self.assertTrue(VoterFile.objects.filter(pk=voter_file.pk).exists())
+
+  def test_voter_upload_of_other_election(self):
+    election, other = self.make_election(freeze=False), self.make_election(freeze=False)
+    voter_file = VoterFile.objects.create(election=other, voter_file_content='password,x,x@example.org,X')
+    session = self.client.session
+    session['voter_file_id'] = voter_file.id
+    session.save()
+    self.client.post('/helios/elections/%s/voters/upload-cancel' % election.uuid, {'csrf_token': 'tok'})
+    self.assertTrue(VoterFile.objects.filter(pk=voter_file.pk).exists())

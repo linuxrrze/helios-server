@@ -1891,7 +1891,9 @@ def voters_upload(request, election):
       # a double click or a resubmitted confirmation finds no pending file;
       # the first one already queued it, so just show the voter list
       voter_file_id = request.session.pop('voter_file_id', None)
-      if voter_file_id:
+      # the file must (still) be one of this election's, not processed yet
+      if voter_file_id and VoterFile.objects.filter(id=voter_file_id, election=election,
+                                                    processing_started_at=None).exists():
         # launch the background task to parse that file
         tasks.voter_file_process.enqueue(voter_file_id = voter_file_id, language = translation.get_language())
 
@@ -1926,11 +1928,10 @@ def voters_upload_cancel(request, election):
   """
   check_csrf(request)
 
-  voter_file_id = request.session.get('voter_file_id', None)
+  voter_file_id = request.session.pop('voter_file_id', None)
   if voter_file_id:
-    vf = VoterFile.objects.get(id = voter_file_id)
-    vf.delete()
-    del request.session['voter_file_id']
+    # only a file of this election that has not been processed (it may be gone since)
+    VoterFile.objects.filter(id=voter_file_id, election=election, processing_started_at=None).delete()
 
   return HttpResponseRedirect(settings.SECURE_URL_HOST + reverse(url_names.election.ELECTION_VIEW, args=[election.uuid]))
 

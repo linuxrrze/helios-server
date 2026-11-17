@@ -44,8 +44,11 @@ def get_voter(request, user, election):
   """
   voter = None
   if 'CURRENT_VOTER_ID' in request.session:
-    voter = Voter.objects.get(id=request.session['CURRENT_VOTER_ID'])
-    if voter.election != election:
+    # the voter may be gone since (removed from the list, election deleted for good)
+    voter = Voter.objects.filter(id=request.session['CURRENT_VOTER_ID']).first()
+    if voter is None:
+      del request.session['CURRENT_VOTER_ID']
+    elif voter.election_id != election.id:
       voter = None
 
   if not voter:
@@ -58,7 +61,11 @@ def get_voter(request, user, election):
 HELIOS_TRUSTEE_UUID = 'helios_trustee_uuid'
 def get_logged_in_trustee(request):
   if HELIOS_TRUSTEE_UUID in request.session:
-    return Trustee.get_by_uuid(request.session[HELIOS_TRUSTEE_UUID])
+    # the trustee may be gone since (removed, election deleted for good)
+    trustee = Trustee.objects.filter(uuid=request.session[HELIOS_TRUSTEE_UUID]).first()
+    if trustee is None:
+      del request.session[HELIOS_TRUSTEE_UUID]
+    return trustee
   else:
     return None
 
