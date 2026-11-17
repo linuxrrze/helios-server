@@ -1675,8 +1675,11 @@ class EmailSuppression(models.Model):
   An address Helios no longer sends to (global, for all elections): it bounced
   for good, bounced temporarily too often, its owner marked an email as spam,
   or a site administrator put it here. Hashed like EmailOptOut. Lifting it
-  (LIFTED_AT) keeps the row: soft bounces before that no longer count.
-  See helios.bounces.
+  (LIFTED_AT) keeps the row: soft bounces before that no longer count. Who
+  lifted it is kept with it (LIFTED_BY, and LIFTED_IN: the election whose
+  administrator lifted it, None for a site administrator), and who put it here
+  by hand (CREATED_BY); the election's log and the server log
+  ("helios.suppression", addresses masked) record the same. See helios.bounces.
   """
   SOURCE_HARD_BOUNCE = 'hard_bounce'
   SOURCE_SOFT_BOUNCES = 'soft_bounces'
@@ -1696,8 +1699,12 @@ class EmailSuppression(models.Model):
   reason = models.CharField(max_length=500, blank=True, default='')
   # when it was (last) suppressed
   created_at = models.DateTimeField()
+  # a site administrator who suppressed it by hand (SOURCE_MANUAL)
+  created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
   lifted_at = models.DateTimeField(null=True, blank=True)
   lifted_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+  # the election whose administrator lifted it (None: a site administrator, or the election is gone)
+  lifted_in = models.ForeignKey(Election, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
 
   class Meta:
     app_label = 'helios'
@@ -1719,30 +1726,35 @@ class EmailSuppression(models.Model):
     return bool(email_hash) and cls.objects.filter(email_hash=email_hash, lifted_at__isnull=True).exists()
 
   @classmethod
-  def suppress(cls, address=None, source=SOURCE_MANUAL, status_code='', reason='', email_hash=None):
-    """suppress ADDRESS (or EMAIL_HASH); an active suppression keeps its source. Returns it."""
+  def suppress(cls, address=None, source=SOURCE_MANUAL, status_code='', reason='', email_hash=None, user=None):
+    """suppress ADDRESS (or EMAIL_HASH), by USER (a site administrator) or a bounce; an
+    active suppression keeps its source. Returns it."""
     email_hash = email_hash or utils.hash_email(address)
     if not email_hash:
       return None
     now = datetime.datetime.utcnow()
+    user = user if user is not None and user.pk else None
     with transaction.atomic():
       suppression, created = cls.objects.select_for_update().get_or_create(
         email_hash=email_hash, defaults={'source': source, 'status_code': status_code[:16],
-                                         'reason': reason[:500], 'created_at': now})
+                                         'reason': reason[:500], 'created_at': now, 'created_by': user})
       if not created and suppression.lifted_at:
         suppression.source, suppression.status_code, suppression.reason = source, status_code[:16], reason[:500]
-        suppression.created_at, suppression.lifted_at, suppression.lifted_by = now, None, None
+        suppression.created_at, suppression.created_by = now, user
+        suppression.lifted_at, suppression.lifted_by, suppression.lifted_in = None, None, None
         suppression.save()
     return suppression
 
   @classmethod
-  def lift(cls, address=None, user=None, email_hash=None):
-    """lift the suppression of ADDRESS (or EMAIL_HASH); True if there was one"""
+  def lift(cls, address=None, user=None, email_hash=None, election=None):
+    """lift the suppression of ADDRESS (or EMAIL_HASH), by USER as administrator of
+    ELECTION (None: as site administrator); True if there was one"""
     email_hash = email_hash or utils.hash_email(address)
     if not email_hash:
       return False
     return bool(cls.objects.filter(email_hash=email_hash, lifted_at__isnull=True).update(
-      lifted_at=datetime.datetime.utcnow(), lifted_by=user if user is not None and user.pk else None))
+      lifted_at=datetime.datetime.utcnow(), lifted_by=user if user is not None and user.pk else None,
+      lifted_in=election if election is not None and election.pk else None))
 
 
 class BounceEvent(models.Model):

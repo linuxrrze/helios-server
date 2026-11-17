@@ -6,6 +6,7 @@ mailing again to the voters it did not reach (helios.mail_status). And, for
 site administrators, the global suppression list (stats pages).
 """
 import csv
+import datetime
 import logging
 from urllib.parse import urlencode
 
@@ -27,6 +28,12 @@ from .stats_views import require_admin
 from .view_utils import render_template
 
 logger = logging.getLogger(__name__)
+# who suppressed or lifted which address (masked), also of site administrators
+audit = logging.getLogger('helios.suppression')
+
+
+def _actor(user):
+  return '%s (%s)' % (user.user_id, user.user_type)
 
 
 def _emails_url(election, **params):
@@ -150,15 +157,18 @@ def election_email_voter(request, election, voter_uuid):
       form = VoterAddressForm(request.POST)
       if form.is_valid():
         new = form.cleaned_data['email']
+        user = get_user(request)
         with transaction.atomic():
           old = voter.voter_email
           voter.voter_email = new
           voter.save(update_fields=['voter_email'])
           # the administrator vouches for the (corrected) address
-          lifted = EmailSuppression.lift(new, user=get_user(request))
-        logger.info("election %s: address of voter %s changed from %s to %s by %s%s", election.uuid, voter.uuid,
-                    mask_address(old or ''), mask_address(new), get_user(request).user_id,
-                    ' (suppression lifted)' if lifted else '')
+          lifted = EmailSuppression.lift(new, user=user, election=election)
+          election.append_log("Email address of voter %s changed from %s to %s by %s%s" % (
+            voter.uuid, mask_address(old or ''), mask_address(new), _actor(user),
+            '; suppression of the new address lifted' if lifted else ''))
+        audit.info("election %s: address of voter %s changed from %s to %s by %s%s", election.uuid, voter.uuid,
+                   mask_address(old or ''), mask_address(new), _actor(user), ' (suppression lifted)' if lifted else '')
         return HttpResponseRedirect(_voter_url(election, voter, done='changed'))
     else:
       form = VoterAddressForm(initial={'email': voter.voter_email})
@@ -194,9 +204,15 @@ def election_email_voter_lift(request, election, voter_uuid):
   check_csrf(request)
   voter = _voter(election, voter_uuid)
   address = mail_status.current_address(voter)
-  if address and EmailSuppression.lift(address, user=get_user(request)):
-    logger.info("election %s: suppression of %s (voter %s) lifted by %s", election.uuid, mask_address(address),
-                voter.uuid, get_user(request).user_id)
+  user = get_user(request)
+  with transaction.atomic():
+    lifted = bool(address) and EmailSuppression.lift(address, user=user, election=election)
+    if lifted:
+      election.append_log("Email suppression of %s (voter %s) lifted by %s" % (
+        mask_address(address), voter.uuid, _actor(user)))
+  if lifted:
+    audit.info("election %s: suppression of %s (voter %s) lifted by %s", election.uuid, mask_address(address),
+               voter.uuid, _actor(user))
   return HttpResponseRedirect(_voter_url(election, voter, done='lifted'))
 
 
@@ -213,21 +229,21 @@ def suppressions(request):
     check_csrf(request)
     action = request.POST.get('action')
     if action == 'lift_all':
-      count = EmailSuppression.objects.filter(lifted_at__isnull=True).count()
-      for email_hash in EmailSuppression.objects.filter(lifted_at__isnull=True).values_list('email_hash', flat=True):
-        EmailSuppression.lift(email_hash=email_hash, user=user)
-      logger.warning("all %d email suppressions lifted by %s", count, user.user_id)
+      count = EmailSuppression.objects.filter(lifted_at__isnull=True).update(
+        lifted_at=datetime.datetime.utcnow(), lifted_by=user, lifted_in=None)
+      audit.warning("all %d email suppressions lifted by site administrator %s", count, _actor(user))
       return HttpResponseRedirect(reverse(url_names.stats.STATS_SUPPRESSIONS) + '?' + urlencode({'done': 'lifted_all'}))
     if not validate_email(address):
       error = _("Please enter a valid email address.")
     elif action == 'lift':
-      EmailSuppression.lift(address, user=user)
-      logger.info("suppression of %s lifted by %s", mask_address(address), user.user_id)
+      if EmailSuppression.lift(address, user=user):
+        audit.info("suppression of %s lifted by site administrator %s", mask_address(address), _actor(user))
       return HttpResponseRedirect(reverse(url_names.stats.STATS_SUPPRESSIONS) + '?' +
                                   urlencode({'email': address, 'done': 'lifted'}))
     elif action == 'suppress':
-      EmailSuppression.suppress(address, source=EmailSuppression.SOURCE_MANUAL, reason='manual')
-      logger.info("%s suppressed by %s", mask_address(address), user.user_id)
+      if not EmailSuppression.is_suppressed(address):
+        EmailSuppression.suppress(address, source=EmailSuppression.SOURCE_MANUAL, reason='manual', user=user)
+        audit.info("%s suppressed by site administrator %s", mask_address(address), _actor(user))
       return HttpResponseRedirect(reverse(url_names.stats.STATS_SUPPRESSIONS) + '?' +
                                   urlencode({'email': address, 'done': 'suppressed'}))
   from django.db.models import Count
@@ -237,7 +253,10 @@ def suppressions(request):
   found = None
   if address and validate_email(address):
     suppression = EmailSuppression.for_address(address)
-    found = {'address': address, 'suppression': suppression,
+    from . import utils
+    lifted = EmailSuppression.objects.filter(email_hash=utils.hash_email(address), lifted_at__isnull=False).select_related(
+      'lifted_by', 'lifted_in').first()
+    found = {'address': address, 'suppression': suppression, 'lifted': lifted,
              'reason': str(mail_status.SUPPRESSION_REASONS[suppression.source]) if suppression else ''}
   return render_template(request, 'stats_suppressions', {
     'sources': sources, 'total': sum(by_source.values()), 'found': found, 'email': address, 'error': error,

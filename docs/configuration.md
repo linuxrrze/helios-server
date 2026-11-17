@@ -161,7 +161,7 @@ Only with SMTP: with Mailgun or Amazon SES, bounce handling is off.
 | Variable | Default | Meaning |
 |---|---|---|
 | `HELIOS_BOUNCE_DOMAIN` | empty (off) | Domain of the envelope senders, e.g. `bounces.example.org`: a subdomain of the domain of `DEFAULT_FROM_EMAIL` (DMARC alignment), with an MX and a mailbox that receives `bounce+…@` (see [INSTALL.md](../INSTALL.md#bounces)). |
-| `HELIOS_BOUNCE_SECRET` | empty (off) | Key of the HMAC in the envelope sender, so that nobody can forge bounces and get voters' addresses suppressed. A long random value (at least 16 characters; Helios refuses to start without it when `HELIOS_BOUNCE_DOMAIN` is set and `DEBUG=0`). Changing it invalidates the bounces of emails sent before. |
+| `HELIOS_BOUNCE_SECRET` | empty (off) | Key of the HMAC in the envelope sender, so that nobody can forge bounces and get voters' addresses suppressed. A long random value (at least 16 characters; Helios refuses to start without it when `HELIOS_BOUNCE_DOMAIN` is set and `DEBUG=0`). Changing it invalidates the bounces of emails sent before: they land in `unmatched` and are not counted (there is no second key for a transition; change it at a quiet time, not during a mailing). |
 
 `manage.py process_bounces` reads the bounces from the mailbox of the bounce domain over IMAP
 (run it every few minutes: `deploy/systemd/helios-bounces.timer`, or cron in a container) and
@@ -170,7 +170,10 @@ moves each mail into one of the folders `processed`, `ignored` (out-of-office an
 creates. A permanent bounce (5.x.x) puts the address on the **suppression list**, which applies
 to all elections: Helios no longer sends to it (status `skipped_suppressed`) until an election
 administrator corrects the voter's address or lifts it on the election's "email delivery" page,
-or a site administrator lifts it (Admin → suppressed email addresses). A
+or a site administrator lifts it (Admin → suppressed email addresses). Who lifted it is kept
+with it (and, for an election administrator, in which election), written to the election's log,
+and logged by `helios.suppression` with the address masked (`e***@example.org`), as are the
+site administrators' changes. A
 temporary bounce (4.x.x, e.g. mailbox full; or one whose kind is unclear) only counts; several
 within a few days count as a permanent one. Delay notices are only logged. A complaint (the
 recipient marked the email as spam, ARF feedback report) also suppresses the address.
@@ -182,7 +185,7 @@ recipient marked the email as spam, ARF feedback report) also suppresses the add
 | `HELIOS_BOUNCE_IMAP_STARTTLS` | `0` | `0`: TLS from the start (port 993). `1`: STARTTLS. Unencrypted IMAP is not possible; the certificate and host name are checked. |
 | `HELIOS_BOUNCE_IMAP_USER` | empty | Login of the mailbox. |
 | `HELIOS_BOUNCE_IMAP_PASSWORD` | empty | Its password. |
-| `HELIOS_BOUNCE_IMAP_FOLDER` | `INBOX` | Folder the bounces arrive in. Only unread mails are handled: don't read them there with a mail client. |
+| `HELIOS_BOUNCE_IMAP_FOLDER` | `INBOX` | Folder the bounces arrive in. Every mail in it is handled, read or not (each only once, by UIDVALIDITY and UID), and moved out of it. |
 | `HELIOS_BOUNCE_RETENTION_DAYS` | `30` | Days after which the mails in `processed`, `ignored`, `unmatched` and `error` are deleted (from their arrival). Helios itself keeps only what a bounce said (status code, shortened explanation), never the mail. |
 | `HELIOS_BOUNCE_SOFT_LIMIT` | `3` | Temporary bounces of an address … |
 | `HELIOS_BOUNCE_SOFT_DAYS` | `14` | … within this many days put it on the suppression list. |

@@ -357,14 +357,15 @@ apply.
 Bounces only come back with SMTP and VERP (above). `manage.py process_bounces`
 (every 5 minutes: `deploy/systemd/helios-bounces.timer`, or cron) reads the
 bounce mailbox over IMAP with TLS (`helios/bounce_mailbox.py`): `UID SEARCH
-UNSEEN` in `HELIOS_BOUNCE_IMAP_FOLDER`, each mail fetched without marking it
-read, judged by `helios/bounces.py`, and moved to `processed`, `ignored`,
+ALL` in `HELIOS_BOUNCE_IMAP_FOLDER` (read or not), each mail fetched without
+marking it read, judged by `helios/bounces.py`, and moved to `processed`, `ignored`,
 `unmatched` or `error` (created if missing; with `COPY` + `\Deleted` where the
 server lacks `MOVE`). Mails there are deleted after
 `HELIOS_BOUNCE_RETENTION_DAYS`. A `ProcessedBounceMail` row (folder,
 UIDVALIDITY, UID, Message-ID) is written in the same transaction as the
 bounce's effect: a mail found again (its move failed, the mailbox was rebuilt,
-two runs at once) is only moved, never counted twice. One mail that cannot be
+two runs at once) is only moved, never counted twice. These records are pruned
+after the retention, except those of mails still in the inbox. One mail that cannot be
 read goes to `error` and the run goes on.
 
 1. The email: a valid token (HMAC checked in constant time, case-insensitive)
@@ -396,7 +397,12 @@ the status code). A soft or unknown bounce makes it `bounced_soft`;
 `HELIOS_BOUNCE_SOFT_LIMIT` of them for the address within
 `HELIOS_BOUNCE_SOFT_DAYS` count as a hard bounce. Only emails the mail server
 took (`sent`) change, and never from hard back to soft. Lifting a suppression
-keeps the row (`lifted_at`, `lifted_by`); soft bounces before it no longer count.
+keeps the row (`lifted_at`, `lifted_by`, and `lifted_in`: the election whose
+administrator lifted it; `created_by` for a manual suppression); soft bounces
+before it no longer count. Lifting by an election administrator (explicitly or
+by correcting the voter's address) is also written to that election's log
+(`ElectionLog`), and every lift or manual suppression, also by site
+administrators, to the server log `helios.suppression`, addresses masked.
 
 ### Email delivery page
 

@@ -43,6 +43,7 @@
 <form method="post" action=""><input type="hidden" name="csrf_token" value="{{ csrf_token }}" /><input type="hidden" name="email" value="{{ found.address }}" /><input type="hidden" name="action" value="lift" /><button type="submit" class="button secondary">{% translate "lift the suppression" %}</button></form>
 {% else %}
 <p>{% blocktranslate trimmed with address=found.address %}<strong>{{ address }}</strong> is not suppressed.{% endblocktranslate %}</p>
+{% if found.lifted %}<p>{% if found.lifted.lifted_in %}{% blocktranslate trimmed with at=found.lifted.lifted_at|utc_time who=found.lifted.lifted_by.user_id|default:"?" election=found.lifted.lifted_in.name %}Its suppression was lifted on {{ at }} by {{ who }}, administrator of the election {{ election }}.{% endblocktranslate %}{% else %}{% blocktranslate trimmed with at=found.lifted.lifted_at|utc_time who=found.lifted.lifted_by.user_id|default:"?" %}Its suppression was lifted on {{ at }} by {{ who }}.{% endblocktranslate %}{% endif %}</p>{% endif %}
 <form method="post" action=""><input type="hidden" name="csrf_token" value="{{ csrf_token }}" /><input type="hidden" name="email" value="{{ found.address }}" /><input type="hidden" name="action" value="suppress" /><button type="submit" class="button secondary">{% translate "suppress this address" %}</button></form>
 {% endif %}
 </div>

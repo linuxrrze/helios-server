@@ -242,6 +242,14 @@ class VoterAddressTests(EmailStatusTestCase):
     self.assertEqual((voter.voter_email, voter.voter_login_id), ('voter5-new@example.net', 'voter5@example.net'))
     self.assertFalse(EmailSuppression.is_suppressed('voter5-new@example.net'))
     self.assertTrue(EmailSuppression.is_suppressed('voter5@example.net'))   # the old one stays
+    # recorded with the suppression and in the election's log, the addresses masked
+    lifted = EmailSuppression.objects.get(lifted_at__isnull=False)
+    self.assertEqual((lifted.lifted_by, lifted.lifted_in), (self.admin, self.election))
+    entry = self.election.get_log().first().log
+    self.assertIn('v***@example.net', entry)
+    self.assertIn('suppression of the new address lifted', entry)
+    self.assertIn('admin@example.org', entry)
+    self.assertNotIn('voter5', entry)
     # the mailing can now be sent again to the voter
     self.assertEqual(mail_status.resend_voters(self.batch), ([self.voters[3].id, self.voters[4].id, voter.id], []))
 
@@ -279,7 +287,11 @@ class VoterAddressTests(EmailStatusTestCase):
     self.login(self.admin)
     self.client.post(self.url('voters/%s/lift' % voter.uuid), {'csrf_token': 'tok'})
     suppression = EmailSuppression.objects.get()
-    self.assertEqual((suppression.lifted_by, bool(suppression.lifted_at)), (self.admin, True))
+    self.assertEqual((suppression.lifted_by, suppression.lifted_in, bool(suppression.lifted_at)),
+                     (self.admin, self.election, True))
+    entry = self.election.get_log().first().log
+    self.assertEqual(entry, 'Email suppression of v***@example.net (voter %s) lifted by admin@example.org (password)'
+                     % voter.uuid)
     # lifted for all elections: the next email goes out
     batch = helios_mail.create_batch(self.election, 'email/simple_subject.txt', 'email/simple_body.txt', {},
                                      language='en')
@@ -298,6 +310,16 @@ class SiteSuppressionTests(EmailStatusTestCase):
     self.login(self.admin)
 
   def test_lookup_lift_suppress_and_lift_all(self):
+    with self.assertLogs('helios.suppression', 'INFO') as logs:
+      self._lookup_lift_suppress_and_lift_all()
+    self.assertEqual(logs.output, [
+      'INFO:helios.suppression:suppression of a***@example.net lifted by site administrator admin@example.org (password)',
+      'INFO:helios.suppression:c***@example.net suppressed by site administrator admin@example.org (password)',
+      'WARNING:helios.suppression:all 2 email suppressions lifted by site administrator admin@example.org (password)'])
+    manual = EmailSuppression.objects.get(source=EmailSuppression.SOURCE_MANUAL)
+    self.assertEqual((manual.created_by, manual.lifted_by, manual.lifted_in), (self.admin, self.admin, None))
+
+  def _lookup_lift_suppress_and_lift_all(self):
     EmailSuppression.suppress('a@example.net', source=EmailSuppression.SOURCE_HARD_BOUNCE, status_code='5.1.1')
     EmailSuppression.suppress('b@example.net', source=EmailSuppression.SOURCE_COMPLAINT)
     page = self.client.get('/helios/stats/suppressions?email=A@example.net')
@@ -306,6 +328,8 @@ class SiteSuppressionTests(EmailStatusTestCase):
     self.assertContains(page, '(5.1.1)')
     self.client.post('/helios/stats/suppressions', {'csrf_token': 'tok', 'action': 'lift', 'email': 'a@example.net'})
     self.assertFalse(EmailSuppression.is_suppressed('a@example.net'))
+    self.assertContains(self.client.get('/helios/stats/suppressions?email=a@example.net'),
+                        'Its suppression was lifted on')
     self.client.post('/helios/stats/suppressions', {'csrf_token': 'tok', 'action': 'suppress', 'email': 'c@example.net'})
     self.assertEqual(EmailSuppression.for_address('c@example.net').source, EmailSuppression.SOURCE_MANUAL)
     self.client.post('/helios/stats/suppressions', {'csrf_token': 'tok', 'action': 'lift_all'})

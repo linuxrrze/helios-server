@@ -202,8 +202,8 @@ class FakeIMAP:
     messages = self.selected.messages
     if command == 'SEARCH':
       criteria = args[1:]
-      if criteria == ('UNSEEN',):
-        uids = [uid for uid, m in messages.items() if '\\Seen' not in m[1]]
+      if criteria == ('ALL',):
+        uids = list(messages)
       elif criteria[0] == 'BEFORE':
         before = datetime.datetime.strptime(criteria[1], '%d-%b-%Y')
         uids = [uid for uid, m in messages.items() if m[2] < before]
@@ -370,11 +370,24 @@ class ProcessBouncesTests(BounceTestCase):
     self.assertEqual(BounceEvent.objects.count(), 1)
     self.assertEqual(len(self.server.contents('processed')), 2)
 
-  def test_read_mails_are_left_alone(self):
+  def test_read_mails_are_handled_too(self):
+    # someone looked at the inbox with a mail client
     email_obj = self.sent_email()
     self.server.deliver(sample('gmail_over_quota.eml', email_obj.id), flags={'\\Seen'})
     self.run_command()
-    self.assertEqual((len(self.server.contents('INBOX')), BounceEvent.objects.count()), (1, 0))
+    self.assertEqual((len(self.server.contents('INBOX')), BounceEvent.objects.count()), (0, 1))
+
+  def test_record_of_a_mail_still_in_the_inbox_is_kept(self):
+    email_obj = self.sent_email()
+    self.server.deliver(sample('gmail_over_quota.eml', email_obj.id))
+    self.server.fail_moves = 1
+    with self.assertRaises(CommandError):
+      self.run_command()
+    ProcessedBounceMail.objects.update(processed_at=datetime.datetime.utcnow() - datetime.timedelta(days=40))
+    self.server.fail_moves = 0
+    self.run_command()
+    self.assertEqual(BounceEvent.objects.count(), 1)
+    self.assertEqual(len(self.server.contents('processed')), 1)
 
   def test_without_move_capability(self):
     self.server.capabilities = ('IMAP4REV1',)
@@ -513,10 +526,10 @@ class SuppressionTests(BounceTestCase):
 
   def test_lifting(self):
     self.bounce('postfix_user_unknown.eml', self.sent_email())
-    self.assertTrue(EmailSuppression.lift('voter@example.net', user=self.admin))
+    self.assertTrue(EmailSuppression.lift('voter@example.net', user=self.admin, election=self.election))
     self.assertFalse(EmailSuppression.lift('voter@example.net'))   # nothing left to lift
     suppression = EmailSuppression.objects.get()
-    self.assertEqual(suppression.lifted_by, self.admin)
+    self.assertEqual((suppression.lifted_by, suppression.lifted_in), (self.admin, self.election))
     self.assertEqual(self.queue_and_send(self.voter).status, OutgoingEmail.SENT)
     # soft bounces before the lift no longer count
     for _ in range(2):
@@ -527,7 +540,7 @@ class SuppressionTests(BounceTestCase):
     # suppressed again
     self.bounce('qmail.eml', self.sent_email())
     suppression.refresh_from_db()
-    self.assertEqual((suppression.lifted_at, suppression.lifted_by), (None, None))
+    self.assertEqual((suppression.lifted_at, suppression.lifted_by, suppression.lifted_in), (None, None, None))
     self.assertTrue(EmailSuppression.is_suppressed('voter@example.net'))
 
   def test_complaint(self):

@@ -1,7 +1,7 @@
 """
 Reading the bounce mailbox over IMAP (`manage.py process_bounces`, run every few
-minutes by a systemd timer or cron): each unread mail of
-HELIOS_BOUNCE_IMAP_FOLDER is judged by helios.bounces and moved to one of the
+minutes by a systemd timer or cron): each mail of HELIOS_BOUNCE_IMAP_FOLDER
+(read or not: UID SEARCH ALL) is judged by helios.bounces and moved to one of the
 folders
 
   processed  a bounce, delay notice or complaint about one of our emails
@@ -234,8 +234,12 @@ def process_one(mailbox, folder, uidvalidity, uid):
   return result
 
 
-def delete_old(mailbox, now):
-  """delete the mails of the Helios folders older than HELIOS_BOUNCE_RETENTION_DAYS; how many"""
+def delete_old(mailbox, now, inbox=None):
+  """
+  delete the mails of the Helios folders older than HELIOS_BOUNCE_RETENTION_DAYS, and
+  the records of handled mails as old, except those of mails still in the inbox
+  (INBOX: folder, UIDVALIDITY, UIDs), which would be handled again; how many mails
+  """
   cutoff = now - datetime.timedelta(days=settings.HELIOS_BOUNCE_RETENTION_DAYS)
   date = '%02d-%s-%04d' % (cutoff.day, ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov',
                                         'Dec')[cutoff.month - 1], cutoff.year)
@@ -247,12 +251,16 @@ def delete_old(mailbox, now):
       mailbox.delete(uid)
     mailbox.expunge()
     count += len(uids)
-  ProcessedBounceMail.objects.filter(processed_at__lt=cutoff).delete()
+  old = ProcessedBounceMail.objects.filter(processed_at__lt=cutoff)
+  if inbox:
+    folder, uidvalidity, uids = inbox
+    old = old.exclude(folder=folder, uidvalidity=uidvalidity, uid__in=uids)
+  old.delete()
   return count
 
 
 def process(mailbox=None, limit=None, now=None):
-  """handle the unread mails of the bounce mailbox (at most LIMIT) and delete old ones; Stats"""
+  """handle the mails of the bounce mailbox (at most LIMIT) and delete old ones; Stats"""
   own = mailbox is None
   mailbox = mailbox or Mailbox.connect()
   now = now or datetime.datetime.utcnow()
@@ -261,15 +269,15 @@ def process(mailbox=None, limit=None, now=None):
     mailbox.ensure_folders(bounces.FOLDERS)
     folder = settings.HELIOS_BOUNCE_IMAP_FOLDER
     uidvalidity = mailbox.select(folder)
-    uids = mailbox.search('UNSEEN')
-    if limit:
-      uids = uids[:limit]
+    # all of them, also those someone has read: handled ones are known by UIDVALIDITY and UID
+    all_uids = mailbox.search('ALL')
+    uids = all_uids[:limit] if limit else all_uids
     for uid in uids:
       result = process_one(mailbox, folder, uidvalidity, uid)
       if result:
         results[result] += 1
     mailbox.expunge()
-    deleted = delete_old(mailbox, now)
+    deleted = delete_old(mailbox, now, inbox=(folder, uidvalidity, all_uids))
   finally:
     if own:
       mailbox.logout()

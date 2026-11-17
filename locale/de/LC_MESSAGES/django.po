@@ -182,79 +182,79 @@ msgstr "Erledigt: Das Ergebnis ist öffentlich"
 msgid "Makes the result visible to everyone and lets you notify the voters."
 msgstr "Macht das Ergebnis für alle sichtbar; danach können Sie die Wahlberechtigten benachrichtigen."
 
-#: helios/email_views.py:45
+#: helios/email_views.py:52
 msgid "Emails to voters are turned off on this site."
 msgstr "E-Mails an Wahlberechtigte sind auf dieser Website abgeschaltet."
 
-#: helios/email_views.py:47
+#: helios/email_views.py:54
 msgid "The election is not frozen yet."
 msgstr "Die Wahl ist noch nicht eingefroren."
 
-#: helios/email_views.py:53
+#: helios/email_views.py:60
 msgid "Voting has closed: an invitation to vote is no longer sent."
 msgstr "Die Stimmabgabe ist beendet: Eine Einladung zur Wahl wird nicht mehr versandt."
 
-#: helios/email_views.py:92
+#: helios/email_views.py:99
 msgid "Date (UTC)"
 msgstr "Datum (UTC)"
 
-#: helios/email_views.py:92 helios/votergroup.py:24 helios/votergroup.py:29
+#: helios/email_views.py:99 helios/votergroup.py:24 helios/votergroup.py:29
 #: helios/templates/election_email_voter.html:58 helios/templates/election_emails.html:83 helios/templates/new_trustee.html:20
 #: helios/templates/new_trustee.html:32 helios/templates/votergroup_prepareelection.html:17 helios/templates/votergroup_view.html:25
 msgid "Email"
 msgstr "E-Mail"
 
-#: helios/email_views.py:92 helios/templates/election_email_voter.html:17 helios/templates/election_emails.html:82
+#: helios/email_views.py:99 helios/templates/election_email_voter.html:17 helios/templates/election_emails.html:82
 #: helios/templates/voters_list.html:147 helios/templates/voters_upload_confirm.html:14
 msgid "Email Address"
 msgstr "E-Mail-Adresse"
 
-#: helios/email_views.py:92 helios/forms.py:71 helios/templates/_election_table.html:11
+#: helios/email_views.py:99 helios/forms.py:71 helios/templates/_election_table.html:11
 #: helios/templates/election_bboard.html:24 helios/templates/new_trustee.html:19 helios/templates/new_trustee.html:27
 #: helios/templates/votergroup_admins.html:17 helios/templates/voters_list.html:149 helios/templates/voters_manage.html:28
 #: helios/templates/voters_upload_confirm.html:14
 msgid "Name"
 msgstr "Name"
 
-#: helios/email_views.py:92 helios/templates/_election_table.html:12 helios/templates/election_email_voter.html:60
+#: helios/email_views.py:99 helios/templates/_election_table.html:12 helios/templates/election_email_voter.html:60
 #: helios/templates/election_emails.html:84
 msgid "Status"
 msgstr "Status"
 
-#: helios/email_views.py:92 helios/forms.py:163 helios/forms.py:168
+#: helios/email_views.py:99 helios/forms.py:163 helios/forms.py:168
 #: helios/templates/election_email_voter.html:16
 msgid "Voter ID"
 msgstr "Wähler-ID"
 
-#: helios/email_views.py:93
+#: helios/email_views.py:100
 msgid "Address suppressed"
 msgstr "Adresse gesperrt"
 
-#: helios/email_views.py:93
+#: helios/email_views.py:100
 msgid "Code"
 msgstr "Code"
 
-#: helios/email_views.py:93 helios/templates/election_email_voter.html:61 helios/templates/election_emails.html:85
+#: helios/email_views.py:100 helios/templates/election_email_voter.html:61 helios/templates/election_emails.html:85
 msgid "Reason"
 msgstr "Grund"
 
-#: helios/email_views.py:98 helios/templates/election_email_voter.html:18
+#: helios/email_views.py:105 helios/templates/election_email_voter.html:18
 msgid "no"
 msgstr "nein"
 
-#: helios/email_views.py:98
+#: helios/email_views.py:105
 msgid "yes"
 msgstr "ja"
 
-#: helios/email_views.py:120 helios/templates/stats_suppressions.html:33
+#: helios/email_views.py:127 helios/templates/stats_suppressions.html:33
 msgid "Email address"
 msgstr "E-Mail-Adresse"
 
-#: helios/email_views.py:125 helios/email_views.py:222 helios/views.py:525
+#: helios/email_views.py:132 helios/email_views.py:237 helios/views.py:525
 msgid "Please enter a valid email address."
 msgstr "Bitte geben Sie eine gültige E-Mail-Adresse ein."
 
-#: helios/email_views.py:127
+#: helios/email_views.py:134
 msgid "This address has opted out of Helios emails; only its owner can opt back in."
 msgstr "Diese Adresse hat sich von E-Mails von Helios abgemeldet; nur ihr Inhaber kann sich wieder anmelden."
 
@@ -843,65 +843,65 @@ msgstr "ungültige Wählerart „%(voter_type)s“ für die Wähler-ID „%(vote
 msgid "invalid voter email '%(voter_email)s' for voter id '%(voter_id)s'"
 msgstr "ungültige E-Mail-Adresse „%(voter_email)s“ für die Wähler-ID „%(voter_id)s“"
 
-#: helios/models.py:1940
+#: helios/models.py:1952
 #, python-format
 msgid "Voter group %(name)s created"
 msgstr "Wählergruppe %(name)s erstellt"
 
-#: helios/models.py:1941
+#: helios/models.py:1953
 #, python-format
 msgid "Renamed to %(name)s"
 msgstr "Umbenannt in %(name)s"
 
-#: helios/models.py:1942
+#: helios/models.py:1954
 #, python-format
 msgid "Member %(email)s added with %(votes)s vote(s)"
 msgstr "Mitglied %(email)s mit %(votes)s Stimme(n) hinzugefügt"
 
-#: helios/models.py:1943
+#: helios/models.py:1955
 #, python-format
 msgid "Member %(email)s removed"
 msgstr "Mitglied %(email)s entfernt"
 
-#: helios/models.py:1944
+#: helios/models.py:1956
 #, python-format
 msgid "Administrator %(admin)s added"
 msgstr "Administrator*in %(admin)s hinzugefügt"
 
-#: helios/models.py:1945
+#: helios/models.py:1957
 #, python-format
 msgid "Administrator %(admin)s removed"
 msgstr "Administrator*in %(admin)s entfernt"
 
-#: helios/models.py:1946
+#: helios/models.py:1958
 #, python-format
 msgid "Administrator %(admin)s left the group"
 msgstr "Administrator*in %(admin)s hat die Gruppe verlassen"
 
-#: helios/models.py:1947
+#: helios/models.py:1959
 #, python-format
 msgid "Ownership transferred from %(old_owner)s to %(new_owner)s"
 msgstr "Besitz von %(old_owner)s an %(new_owner)s übertragen"
 
-#: helios/models.py:1948
+#: helios/models.py:1960
 #, python-format
 msgid "Election %(name)s prepared with %(voters)s voter(s)"
 msgstr "Wahl %(name)s mit %(voters)s Wahlberechtigten vorbereitet"
 
-#: helios/models.py:1949
+#: helios/models.py:1961
 #, python-format
 msgid "Members updated: %(added)s added, %(removed)s removed; %(admins)s administrator(s)"
 msgstr "Mitglieder aktualisiert: %(added)s hinzugefügt, %(removed)s entfernt; %(admins)s Administrator*in(nen)"
 
-#: helios/models.py:1953
+#: helios/models.py:1965
 msgid "Transferred by a site administrator."
 msgstr "Übertragen durch eine Administrator*in der Website."
 
-#: helios/models.py:1954
+#: helios/models.py:1966
 msgid "The previous owner is no longer an administrator."
 msgstr "Die bisherige Besitzer*in ist nicht mehr Administrator*in."
 
-#: helios/models.py:1955
+#: helios/models.py:1967
 msgid "The other administrators of the group were added to the election administrators."
 msgstr "Die anderen Administrator*innen der Gruppe wurden zur Wahlleitung hinzugefügt."
 
@@ -3426,6 +3426,16 @@ msgid "<strong>%(address)s</strong> is not suppressed."
 msgstr "<strong>%(address)s</strong> ist nicht gesperrt."
 
 #: helios/templates/stats_suppressions.html:46
+#, python-format
+msgid "Its suppression was lifted on %(at)s by %(who)s, administrator of the election %(election)s."
+msgstr "Die Sperre wurde am %(at)s von %(who)s aufgehoben, Administrator*in der Wahl %(election)s."
+
+#: helios/templates/stats_suppressions.html:46
+#, python-format
+msgid "Its suppression was lifted on %(at)s by %(who)s."
+msgstr "Die Sperre wurde am %(at)s von %(who)s aufgehoben."
+
+#: helios/templates/stats_suppressions.html:47
 msgid "suppress this address"
 msgstr "diese Adresse sperren"
 
