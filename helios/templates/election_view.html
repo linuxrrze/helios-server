@@ -187,6 +187,7 @@
 </div>
 {% if not can_delete_p %}<p class="muted">{% if election.is_archived %}{% translate "This election has ballots and can no longer be deleted." %}{% else %}{% translate "This election has ballots and can no longer be deleted; you can archive it." %} {% translate "Archived elections are hidden from your list of elections." %}{% endif %}</p>
 {% elif not election.is_archived %}<p class="muted">{% if has_ballots_p %}{% translate "Archived elections are hidden from your list of elections. This election has ballots: its administrators can no longer delete it, only site administrators can (once it is archived)." %}{% else %}{% translate "Archived elections are hidden from your list of elections; an archived election can be deleted." %}{% endif %}</p>{% endif %}
+{% if retention_days %}<p class="muted retention-note">{% if purge_date %}{% blocktranslate trimmed with date=purge_date|utc_time count days=retention_days %}This election will be deleted permanently after {{ date }} (retention period of {{ days }} day).{% plural %}This election will be deleted permanently after {{ date }} (retention period of {{ days }} days).{% endblocktranslate %}{% else %}{% blocktranslate trimmed count days=retention_days %}This election will be deleted permanently {{ days }} day after voting has ended and the result is in.{% plural %}This election will be deleted permanently {{ days }} days after voting has ended and the result is in.{% endblocktranslate %}{% endif %}</p>{% endif %}
 
 {% if not election.private_p %}
 <p>

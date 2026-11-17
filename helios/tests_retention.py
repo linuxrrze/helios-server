@@ -1,18 +1,33 @@
 """
 Deleting elections: election administrators can no longer delete an election
 once a ballot has been cast (only archive it), site administrators still can
-(logged).
+(logged); and `manage.py purge_elections`, which deletes elections for good
+after HELIOS_ELECTION_RETENTION_DAYS (helios.retention).
 """
 
 import datetime
+import io
+import os
+import shutil
+import tempfile
+import uuid
 
-from django.test import TestCase
+from django.core.files.base import ContentFile
+from django.core.management import call_command
+from django.core.management.base import CommandError
+from django.test import TestCase, override_settings
 
-from helios.models import CastVote, Election, ElectionLog
+from helios import retention
+from helios.models import (AuditedBallot, BounceEvent, CastVote, Election, ElectionLog, EmailBatch, EmailSuppression,
+                           OutgoingEmail, Trustee, Voter, VoterFile)
 from helios.tests_auto_close import ElectionSetup
 from helios_auth.models import User
 
 LOCK_MESSAGE = 'This election has ballots and can no longer be deleted; you can archive it.'
+
+
+def days_ago(days):
+  return datetime.datetime.utcnow() - datetime.timedelta(days=days)
 
 
 class DeleteSetup(ElectionSetup):
@@ -125,3 +140,265 @@ class DeleteLockTests(DeleteSetup, TestCase):
     response = self.client.post('/helios/stats/deleted-elections/%s/undelete' % election.uuid, {'csrf_token': 'tok'})
     self.assertEqual(response.status_code, 302)
     self.assertFalse(self.deleted(election))
+
+
+@override_settings(HELIOS_ELECTION_RETENTION_DAYS=0)
+class PurgeTests(DeleteSetup, TestCase):
+
+  def setUp(self):
+    super().setUp()
+    self.media = tempfile.mkdtemp()
+    self.addCleanup(shutil.rmtree, self.media, ignore_errors=True)
+
+  def run_purge(self, *args):
+    out = io.StringIO()
+    with self.captureOnCommitCallbacks(execute=True):
+      call_command('purge_elections', *args, stdout=out)
+    return out.getvalue()
+
+  def exists(self, election):
+    return Election.objects_with_deleted.filter(pk=election.pk).exists()
+
+  def set(self, election, **fields):
+    Election.objects_with_deleted.filter(pk=election.pk).update(**fields)
+    return Election.objects_with_deleted.get(pk=election.pk)
+
+  def ended(self, days, **fields):
+    """an election whose voting ended DAYS ago (frozen and created before that)"""
+    election = self.make_election()
+    return self.set(election, created_at=days_ago(days + 10), modified_at=days_ago(days + 10),
+                    frozen_at=days_ago(days + 5), voting_ends_at=days_ago(days), **fields)
+
+  def never_opened(self, days):
+    election = self.make_election(freeze=False)
+    # adding the trustee was logged
+    ElectionLog.objects.filter(election=election).update(at=days_ago(days))
+    return self.set(election, created_at=days_ago(days), modified_at=days_ago(days))
+
+  # the setting
+
+  def test_off_by_default(self):
+    self.assertEqual(retention.retention_days(), 0)
+    old = self.ended(1000)
+    with self.assertRaisesMessage(CommandError, 'HELIOS_ELECTION_RETENTION_DAYS=0'):
+      self.run_purge('--yes')
+    self.assertTrue(self.exists(old))
+    self.assertIsNone(retention.purge_date(old))
+
+  def test_days_override_when_off(self):
+    old, recent = self.ended(100), self.ended(10)
+    out = self.run_purge('--days', '30', '--yes')
+    self.assertFalse(self.exists(old))
+    self.assertTrue(self.exists(recent))
+    self.assertIn('1 election(s) deleted (retention period 30 days)', out)
+
+  def test_days_must_be_positive(self):
+    with self.assertRaises(CommandError):
+      self.run_purge('--days', '0')
+
+  @override_settings(HELIOS_ELECTION_RETENTION_DAYS=365)
+  def test_days_override_setting(self):
+    election = self.ended(100)
+    self.run_purge('--yes')
+    self.assertTrue(self.exists(election))
+    self.run_purge('--days', '50', '--yes')
+    self.assertFalse(self.exists(election))
+
+  # dry run and --yes
+
+  @override_settings(HELIOS_ELECTION_RETENTION_DAYS=30)
+  def test_dry_run_deletes_nothing(self):
+    old = self.ended(100)
+    self.cast(self.voters(old)[0], run=False)
+    out = self.run_purge()
+    self.assertTrue(self.exists(old))
+    self.assertIn(old.uuid, out)
+    self.assertIn(old.short_name, out)
+    self.assertIn('2 voters  1 ballots', out)
+    self.assertIn('1 election(s) would be deleted', out)
+    # no personal data
+    self.assertNotIn('@example.org', out)
+    self.assertNotIn('Voter a', out)
+
+  @override_settings(HELIOS_ELECTION_RETENTION_DAYS=30)
+  def test_yes_deletes_only_old_ones(self):
+    old, recent = self.ended(31), self.ended(29)
+    with self.assertLogs('helios.retention', 'INFO') as logs:
+      out = self.run_purge('--yes')
+    self.assertFalse(self.exists(old))
+    self.assertTrue(self.exists(recent))
+    self.assertIn(old.uuid, out)
+    self.assertNotIn(recent.uuid, out)
+    self.assertEqual(len(logs.output), 1)
+    self.assertIn(old.uuid, logs.output[0])
+    self.assertIn('2 voters', logs.output[0])
+    self.assertNotIn('@example.org', logs.output[0])
+
+  # reference date
+
+  def test_reference_date_is_the_latest(self):
+    election = self.ended(100)
+    self.assertEqual(retention.reference_date(election), election.voting_ends_at)
+    # closed early by hand: when it was closed
+    election = self.set(election, voting_ended_at=days_ago(120))
+    self.assertEqual(retention.reference_date(election), election.frozen_at)
+    election = self.set(election, voting_ended_at=None, voting_extended_until=days_ago(90))
+    self.assertEqual(retention.reference_date(election), election.voting_extended_until)
+    election = self.set(election, result_released_at=days_ago(80))
+    self.assertEqual(retention.reference_date(election), election.result_released_at)
+    election = self.set(election, archived_at=days_ago(70))
+    self.assertEqual(retention.reference_date(election), election.archived_at)
+    election = self.set(election, deleted_at=days_ago(60))
+    self.assertEqual(retention.reference_date(election), election.deleted_at)
+    self.assertEqual(retention.purge_date(election, 30), election.deleted_at + datetime.timedelta(days=30))
+
+  def test_open_voting_never_purged(self):
+    # frozen without an end date, or with an end in the future
+    no_end = self.set(self.make_election(), created_at=days_ago(1000), frozen_at=days_ago(1000))
+    future_end = self.set(self.make_election(), created_at=days_ago(1000), frozen_at=days_ago(1000),
+                          voting_ends_at=days_ago(-1), archived_at=days_ago(900))
+    # extended past today
+    extended = self.ended(500, voting_extended_until=days_ago(-1))
+    for election in (no_end, future_end, extended):
+      self.assertIsNone(retention.reference_date(election))
+      self.assertEqual(retention.never_purged_reason(election), 'voting open')
+    # also when deleted
+    self.set(no_end, deleted_at=days_ago(900))
+    self.run_purge('--days', '1', '--yes')
+    for election in (no_end, future_end, extended):
+      self.assertTrue(self.exists(election))
+
+  def test_tally_in_progress_never_purged(self):
+    election = self.ended(500, tallying_started_at=days_ago(499))
+    self.assertEqual(retention.never_purged_reason(election), 'tally in progress')
+    self.run_purge('--days', '1', '--yes')
+    self.assertTrue(self.exists(election))
+    # with a result it is
+    self.set(election, result=[[1, 0]], tallying_finished_at=days_ago(498))
+    self.run_purge('--days', '1', '--yes')
+    self.assertFalse(self.exists(election))
+
+  def test_soft_deleted_purged(self):
+    deleted = self.ended(500, deleted_at=days_ago(100))
+    recently_deleted = self.ended(500, deleted_at=days_ago(10))
+    self.run_purge('--days', '30', '--yes')
+    self.assertFalse(self.exists(deleted))
+    self.assertTrue(self.exists(recently_deleted))
+
+  def test_never_opened_by_last_change(self):
+    old = self.never_opened(100)
+    # created long ago, but changed recently
+    edited = self.never_opened(100)
+    edited.name = 'renamed'
+    edited.save()
+    logged = self.never_opened(100)
+    logged.append_log('Administrator added')
+    uploaded = self.never_opened(100)
+    VoterFile.objects.create(election=uploaded, voter_file_content='password,x,x@example.org,X')
+    # scheduled end in the past does not count before it was opened
+    scheduled = self.never_opened(100)
+    self.set(scheduled, voting_ends_at=days_ago(1))
+
+    self.assertEqual(retention.reference_date(old), old.modified_at)
+    self.run_purge('--days', '30', '--yes')
+    self.assertFalse(self.exists(old))
+    self.assertFalse(self.exists(scheduled))
+    for election in (edited, logged, uploaded):
+      self.assertTrue(self.exists(election))
+
+  def test_modified_at_set_on_save(self):
+    election = self.never_opened(100)
+    self.assertLess(election.modified_at, days_ago(99))
+    election.save()
+    self.assertGreater(Election.objects.get(pk=election.pk).modified_at, days_ago(1))
+
+  # what goes, what stays
+
+  def test_related_rows_deleted_suppressions_kept(self):
+    election = self.ended(100, result_released_at=days_ago(100))
+    voter = self.voters(election)[0]
+    self.cast(voter, run=False)
+    AuditedBallot.objects.create(election=election, raw_vote='{}', vote_hash='h')
+    VoterFile.objects.create(election=election, voter_file_content='password,x,x@example.org,X')
+    batch = EmailBatch.objects.create(election=election, subject_template='s', body_template='b')
+    email = OutgoingEmail.objects.create(batch=batch, election=election, voter=voter, kind=OutgoingEmail.KIND_BULK,
+                                         recipient='a@example.org')
+    trustee_email = OutgoingEmail.objects.create(election=election, trustee=election.trustee_set.first(),
+                                                 kind=OutgoingEmail.KIND_TRUSTEE)
+    BounceEvent.objects.create(outgoing_email=email, email_hash='e' * 64, bounce_type=BounceEvent.HARD)
+    suppression = EmailSuppression.objects.create(email_hash='e' * 64, source=EmailSuppression.SOURCE_HARD_BOUNCE,
+                                                  created_at=days_ago(100), lifted_at=days_ago(99),
+                                                  lifted_by=self.admin, lifted_in=election)
+    other = EmailSuppression.objects.create(email_hash='f' * 64, source=EmailSuppression.SOURCE_MANUAL,
+                                            created_at=days_ago(100))
+    keep = self.ended(10)
+    election.admins.add(User.objects.create(user_type='password', user_id='co@example.org', name='Co',
+                                            info={'password': 'x', 'email': 'co@example.org'}))
+
+    self.run_purge('--days', '30', '--yes')
+
+    self.assertFalse(self.exists(election))
+    for model, field in ((Voter, 'election_id'), (CastVote, 'voter__election_id'), (AuditedBallot, 'election_id'),
+                         (Trustee, 'election_id'), (ElectionLog, 'election_id'), (VoterFile, 'election_id'),
+                         (EmailBatch, 'election_id'), (OutgoingEmail, 'election_id'),
+                         (BounceEvent, 'outgoing_email__election_id')):
+      self.assertFalse(model.objects.filter(**{field: election.pk}).exists(), model.__name__)
+    self.assertFalse(OutgoingEmail.objects.filter(pk__in=[email.pk, trustee_email.pk]).exists())
+    self.assertFalse(BounceEvent.objects.exists())
+    self.assertFalse(Election.admins.through.objects.filter(election_id=election.pk).exists())
+    # the suppression list stays, without the election
+    suppression.refresh_from_db()
+    self.assertIsNone(suppression.lifted_in)
+    self.assertEqual(suppression.lifted_by, self.admin)
+    self.assertTrue(EmailSuppression.objects.filter(pk=other.pk).exists())
+    # the users and the other election stay
+    self.assertTrue(User.objects.filter(user_id='co@example.org').exists())
+    self.assertTrue(User.objects.filter(pk=self.admin.pk).exists())
+    self.assertTrue(self.exists(keep))
+    self.assertEqual(keep.voter_set.count(), 2)
+
+  def test_voter_file_in_storage_deleted(self):
+    election = self.ended(100)
+    with self.settings(MEDIA_ROOT=self.media):
+      voter_file = VoterFile(election=election)
+      voter_file.voter_file.save('voters.csv', ContentFile(b'password,x,x@example.org,X\n'))
+      path = voter_file.voter_file.path
+      self.assertTrue(os.path.exists(path))
+      self.run_purge('--days', '30', '--yes')
+    self.assertFalse(self.exists(election))
+    self.assertFalse(os.path.exists(path))
+
+  def test_purge_rechecks(self):
+    election = self.ended(100)
+    found = retention.candidates(30)
+    self.assertEqual([e.pk for e, _ in found], [election.pk])
+    # voting extended in the meantime
+    self.set(election, voting_extended_until=days_ago(-1))
+    self.assertIsNone(retention.purge(election, days=30))
+    self.assertTrue(self.exists(election))
+
+  # shown to site administrators
+
+  @override_settings(HELIOS_ELECTION_RETENTION_DAYS=30)
+  def test_purge_date_shown_to_site_admins(self):
+    election = self.ended(10)
+    html = self.page(election)
+    self.assertNotIn('deleted permanently', html)
+
+    self.login(self.site_admin())
+    html = self.page(election)
+    self.assertIn('This election will be deleted permanently after', html)
+    self.assertIn('retention period of 30 days', html)
+
+    election = self.set(self.make_election(), frozen_at=days_ago(1))
+    html = self.page(election)
+    self.assertIn('This election will be deleted permanently 30 days after voting has ended', html)
+
+  @override_settings(HELIOS_ELECTION_RETENTION_DAYS=30)
+  def test_purge_date_in_deleted_elections(self):
+    election = self.ended(10, deleted_at=days_ago(5))
+    self.login(self.site_admin())
+    response = self.client.get('/helios/stats/deleted-elections')
+    self.assertContains(response, 'Permanent deletion after:')
+    expected = (election.deleted_at + datetime.timedelta(days=30)).strftime('%Y-%m-%dT%H:%MZ')
+    self.assertContains(response, expected)

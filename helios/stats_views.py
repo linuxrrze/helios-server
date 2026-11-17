@@ -14,7 +14,7 @@ from django.views.decorators.http import require_http_methods
 from django_tasks import TaskResultStatus
 from django_tasks_db.models import DBTaskResult
 
-from helios import organizations, tasks, url_names
+from helios import organizations, retention, tasks, url_names
 from helios.management.commands.requeue_stuck_tasks import STUCK_AFTER_MINUTES
 from helios.models import CastVote, Election, SiteAnnouncement, VoterGroup
 from helios_auth.models import User
@@ -191,7 +191,14 @@ def deleted_elections(request):
 
   total_elections = elections_paginator.count
 
+  # when each will be deleted for good (helios.retention), if retention is on
+  days = retention.retention_days()
+  if days:
+    for election in elections_page.object_list:
+      election.purge_date = retention.purge_date(election, days)
+
   return render_template(request, "stats_deleted_elections", {
+    'retention_days': days,
     'elections': elections_page.object_list,
     'elections_page': elections_page,
     'limit': limit,

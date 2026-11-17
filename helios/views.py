@@ -37,6 +37,7 @@ from . import election_progress
 from . import forms
 from . import mail
 from . import organizations
+from . import retention
 from . import short_names
 from . import tasks
 from .crypto import algs, electionalgs, elgamal
@@ -454,6 +455,9 @@ def one_election_view(request, election):
     admin_steps, freeze_issues = None, []
     can_send_emails, email_disabled_reason = False, None
     has_ballots_p = can_delete_p = False
+  # site administrators see when the election will be deleted for good (helios.retention)
+  retention_days = retention.retention_days() if user and user.admin_p else 0
+  purge_date = retention.purge_date(election, retention_days) if retention_days else None
 
   return render_template(request, 'election_view',
                          {'election' : election, 'trustees': trustees, 'admin_p': admin_p, 'user': user,
@@ -461,6 +465,7 @@ def one_election_view(request, election):
                           'admin_steps': admin_steps, 'freeze_issues': freeze_issues,
                           'can_send_emails': can_send_emails, 'email_disabled_reason': email_disabled_reason,
                           'has_ballots_p': has_ballots_p, 'can_delete_p': can_delete_p,
+                          'retention_days': retention_days, 'purge_date': purge_date,
                           'voter': voter, 'votes': votes, 'notregistered': notregistered, 'eligible_p': eligible_p,
                           'can_feature_p': can_feature_p, 'election_url' : election_url,
                           'organizations_p': organizations.enabled(),

@@ -27,7 +27,7 @@
 {% for election in elections %}
 <li>
 {% blocktranslate trimmed with name=election.name email=election.admin.info.email admin_name=election.admin.pretty_name %}<b>{{name}}</b> by <a href="mailto:{{email}}">{{admin_name}}</a>{% endblocktranslate %}
-<span class="muted">{% translate "Deleted at:" %} {{election.deleted_at|utc_time}} &middot; {% blocktranslate trimmed with num_voters=election.num_voters num_cast_votes=election.num_cast_votes %}{{num_voters}} voters / {{num_cast_votes}} cast votes{% endblocktranslate %}</span>
+<span class="muted">{% translate "Deleted at:" %} {{election.deleted_at|utc_time}} &middot; {% blocktranslate trimmed with num_voters=election.num_voters num_cast_votes=election.num_cast_votes %}{{num_voters}} voters / {{num_cast_votes}} cast votes{% endblocktranslate %}{% if retention_days %} &middot; {% if election.purge_date %}{% translate "Permanent deletion after:" %} {{election.purge_date|utc_time}}{% else %}{% translate "Not deleted permanently while voting is open or a tally is in progress" %}{% endif %}{% endif %}</span>
 <form class="inline-action" method="post" action="{% url "stats@undelete-election" election.uuid %}" onsubmit="return confirm('{% filter escapejs %}{% translate "Are you sure you want to restore this election? It will become visible to its administrators again." %}{% endfilter %}');">
 <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
 <button type="submit" class="button secondary small">{% translate "undelete" %}<span class="screen-reader-text"> {{election.name}}</span></button>

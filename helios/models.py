@@ -121,9 +121,10 @@ class Election(HeliosModel):
   # where votes should be cast
   cast_url = models.CharField(max_length = 500)
 
-  # dates at which this was touched
+  # dates at which this was touched; MODIFIED_AT is set by each save() (not by
+  # save(update_fields=...) without it), see helios.retention
   created_at = models.DateTimeField(auto_now_add=True)
-  modified_at = models.DateTimeField(auto_now_add=True)
+  modified_at = models.DateTimeField(auto_now=True)
 
   # dates at which things happen for the election
   frozen_at = models.DateTimeField(auto_now_add=False, default=None, null=True)

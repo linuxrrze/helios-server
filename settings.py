@@ -758,6 +758,12 @@ HELIOS_VOTERS_EMAIL = True
 # Number of weeks after tallying when voter emails should be disabled
 HELIOS_VOTER_EMAIL_CUTOFF_WEEKS = int(get_from_env('HELIOS_VOTER_EMAIL_CUTOFF_WEEKS', '3'))
 
+# Elections are deleted for good (with voters, ballots, logs and emails) this many
+# days after voting ended, the result was released, or they were archived or
+# deleted, whichever is latest; never-opened ones after their last change. Run
+# by `manage.py purge_elections --yes` (helios.retention). 0: never (default).
+HELIOS_ELECTION_RETENTION_DAYS = int(get_from_env('HELIOS_ELECTION_RETENTION_DAYS', '0'))
+
 # Retrying emails the mail server did not take (helios.mail), in seconds: the
 # n-th retry waits min(BASE * 2^n, CAP) * random(0.5, 1.5); an email is given up
 # (failed) after MAX_ATTEMPTS attempts or MAX_AGE after it was queued.
