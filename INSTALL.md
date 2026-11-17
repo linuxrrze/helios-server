@@ -101,6 +101,33 @@ uv run python manage.py requeue_stuck_tasks --older-than 120
 uv run python manage.py resume_email
 ```
 
+## Bounces
+
+Optional, only when Helios sends over SMTP. Each email then goes out with its own envelope
+sender `bounce+<id>-<mac>@bounces.example.org`, so that a bounce tells which email (and voter) it
+is about; `From:` stays `DEFAULT_FROM_EMAIL`. Settings: `HELIOS_BOUNCE_DOMAIN` and
+`HELIOS_BOUNCE_SECRET` ([docs/configuration.md](docs/configuration.md#4-email)).
+
+DNS and mail server (the domain names are examples; the sender domain is that of `DEFAULT_FROM_EMAIL`):
+
+* **A subdomain of the sender domain** as bounce domain, e.g. `bounces.example.org` for
+  `helios@example.org`. DMARC (relaxed alignment) accepts the SPF result of the envelope domain
+  when it has the same organizational domain as `From:`; DKIM signatures of `example.org` stay
+  aligned as before.
+* **MX** for the bounce domain, pointing to the mail server that receives the bounces:
+  `bounces.example.org. MX 10 mx.example.org.`
+* **SPF** for the bounce domain (it is now the envelope domain the receivers check), listing
+  the server(s) Helios sends through: `bounces.example.org. TXT "v=spf1 ip4:192.0.2.25 -all"`
+  (or `include:` of your relay's record).
+* **DMARC**: the policy of `example.org` covers the subdomain (`sp=`); nothing else to add.
+* **Delivery into one mailbox**: all `bounce+…@bounces.example.org` addresses must arrive in one
+  IMAP mailbox. With Postfix: `recipient_delimiter = +` (in `main.cf`), and the bounce domain
+  as a virtual mailbox domain with the mailbox `bounce@bounces.example.org` (e.g. Dovecot via
+  LMTP), so that `bounce+4711-…@` is delivered to `bounce@`. Do not let a spam filter reject or
+  discard bounces (they come from `<>`), and do not let the mailbox forward them elsewhere.
+* The relay Helios sends through must allow the envelope sender `bounce+…@bounces.example.org`
+  for the login of `EMAIL_HOST_USER` (an authenticating relay often restricts senders).
+
 ## Upgrading from Celery and RabbitMQ
 
 Older versions of Helios used Celery with RabbitMQ. To upgrade:

@@ -149,6 +149,19 @@ settings.
 | `HELIOS_EMAIL_MAX_ATTEMPTS` | `8` | Attempts after which an email counts as failed. |
 | `HELIOS_EMAIL_MAX_AGE` | `172800` | Seconds after queueing (48 hours) after which an email that has not gone out counts as failed. Time during which sending was paused (mail server unreachable or refusing the login) does not count: after an outage the waiting emails still go out. |
 
+**Bounces.** A mail server that has taken an email may still fail to deliver it later (unknown
+mailbox at the recipient's provider, mailbox full) and returns a bounce to the envelope sender.
+With `HELIOS_BOUNCE_DOMAIN` and `HELIOS_BOUNCE_SECRET` set, each email goes out over SMTP with an
+envelope sender of its own, `bounce+<id>-<mac>@<HELIOS_BOUNCE_DOMAIN>` (VERP), while `From:` stays
+`DEFAULT_FROM_EMAIL`. If the mail server supports DSN (RFC 3461), Helios asks for failure and delay
+notices with only the headers returned (`RET=HDRS`, never the body with the voter's password).
+Only with SMTP: with Mailgun or Amazon SES, bounce handling is off.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `HELIOS_BOUNCE_DOMAIN` | empty (off) | Domain of the envelope senders, e.g. `bounces.example.org`: a subdomain of the domain of `DEFAULT_FROM_EMAIL` (DMARC alignment), with an MX and a mailbox that receives `bounce+…@` (see [INSTALL.md](../INSTALL.md#bounces)). |
+| `HELIOS_BOUNCE_SECRET` | empty (off) | Key of the HMAC in the envelope sender, so that nobody can forge bounces and get voters' addresses suppressed. A long random value (at least 16 characters; Helios refuses to start without it when `HELIOS_BOUNCE_DOMAIN` is set and `DEBUG=0`). Changing it invalidates the bounces of emails sent before. |
+
 **Other ways to send** (instead of SMTP):
 
 | Variable | Default | Meaning |

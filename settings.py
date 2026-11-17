@@ -881,9 +881,23 @@ if get_from_env('EMAIL_USE_AWS', '0') == '1':
     EMAIL_BACKEND = 'django_ses.SESBackend'
 
 # Every email goes through helios.mail_backend, which logs one line per email
-# (recipient masked) and passes it on to the backend selected above.
-HELIOS_EMAIL_BACKEND = globals().get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+# (recipient masked) and passes it on to the backend selected above. SMTP is
+# Django's SMTP backend with the VERP envelope sender below.
+HELIOS_EMAIL_BACKEND = globals().get('EMAIL_BACKEND', 'helios.mail_backend.SMTPBackend')
 EMAIL_BACKEND = 'helios.mail_backend.LoggingEmailBackend'
+
+# Bounces (helios.verp, helios.bounces): with SMTP, each email goes out with the
+# envelope sender bounce+<id>-<mac>@HELIOS_BOUNCE_DOMAIN; the MAC (HMAC with
+# HELIOS_BOUNCE_SECRET) keeps others from forging bounces. Both empty: off.
+HELIOS_BOUNCE_DOMAIN = get_from_env('HELIOS_BOUNCE_DOMAIN', '').strip().lower()
+HELIOS_BOUNCE_SECRET = get_from_env('HELIOS_BOUNCE_SECRET', '')
+if HELIOS_BOUNCE_DOMAIN and not DEBUG and not TESTING:
+  _problem = _secret_problem('HELIOS_BOUNCE_SECRET', HELIOS_BOUNCE_SECRET, 16)
+  if _problem:
+    from django.core.exceptions import ImproperlyConfigured
+    raise ImproperlyConfigured(
+      "%s It is needed with HELIOS_BOUNCE_DOMAIN: set it to a long random value, e.g. the output of: "
+      "python3 -c \"import secrets; print(secrets.token_urlsafe(32))\"" % _problem)
 
 # set up logging
 import logging

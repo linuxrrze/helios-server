@@ -256,7 +256,14 @@ through `helios/mail.py`: the voter's login system only gives the address
 (`get_email_address`; a login system without it still sends with its own
 `send_message`), and the email goes out via Django's mail backend (SMTP,
 Mailgun or Amazon SES depending on settings) through
-`helios.mail_backend.LoggingEmailBackend`.
+`helios.mail_backend.LoggingEmailBackend`. SMTP is
+`helios.mail_backend.SMTPBackend`, Django's backend with VERP: with
+`HELIOS_BOUNCE_DOMAIN` and `HELIOS_BOUNCE_SECRET` set (`helios/verp.py`), each
+email goes out with the envelope sender `bounce+<id>-<mac>@<bounce domain>` (id
+of the `OutgoingEmail`, MAC: the first 80 bits of HMAC-SHA256 over the id in
+lower-case base32, kept as `bounce_token`), while `From:` stays. If the mail
+server offers DSN, it asks for failure and delay notices with only the headers
+returned (`RET=HDRS`, `NOTIFY=FAILURE,DELAY`, the token as `ENVID`).
 
 Each email gets an `OutgoingEmail` row (kind, recipient, status, attempts,
 error, `sent_at`, Message-ID) and is sent by its own task,

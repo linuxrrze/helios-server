@@ -34,7 +34,10 @@ cannot be checked: the email counts as sent unless it raises).
 
 The email itself goes through helios.mail_backend.LoggingEmailBackend like any
 other (log line with a masked address, sender name and Reply-To of the election's
-organization inside organizations.mail_context).
+organization inside organizations.mail_context). With bounce handling on
+(helios.verp), it gets its own envelope sender bounce+<id>-<mac>@<bounce domain>,
+kept as bounce_token, by which `manage.py process_bounces` (helios.bounces)
+finds the email a bounce is about.
 """
 import contextlib
 import datetime
@@ -54,6 +57,7 @@ from helios_auth.auth_systems import AUTH_SYSTEMS
 from . import mail_errors
 from . import mail_messages
 from . import organizations
+from . import verp
 from .mail_backend import mask_address
 from .models import EmailBatch, EmailOptOut, EmailPausePeriod, EmailSendingPause, OutgoingEmail
 
@@ -275,6 +279,8 @@ class _Message(NamedTuple):
   recipient: str
   # the auth system sends it itself (no get_email_address)
   send_with: Optional[Callable] = None
+  # the VERP token (helios.verp) for the envelope sender, or ''
+  bounce_token: str = ''
 
 
 class _NoAddress(Exception):
@@ -431,8 +437,11 @@ def _claim(email_id, now):
     email.attempts += 1
     email.next_attempt_at = now + SENDING_LEASE
     email.recipient = recipient
-    email.save(update_fields=['status', 'attempts', 'next_attempt_at', 'recipient'])
-    return email, _Message(subject, body, recipient, send_with), bool(pause and pause.failures)
+    # bounces come back to an envelope sender of its own (only over SMTP, not with send_with)
+    email.bounce_token = verp.token(email.id) if send_with is None and verp.enabled() else ''
+    email.save(update_fields=['status', 'attempts', 'next_attempt_at', 'recipient', 'bounce_token'])
+    return (email, _Message(subject, body, recipient, send_with, email.bounce_token),
+            bool(pause and pause.failures))
 
 
 def _send(message):
@@ -442,8 +451,13 @@ def _send(message):
     return ''
   message_id = make_msgid(domain=DNS_NAME)
   # as django.core.mail.send_mail, which the auth systems used
-  EmailMultiAlternatives(message.subject, message.body, settings.SERVER_EMAIL, [message.recipient],
-                         headers={'Message-ID': message_id}).send(fail_silently=False)
+  email_message = EmailMultiAlternatives(message.subject, message.body, settings.SERVER_EMAIL, [message.recipient],
+                                         headers={'Message-ID': message_id})
+  if message.bounce_token:
+    # the header From stays; helios.mail_backend.SMTPBackend uses these for MAIL FROM and the DSN's ENVID
+    email_message.envelope_from = verp.address(message.bounce_token)
+    email_message.envelope_id = message.bounce_token
+  email_message.send(fail_silently=False)
   return message_id
 
 
