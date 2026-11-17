@@ -370,7 +370,7 @@ table.pretty .helptext { margin-top: 4px; }
 /* --- voters and trustees ------------------------------------------------ */
 .pager { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; margin: .5em 0 1em; }
 .voters-table td.row-actions { white-space: nowrap; }
-.row-actions > * + * { margin-left: 12px; }
+.row-actions > * + *, .row-actions > * + form.inline-action { margin-left: 12px; }
 .disabled-action { color: var(--muted-color); cursor: not-allowed; text-decoration: line-through; }
 .tracker-inline { font-size: .95rem; overflow-wrap: anywhere; }
 .voter-search { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 1em; }

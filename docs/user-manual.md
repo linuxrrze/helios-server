@@ -226,7 +226,10 @@ Each member can have, besides name, email and number of votes, **initials**
 **status**: member, deputy member, advisory member or guest. The member list
 is sorted by person group (members without one last), then by name; columns
 nobody has a value for are left out. **Edit** next to a member changes these
-fields. A member with **0 votes** has no voting right, e.g. a deputy or an
+fields. An email address can belong to only one member of a group
+(case-insensitive); adding a member or changing an address to one another
+member already has is refused. (Older groups may still have an address twice:
+such members can be edited as long as their address stays the same.) A member with **0 votes** has no voting right, e.g. a deputy or an
 advisory member: they stay in the group but get no voter when an election is
 prepared from it (the page lists them as "no vote"). If no member has a vote,
 no election can be prepared. The status does not change the votes by itself:

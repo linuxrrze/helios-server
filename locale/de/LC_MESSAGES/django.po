@@ -214,7 +214,7 @@ msgstr "Die Stimmabgabe ist beendet: Eine Einladung zur Wahl wird nicht mehr ver
 msgid "Date (UTC)"
 msgstr "Datum (UTC)"
 
-#: helios/email_views.py:99 helios/votergroup.py:59 helios/votergroup.py:85
+#: helios/email_views.py:99 helios/votergroup.py:64 helios/votergroup.py:103
 #: helios/templates/election_email_voter.html:58 helios/templates/election_emails.html:83 helios/templates/new_trustee.html:20
 #: helios/templates/new_trustee.html:32 helios/templates/votergroup_import_preview.html:33 helios/templates/votergroup_import_preview.html:47
 #: helios/templates/votergroup_import_preview.html:62 helios/templates/votergroup_prepareelection.html:27 helios/templates/votergroup_view.html:35
@@ -235,7 +235,7 @@ msgstr "E-Mail-Adresse"
 msgid "Name"
 msgstr "Name"
 
-#: helios/email_views.py:99 helios/votergroup.py:67 helios/templates/_election_table.html:12
+#: helios/email_views.py:99 helios/votergroup.py:72 helios/templates/_election_table.html:12
 #: helios/templates/election_email_voter.html:60 helios/templates/election_emails.html:84 helios/templates/votergroup_import_preview.html:33
 #: helios/templates/votergroup_view.html:34
 msgid "Status"
@@ -5169,131 +5169,135 @@ msgstr "Nach diesem Tag wird die Gruppe als „Amtszeit beendet“ gekennzeichne
 msgid "The term of office cannot end before it begins."
 msgstr "Die Amtszeit kann nicht enden, bevor sie beginnt."
 
-#: helios/votergroup.py:57 helios/templates/votergroup_prepareelection.html:27
+#: helios/votergroup.py:62 helios/templates/votergroup_prepareelection.html:27
 msgid "First name"
 msgstr "Vorname"
 
-#: helios/votergroup.py:58 helios/templates/votergroup_prepareelection.html:27
+#: helios/votergroup.py:63 helios/templates/votergroup_prepareelection.html:27
 msgid "Last name"
 msgstr "Nachname"
 
-#: helios/votergroup.py:60 helios/templates/election_view.html:249
+#: helios/votergroup.py:65 helios/templates/election_view.html:249
 msgid "Votes"
 msgstr "Stimmen"
 
-#: helios/votergroup.py:61
+#: helios/votergroup.py:66
 msgid "0 for members without a voting right, e.g. deputy or advisory members: they get no vote in an election prepared from the group."
 msgstr "0 für Mitglieder ohne Stimmrecht, z. B. Ersatzmitglieder oder beratende Mitglieder: Sie erhalten in einer Wahl, die aus der Gruppe vorbereitet wird, keine Stimme."
 
-#: helios/votergroup.py:62 helios/templates/votergroup_view.html:32
+#: helios/votergroup.py:67 helios/templates/votergroup_view.html:32
 msgid "Initials"
 msgstr "Kürzel"
 
-#: helios/votergroup.py:63
+#: helios/votergroup.py:68
 msgid "A short identifier, e.g. the initials."
 msgstr "Eine kurze Kennung, z. B. die Initialen."
 
-#: helios/votergroup.py:64 helios/templates/votergroup_import_preview.html:33 helios/templates/votergroup_view.html:33
+#: helios/votergroup.py:69 helios/templates/votergroup_import_preview.html:33 helios/templates/votergroup_view.html:33
 msgid "Person group"
 msgstr "Personengruppe"
 
-#: helios/votergroup.py:65
+#: helios/votergroup.py:70
 msgid "e.g. Professors, Students; the member list is sorted by it."
 msgstr "z. B. Professor*innen, Studierende; die Mitgliederliste wird danach sortiert."
 
-#: helios/votergroup.py:86
+#: helios/votergroup.py:98
+msgid "Another member of the group already has this email address."
+msgstr "Ein anderes Mitglied der Gruppe hat bereits diese E-Mail-Adresse."
+
+#: helios/votergroup.py:104
 msgid "The person must have logged in to Helios at least once before they can be added."
 msgstr "Die Person muss sich mindestens einmal bei Helios angemeldet haben, bevor sie hinzugefügt werden kann."
 
-#: helios/votergroup.py:92 helios/templates/votergroup_transfer.html:69
+#: helios/votergroup.py:110 helios/templates/votergroup_transfer.html:69
 msgid "New owner"
 msgstr "Neue Besitzer*in"
 
-#: helios/votergroup.py:103
+#: helios/votergroup.py:121
 msgid "Email of the new owner"
 msgstr "E-Mail-Adresse der neuen Besitzer*in"
 
-#: helios/votergroup.py:104
+#: helios/votergroup.py:122
 msgid "The person must have logged in to Helios at least once and be allowed to create elections."
 msgstr "Die Person muss sich mindestens einmal bei Helios angemeldet haben und Wahlen erstellen dürfen."
 
-#: helios/votergroup.py:106 helios/templates/votergroup_transfer.html:79
+#: helios/votergroup.py:124 helios/templates/votergroup_transfer.html:79
 msgid "Keep the previous owner as an administrator of the group"
 msgstr "Die bisherige Besitzer*in als Administrator*in der Gruppe behalten"
 
-#: helios/votergroup.py:112
+#: helios/votergroup.py:130
 msgid "Add the other administrators of the group to the election administrators"
 msgstr "Die anderen Administrator*innen der Gruppe zur Wahlleitung hinzufügen"
 
-#: helios/votergroup.py:113
+#: helios/votergroup.py:131
 msgid "You become the creator of the election either way. Changes to the group later on do not change the election."
 msgstr "Sie werden in jedem Fall Ersteller*in der Wahl. Spätere Änderungen an der Gruppe ändern die Wahl nicht."
 
-#: helios/votergroup.py:138
+#: helios/votergroup.py:156
 #, python-format
 msgid "Login IDs must be unique: %(login_id)s is used twice."
 msgstr "Wähler-IDs müssen eindeutig sein: %(login_id)s wird doppelt verwendet."
 
-#: helios/votergroup.py:146
+#: helios/votergroup.py:164
 msgid "No delegation"
 msgstr "Keine Übertragung"
 
-#: helios/votergroup.py:234 helios/templates/voters_upload.html:33
+#: helios/votergroup.py:252 helios/templates/voters_upload.html:33
 msgid "CSV file"
 msgstr "CSV-Datei"
 
-#: helios/votergroup.py:236
+#: helios/votergroup.py:254
 msgid "Remove members who are not in the file"
 msgstr "Mitglieder entfernen, die nicht in der Datei stehen"
 
-#: helios/votergroup.py:237
+#: helios/votergroup.py:255
 msgid "Without this, members who are not in the file stay in the group."
 msgstr "Ohne diese Option bleiben Mitglieder, die nicht in der Datei stehen, in der Gruppe."
 
-#: helios/votergroup.py:307 helios/votergroup_views.py:672
+#: helios/votergroup.py:325 helios/votergroup_views.py:672
 #, python-format
 msgid "The file is too large (at most %(size)s kB)."
 msgstr "Die Datei ist zu groß (höchstens %(size)s kB)."
 
-#: helios/votergroup.py:311
+#: helios/votergroup.py:329
 msgid "The file is empty."
 msgstr "Die Datei ist leer."
 
-#: helios/votergroup.py:327
+#: helios/votergroup.py:345
 #, python-format
 msgid "The column %(column)s appears twice."
 msgstr "Die Spalte %(column)s kommt zweimal vor."
 
-#: helios/votergroup.py:333
+#: helios/votergroup.py:351
 #, python-format
 msgid "The header row lacks the column(s) %(columns)s. Expected are first_name, last_name and email (or Vorname, Nachname and E-Mail), optionally votes, initials, person_group and status."
 msgstr "In der Kopfzeile fehlt bzw. fehlen die Spalte(n) %(columns)s. Erwartet werden Vorname, Nachname und E-Mail (oder first_name, last_name und email), optional Stimmen, Kürzel, Personengruppe und Status."
 
-#: helios/votergroup.py:349
+#: helios/votergroup.py:367
 #, python-format
 msgid "The file has too many rows (at most %(rows)s)."
 msgstr "Die Datei hat zu viele Zeilen (höchstens %(rows)s)."
 
-#: helios/votergroup.py:357
+#: helios/votergroup.py:375
 #, python-format
 msgid "Unknown status \"%(status)s\" (possible: %(choices)s)."
 msgstr "Unbekannter Status „%(status)s“ (möglich: %(choices)s)."
 
-#: helios/votergroup.py:370
+#: helios/votergroup.py:388
 #, python-format
 msgid "The address %(email)s is already in line %(line)s."
 msgstr "Die Adresse %(email)s steht bereits in Zeile %(line)s."
 
-#: helios/votergroup.py:379
+#: helios/votergroup.py:397
 #, python-format
 msgid "The file cannot be read as CSV: %(error)s"
 msgstr "Die Datei kann nicht als CSV gelesen werden: %(error)s"
 
-#: helios/votergroup.py:381
+#: helios/votergroup.py:399
 msgid "The file contains no members."
 msgstr "Die Datei enthält keine Mitglieder."
 
-#: helios/votergroup.py:399
+#: helios/votergroup.py:417
 #, python-format
 msgid "Several members of the group have the address %(email)s; please delete all but one of them first."
 msgstr "Mehrere Mitglieder der Gruppe haben die Adresse %(email)s; bitte löschen Sie zuerst alle bis auf eines."

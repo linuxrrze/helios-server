@@ -245,7 +245,7 @@ def votergroup_memberadd(request, votergroup_uuid):
     form = vg.VoterGroupMemberForm()
   else:
     check_csrf(request)
-    form = vg.VoterGroupMemberForm(request.POST)
+    form = vg.VoterGroupMemberForm(request.POST, group=group)
     if form.is_valid():
       with transaction.atomic():
         member = VoterGroupMember.objects.create(group=group, uuid=str(uuid.uuid4()), **form.cleaned_data)
@@ -280,7 +280,7 @@ def votergroup_memberedit(request, member_uuid):
     form = vg.VoterGroupMemberForm(initial={f: getattr(member, f) for f in fields})
   else:
     check_csrf(request)
-    form = vg.VoterGroupMemberForm(request.POST)
+    form = vg.VoterGroupMemberForm(request.POST, group=group, member=member)
     if form.is_valid():
       user = get_user(request)
       changed = [f for f in fields if getattr(member, f) != form.cleaned_data[f]]

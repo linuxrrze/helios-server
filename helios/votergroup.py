@@ -54,6 +54,11 @@ class VoterGroupForm(forms.Form):
 
 
 class VoterGroupMemberForm(forms.Form):
+  """A member of a group. With GROUP, a new or changed address must not
+  belong to another member of the group (case-insensitive). MEMBER is the
+  member being edited: it may keep its address, even where older data has it
+  twice in the group. Without GROUP (the CSV import), no such check: the
+  import matches members by address and refuses duplicates itself."""
   first_name = forms.CharField(max_length=100, label=_('First name'))
   last_name = forms.CharField(max_length=100, label=_('Last name'))
   email = forms.EmailField(max_length=100, label=_('Email'))
@@ -66,7 +71,8 @@ class VoterGroupMemberForm(forms.Form):
   status = forms.ChoiceField(choices=VoterGroupMember.STATUS_CHOICES, initial=VoterGroupMember.STATUS_MEMBER,
                              label=_('Status'))
 
-  def __init__(self, data=None, *args, **kwargs):
+  def __init__(self, data=None, *args, group=None, member=None, **kwargs):
+    self.group, self.member = group, member
     if data is not None and not data.get('status'):
       # a client that doesn't know the field (or an empty cell in an import): a regular member
       data = data.copy()
@@ -79,6 +85,18 @@ class VoterGroupMemberForm(forms.Form):
       if isinstance(cleaned.get(field), str):
         cleaned[field] = cleaned[field].strip()
     return cleaned
+
+  def clean_email(self):
+    email = self.cleaned_data['email']
+    if self.member is not None and email.lower() == self.member.email.lower():
+      return email
+    if self.group is not None:
+      others = self.group.votergroupmember_set.filter(email__iexact=email)
+      if self.member is not None:
+        others = others.exclude(pk=self.member.pk)
+      if others.exists():
+        raise forms.ValidationError(_('Another member of the group already has this email address.'))
+    return email
 
 
 class VoterGroupAdminForm(forms.Form):

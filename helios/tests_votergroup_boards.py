@@ -295,6 +295,40 @@ class MemberEditTests(_BoardTestCase):
     self.post(votes='0', initials='AA', person_group='Professors', status='advisory')
     self.assertEqual(self.actions(), [VoterGroupLog.MEMBER_CHANGED])
 
+  def test_duplicate_addresses_are_refused(self):
+    self.login(self.owner)
+    response = self.client.post('/helios/votergroup/memberadd/g1', {
+      'csrf_token': 'tok', 'first_name': 'Anna', 'last_name': 'Again', 'email': 'ANNA@example.org', 'votes': '1'})
+    self.assertEqual(response.status_code, 200)
+    self.assertContains(response, 'Another member of the group already has this email address.')
+    self.assertEqual(VoterGroupMember.objects.filter(email__iexact='anna@example.org').count(), 1)
+    # changing an address to another member's is refused, keeping one's own (in other case) is not
+    response = self.post(uuid='m2', first_name='Bea', last_name='Bach', email='Anna@Example.org', votes='1')
+    self.assertContains(response, 'Another member of the group already has this email address.')
+    self.assertEqual(VoterGroupMember.objects.get(uuid='m2').email, 'bea@example.org')
+    self.assertEqual(self.post(email='ANNA@example.org', votes='3').status_code, 302)
+    self.assertEqual(VoterGroupMember.objects.get(uuid='m1').votes, 3)
+    # the same address in another group is fine
+    VoterGroup.objects.create(admin=self.owner, uuid='g2', short_name='senate')
+    response = self.client.post('/helios/votergroup/memberadd/g2', {
+      'csrf_token': 'tok', 'first_name': 'Anna', 'last_name': 'Arp', 'email': 'anna@example.org', 'votes': '1'})
+    self.assertEqual(response.status_code, 302)
+    # in German
+    response = self.client.post('/helios/votergroup/memberadd/g1', {
+      'csrf_token': 'tok', 'first_name': 'Bea', 'last_name': 'B', 'email': 'bea@example.org', 'votes': '1'},
+      HTTP_ACCEPT_LANGUAGE='de')
+    self.assertContains(response, 'Ein anderes Mitglied der Gruppe hat bereits diese E-Mail-Adresse.')
+
+  def test_older_duplicates_can_still_be_edited(self):
+    self.member('m3', 'Anna', 'Arp', 'Anna@example.org', votes=1)
+    self.login(self.owner)
+    response = self.post(uuid='m3', email='Anna@example.org', votes='0', status='deputy')
+    self.assertEqual(response.status_code, 302)
+    self.assertEqual(VoterGroupMember.objects.get(uuid='m3').status, 'deputy')
+    # but not to the address of yet another member
+    response = self.post(uuid='m3', email='bea@example.org', votes='0')
+    self.assertContains(response, 'Another member of the group already has this email address.')
+
   def test_table_shows_new_columns_only_when_used(self):
     self.login(self.owner)
     content = self.client.get('/helios/votergroup/view/g1').content.decode()
