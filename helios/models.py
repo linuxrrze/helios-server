@@ -1478,6 +1478,104 @@ class EmailOptOut(models.Model):
     return deleted_count > 0
 
 
+class EmailBatch(models.Model):
+  """
+  One bulk mailing of an election to (a selection of) its voters, created when
+  the administrator sends it (see helios.mail). It keeps the templates and the
+  variables, not the rendered emails: each email is rendered when it is sent, as
+  some contain the voter's password.
+  """
+  election = models.ForeignKey(Election, on_delete=models.CASCADE, related_name='email_batches')
+  subject_template = models.CharField(max_length=200)
+  body_template = models.CharField(max_length=200)
+  extra_vars = models.JSONField(default=dict, blank=True)
+  # the language the emails are rendered in (that of the administrator who sent them)
+  language = models.CharField(max_length=16, blank=True, default='')
+  triggered_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+  created_at = models.DateTimeField(auto_now_add=True)
+
+  class Meta:
+    app_label = 'helios'
+
+  def __str__(self):
+    return 'EmailBatch %s (%s, %s)' % (self.id, self.election_id, self.body_template)
+
+
+class OutgoingEmail(models.Model):
+  """
+  One email to one recipient: of a bulk mailing (batch), the confirmation of a
+  cast vote, or information for an election administrator. Records what became
+  of it; the email itself (subject and body) is not stored.
+  """
+  KIND_BULK = 'bulk'
+  KIND_VOTE_CAST = 'vote_cast'
+  KIND_VOTE_REMOVED = 'vote_removed'
+  KIND_ADMIN_INFO = 'admin_info'
+  KINDS = [
+    (KIND_BULK, 'bulk mailing'),
+    (KIND_VOTE_CAST, 'vote-cast confirmation'),
+    (KIND_VOTE_REMOVED, 'vote removed'),
+    (KIND_ADMIN_INFO, 'information for the administrator'),
+  ]
+
+  QUEUED = 'queued'
+  SENDING = 'sending'
+  SENT = 'sent'
+  DEFERRED = 'deferred'
+  FAILED = 'failed'
+  BOUNCED_SOFT = 'bounced_soft'
+  BOUNCED_HARD = 'bounced_hard'
+  SKIPPED_OPTOUT = 'skipped_optout'
+  SKIPPED_SUPPRESSED = 'skipped_suppressed'
+  SKIPPED_NOADDRESS = 'skipped_noaddress'
+  STATUSES = [
+    (QUEUED, 'queued'),
+    (SENDING, 'sending'),
+    (SENT, 'sent'),
+    (DEFERRED, 'deferred'),
+    (FAILED, 'failed'),
+    (BOUNCED_SOFT, 'bounced (temporary)'),
+    (BOUNCED_HARD, 'bounced (permanent)'),
+    (SKIPPED_OPTOUT, 'not sent: opted out'),
+    (SKIPPED_SUPPRESSED, 'not sent: address suppressed'),
+    (SKIPPED_NOADDRESS, 'not sent: no email address'),
+  ]
+  # (still) to be sent; a task finding its email in another status leaves it alone.
+  # SENDING here: the worker died while sending, and a duplicate email is better than a lost one
+  SENDABLE = (QUEUED, SENDING, DEFERRED)
+
+  batch = models.ForeignKey(EmailBatch, on_delete=models.CASCADE, null=True, blank=True, related_name='emails')
+  election = models.ForeignKey(Election, on_delete=models.CASCADE, null=True, blank=True, related_name='+')
+  # kept when the voter is removed (the "vote removed" email is sent just before that)
+  voter = models.ForeignKey(Voter, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+  user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+  kind = models.CharField(max_length=20, choices=KINDS)
+  # as given to the mail server ("Name" <address>); empty until sent, and when
+  # nothing was sent (no address of an opted-out voter is stored)
+  recipient = models.CharField(max_length=500, blank=True, default='')
+  status = models.CharField(max_length=20, choices=STATUSES, default=QUEUED, db_index=True)
+  attempts = models.PositiveIntegerField(default=0)
+  next_attempt_at = models.DateTimeField(null=True, blank=True)
+  last_error_code = models.CharField(max_length=32, blank=True, default='')
+  last_error_text = models.TextField(blank=True, default='')
+  created_at = models.DateTimeField(auto_now_add=True)
+  sent_at = models.DateTimeField(null=True, blank=True)
+  message_id = models.CharField(max_length=255, blank=True, default='')
+  # for matching bounces to the email (VERP), not used yet
+  bounce_token = models.CharField(max_length=64, blank=True, default='')
+
+  class Meta:
+    app_label = 'helios'
+    constraints = [
+      # re-running a bulk mailing only adds the emails still missing
+      models.UniqueConstraint(fields=['batch', 'voter'], condition=models.Q(batch__isnull=False),
+                              name='helios_outgoingemail_once_per_batch_and_voter'),
+    ]
+
+  def __str__(self):
+    return 'OutgoingEmail %s (%s, %s)' % (self.id, self.kind, self.status)
+
+
 class SiteAnnouncement(models.Model):
   """A single banner message shown on every page, set from the site admin page."""
   text = models.TextField(blank=True)

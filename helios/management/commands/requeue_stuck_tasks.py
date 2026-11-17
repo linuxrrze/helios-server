@@ -10,10 +10,21 @@ from django.utils import timezone
 from django_tasks import TaskResultStatus
 from django_tasks_db.models import DBTaskResult
 
-# re-running these would email every voter again
-NOT_REQUEUED = ['helios.tasks.voters_email', 'helios.tasks.voters_notify']
-
 STUCK_AFTER_MINUTES = 120
+
+# re-running these would notify every voter again
+NOT_REQUEUED = ['helios.tasks.voters_notify']
+
+
+# re-running a bulk mailing adds and queues only its emails still missing (an
+# OutgoingEmail per voter of its EmailBatch); not so tasks queued before batches
+# existed (without batch_id), which would email every voter again
+def _requeue_safe(task_result):
+  if task_result.task_path in NOT_REQUEUED:
+    return False
+  if task_result.task_path == 'helios.tasks.voters_email':
+    return bool((task_result.args_kwargs.get('kwargs') or {}).get('batch_id'))
+  return True
 
 
 class Command(BaseCommand):
@@ -28,11 +39,11 @@ class Command(BaseCommand):
     cutoff = timezone.now() - datetime.timedelta(minutes=options['older_than'])
     stuck = DBTaskResult.objects.running().filter(started_at__lt=cutoff)
 
-    for task_path in NOT_REQUEUED:
-      for task_result in stuck.filter(task_path=task_path):
-        self.stdout.write('not requeued: %s %s' % (task_result.id, task_path))
+    not_requeued = [task_result for task_result in stuck if not _requeue_safe(task_result)]
+    for task_result in not_requeued:
+      self.stdout.write('not requeued: %s %s' % (task_result.id, task_result.task_path))
 
-    to_requeue = stuck.exclude(task_path__in=NOT_REQUEUED)
+    to_requeue = stuck.exclude(id__in=[task_result.id for task_result in not_requeued])
     if options['dry_run']:
       self.stdout.write('would requeue %d tasks' % to_requeue.count())
       return

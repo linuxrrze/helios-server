@@ -35,12 +35,13 @@ from . import booth_theme
 from . import datatypes
 from . import election_progress
 from . import forms
+from . import mail
 from . import organizations
 from . import short_names
 from . import tasks
 from .crypto import algs, electionalgs, elgamal
 from .crypto import utils as cryptoutils
-from .models import User, Election, CastVote, Voter, VoterFile, Trustee, AuditedBallot, TallyDecryptionError
+from .models import User, Election, CastVote, Voter, VoterFile, Trustee, AuditedBallot, TallyDecryptionError, OutgoingEmail
 from .security import (election_view, election_admin,
                        trustee_check, set_logged_in_trustee,
                        can_create_election, user_can_see_election, get_voter,
@@ -1231,7 +1232,7 @@ If you believe this was done in error, please contact the election administrator
 """) % {'election': election.name, 'election_url': election_url,
         'signature': organizations.for_election(election).mail_signature}
       with organizations.mail_context(election):
-        voter.send_message(subject, body)
+        mail.send_now(OutgoingEmail.KIND_VOTE_REMOVED, None, subject, body, election=election, voter=voter)
 
       # log it
       election.append_log("Voter %s/%s and their vote were removed after election was frozen" % (voter.voter_type,voter.voter_id))
@@ -2018,11 +2019,17 @@ def voters_email(request, election):
         'election_url' : election_url
         }
         
-      if voter:
-        tasks.single_voter_email.enqueue(voter_uuid = voter.uuid, subject_template = subject_template, body_template = body_template, extra_vars = extra_vars, language = translation.get_language())
-      else:
-        voter_constraints_include, voter_constraints_exclude = VOTERS_EMAIL_CONSTRAINTS[email_form.cleaned_data['send_to']]
-        tasks.voters_email.enqueue(election_id = election.id, subject_template = subject_template, body_template = body_template, extra_vars = extra_vars, voter_constraints_include = voter_constraints_include, voter_constraints_exclude = voter_constraints_exclude, language = translation.get_language())
+      # the mailing (helios.mail), with its emails added and sent in the background
+      language = translation.get_language()
+      with transaction.atomic():
+        batch = mail.create_batch(election, subject_template, body_template, extra_vars,
+                                  language=language, triggered_by=get_user(request))
+        if voter:
+          email = mail.new_email(OutgoingEmail.KIND_BULK, voter=voter, batch=batch)
+          tasks.single_voter_email.enqueue(voter_uuid = voter.uuid, language = language, outgoing_email_id = email.id)
+        else:
+          voter_constraints_include, voter_constraints_exclude = VOTERS_EMAIL_CONSTRAINTS[email_form.cleaned_data['send_to']]
+          tasks.voters_email.enqueue(election_id = election.id, batch_id = batch.id, voter_constraints_include = voter_constraints_include, voter_constraints_exclude = voter_constraints_exclude, language = language)
 
       # this batch process is all async, so we can return a nice note
       return HttpResponseRedirect(settings.SECURE_URL_HOST + reverse(url_names.election.ELECTION_VIEW, args=[election.uuid]))

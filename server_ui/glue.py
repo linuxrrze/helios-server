@@ -8,7 +8,9 @@ from django.utils.translation import gettext as _
 
 import helios.signals
 import helios.views
-from helios.tasks import voter_opted_out, voter_unsubscribe_vars
+from helios import mail
+from helios.models import OutgoingEmail
+from helios.tasks import voter_unsubscribe_vars
 from helios.view_utils import render_text_template
 
 logger = logging.getLogger(__name__)
@@ -20,8 +22,8 @@ def vote_cast_send_message(user, voter, election, cast_vote, **kwargs):
     which already renders in the voter's language. Voters without a user account
     get a stub password user from Voter.get_user(), which mails voter_email.
     """
-    if voter_opted_out(voter):
-        logger.info("Skipping vote-cast email to opted-out voter %s", voter.uuid)
+    email = mail.new_email(OutgoingEmail.KIND_VOTE_CAST, election=election, voter=voter, user=user)
+    if mail.skip_opted_out(email, voter):
         return
 
     extra_vars = {
@@ -37,7 +39,7 @@ def vote_cast_send_message(user, voter, election, cast_vote, **kwargs):
 
     # The ballot is already stored: a mail failure must not fail the cast-vote task.
     try:
-        user.send_message(subject, body)
+        mail.deliver(email, user, subject, body)
     except Exception:
         logger.exception("Could not send vote-cast email for voter %s", voter.uuid)
 

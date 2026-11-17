@@ -218,12 +218,17 @@ class SAMLAuthSystem:
   def update_status(self, token, message):
     pass
 
-  def send_message(self, user_id, name, user_info, subject, body):
+  def get_email_address(self, user_id, name, user_info):
+    """the recipient of emails to this user (see helios.mail), or None without an address"""
     email = (user_info or {}).get('email')
-    if not email:
+    return format_recipient(name, email) if email else None
+
+  def send_message(self, user_id, name, user_info, subject, body):
+    recipient = self.get_email_address(user_id, name, user_info)
+    if not recipient:
       logger.warning("not emailing %s user: no email address on file", self.name)
       return
-    send_mail(subject, body, settings.SERVER_EMAIL, [format_recipient(name, email)], fail_silently=False)
+    send_mail(subject, body, settings.SERVER_EMAIL, [recipient], fail_silently=False)
 
   def check_constraint(self, eligibility, user_info):
     pass

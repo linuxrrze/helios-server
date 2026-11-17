@@ -148,7 +148,7 @@ class VoteCastEmailTests(TestCase):
 
     def test_mail_failure_does_not_raise(self):
         from unittest import mock
-        with mock.patch('helios_auth.auth_systems.password.send_mail', side_effect=OSError('SMTP down')):
+        with mock.patch('helios.mail.EmailMultiAlternatives.send', side_effect=OSError('SMTP down')):
             with self.assertLogs('server_ui.glue', level='ERROR'):
                 self._send()
 

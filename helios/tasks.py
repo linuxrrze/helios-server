@@ -7,16 +7,18 @@ ben@adida.net
 import copy
 import logging
 from django.conf import settings
+from django.db import transaction
 from django.urls import reverse
 from django.utils import translation
 from django.utils.translation import gettext as _, ngettext
 from django_tasks import task
 from urllib.parse import urlparse
 
+from . import mail
 from . import organizations
 from . import signals
 from . import utils
-from .models import CastVote, Election, Voter, VoterFile, EmailOptOut
+from .models import CastVote, EmailBatch, Election, OutgoingEmail, Voter, VoterFile
 from .view_utils import render_text_template
 
 
@@ -26,19 +28,9 @@ def _language(language):
     return translation.override(language or settings.LANGUAGE_CODE)
 
 
-def _voter_email(voter):
-    return voter.voter_email or (voter.user and voter.user.user_id)
-
-
-def voter_opted_out(voter):
-    """True if the voter's address has opted out of all Helios emails."""
-    voter_email = _voter_email(voter)
-    return bool(voter_email) and EmailOptOut.is_opted_out(voter_email)
-
-
 def voter_unsubscribe_vars(voter):
     """Template variables for the unsubscribe link at the end of a voter email."""
-    voter_email = _voter_email(voter)
+    voter_email = mail.voter_email_address(voter)
     if not voter_email:
         return {}
     unsubscribe_code = utils.generate_email_confirmation_code(voter_email, 'optout')
@@ -76,13 +68,24 @@ def _cast_vote_verify_and_store(cast_vote_id, status_update_message):
 
 
 @task()
-def voters_email(election_id, subject_template, body_template, extra_vars={},
-                 voter_constraints_include=None, voter_constraints_exclude=None, language=None):
+def voters_email(election_id, subject_template=None, body_template=None, extra_vars=None,
+                 voter_constraints_include=None, voter_constraints_exclude=None, language=None,
+                 batch_id=None):
     """
+    The emails of the bulk mailing BATCH_ID (an EmailBatch, with the templates and
+    variables) to the voters of the election, one OutgoingEmail and task each.
     voter_constraints_include are conditions on including voters
     voter_constraints_exclude are conditions on excluding voters
+
+    Safe to run again (requeue_stuck_tasks): it adds and queues only the emails
+    that are still missing, in one transaction with their tasks.
+    Tasks queued before EmailBatch existed pass the templates instead of BATCH_ID.
     """
     election = Election.objects.get(id=election_id)
+    if batch_id is None:
+        batch = mail.create_batch(election, subject_template, body_template, extra_vars, language=language)
+    else:
+        batch = EmailBatch.objects.get(id=batch_id, election=election)
 
     # select the right list of voters
     voters = election.voter_set.all()
@@ -91,8 +94,17 @@ def voters_email(election_id, subject_template, body_template, extra_vars={},
     if voter_constraints_exclude:
         voters = voters.exclude(**voter_constraints_exclude)
 
-    for voter in voters:
-        single_voter_email.enqueue(voter.uuid, subject_template, body_template, extra_vars, language=language)
+    with transaction.atomic():
+        already = set(batch.emails.values_list('id', flat=True))
+        queued_voters = set(batch.emails.values_list('voter_id', flat=True))
+        OutgoingEmail.objects.bulk_create(
+            [OutgoingEmail(batch=batch, election=election, voter_id=voter_id, user_id=user_id, kind=OutgoingEmail.KIND_BULK)
+             for voter_id, user_id in voters.values_list('id', 'user_id') if voter_id not in queued_voters],
+            batch_size=1000)
+        for email_id, voter_uuid in batch.emails.filter(voter__isnull=False).values_list('id', 'voter__uuid'):
+            if email_id not in already:
+                single_voter_email.enqueue(voter_uuid, language=language or batch.language or None,
+                                           outgoing_email_id=email_id)
 
 
 @task()
@@ -103,15 +115,31 @@ def voters_notify(election_id, notification_template, extra_vars={}, language=No
 
 
 @task()
-def single_voter_email(voter_uuid, subject_template, body_template, extra_vars={}, language=None):
+def single_voter_email(voter_uuid, subject_template=None, body_template=None, extra_vars=None, language=None,
+                       outgoing_email_id=None):
+    """
+    The email to one voter: of a bulk mailing (OUTGOING_EMAIL_ID, whose batch has
+    the templates and variables), or of the templates given here.
+    """
     voter = Voter.objects.get(uuid=voter_uuid)
 
-    if voter_opted_out(voter):
-        logger = logging.getLogger(__name__)
-        logger.info(f"Skipping email to opted-out voter {voter.uuid}")
+    if outgoing_email_id is None:
+        email = mail.new_email(OutgoingEmail.KIND_BULK, voter=voter)
+    else:
+        email = OutgoingEmail.objects.select_related('batch').get(id=outgoing_email_id)
+        if email.status not in OutgoingEmail.SENDABLE:
+            # already sent (or not to be sent): this task ran before
+            logging.getLogger(__name__).info("email %s already %s", email.id, email.status)
+            return
+        subject_template = email.batch.subject_template
+        body_template = email.batch.body_template
+        extra_vars = email.batch.extra_vars
+        language = language or email.batch.language or None
+
+    if mail.skip_opted_out(email, voter):
         return
 
-    the_vars = copy.copy(extra_vars)
+    the_vars = copy.copy(extra_vars or {})
     the_vars.update({'election': voter.election})
     the_vars.update({'voter': voter})
     the_vars.update(voter_unsubscribe_vars(voter))
@@ -121,7 +149,7 @@ def single_voter_email(voter_uuid, subject_template, body_template, extra_vars={
     with _language(language), organizations.mail_context(voter.election):
         subject = render_text_template(subject_template, the_vars)
         body = render_text_template(body_template, the_vars)
-        voter.send_message(subject, body)
+        mail.deliver(email, voter.get_user(), subject, body)
 
 
 @task()
@@ -263,4 +291,4 @@ def notify_election_admin(election, subject, body):
     with organizations.mail_context(election):
         if '\n--\n' not in body:
             body = '%s\n\n--\n%s\n' % (body.rstrip(), organizations.for_election(election).mail_signature)
-        election.admin.send_message(subject, body)
+        mail.send_now(OutgoingEmail.KIND_ADMIN_INFO, election.admin, subject, body, election=election)

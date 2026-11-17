@@ -75,7 +75,7 @@ emails aren't sent and tallies aren't computed, in development too.
 uv run python manage.py prune_db_task_results
 ```
 
-* A worker killed mid-task leaves that task stuck as running. Put tasks running longer than 120 minutes back in the queue (bulk voter emails are listed, not requeued):
+* A worker killed mid-task leaves that task stuck as running. Put tasks running longer than 120 minutes back in the queue (a bulk voter email then sends only its emails still missing):
 
 ```
 uv run python manage.py requeue_stuck_tasks --older-than 120

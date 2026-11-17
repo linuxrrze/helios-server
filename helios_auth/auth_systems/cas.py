@@ -206,22 +206,26 @@ def update_status(token, message):
   """
   pass
 
-def send_message(user_id, name, user_info, subject, body):
+def get_email_address(user_id, name, user_info):
   """
-  send email, for now just to Princeton
+  the recipient of emails to this user (see helios.mail): the user id, or
+  user_id@CAS_EMAIL_DOMAIN when it is no address (for now just Princeton)
   """
   # if the user_id contains an @ sign already
   if "@" in user_id:
     email = user_id
   else:
     email = "%s@%s" % (user_id, CAS_EMAIL_DOMAIN)
-    
+
   if 'name' in user_info:
     name = user_info["name"]
   else:
     name = email
-    
-  send_mail(subject, body, settings.SERVER_EMAIL, [format_recipient(name, email)], fail_silently=False)
+
+  return format_recipient(name, email)
+
+def send_message(user_id, name, user_info, subject, body):
+  send_mail(subject, body, settings.SERVER_EMAIL, [get_email_address(user_id, name, user_info)], fail_silently=False)
 
 #
 # eligibility

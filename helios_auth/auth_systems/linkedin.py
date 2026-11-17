@@ -92,6 +92,11 @@ def user_needs_intervention(user_id, user_info, token):
 def update_status(token, message):
   pass
 
+def get_email_address(user_id, name, user_info):
+  """the recipient of emails to this user (see helios.mail), or None without an address"""
+  email = (user_info or {}).get('email')
+  return format_recipient(name, email) if email else None
+
 def send_message(user_id, name, user_info, subject, body):
   send_mail(
     subject,

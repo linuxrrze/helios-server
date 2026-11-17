@@ -67,9 +67,16 @@ def update_status(user_id, user_info, token, message):
       'message': message
       })
 
-def send_message(user_id, user_name, user_info, subject, body):
+def get_email_address(user_id, user_name, user_info):
+  """the recipient of emails to this user (see helios.mail), or None without an address"""
   if 'email' in user_info:
-    send_mail(subject, body, settings.SERVER_EMAIL, [format_recipient(user_name, user_info['email'])], fail_silently=False)    
+    return format_recipient(user_name, user_info['email'])
+  return None
+
+def send_message(user_id, user_name, user_info, subject, body):
+  recipient = get_email_address(user_id, user_name, user_info)
+  if recipient:
+    send_mail(subject, body, settings.SERVER_EMAIL, [recipient], fail_silently=False)
 
 
 ##

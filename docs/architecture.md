@@ -192,7 +192,8 @@ than half of the ballots cast.
   - required: `get_auth_url`, `get_user_info_after_auth`, `send_message`,
     `can_create_election`;
   - optional: `check_constraint`/`list_categories` for group-based
-    eligibility, `do_logout`.
+    eligibility, `do_logout`, `get_email_address` (where emails to a user
+    go; `helios/mail.py` then sends them itself, see Email).
 
   The registered systems are password, Google, GitHub, GitLab, Facebook,
   LinkedIn, Yahoo, CAS, LDAP, and `devlogin` (debug mode only).
@@ -236,8 +237,10 @@ election creator).
   day, and re-queues cast votes still waiting for verification.
 - A worker killed mid-task leaves that task marked running.
   `manage.py requeue_stuck_tasks --older-than 120` puts such tasks back in
-  the queue; bulk voter emails are only listed, since rerunning one would
-  email every voter again.
+  the queue. A bulk voter email (`voters_email`) can run again: it adds and
+  queues only the emails of its mailing still missing. `voters_notify` and
+  bulk emails queued before mailings were recorded are only listed, since
+  rerunning one would reach every voter again.
 - Tests use the same database queue: `run_queued_tasks()` in
   `helios/tests.py` runs the worker until the queue is empty, and fails the
   test if any task failed.
@@ -245,9 +248,20 @@ election creator).
 ## Email
 
 Voter emails are plain text, rendered from `helios/templates/email/` with
-HTML escaping turned off. They are sent through the voter's login system:
-password, Google, GitHub and most others send email via Django's mail backend
-(SMTP, Mailgun or Amazon SES depending on settings).
+HTML escaping turned off. All emails to voters and election administrators go
+through `helios/mail.py`: the voter's login system only gives the address
+(`get_email_address`; a login system without it still sends with its own
+`send_message`), and the email goes out via Django's mail backend (SMTP,
+Mailgun or Amazon SES depending on settings) through
+`helios.mail_backend.LoggingEmailBackend`.
+
+Each email gets an `OutgoingEmail` row (kind, recipient, status, attempts,
+error, `sent_at`, Message-ID); a bulk mailing from the "email voters" page is
+an `EmailBatch` with the templates and variables and one `OutgoingEmail` per
+voter. The rendered email is not stored (it may contain the voter's password).
+An email is marked "sending" before it goes to the mail server, so a worker
+that dies in between sends it again rather than losing it. There are no
+automatic retries yet.
 
 Emails sent from the administrator's "email voters" page, and password
 resends, go through `single_voter_email`: it skips opted-out addresses and

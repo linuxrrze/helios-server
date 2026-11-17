@@ -85,6 +85,12 @@ def get_auth_url(request, redirect_url = None):
     return reverse(ldap_login_view)
 
 
+def get_email_address(user_id, name, user_info):
+    """the recipient of emails to this user (see helios.mail), or None without an address"""
+    email = (user_info or {}).get('email')
+    return format_recipient(name, email) if email else None
+
+
 def send_message(user_id, name, user_info, subject, body):
     send_mail(
         subject,

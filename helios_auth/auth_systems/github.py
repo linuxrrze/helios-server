@@ -104,11 +104,20 @@ def do_logout(user):
 def update_status(token, message):
   pass
 
-def send_message(user_id, name, user_info, subject, body):
-  # Voters uploaded by username who haven't logged in yet have no email on file.
-  # Skip them instead of raising KeyError and failing the email task.
+def get_email_address(user_id, name, user_info):
+  """
+  the recipient of emails to this user (see helios.mail). Voters uploaded by
+  username who haven't logged in yet have no email on file: None.
+  """
   email = (user_info or {}).get('email')
   if not email:
+    return None
+  return format_recipient(user_id, email)
+
+def send_message(user_id, name, user_info, subject, body):
+  # Skip voters without an address instead of failing the email task.
+  recipient = get_email_address(user_id, name, user_info)
+  if not recipient:
     logging.getLogger(__name__).warning("not emailing GitHub user: no email address on file")
     return
 
@@ -116,7 +125,7 @@ def send_message(user_id, name, user_info, subject, body):
     subject,
     body,
     settings.SERVER_EMAIL,
-    [format_recipient(user_id, email)],
+    [recipient],
     fail_silently=False,
   )
 

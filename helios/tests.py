@@ -2141,17 +2141,15 @@ class EmailOptOutTests(TestCase):
         from unittest.mock import patch
         
         # Test that single_voter_email DOES send emails before opt-out
-        with patch.object(models.Voter, 'send_message') as mock_send_message:
-            
-            # Verify voter setup
-            self.assertEqual(voter.voter_email, email)
-            self.assertFalse(models.EmailOptOut.is_opted_out(email))
-            
-            # Call single_voter_email before opt-out is applied
-            tasks.single_voter_email.call(voter.uuid, "email/simple_subject.txt", "email/simple_body.txt", {})
-            
-            # The send_message method should have been called because voter is not opted out
-            mock_send_message.assert_called_once()
+        # Verify voter setup
+        self.assertEqual(voter.voter_email, email)
+        self.assertFalse(models.EmailOptOut.is_opted_out(email))
+
+        # Call single_voter_email before opt-out is applied
+        tasks.single_voter_email.call(voter.uuid, "email/simple_subject.txt", "email/simple_body.txt", {})
+
+        # The email was sent because voter is not opted out
+        self.assertEqual(len(mail.outbox), 1)
         
         # Now opt out the email
         models.EmailOptOut.add_opt_out(email)
@@ -2160,13 +2158,13 @@ class EmailOptOutTests(TestCase):
         self.assertTrue(models.EmailOptOut.is_opted_out(email))
         
         # Test that single_voter_email does NOT send emails after opt-out
-        with patch.object(models.Voter, 'send_message') as mock_send_message:
-            
-            # Call single_voter_email after opt-out is applied
-            tasks.single_voter_email.call(voter.uuid, "email/simple_subject.txt", "email/simple_body.txt", {})
-            
-            # The send_message method should not have been called because voter is opted out
-            mock_send_message.assert_not_called()
+        # Call single_voter_email after opt-out is applied
+        tasks.single_voter_email.call(voter.uuid, "email/simple_subject.txt", "email/simple_body.txt", {})
+
+        # No email, because the voter is opted out (helios.mail records it as skipped)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(models.OutgoingEmail.objects.filter(voter=voter).latest('id').status,
+                         models.OutgoingEmail.SKIPPED_OPTOUT)
 
     def test_email_contains_unsubscribe_link(self):
         """Test that emails sent to voters contain unsubscribe links"""
@@ -3281,8 +3279,13 @@ class VoterEmailCutoffViewTests(WebTest):
                 'send_to': 'all'
             })
         self.assertRedirects(response, f'/helios/elections/{self.election.uuid}/view')
-        self.assertEqual(voters_email.enqueue.call_args.kwargs['extra_vars']['custom_message'], 'Polls close <b>Friday</b>.')
-        self.assertNotIn('email_preview', voters_email.enqueue.call_args.kwargs['extra_vars'])
+        # the mailing keeps the variables (helios.mail)
+        batch = models.EmailBatch.objects.get(id=voters_email.enqueue.call_args.kwargs['batch_id'])
+        self.assertEqual(batch.election, self.election)
+        self.assertEqual(batch.body_template, 'email/vote_body.txt')
+        self.assertEqual(batch.extra_vars['custom_message'], 'Polls close <b>Friday</b>.')
+        self.assertNotIn('email_preview', batch.extra_vars)
+        self.assertEqual(batch.triggered_by.user_id, self.user.user_id)
 
     def test_voters_email_preview_marks_conditional_parts(self):
         """The tracker block reaches only voters who have voted; the preview says so (A12)"""
@@ -3524,6 +3527,9 @@ class VotersEmailOpenRegTests(WebTest):
             response = self.post_email(query=query)
         self.assertRedirects(response, f'/helios/elections/{self.election.uuid}/view')
         self.assertEqual(single_voter_email.enqueue.call_args.kwargs['voter_uuid'], voter.uuid)
+        # a mailing of one email (helios.mail)
+        email = models.OutgoingEmail.objects.get(id=single_voter_email.enqueue.call_args.kwargs['outgoing_email_id'])
+        self.assertEqual((email.voter, email.batch.election, email.status), (voter, self.election, 'queued'))
 
 
 class DateTimeLocalWidgetTests(TestCase):
