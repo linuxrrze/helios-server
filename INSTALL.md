@@ -142,8 +142,8 @@ prints how many mails went to which folder; it fails (non-zero exit status) when
 cannot be reached or bounce handling is not configured.
 
 To check the setup, send an email to a voter with a non-existent address at a domain you
-control (e.g. `nobody-12345@example.org`): after the next run, its `OutgoingEmail` has the status
-`bounced_hard` and the address is on the suppression list (`EmailSuppression`).
+control (e.g. `nobody-12345@example.org`): after the next run, the election's "email delivery"
+page lists the voter as bounced ("5.1.1 recipient unknown") and the address as suppressed.
 
 ## Upgrading from Celery and RabbitMQ
 

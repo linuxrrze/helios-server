@@ -2016,6 +2016,8 @@ def voters_email(request, election):
                                     language=language, triggered_by=get_user(request),
                                     voter_constraints=(voter_constraints_include, voter_constraints_exclude))
           tasks.voters_email.enqueue(election_id = election.id, batch_id = batch.id, voter_constraints_include = voter_constraints_include, voter_constraints_exclude = voter_constraints_exclude, language = language)
+          # its administrator gets a summary once it is sent (HELIOS_EMAIL_BATCH_SUMMARY)
+          mail.schedule_batch_summary(batch)
 
       # this batch process is all async, so we can return a nice note
       return HttpResponseRedirect(settings.SECURE_URL_HOST + reverse(url_names.election.ELECTION_VIEW, args=[election.uuid]))

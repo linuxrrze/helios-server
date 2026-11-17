@@ -167,6 +167,48 @@ def recipient_of(user):
 
 
 ##
+## the summary of a bulk mailing for the administrator
+##
+
+# how often the summary task checks whether a mailing is done
+SUMMARY_CHECK = datetime.timedelta(minutes=15)
+
+
+def schedule_batch_summary(batch):
+  """queue the check for the summary of BATCH (HELIOS_EMAIL_BATCH_SUMMARY), in the caller's transaction"""
+  if not settings.HELIOS_EMAIL_BATCH_SUMMARY:
+    return
+  from .tasks import email_batch_summary
+  email_batch_summary.using(run_after=timezone.now() + SUMMARY_CHECK).enqueue(batch.id)
+
+
+def batch_summary(batch_id):
+  """
+  Once no email of the mailing BATCH_ID is still to be sent, mail its counts
+  to the administrator who sent it (KIND_BATCH_SUMMARY, rendered when sent);
+  until then check again every SUMMARY_CHECK. Only once per mailing.
+  """
+  batch = EmailBatch.objects.filter(id=batch_id).select_related('election', 'triggered_by').first()
+  if batch is None or batch.summary_sent_at or not settings.HELIOS_EMAIL_BATCH_SUMMARY:
+    return
+  now = timezone.now()
+  emails = batch.emails.all()
+  # the emails of a mailing are added by its own task (voters_email): none yet, wait for it (a day at most)
+  if emails.filter(status__in=OutgoingEmail.SENDABLE).exists() or \
+     (not emails.exists() and now - batch.created_at < datetime.timedelta(days=1)):
+    from .tasks import email_batch_summary
+    email_batch_summary.using(run_after=now + SUMMARY_CHECK).enqueue(batch.id)
+    return
+  if not emails.exists() or batch.election.deleted_at:
+    return
+  with transaction.atomic():
+    if not EmailBatch.objects.filter(id=batch.id, summary_sent_at__isnull=True).update(summary_sent_at=now):
+      return   # another task was quicker
+    queue(OutgoingEmail.KIND_BATCH_SUMMARY, election=batch.election, user=batch.triggered_by or batch.election.admin,
+          params={'batch_id': batch.id}, language=batch.language or '')
+
+
+##
 ## backoff and pause
 ##
 
@@ -307,7 +349,8 @@ def _obsolete_reason(email):
     return 'voter_removed'
   if email.kind == OutgoingEmail.KIND_TRUSTEE and email.trustee_id is None:
     return 'trustee_removed'
-  if email.kind in (OutgoingEmail.KIND_ADMIN_INFO, OutgoingEmail.KIND_PASSWORD_REMINDER) and email.user_id is None \
+  if email.kind in (OutgoingEmail.KIND_ADMIN_INFO, OutgoingEmail.KIND_PASSWORD_REMINDER,
+                    OutgoingEmail.KIND_BATCH_SUMMARY) and email.user_id is None \
      and not email.recipient:
     return 'user_removed'
   if email.kind in (OutgoingEmail.KIND_BULK, OutgoingEmail.KIND_VOTER_PASSWORD) and election is not None:

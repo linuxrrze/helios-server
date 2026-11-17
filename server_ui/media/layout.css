@@ -284,6 +284,13 @@ table.pretty .helptext { margin-top: 4px; }
 .status-closed, .status-tallying { color: var(--warning-color); background: var(--warning-bg); }
 .status-released { color: var(--info-color); background: var(--info-bg); }
 .status-archived { color: var(--muted-color); background: var(--card-bg); }
+/* what became of an email (helios/templates/election_emails.html) */
+.status-ok { color: var(--success-color); background: var(--success-bg); }
+.status-warn { color: var(--warning-color); background: var(--warning-bg); }
+.status-failed { color: var(--danger-color); background: var(--danger-bg); }
+.email-table .address-cell { overflow-wrap: anywhere; min-width: 10rem; }
+.email-table .plain-list { margin: 2px 0 0; padding: 0; list-style: none; font-size: .85rem; }
+.email-table tfoot th, .email-table tfoot td { border-top: 2px solid var(--border-color); font-weight: 600; }
 /* entities managed by provisioning (SCIM), see helios/templatetags/provisioning_tags.py */
 .provisioned-badge, .deactivated-badge { margin-left: 4px; padding: 0 8px; font-size: .75rem; font-weight: 500; }
 .provisioned-badge { color: var(--info-color); background: var(--info-bg); }

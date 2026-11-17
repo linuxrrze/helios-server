@@ -1,0 +1,106 @@
+{% extends TEMPLATE_BASE %}
+{% load i18n timezone_tags %}
+
+{% block title %}{% blocktranslate trimmed with name=election.name %}Email delivery for {{ name }}{% endblocktranslate %}{% endblock %}
+{% block content %}
+<h1 class="title">{{ election.name }} &mdash; {% translate "Email delivery" %}</h1>
+<p><a href="{% url "election@view" election.uuid %}">{% translate "back to election" %}</a> &middot; <a href="{% url "election@voters@list-pretty" election.uuid %}">{% translate "voters &amp; ballots" %}</a></p>
+
+<p class="page-lead">{% translate "What became of the emails to the voters of this election: how many went out, are still being retried, failed or bounced, and which voters were not reached and why." %}</p>
+
+{% if done == "resent" %}
+<div class="callout callout-success" role="status"><p>{% blocktranslate trimmed count counter=count %}The mailing is being sent again to {{ counter }} voter.{% plural %}The mailing is being sent again to {{ counter }} voters.{% endblocktranslate %}</p></div>
+{% endif %}
+
+{% if not bounces_enabled %}
+<div class="callout callout-info"><p>{% translate "Bounces are not processed on this site: an email counts as sent once the mail server has accepted it. Whether it then reached the voter's mailbox is not known here." %}</p></div>
+{% endif %}
+
+<section aria-labelledby="mailings-title">
+<h2 id="mailings-title">{% translate "Mailings" %}</h2>
+{% if batches %}
+<div class="table-scroll">
+<table class="election-table email-table">
+<caption class="screen-reader-text">{% translate "Emails per mailing, by what became of them" %}</caption>
+<thead><tr>
+  <th scope="col">{% translate "Mailing" %}</th>
+  <th scope="col" class="num">{% translate "Emails" %}</th>
+  <th scope="col" class="num">{% translate "sent" context "email" %}</th>
+  <th scope="col" class="num">{% translate "waiting" %}</th>
+  <th scope="col" class="num">{% translate "retrying" %}</th>
+  <th scope="col" class="num">{% translate "failed" context "email" %}</th>
+  <th scope="col" class="num">{% translate "bounced" %}</th>
+  <th scope="col">{% translate "not sent" %}</th>
+  <th scope="col">{% translate "Send again" %}</th>
+</tr></thead>
+<tbody>
+{% for b in batches %}
+<tr>
+  <th scope="row" class="election-name">{{ b.label }}<br /><span class="muted">{{ b.batch.created_at|utc_time }}{% if b.batch.resend_of %} &middot; {% translate "sent again to the voters not reached" %}{% endif %}</span></th>
+  <td class="num">{{ b.counts.total }}</td>
+  <td class="num">{{ b.counts.sent }}</td>
+  <td class="num">{{ b.counts.waiting }}</td>
+  <td class="num">{{ b.counts.retrying }}</td>
+  <td class="num">{{ b.counts.failed }}</td>
+  <td class="num">{{ b.counts.bounced }}</td>
+  <td>{% if b.counts.skipped %}{{ b.counts.skipped }}<ul class="plain-list muted">{% for label, n in b.counts.skipped_by %}<li>{{ label }}: {{ n }}</li>{% endfor %}</ul>{% else %}0{% endif %}</td>
+  <td>{% if b.batch.resend_of %}<span class="muted">&ndash;</span>{% elif b.sendable %}{% if b.can_resend %}<form class="inline-action" method="post" action="{% url "election@emails@resend" election.uuid %}" onsubmit="return confirm('{% filter escapejs %}{% blocktranslate trimmed count counter=b.sendable %}Send this mailing again to the {{ counter }} voter it did not reach?{% plural %}Send this mailing again to the {{ counter }} voters it did not reach?{% endblocktranslate %}{% endfilter %}');"><input type="hidden" name="csrf_token" value="{{ csrf_token }}" /><input type="hidden" name="batch_id" value="{{ b.batch.id }}" /><button type="submit" class="button small secondary">{% blocktranslate trimmed count counter=b.sendable %}send again to {{ counter }} voter{% plural %}send again to {{ counter }} voters{% endblocktranslate %}</button></form>{% else %}<span class="muted">{{ b.why_not }}</span>{% endif %}{% elif not b.suppressed %}<span class="muted">&ndash;</span>{% endif %}
+  {% if b.suppressed %}<span class="muted">{% blocktranslate trimmed count counter=b.suppressed %}{{ counter }} voter not reached has a suppressed address: correct it or lift the suppression first (below).{% plural %}{{ counter }} voters not reached have a suppressed address: correct it or lift the suppression first (below).{% endblocktranslate %}</span>{% endif %}</td>
+</tr>
+{% endfor %}
+</tbody>
+<tfoot><tr>
+  <th scope="row">{% translate "All emails to voters" %}<br /><span class="muted">{% translate "including vote confirmations and passwords resent" %}</span></th>
+  <td class="num">{{ overall.total }}</td>
+  <td class="num">{{ overall.sent }}</td>
+  <td class="num">{{ overall.waiting }}</td>
+  <td class="num">{{ overall.retrying }}</td>
+  <td class="num">{{ overall.failed }}</td>
+  <td class="num">{{ overall.bounced }}</td>
+  <td>{% if overall.skipped %}{{ overall.skipped }}<ul class="plain-list muted">{% for label, n in overall.skipped_by %}<li>{{ label }}: {{ n }}</li>{% endfor %}</ul>{% else %}0{% endif %}</td>
+  <td></td>
+</tr></tfoot>
+</table>
+</div>
+<p class="muted">{% blocktranslate trimmed %}"Retrying": the mail server did not accept the email for now; it is tried again automatically. "Bounced": accepted at first, then returned as undeliverable. Bounces can arrive hours or days later.{% endblocktranslate %}</p>
+{% else %}
+<div class="callout empty-state"><p>{% translate "No mailings have been sent to the voters of this election yet." %}</p></div>
+{% endif %}
+</section>
+
+<section aria-labelledby="problems-title">
+<h2 id="problems-title">{% translate "Voters not reached" %}</h2>
+{% if problems %}
+<p>{% blocktranslate trimmed count counter=problems|length %}{{ counter }} email did not reach its voter.{% plural %}{{ counter }} emails did not reach their voters.{% endblocktranslate %}
+{% translate "A voter whose address bounced for good is no longer emailed (in any election) until the address is corrected or the suppression is lifted." %}</p>
+<p class="actions"><a class="button secondary" href="{% url "election@emails@csv" election.uuid %}">{% translate "Download as CSV" %}</a></p>
+<div class="table-scroll">
+<table class="election-table email-table">
+<caption class="screen-reader-text">{% translate "Voters not reached, with the reason" %}</caption>
+<thead><tr>
+  <th scope="col">{% translate "Voter" %}</th>
+  <th scope="col">{% translate "Email Address" %}</th>
+  <th scope="col">{% translate "Email" %}</th>
+  <th scope="col">{% translate "Status" %}</th>
+  <th scope="col">{% translate "Reason" %}</th>
+  <th scope="col">{% translate "Actions" %}</th>
+</tr></thead>
+<tbody>
+{% for p in problems %}
+<tr>
+  <th scope="row" class="election-name">{{ p.voter.voter_name|default:p.voter.voter_login_id }}{% if p.voter.voter_name and p.voter.voter_login_id != p.voter.voter_name %}<br /><span class="muted">{{ p.voter.voter_login_id }}</span>{% endif %}</th>
+  <td class="address-cell">{{ p.voter.voter_email|default:"" }}{% if p.suppression %}<br /><span class="status-badge status-failed">{% translate "suppressed" %}</span>{% endif %}</td>
+  <td>{{ p.what }}<br /><span class="muted">{{ p.at|utc_time }}</span></td>
+  <td><span class="status-badge status-{{ p.tone }}">{{ p.status_label }}</span></td>
+  <td>{{ p.reason }}</td>
+  <td class="row-actions"><a href="{% url "election@emails@voter" election.uuid p.voter.uuid %}">{% if p.voter.user_id is None and can_modify_voters %}{% translate "correct address" %}{% else %}{% translate "details" %}{% endif %}<span class="screen-reader-text"> {{ p.voter.voter_name|default:p.voter.voter_login_id }}</span></a></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% else %}
+<div class="callout callout-success"><p>{% translate "No voter is known not to have been reached." %}</p></div>
+{% endif %}
+</section>
+{% endblock %}

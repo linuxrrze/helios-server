@@ -148,6 +148,7 @@ settings.
 | `HELIOS_EMAIL_RETRY_CAP` | `21600` | Longest wait between two attempts, in seconds (6 hours). |
 | `HELIOS_EMAIL_MAX_ATTEMPTS` | `8` | Attempts after which an email counts as failed. |
 | `HELIOS_EMAIL_MAX_AGE` | `172800` | Seconds after queueing (48 hours) after which an email that has not gone out counts as failed. Time during which sending was paused (mail server unreachable or refusing the login) does not count: after an outage the waiting emails still go out. |
+| `HELIOS_EMAIL_BATCH_SUMMARY` | `1` | Once a mailing from "email voters" has been sent (no email of it still waiting or being retried), its administrator gets an email with how many were sent, failed, bounced or not sent, and a link to the election's "email delivery" page. `0`: off. |
 
 **Bounces.** A mail server that has taken an email may still fail to deliver it later (unknown
 mailbox at the recipient's provider, mailbox full) and returns a bounce to the envelope sender.
@@ -168,7 +169,8 @@ moves each mail into one of the folders `processed`, `ignored` (out-of-office an
 `unmatched` (no valid token: spam, forged or old bounces) and `error` (unreadable), which it
 creates. A permanent bounce (5.x.x) puts the address on the **suppression list**, which applies
 to all elections: Helios no longer sends to it (status `skipped_suppressed`) until an election
-administrator corrects the voter's address or lifts it, or a site administrator lifts it. A
+administrator corrects the voter's address or lifts it on the election's "email delivery" page,
+or a site administrator lifts it (Admin → suppressed email addresses). A
 temporary bounce (4.x.x, e.g. mailbox full; or one whose kind is unclear) only counts; several
 within a few days count as a permanent one. Delay notices are only logged. A complaint (the
 recipient marked the email as spam, ARF feedback report) also suppresses the address.

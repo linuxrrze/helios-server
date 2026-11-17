@@ -62,6 +62,10 @@
 
 <a class="button secondary" href="{% url "election@voters@download-csv" election.uuid %}{% if q %}?q={{q|urlencode}}{% endif %}">{% translate "Download Voters as CSV" %}</a>
 
+{% if email_voters and election.frozen_at %}
+<a class="button secondary" href="{% url "election@emails" election.uuid %}">{% translate "email delivery" %}</a>
+{% endif %}
+
 {% if not election.frozen_at and election.num_voters > 0 %}
 <form class="inline-action" method="post" action="{% url "election@voters@clear" election.uuid %}" onsubmit="return confirm('{% filter escapejs %}{% blocktranslate trimmed with num_voters=election.num_voters %}Are you sure you want to remove ALL {{ num_voters }} voter(s)? This action cannot be undone.{% endblocktranslate %}{% endfilter %}');">
 <input type="hidden" name="csrf_token" value="{{csrf_token}}" />

@@ -6,7 +6,7 @@ Ben Adida (ben@adida.net)
 
 from django.urls import path, re_path
 
-from helios import views
+from helios import email_views, views
 from helios import election_url_names as names
 
 urlpatterns = [
@@ -103,6 +103,14 @@ urlpatterns = [
     path('/voters/<str:voter_uuid>', views.one_voter, name=names.ELECTION_VOTER),
     path('/voters/<str:voter_uuid>/delete', views.voter_delete, name=names.ELECTION_VOTER_DELETE),
     
+    # what became of the emails to voters: bounces, suppressed addresses, sending again
+    path('/emails/', email_views.election_emails, name=names.ELECTION_EMAILS),
+    path('/emails/csv', email_views.election_emails_csv, name=names.ELECTION_EMAILS_CSV),
+    path('/emails/resend', email_views.election_emails_resend, name=names.ELECTION_EMAILS_RESEND),
+    path('/emails/voters/<str:voter_uuid>', email_views.election_email_voter, name=names.ELECTION_EMAILS_VOTER),
+    path('/emails/voters/<str:voter_uuid>/lift', email_views.election_email_voter_lift,
+         name=names.ELECTION_EMAILS_VOTER_LIFT),
+
     # ballots
     path('/ballots/', views.ballot_list, name=names.ELECTION_BALLOTS_LIST),
     path('/ballots/<str:voter_uuid>/all', views.voter_votes, name=names.ELECTION_BALLOTS_VOTER),

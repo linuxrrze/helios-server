@@ -765,6 +765,9 @@ HELIOS_EMAIL_RETRY_BASE = int(get_from_env('HELIOS_EMAIL_RETRY_BASE', '300'))
 HELIOS_EMAIL_RETRY_CAP = int(get_from_env('HELIOS_EMAIL_RETRY_CAP', '21600'))
 HELIOS_EMAIL_MAX_ATTEMPTS = int(get_from_env('HELIOS_EMAIL_MAX_ATTEMPTS', '8'))
 HELIOS_EMAIL_MAX_AGE = int(get_from_env('HELIOS_EMAIL_MAX_AGE', '172800'))
+# once a bulk mailing has been sent, its administrator gets an email with how many
+# emails went out, failed, bounced or were not sent (and a link to the details)
+HELIOS_EMAIL_BATCH_SUMMARY = (get_from_env('HELIOS_EMAIL_BATCH_SUMMARY', '1') == '1')
 
 # are elections private by default?
 HELIOS_PRIVATE_DEFAULT = False

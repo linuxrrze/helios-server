@@ -34,7 +34,8 @@
     <li><a href="{% url "election@questions" election.uuid %}">{% blocktranslate trimmed with count=election.questions|length %}questions ({{ count }}){% endblocktranslate %}</a></li>
     <li><a href="{% url "election@voters@list-pretty" election.uuid %}">{% translate "voters &amp; ballots" %}</a></li>
     <li><a href="{% url "election@trustees@view" election.uuid %}">{% blocktranslate trimmed with count=trustees|length %}trustees ({{ count }}){% endblocktranslate %}</a></li>
-    {% if admin_p %}<li><a href="{% url "election@admins" election.uuid %}">{% translate "administrators" %}</a></li>{% endif %}
+    {% if admin_p %}<li><a href="{% url "election@admins" election.uuid %}">{% translate "administrators" %}</a></li>
+    {% if election.frozen_at %}<li><a href="{% url "election@emails" election.uuid %}">{% translate "email delivery" %}</a></li>{% endif %}{% endif %}
   </ul>
 </nav>
 

@@ -182,6 +182,82 @@ msgstr "Erledigt: Das Ergebnis ist öffentlich"
 msgid "Makes the result visible to everyone and lets you notify the voters."
 msgstr "Macht das Ergebnis für alle sichtbar; danach können Sie die Wahlberechtigten benachrichtigen."
 
+#: helios/email_views.py:45
+msgid "Emails to voters are turned off on this site."
+msgstr "E-Mails an Wahlberechtigte sind auf dieser Website abgeschaltet."
+
+#: helios/email_views.py:47
+msgid "The election is not frozen yet."
+msgstr "Die Wahl ist noch nicht eingefroren."
+
+#: helios/email_views.py:53
+msgid "Voting has closed: an invitation to vote is no longer sent."
+msgstr "Die Stimmabgabe ist beendet: Eine Einladung zur Wahl wird nicht mehr versandt."
+
+#: helios/email_views.py:92
+msgid "Date (UTC)"
+msgstr "Datum (UTC)"
+
+#: helios/email_views.py:92 helios/votergroup.py:24 helios/votergroup.py:29
+#: helios/templates/election_email_voter.html:58 helios/templates/election_emails.html:83 helios/templates/new_trustee.html:20
+#: helios/templates/new_trustee.html:32 helios/templates/votergroup_prepareelection.html:17 helios/templates/votergroup_view.html:25
+msgid "Email"
+msgstr "E-Mail"
+
+#: helios/email_views.py:92 helios/templates/election_email_voter.html:17 helios/templates/election_emails.html:82
+#: helios/templates/voters_list.html:147 helios/templates/voters_upload_confirm.html:14
+msgid "Email Address"
+msgstr "E-Mail-Adresse"
+
+#: helios/email_views.py:92 helios/forms.py:71 helios/templates/_election_table.html:11
+#: helios/templates/election_bboard.html:24 helios/templates/new_trustee.html:19 helios/templates/new_trustee.html:27
+#: helios/templates/votergroup_admins.html:17 helios/templates/voters_list.html:149 helios/templates/voters_manage.html:28
+#: helios/templates/voters_upload_confirm.html:14
+msgid "Name"
+msgstr "Name"
+
+#: helios/email_views.py:92 helios/templates/_election_table.html:12 helios/templates/election_email_voter.html:60
+#: helios/templates/election_emails.html:84
+msgid "Status"
+msgstr "Status"
+
+#: helios/email_views.py:92 helios/forms.py:163 helios/forms.py:168
+#: helios/templates/election_email_voter.html:16
+msgid "Voter ID"
+msgstr "Wähler-ID"
+
+#: helios/email_views.py:93
+msgid "Address suppressed"
+msgstr "Adresse gesperrt"
+
+#: helios/email_views.py:93
+msgid "Code"
+msgstr "Code"
+
+#: helios/email_views.py:93 helios/templates/election_email_voter.html:61 helios/templates/election_emails.html:85
+msgid "Reason"
+msgstr "Grund"
+
+#: helios/email_views.py:98 helios/templates/election_email_voter.html:18
+msgid "no"
+msgstr "nein"
+
+#: helios/email_views.py:98
+msgid "yes"
+msgstr "ja"
+
+#: helios/email_views.py:120 helios/templates/stats_suppressions.html:33
+msgid "Email address"
+msgstr "E-Mail-Adresse"
+
+#: helios/email_views.py:125 helios/email_views.py:222 helios/views.py:525
+msgid "Please enter a valid email address."
+msgstr "Bitte geben Sie eine gültige E-Mail-Adresse ein."
+
+#: helios/email_views.py:127
+msgid "This address has opted out of Helios emails; only its owner can opt back in."
+msgstr "Diese Adresse hat sich von E-Mails von Helios abgemeldet; nur ihr Inhaber kann sich wieder anmelden."
+
 #: helios/fields.py:59
 #, python-format
 msgid "This time does not exist in the time zone %(zone)s, because the clocks are put forward then. Please choose another time."
@@ -199,12 +275,6 @@ msgstr "Adresse der Wahl"
 #: helios/forms.py:68
 msgid "The link to the election that voters get in their invitation and that you can pass on. Letters, digits, hyphens and underscores, no spaces, e.g. board-2026. Leave empty to have one created automatically (a long random code)."
 msgstr "Der Link zur Wahl, den die Wahlberechtigten in ihrer Einladung erhalten und den Sie weitergeben können. Buchstaben, Ziffern, Binde- und Unterstriche, keine Leerzeichen, z. B. vorstand-2026. Lassen Sie das Feld leer, wird die Adresse automatisch erzeugt (ein langer Zufallscode)."
-
-#: helios/forms.py:71 helios/templates/_election_table.html:11 helios/templates/election_bboard.html:24
-#: helios/templates/new_trustee.html:19 helios/templates/new_trustee.html:27 helios/templates/votergroup_admins.html:17
-#: helios/templates/voters_list.html:145 helios/templates/voters_manage.html:28 helios/templates/voters_upload_confirm.html:14
-msgid "Name"
-msgstr "Name"
 
 #: helios/forms.py:71
 msgid "The name voters see, e.g. Board Election 2026."
@@ -337,10 +407,6 @@ msgstr "niemanden – sind Sie sicher?"
 msgid "only voters who cast a ballot"
 msgstr "nur Wahlberechtigte, die ihre Stimme abgegeben haben"
 
-#: helios/forms.py:163 helios/forms.py:168
-msgid "Voter ID"
-msgstr "Wähler-ID"
-
 #: helios/forms.py:165 helios_auth/auth_systems/ldapauth.py:27 helios_auth/auth_systems/password.py:39
 #: helios_auth/templates/ldapauth/login.html:17 helios_auth/templates/ldapauth/login.html:18
 msgid "Password"
@@ -438,6 +504,246 @@ msgstr ""
 "\n"
 "--\n"
 "Wahlsystem Helios\n"
+
+#: helios/mail_messages.py:157
+#, python-format
+msgid "Mailing sent: %(election)s"
+msgstr "Rundmail versandt: %(election)s"
+
+#: helios/mail_messages.py:159
+msgid "sent"
+msgstr "versandt"
+
+#: helios/mail_messages.py:160
+msgid "failed"
+msgstr "fehlgeschlagen"
+
+#: helios/mail_messages.py:161
+msgid "bounced so far"
+msgstr "bisher unzustellbar zurückgekommen"
+
+#: helios/mail_messages.py:162
+msgid "not sent (opted out, address suppressed, no longer applicable)"
+msgstr "nicht versandt (abgemeldet, Adresse gesperrt, nicht mehr zutreffend)"
+
+#: helios/mail_messages.py:164
+#, python-format
+msgid ""
+"Your mailing %(mailing)s of %(date)s to the voters of %(election)s has been sent.\n"
+"\n"
+"%(counts)s\n"
+"\n"
+"Bounces can still arrive in the coming hours and days. Which voters were not\n"
+"reached and why, how to correct a voter's address and how to send the email\n"
+"again to the voters not reached:\n"
+"\n"
+"  %(url)s\n"
+"\n"
+"--\n"
+"%(signature)s\n"
+msgstr ""
+"Ihre Rundmail %(mailing)s vom %(date)s an die Wahlberechtigten von %(election)s ist versandt.\n"
+"\n"
+"%(counts)s\n"
+"\n"
+"Unzustellbarkeitsmeldungen können noch in den nächsten Stunden und Tagen\n"
+"eintreffen. Welche Wahlberechtigten nicht erreicht wurden und warum, wie Sie\n"
+"eine Adresse korrigieren und die E-Mail erneut an die nicht Erreichten senden:\n"
+"\n"
+"  %(url)s\n"
+"\n"
+"--\n"
+"%(signature)s\n"
+
+#: helios/mail_status.py:41 helios/templates/election_emails.html:29
+msgid "waiting"
+msgstr "wartet"
+
+#: helios/mail_status.py:42
+msgid "being sent"
+msgstr "wird gesendet"
+
+#: helios/mail_status.py:43 helios/templates/election_emails.html:28
+msgctxt "email"
+msgid "sent"
+msgstr "versandt"
+
+#: helios/mail_status.py:44 helios/templates/election_emails.html:30
+msgid "retrying"
+msgstr "neuer Versuch folgt"
+
+#: helios/mail_status.py:45 helios/templates/election_emails.html:31
+msgctxt "email"
+msgid "failed"
+msgstr "fehlgeschlagen"
+
+#: helios/mail_status.py:46
+msgid "bounced (temporary)"
+msgstr "unzustellbar (vorübergehend)"
+
+#: helios/mail_status.py:47
+msgid "bounced (permanent)"
+msgstr "unzustellbar (dauerhaft)"
+
+#: helios/mail_status.py:48
+msgid "not sent: opted out"
+msgstr "nicht versandt: abgemeldet"
+
+#: helios/mail_status.py:49
+msgid "not sent: address suppressed"
+msgstr "nicht versandt: Adresse gesperrt"
+
+#: helios/mail_status.py:50
+msgid "not sent: no email address"
+msgstr "nicht versandt: keine E-Mail-Adresse"
+
+#: helios/mail_status.py:51
+msgid "not sent: no longer applicable"
+msgstr "nicht versandt: nicht mehr zutreffend"
+
+#: helios/mail_status.py:60
+msgid "opted out"
+msgstr "abgemeldet"
+
+#: helios/mail_status.py:61 helios/mail_status.py:138
+msgid "address suppressed"
+msgstr "Adresse gesperrt"
+
+#: helios/mail_status.py:62
+msgid "no email address"
+msgstr "keine E-Mail-Adresse"
+
+#: helios/mail_status.py:63
+msgid "no longer applicable"
+msgstr "nicht mehr zutreffend"
+
+#: helios/mail_status.py:67
+msgid "mailing"
+msgstr "Rundmail"
+
+#: helios/mail_status.py:68
+msgid "password resent"
+msgstr "Passwort erneut gesendet"
+
+#: helios/mail_status.py:69
+msgid "vote-cast confirmation"
+msgstr "Bestätigung der Stimmabgabe"
+
+#: helios/mail_status.py:74 helios/views.py:1922
+msgid "Time to Vote"
+msgstr "Zeit zu wählen"
+
+#: helios/mail_status.py:75 helios/views.py:1923
+msgid "Simple"
+msgstr "Einfach"
+
+#: helios/mail_status.py:76 helios/views.py:1924
+msgid "Additional Info"
+msgstr "Zusätzliche Informationen"
+
+#: helios/mail_status.py:77 helios/views.py:1925
+msgid "Election Result"
+msgstr "Wahlergebnis"
+
+#: helios/mail_status.py:82
+msgid "address rejected"
+msgstr "Adresse abgelehnt"
+
+#: helios/mail_status.py:83 helios/mail_status.py:84
+msgid "recipient unknown"
+msgstr "Empfänger unbekannt"
+
+#: helios/mail_status.py:85
+msgid "domain does not exist or does not receive email"
+msgstr "Domain existiert nicht oder empfängt keine E-Mails"
+
+#: helios/mail_status.py:86
+msgid "invalid address"
+msgstr "ungültige Adresse"
+
+#: helios/mail_status.py:87
+msgid "mailbox has moved"
+msgstr "Postfach umgezogen"
+
+#: helios/mail_status.py:88
+msgid "mailbox disabled"
+msgstr "Postfach deaktiviert"
+
+#: helios/mail_status.py:89 helios/mail_status.py:90
+msgid "mailbox full"
+msgstr "Postfach voll"
+
+#: helios/mail_status.py:91
+msgid "message too large"
+msgstr "Nachricht zu groß"
+
+#: helios/mail_status.py:92
+msgid "recipient's mail server failed"
+msgstr "Fehler beim Mailserver des Empfängers"
+
+#: helios/mail_status.py:93
+msgid "recipient's mail server cannot be found"
+msgstr "Mailserver des Empfängers nicht gefunden"
+
+#: helios/mail_status.py:94 helios/mail_status.py:95
+msgid "recipient's mail server not reachable"
+msgstr "Mailserver des Empfängers nicht erreichbar"
+
+#: helios/mail_status.py:96 helios/mail_status.py:97
+msgid "could not be delivered in time, given up"
+msgstr "nicht rechtzeitig zustellbar, aufgegeben"
+
+#: helios/mail_status.py:98
+msgid "refused by the recipient's mail server (policy or spam filter)"
+msgstr "vom Mailserver des Empfängers abgelehnt (Richtlinie oder Spamfilter)"
+
+#: helios/mail_status.py:99
+msgid "refused for now by the recipient's mail server (greylisting or policy)"
+msgstr "vom Mailserver des Empfängers vorerst abgelehnt (Greylisting oder Richtlinie)"
+
+#: helios/mail_status.py:103
+msgid "address suppressed after a permanent bounce"
+msgstr "Adresse gesperrt nach dauerhafter Unzustellbarkeit"
+
+#: helios/mail_status.py:104
+msgid "address suppressed after repeated temporary bounces"
+msgstr "Adresse gesperrt nach wiederholter vorübergehender Unzustellbarkeit"
+
+#: helios/mail_status.py:105
+msgid "address suppressed: the recipient marked an email as spam"
+msgstr "Adresse gesperrt: Der Empfänger hat eine E-Mail als Spam markiert"
+
+#: helios/mail_status.py:106
+msgid "address suppressed by a site administrator"
+msgstr "Adresse von einem Site-Administrator gesperrt"
+
+#: helios/mail_status.py:127
+msgid "permanent delivery failure"
+msgstr "dauerhaft unzustellbar"
+
+#: helios/mail_status.py:129
+msgid "temporary delivery problem"
+msgstr "vorübergehendes Zustellproblem"
+
+#: helios/mail_status.py:140
+msgid "the voter opted out of Helios emails"
+msgstr "die Person hat sich von E-Mails von Helios abgemeldet"
+
+#: helios/mail_status.py:142
+msgid "given up: could not be sent for too long"
+msgstr "aufgegeben: konnte zu lange nicht gesendet werden"
+
+#: helios/mail_status.py:144
+msgid "the email could not be created (an error in Helios)"
+msgstr "die E-Mail konnte nicht erstellt werden (Fehler in Helios)"
+
+#: helios/mail_status.py:149
+msgid "bounced, reason unknown"
+msgstr "unzustellbar, Grund unbekannt"
+
+#: helios/mail_status.py:151
+msgid "the mail server did not accept the email"
+msgstr "der Mailserver hat die E-Mail nicht angenommen"
 
 #: helios/models.py:79
 msgid "Election"
@@ -537,73 +843,73 @@ msgstr "ungültige Wählerart „%(voter_type)s“ für die Wähler-ID „%(vote
 msgid "invalid voter email '%(voter_email)s' for voter id '%(voter_id)s'"
 msgstr "ungültige E-Mail-Adresse „%(voter_email)s“ für die Wähler-ID „%(voter_id)s“"
 
-#: helios/models.py:1800
+#: helios/models.py:1940
 #, python-format
 msgid "Voter group %(name)s created"
 msgstr "Wählergruppe %(name)s erstellt"
 
-#: helios/models.py:1801
+#: helios/models.py:1941
 #, python-format
 msgid "Renamed to %(name)s"
 msgstr "Umbenannt in %(name)s"
 
-#: helios/models.py:1802
+#: helios/models.py:1942
 #, python-format
 msgid "Member %(email)s added with %(votes)s vote(s)"
 msgstr "Mitglied %(email)s mit %(votes)s Stimme(n) hinzugefügt"
 
-#: helios/models.py:1803
+#: helios/models.py:1943
 #, python-format
 msgid "Member %(email)s removed"
 msgstr "Mitglied %(email)s entfernt"
 
-#: helios/models.py:1804
+#: helios/models.py:1944
 #, python-format
 msgid "Administrator %(admin)s added"
 msgstr "Administrator*in %(admin)s hinzugefügt"
 
-#: helios/models.py:1805
+#: helios/models.py:1945
 #, python-format
 msgid "Administrator %(admin)s removed"
 msgstr "Administrator*in %(admin)s entfernt"
 
-#: helios/models.py:1806
+#: helios/models.py:1946
 #, python-format
 msgid "Administrator %(admin)s left the group"
 msgstr "Administrator*in %(admin)s hat die Gruppe verlassen"
 
-#: helios/models.py:1807
+#: helios/models.py:1947
 #, python-format
 msgid "Ownership transferred from %(old_owner)s to %(new_owner)s"
 msgstr "Besitz von %(old_owner)s an %(new_owner)s übertragen"
 
-#: helios/models.py:1808
+#: helios/models.py:1948
 #, python-format
 msgid "Election %(name)s prepared with %(voters)s voter(s)"
 msgstr "Wahl %(name)s mit %(voters)s Wahlberechtigten vorbereitet"
 
-#: helios/models.py:1809
+#: helios/models.py:1949
 #, python-format
 msgid "Members updated: %(added)s added, %(removed)s removed; %(admins)s administrator(s)"
 msgstr "Mitglieder aktualisiert: %(added)s hinzugefügt, %(removed)s entfernt; %(admins)s Administrator*in(nen)"
 
-#: helios/models.py:1813
+#: helios/models.py:1953
 msgid "Transferred by a site administrator."
 msgstr "Übertragen durch eine Administrator*in der Website."
 
-#: helios/models.py:1814
+#: helios/models.py:1954
 msgid "The previous owner is no longer an administrator."
 msgstr "Die bisherige Besitzer*in ist nicht mehr Administrator*in."
 
-#: helios/models.py:1815
+#: helios/models.py:1955
 msgid "The other administrators of the group were added to the election administrators."
 msgstr "Die anderen Administrator*innen der Gruppe wurden zur Wahlleitung hinzugefügt."
 
-#: helios/tasks.py:148
+#: helios/tasks.py:154
 msgid "encrypted tally computed"
 msgstr "verschlüsselte Auszählung berechnet"
 
-#: helios/tasks.py:149
+#: helios/tasks.py:155
 #, python-format
 msgid ""
 "\n"
@@ -612,11 +918,11 @@ msgstr ""
 "\n"
 "Die verschlüsselte Auszählung für die Wahl %(election)s wurde berechnet.\n"
 
-#: helios/tasks.py:163
+#: helios/tasks.py:169
 msgid "Helios Decrypt"
 msgstr "Helios-Entschlüsselung"
 
-#: helios/tasks.py:164
+#: helios/tasks.py:170
 #, python-format
 msgid ""
 "\n"
@@ -627,7 +933,7 @@ msgstr ""
 "Helios hat seinen Teil der Auszählung\n"
 "für die Wahl %(election)s entschlüsselt.\n"
 
-#: helios/tasks.py:186
+#: helios/tasks.py:192
 #, python-format
 msgid ""
 "\n"
@@ -650,18 +956,18 @@ msgstr[1] ""
 "im Wählerverzeichnis standen (oder doppelt in der Datei aufgeführt waren) oder\n"
 "Helios-E-Mails abbestellt haben. Personen, die E-Mails abbestellt haben, werden in einer separaten E-Mail aufgeführt.\n"
 
-#: helios/tasks.py:196
+#: helios/tasks.py:202
 #, python-format
 msgid "%(count)d voter has been created."
 msgid_plural "%(count)d voters have been created."
 msgstr[0] "%(count)d wahlberechtigte Person wurde angelegt."
 msgstr[1] "%(count)d Wahlberechtigte wurden angelegt."
 
-#: helios/tasks.py:201
+#: helios/tasks.py:207
 msgid "voter file processed"
 msgstr "Wählerliste verarbeitet"
 
-#: helios/tasks.py:202
+#: helios/tasks.py:208
 #, python-format
 msgid ""
 "\n"
@@ -678,12 +984,12 @@ msgstr ""
 "%(created)s\n"
 "%(skipped)s"
 
-#: helios/tasks.py:223
+#: helios/tasks.py:229
 #, python-format
 msgid "Opted-out voters not added to election %(election)s"
 msgstr "Wahlberechtigte mit abbestellten E-Mails nicht zur Wahl %(election)s hinzugefügt"
 
-#: helios/tasks.py:225
+#: helios/tasks.py:231
 #, python-format
 msgid ""
 "\n"
@@ -706,12 +1012,12 @@ msgstr[1] ""
 "weil sie Helios-E-Mails abbestellt haben:\n"
 "\n"
 
-#: helios/tasks.py:236
+#: helios/tasks.py:242
 #, python-format
 msgid "- %(name)s (%(email)s) [ID: %(voter_id)s, Type: %(voter_type)s]"
 msgstr "- %(name)s (%(email)s) [ID: %(voter_id)s, Typ: %(voter_type)s]"
 
-#: helios/tasks.py:242
+#: helios/tasks.py:248
 #, python-format
 msgid ""
 "\n"
@@ -816,15 +1122,11 @@ msgstr "Sie können beliebig oft einen Stimmzettel abgeben: Nur der letzte zähl
 msgid "log in"
 msgstr "Anmelden"
 
-#: helios/templates/_election_table.html:12
-msgid "Status"
-msgstr "Status"
-
 #: helios/templates/_election_table.html:15
 msgid "Cast votes"
 msgstr "Abgegebene Stimmen"
 
-#: helios/templates/_election_table.html:16 helios/templates/election_view.html:190 helios/templates/stats_elections.html:10
+#: helios/templates/_election_table.html:16 helios/templates/election_view.html:191 helios/templates/stats_elections.html:10
 #: helios/templates/stats_elections.html:36
 msgid "Organization"
 msgstr "Organisation"
@@ -870,7 +1172,7 @@ msgstr "Zurück: %(title)s"
 msgid "Election setup &ndash; step %(number)s of %(total)s"
 msgstr "Einrichtung der Wahl &ndash; Schritt %(number)s von %(total)s"
 
-#: helios/templates/_setup_nav.html:14 helios/templates/election_new_guided.html:15 helios/templates/election_view.html:124
+#: helios/templates/_setup_nav.html:14 helios/templates/election_new_guided.html:15 helios/templates/election_view.html:125
 msgid "done"
 msgstr "erledigt"
 
@@ -959,7 +1261,7 @@ msgstr "von"
 msgid "Compare this fingerprint with the ballot tracker you received when you voted. If they are the same, this is your encrypted ballot as the server recorded it."
 msgstr "Vergleichen Sie diesen Fingerabdruck mit dem Stimmzettel-Tracker, den Sie bei der Stimmabgabe erhalten haben. Stimmen beide überein, ist dies Ihr verschlüsselter Stimmzettel, wie der Server ihn gespeichert hat."
 
-#: helios/templates/castvote.html:24
+#: helios/templates/castvote.html:24 helios/templates/election_emails.html:96
 msgid "details"
 msgstr "Details"
 
@@ -1048,7 +1350,8 @@ msgid "Administrators"
 msgstr "Wahlleitung"
 
 #: helios/templates/election_admins.html:7 helios/templates/election_build.html:5 helios/templates/election_compute_tally.html:20
-#: helios/templates/election_compute_tally.html:49 helios/templates/voters_manage.html:5 helios/templates/voters_search.html:5
+#: helios/templates/election_compute_tally.html:49 helios/templates/election_emails.html:7 helios/templates/voters_manage.html:5
+#: helios/templates/voters_search.html:5
 msgid "back to election"
 msgstr "zurück zur Wahl"
 
@@ -1073,7 +1376,7 @@ msgid "Additional Administrators"
 msgstr "Weitere Mitglieder der Wahlleitung"
 
 #: helios/templates/election_admins.html:30 helios/templates/list_trustees.html:54 helios/templates/list_trustees.html:58
-#: helios/templates/voters_list.html:167
+#: helios/templates/voters_list.html:171
 msgid "remove"
 msgstr "entfernen"
 
@@ -1090,7 +1393,7 @@ msgstr "Es wurden keine weiteren Mitglieder der Wahlleitung hinzugefügt."
 msgid "Audited Ballots for %(election_name)s"
 msgstr "Geprüfte Stimmzettel für %(election_name)s"
 
-#: helios/templates/election_audited_ballots.html:7 helios/templates/election_view.html:330 helios/templatetags/navigation_tags.py:33
+#: helios/templates/election_audited_ballots.html:7 helios/templates/election_view.html:331 helios/templatetags/navigation_tags.py:33
 msgid "Audited Ballots"
 msgstr "Geprüfte Stimmzettel"
 
@@ -1112,7 +1415,7 @@ msgid "To verify an audited ballot, copy its entire content and paste it in the 
 msgstr "Um einen geprüften Stimmzettel zu überprüfen, kopieren Sie seinen gesamten Inhalt und fügen Sie ihn in die <a target=\"_new\" href=\"%(verifier_url)s%(election_home_url)s\">Einzelstimmzettel-Überprüfung</a> ein."
 
 #: helios/templates/election_audited_ballots.html:27 helios/templates/election_bboard.html:13 helios/templates/stats_deleted_elections.html:15
-#: helios/templates/stats_elections.html:20 helios/templates/votergroup_view.html:71 helios/templates/voters_list.html:125
+#: helios/templates/stats_elections.html:20 helios/templates/votergroup_view.html:71 helios/templates/voters_list.html:129
 msgid "Pages"
 msgstr "Seiten"
 
@@ -1126,18 +1429,18 @@ msgid "back to start"
 msgstr "zurück zum Anfang"
 
 #: helios/templates/election_audited_ballots.html:30 helios/templates/election_audited_ballots.html:30 helios/templates/election_bboard.html:16
-#: helios/templates/stats_deleted_elections.html:21 helios/templates/stats_elections.html:26 helios/templates/voters_list.html:131
+#: helios/templates/stats_deleted_elections.html:21 helios/templates/stats_elections.html:26 helios/templates/voters_list.html:135
 #: helios/templates/voters_manage.html:16 helios/templates/voters_manage.html:24
 #, python-format
 msgid "next %(limit)s"
 msgstr "nächste %(limit)s"
 
-#: helios/templates/election_audited_ballots.html:34 helios/templates/votergroup_admins.html:17 helios/templates/votergroup_view.html:25
-#: helios/templates/voters_list.html:141
+#: helios/templates/election_audited_ballots.html:34 helios/templates/election_emails.html:86 helios/templates/votergroup_admins.html:17
+#: helios/templates/votergroup_view.html:25 helios/templates/voters_list.html:145
 msgid "Actions"
 msgstr "Aktionen"
 
-#: helios/templates/election_audited_ballots.html:34 helios/templates/election_bboard.html:24 helios/templates/voters_list.html:151
+#: helios/templates/election_audited_ballots.html:34 helios/templates/election_bboard.html:24 helios/templates/voters_list.html:155
 msgid "Smart Ballot Tracker"
 msgstr "Stimmzettel-Tracker"
 
@@ -1167,7 +1470,7 @@ msgstr "bereitgestellt mit"
 msgid "Ballot Tracking Center for %(election_name)s"
 msgstr "Stimmzettel-Übersicht für %(election_name)s"
 
-#: helios/templates/election_bboard.html:7 helios/templates/election_view.html:329
+#: helios/templates/election_bboard.html:7 helios/templates/election_view.html:330
 msgid "Ballot Tracking Center"
 msgstr "Stimmzettel-Übersicht"
 
@@ -1188,11 +1491,11 @@ msgstr "Anzeigen:"
 msgid "per page"
 msgstr "pro Seite"
 
-#: helios/templates/election_bboard.html:24 helios/templates/voters_list.html:149 helios/templates/voters_manage.html:28
+#: helios/templates/election_bboard.html:24 helios/templates/voters_list.html:153 helios/templates/voters_manage.html:28
 msgid "Alias"
 msgstr "Alias"
 
-#: helios/templates/election_bboard.html:32 helios/templates/voters_list.html:177
+#: helios/templates/election_bboard.html:32 helios/templates/voters_list.html:181
 msgid "no vote yet"
 msgstr "noch keine Stimme"
 
@@ -1339,6 +1642,208 @@ msgstr "Aktualisieren"
 msgid "Save changes"
 msgstr "Änderungen speichern"
 
+#: helios/templates/election_email_voter.html:4 helios/templates/election_emails.html:4
+#, python-format
+msgid "Email delivery for %(name)s"
+msgstr "E-Mail-Zustellung für %(name)s"
+
+#: helios/templates/election_email_voter.html:6
+#, python-format
+msgid "Emails to %(voter)s"
+msgstr "E-Mails an %(voter)s"
+
+#: helios/templates/election_email_voter.html:7
+msgid "back to email delivery"
+msgstr "zurück zur E-Mail-Zustellung"
+
+#: helios/templates/election_email_voter.html:10
+msgid "The address has been changed. Emails to this voter go to the new address from now on; send the mailing again from the email delivery page."
+msgstr "Die Adresse wurde geändert. E-Mails an diese Person gehen ab jetzt an die neue Adresse; senden Sie die Rundmail auf der Seite „E-Mail-Zustellung“ erneut."
+
+#: helios/templates/election_email_voter.html:12 helios/templates/stats_suppressions.html:12
+msgid "The suppression has been lifted: this address is emailed again."
+msgstr "Die Sperre wurde aufgehoben: Diese Adresse erhält wieder E-Mails."
+
+#: helios/templates/election_email_voter.html:18
+msgid "Suppressed"
+msgstr "Gesperrt"
+
+#: helios/templates/election_email_voter.html:18 helios/templates/election_emails.html:92
+msgid "suppressed"
+msgstr "gesperrt"
+
+#: helios/templates/election_email_voter.html:23
+msgid "Lift the suppression"
+msgstr "Sperre aufheben"
+
+#: helios/templates/election_email_voter.html:24
+msgid "Helios no longer sends any email to this address, in any election. If the problem has been solved (e.g. the mailbox was full or has been set up again), lift the suppression. If the address itself is wrong, correct it instead."
+msgstr "Helios sendet an diese Adresse keine E-Mails mehr, in keiner Wahl. Wenn das Problem behoben ist (z. B. das Postfach war voll oder wurde neu eingerichtet), heben Sie die Sperre auf. Ist die Adresse selbst falsch, korrigieren Sie sie stattdessen."
+
+#: helios/templates/election_email_voter.html:27 helios/templates/stats_suppressions.html:43
+msgid "lift the suppression"
+msgstr "Sperre aufheben"
+
+#: helios/templates/election_email_voter.html:33
+msgid "Correct the address"
+msgstr "Adresse korrigieren"
+
+#: helios/templates/election_email_voter.html:35
+msgid "This voter logs in with an account; emails go to the address their login system gives. It cannot be changed here."
+msgstr "Diese Person meldet sich mit einem Konto an; E-Mails gehen an die Adresse, die ihr Anmeldesystem angibt. Sie kann hier nicht geändert werden."
+
+#: helios/templates/election_email_voter.html:37
+#, python-format
+msgid "Voters can no longer be changed: %(reason)s."
+msgstr "Das Wählerverzeichnis kann nicht mehr geändert werden: %(reason)s."
+
+#: helios/templates/election_email_voter.html:43
+msgid "The voter's login and password stay the same; only where their emails go changes. A suppression of the new address is lifted."
+msgstr "Wähler-ID und Passwort bleiben gleich; nur das Ziel der E-Mails ändert sich. Eine Sperre der neuen Adresse wird aufgehoben."
+
+#: helios/templates/election_email_voter.html:47 helios/templates/stats.html:36
+msgid "Save"
+msgstr "Speichern"
+
+#: helios/templates/election_email_voter.html:53
+msgid "Emails to this voter"
+msgstr "E-Mails an diese Person"
+
+#: helios/templates/election_email_voter.html:59 helios/templates/votergroup_view.html:57
+msgid "Date"
+msgstr "Datum"
+
+#: helios/templates/election_email_voter.html:76
+msgid "No emails have been sent to this voter yet."
+msgstr "An diese Person wurden noch keine E-Mails gesendet."
+
+#: helios/templates/election_emails.html:6
+msgid "Email delivery"
+msgstr "E-Mail-Zustellung"
+
+#: helios/templates/election_emails.html:7 helios/templates/election_view.html:35
+msgid "voters &amp; ballots"
+msgstr "Wahlberechtigte &amp; Stimmzettel"
+
+#: helios/templates/election_emails.html:9
+msgid "What became of the emails to the voters of this election: how many went out, are still being retried, failed or bounced, and which voters were not reached and why."
+msgstr "Was aus den E-Mails an die Wahlberechtigten dieser Wahl geworden ist: wie viele versandt wurden, erneut versucht werden, fehlgeschlagen oder unzustellbar zurückgekommen sind, und welche Wahlberechtigten nicht erreicht wurden und warum."
+
+#: helios/templates/election_emails.html:12
+#, python-format
+msgid "The mailing is being sent again to %(counter)s voter."
+msgid_plural "The mailing is being sent again to %(counter)s voters."
+msgstr[0] "Die Rundmail wird erneut an %(counter)s Person gesendet."
+msgstr[1] "Die Rundmail wird erneut an %(counter)s Personen gesendet."
+
+#: helios/templates/election_emails.html:16
+msgid "Bounces are not processed on this site: an email counts as sent once the mail server has accepted it. Whether it then reached the voter's mailbox is not known here."
+msgstr "Unzustellbarkeitsmeldungen werden auf dieser Website nicht ausgewertet: Eine E-Mail gilt als versandt, sobald der Mailserver sie angenommen hat. Ob sie danach im Postfach angekommen ist, ist hier nicht bekannt."
+
+#: helios/templates/election_emails.html:20
+msgid "Mailings"
+msgstr "Rundmails"
+
+#: helios/templates/election_emails.html:24
+msgid "Emails per mailing, by what became of them"
+msgstr "E-Mails je Rundmail, nach ihrem Verbleib"
+
+#: helios/templates/election_emails.html:26
+msgid "Mailing"
+msgstr "Rundmail"
+
+#: helios/templates/election_emails.html:27
+msgid "Emails"
+msgstr "E-Mails"
+
+#: helios/templates/election_emails.html:32
+msgid "bounced"
+msgstr "unzustellbar"
+
+#: helios/templates/election_emails.html:33
+msgid "not sent"
+msgstr "nicht versandt"
+
+#: helios/templates/election_emails.html:34
+msgid "Send again"
+msgstr "Erneut senden"
+
+#: helios/templates/election_emails.html:39
+msgid "sent again to the voters not reached"
+msgstr "erneut an die nicht Erreichten gesendet"
+
+#: helios/templates/election_emails.html:47
+#, python-format
+msgid "Send this mailing again to the %(counter)s voter it did not reach?"
+msgid_plural "Send this mailing again to the %(counter)s voters it did not reach?"
+msgstr[0] "Diese Rundmail erneut an die %(counter)s nicht erreichte Person senden?"
+msgstr[1] "Diese Rundmail erneut an die %(counter)s nicht erreichten Personen senden?"
+
+#: helios/templates/election_emails.html:47
+#, python-format
+msgid "send again to %(counter)s voter"
+msgid_plural "send again to %(counter)s voters"
+msgstr[0] "erneut an %(counter)s Person senden"
+msgstr[1] "erneut an %(counter)s Personen senden"
+
+#: helios/templates/election_emails.html:48
+#, python-format
+msgid "%(counter)s voter not reached has a suppressed address: correct it or lift the suppression first (below)."
+msgid_plural "%(counter)s voters not reached have a suppressed address: correct it or lift the suppression first (below)."
+msgstr[0] "%(counter)s nicht erreichte Person hat eine gesperrte Adresse: Korrigieren Sie sie oder heben Sie zuerst die Sperre auf (unten)."
+msgstr[1] "%(counter)s nicht erreichte Personen haben eine gesperrte Adresse: Korrigieren Sie sie oder heben Sie zuerst die Sperre auf (unten)."
+
+#: helios/templates/election_emails.html:53
+msgid "All emails to voters"
+msgstr "Alle E-Mails an Wahlberechtigte"
+
+#: helios/templates/election_emails.html:53
+msgid "including vote confirmations and passwords resent"
+msgstr "einschließlich Bestätigungen der Stimmabgabe und erneut gesendeter Passwörter"
+
+#: helios/templates/election_emails.html:65
+msgid "\"Retrying\": the mail server did not accept the email for now; it is tried again automatically. \"Bounced\": accepted at first, then returned as undeliverable. Bounces can arrive hours or days later."
+msgstr "„Neuer Versuch folgt“: Der Mailserver hat die E-Mail vorerst nicht angenommen; sie wird automatisch erneut versucht. „Unzustellbar“: zunächst angenommen, dann als unzustellbar zurückgekommen. Solche Meldungen können Stunden oder Tage später eintreffen."
+
+#: helios/templates/election_emails.html:67
+msgid "No mailings have been sent to the voters of this election yet."
+msgstr "An die Wahlberechtigten dieser Wahl wurden noch keine Rundmails gesendet."
+
+#: helios/templates/election_emails.html:72
+msgid "Voters not reached"
+msgstr "Nicht erreichte Wahlberechtigte"
+
+#: helios/templates/election_emails.html:74
+#, python-format
+msgid "%(counter)s email did not reach its voter."
+msgid_plural "%(counter)s emails did not reach their voters."
+msgstr[0] "%(counter)s E-Mail hat ihren Empfänger nicht erreicht."
+msgstr[1] "%(counter)s E-Mails haben ihre Empfänger nicht erreicht."
+
+#: helios/templates/election_emails.html:75
+msgid "A voter whose address bounced for good is no longer emailed (in any election) until the address is corrected or the suppression is lifted."
+msgstr "Wer unter seiner Adresse dauerhaft nicht erreichbar ist, erhält keine E-Mails mehr (in keiner Wahl), bis die Adresse korrigiert oder die Sperre aufgehoben wird."
+
+#: helios/templates/election_emails.html:76
+msgid "Download as CSV"
+msgstr "Als CSV herunterladen"
+
+#: helios/templates/election_emails.html:79
+msgid "Voters not reached, with the reason"
+msgstr "Nicht erreichte Wahlberechtigte mit Grund"
+
+#: helios/templates/election_emails.html:81
+msgid "Voter"
+msgstr "Wahlberechtigte Person"
+
+#: helios/templates/election_emails.html:96
+msgid "correct address"
+msgstr "Adresse korrigieren"
+
+#: helios/templates/election_emails.html:103
+msgid "No voter is known not to have been reached."
+msgstr "Es ist keine Person bekannt, die nicht erreicht wurde."
+
 #: helios/templates/election_extend.html:4 helios/templates/election_extend.html:6 helios/templates/election_extend.html:15
 #: helios/templatetags/navigation_tags.py:27
 msgid "Extend Voting"
@@ -1401,7 +1906,7 @@ msgstr[1] "Der Stimmzettel hat %(counter)s Fragen."
 msgid "Review the questions"
 msgstr "Fragen prüfen"
 
-#: helios/templates/election_freeze.html:49 helios/templates/election_view.html:336
+#: helios/templates/election_freeze.html:49 helios/templates/election_view.html:337
 msgid "preview booth"
 msgstr "Vorschau der Wahlkabine"
 
@@ -1813,10 +2318,6 @@ msgstr "Seiten der Wahl"
 msgid "questions (%(count)s)"
 msgstr "Fragen (%(count)s)"
 
-#: helios/templates/election_view.html:35
-msgid "voters &amp; ballots"
-msgstr "Wahlberechtigte &amp; Stimmzettel"
-
 #: helios/templates/election_view.html:36
 #, python-format
 msgid "trustees (%(count)s)"
@@ -1826,401 +2327,405 @@ msgstr "Treuhänder*innen (%(count)s)"
 msgid "administrators"
 msgstr "Wahlleitung"
 
-#: helios/templates/election_view.html:43
+#: helios/templates/election_view.html:38 helios/templates/voters_list.html:66
+msgid "email delivery"
+msgstr "E-Mail-Zustellung"
+
+#: helios/templates/election_view.html:44
 msgid "Running this election"
 msgstr "Ablauf der Wahl"
 
-#: helios/templates/election_view.html:48
+#: helios/templates/election_view.html:49
 msgid "This election is complete. The result is public."
 msgstr "Diese Wahl ist abgeschlossen. Das Ergebnis ist öffentlich."
 
-#: helios/templates/election_view.html:51 helios/templates/election_view.html:59 helios/templates/election_view.html:76
-#: helios/templates/election_view.html:96 helios/templates/election_view.html:101
+#: helios/templates/election_view.html:52 helios/templates/election_view.html:60 helios/templates/election_view.html:77
+#: helios/templates/election_view.html:97 helios/templates/election_view.html:102
 msgid "Next step:"
 msgstr "Nächster Schritt:"
 
-#: helios/templates/election_view.html:51
+#: helios/templates/election_view.html:52
 msgid "complete the setup"
 msgstr "Einrichtung abschließen"
 
-#: helios/templates/election_view.html:52
+#: helios/templates/election_view.html:53
 msgid "Before you can freeze the ballot and open the election, you need to:"
 msgstr "Bevor Sie den Stimmzettel einfrieren und die Wahl öffnen können, müssen Sie:"
 
-#: helios/templates/election_view.html:59
+#: helios/templates/election_view.html:60
 msgid "freeze the ballot and open the election"
 msgstr "Stimmzettel einfrieren und Wahl öffnen"
 
-#: helios/templates/election_view.html:62
+#: helios/templates/election_view.html:63
 #, python-format
 msgid "Everything is set up. Once you freeze the ballot, the election is ready and opens automatically at %(start)s, as per your settings."
 msgstr "Alles ist eingerichtet. Sobald Sie den Stimmzettel einfrieren, ist die Wahl bereit und öffnet laut Ihren Einstellungen automatisch am %(start)s."
 
-#: helios/templates/election_view.html:64
+#: helios/templates/election_view.html:65
 msgid "Everything is set up. Once you freeze the ballot, the election is immediately open for voting."
 msgstr "Alles ist eingerichtet. Sobald Sie den Stimmzettel einfrieren, ist die Wahl sofort für die Stimmabgabe geöffnet."
 
-#: helios/templates/election_view.html:66
+#: helios/templates/election_view.html:67
 msgid "Questions, answers and trustees can no longer be changed after that, so check them first."
 msgstr "Danach können Fragen, Antworten und Treuhänder*innen nicht mehr geändert werden – prüfen Sie sie also vorher."
 
-#: helios/templates/election_view.html:68
+#: helios/templates/election_view.html:69
 msgid "freeze ballot and open election"
 msgstr "Stimmzettel einfrieren und Wahl öffnen"
 
-#: helios/templates/election_view.html:72
+#: helios/templates/election_view.html:73
 msgid "Tally computation is under way."
 msgstr "Die Auszählung wird gerade berechnet."
 
-#: helios/templates/election_view.html:73
+#: helios/templates/election_view.html:74
 msgid "Reload this page in a couple of minutes."
 msgstr "Laden Sie diese Seite in ein paar Minuten neu."
 
-#: helios/templates/election_view.html:76
+#: helios/templates/election_view.html:77
 msgid "compute the encrypted tally"
 msgstr "verschlüsselte Auszählung berechnen"
 
-#: helios/templates/election_view.html:78
+#: helios/templates/election_view.html:79
 msgid "Voting is open."
 msgstr "Die Stimmabgabe ist geöffnet."
 
-#: helios/templates/election_view.html:79
+#: helios/templates/election_view.html:80
 msgid "Invite the voters by email, and follow the turnout in the ballot tracking center."
 msgstr "Laden Sie die Wahlberechtigten per E-Mail ein und verfolgen Sie die Beteiligung in der Stimmzettel-Übersicht."
 
-#: helios/templates/election_view.html:81
+#: helios/templates/election_view.html:82
 msgid "The ballot is frozen; voting has not started yet."
 msgstr "Der Stimmzettel ist eingefroren; die Stimmabgabe hat noch nicht begonnen."
 
-#: helios/templates/election_view.html:82
+#: helios/templates/election_view.html:83
 msgid "You can already send the voters their invitation."
 msgstr "Sie können den Wahlberechtigten schon jetzt ihre Einladung senden."
 
-#: helios/templates/election_view.html:85
+#: helios/templates/election_view.html:86
 msgid "The encrypted votes will be combined into an encrypted tally. Once this is done,<br /> trustees will be asked to provide their share of the decryption."
 msgstr "Die verschlüsselten Stimmen werden zu einer verschlüsselten Auszählung zusammengeführt. Anschließend<br /> werden die Treuhänder*innen gebeten, ihre Teilentschlüsselung beizutragen."
 
-#: helios/templates/election_view.html:87
+#: helios/templates/election_view.html:88
 msgid "Computing the tally ends voting."
 msgstr "Mit der Auszählung endet die Stimmabgabe."
 
-#: helios/templates/election_view.html:90 helios/templates/voters_list.html:49
+#: helios/templates/election_view.html:91 helios/templates/voters_list.html:49
 msgid "email voters"
 msgstr "Wahlberechtigten eine E-Mail senden"
 
-#: helios/templates/election_view.html:90 helios/templates/voters_list.html:51
+#: helios/templates/election_view.html:91 helios/templates/voters_list.html:51
 #, python-format
 msgid "email voters (disabled: %(reason)s)"
 msgstr "Wahlberechtigten eine E-Mail senden (deaktiviert: %(reason)s)"
 
-#: helios/templates/election_view.html:91
+#: helios/templates/election_view.html:92
 msgid "compute encrypted tally"
 msgstr "verschlüsselte Auszählung berechnen"
 
-#: helios/templates/election_view.html:92 helios/templates/election_view.html:162
+#: helios/templates/election_view.html:93 helios/templates/election_view.html:163
 msgid "extend voting"
 msgstr "Stimmabgabe verlängern"
 
-#: helios/templates/election_view.html:96
+#: helios/templates/election_view.html:97
 msgid "release the result"
 msgstr "Ergebnis freigeben"
 
-#: helios/templates/election_view.html:97
+#: helios/templates/election_view.html:98
 msgid "The result displayed below is visible only to you."
 msgstr "Das unten angezeigte Ergebnis ist nur für Sie sichtbar."
 
-#: helios/templates/election_view.html:98
+#: helios/templates/election_view.html:99
 msgid "Once you release the result, it will be visible to everyone."
 msgstr "Sobald Sie das Ergebnis freigeben, ist es für alle sichtbar."
 
-#: helios/templates/election_view.html:99
+#: helios/templates/election_view.html:100
 msgid "release result"
 msgstr "Ergebnis freigeben"
 
-#: helios/templates/election_view.html:101
+#: helios/templates/election_view.html:102
 msgid "compute the result"
 msgstr "Ergebnis berechnen"
 
-#: helios/templates/election_view.html:104
+#: helios/templates/election_view.html:105
 msgid "The result will be computed and shown to you, the administrator, only."
 msgstr "Das Ergebnis wird berechnet und nur Ihnen als Wahlleitung angezeigt."
 
-#: helios/templates/election_view.html:106
+#: helios/templates/election_view.html:107
 msgid "The decryption shares from the trustees will be combined and the tally computed."
 msgstr "Die Teilentschlüsselungen der Treuhänder*innen werden kombiniert und die Auszählung wird berechnet."
 
-#: helios/templates/election_view.html:107
+#: helios/templates/election_view.html:108
 msgid "Once you do this, the tally will visible to you, the administrator, only."
 msgstr "Danach ist die Auszählung nur für Sie als Wahlleitung sichtbar."
 
-#: helios/templates/election_view.html:110
+#: helios/templates/election_view.html:111
 msgid "combine trustee decryptions and compute results"
 msgstr "Teilentschlüsselungen der Treuhänder*innen kombinieren und Ergebnisse berechnen"
 
-#: helios/templates/election_view.html:110
+#: helios/templates/election_view.html:111
 msgid "compute results"
 msgstr "Ergebnisse berechnen"
 
-#: helios/templates/election_view.html:112
+#: helios/templates/election_view.html:113
 msgid "Waiting for the trustees"
 msgstr "Warten auf die Treuhänder*innen"
 
-#: helios/templates/election_view.html:113
+#: helios/templates/election_view.html:114
 msgid "Each trustee now decrypts their share of the tally with their secret key. Once all have done so, you can compute the result."
 msgstr "Alle Treuhänder*innen entschlüsseln jetzt mit ihrem geheimen Schlüssel ihren Anteil an der Auszählung. Sobald alle das getan haben, können Sie das Ergebnis berechnen."
 
-#: helios/templates/election_view.html:114
+#: helios/templates/election_view.html:115
 msgid "trustees (for decryption)"
 msgstr "Treuhänder*innen (zur Entschlüsselung)"
 
-#: helios/templates/election_view.html:118 helios/templates/trustee_home.html:9
+#: helios/templates/election_view.html:119 helios/templates/trustee_home.html:9
 msgid "Progress"
 msgstr "Fortschritt"
 
-#: helios/templates/election_view.html:124
+#: helios/templates/election_view.html:125
 msgid "next"
 msgstr "als Nächstes"
 
-#: helios/templates/election_view.html:124
+#: helios/templates/election_view.html:125
 msgid "to do"
 msgstr "offen"
 
-#: helios/templates/election_view.html:133
+#: helios/templates/election_view.html:134
 msgid "More actions"
 msgstr "Weitere Aktionen"
 
-#: helios/templates/election_view.html:138
+#: helios/templates/election_view.html:139
 msgid "edit"
 msgstr "bearbeiten"
 
-#: helios/templates/election_view.html:140
+#: helios/templates/election_view.html:141
 msgid "Are you sure you want to copy this election?"
 msgstr "Möchten Sie diese Wahl wirklich kopieren?"
 
-#: helios/templates/election_view.html:142
+#: helios/templates/election_view.html:143
 msgid "copy"
 msgstr "kopieren"
 
-#: helios/templates/election_view.html:148
+#: helios/templates/election_view.html:149
 msgid "unarchive it"
 msgstr "Archivierung aufheben"
 
-#: helios/templates/election_view.html:151
+#: helios/templates/election_view.html:152
 msgid "archive it"
 msgstr "archivieren"
 
-#: helios/templates/election_view.html:155
+#: helios/templates/election_view.html:156
 msgid "Are you sure you want to delete this election? Once deleted, only site administrators can restore it."
 msgstr "Möchten Sie diese Wahl wirklich löschen? Nach dem Löschen kann nur die Administration sie wiederherstellen."
 
-#: helios/templates/election_view.html:158
+#: helios/templates/election_view.html:159
 msgid "delete it"
 msgstr "löschen"
 
-#: helios/templates/election_view.html:165
+#: helios/templates/election_view.html:166
 msgid "Archived elections are hidden from your list of elections; an archived election can be deleted."
 msgstr "Archivierte Wahlen erscheinen nicht mehr in Ihrer Liste der Wahlen; eine archivierte Wahl kann gelöscht werden."
 
-#: helios/templates/election_view.html:170
+#: helios/templates/election_view.html:171
 #, python-format
 msgid "this %(type)s is featured on the front page."
 msgstr "Diese %(type)s wird auf der Startseite hervorgehoben."
 
-#: helios/templates/election_view.html:172
+#: helios/templates/election_view.html:173
 msgid "unfeature it"
 msgstr "nicht mehr hervorheben"
 
-#: helios/templates/election_view.html:175
+#: helios/templates/election_view.html:176
 #, python-format
 msgid "this %(type)s is <u>not</u> featured on the front page."
 msgstr "Diese %(type)s wird <u>nicht</u> auf der Startseite hervorgehoben."
 
-#: helios/templates/election_view.html:177
+#: helios/templates/election_view.html:178
 msgid "feature it"
 msgstr "hervorheben"
 
-#: helios/templates/election_view.html:185
+#: helios/templates/election_view.html:186
 #, python-format
 msgid "Corporate identity of the pages: <strong>%(name)s</strong> (default organization)."
 msgstr "Erscheinungsbild der Seiten: <strong>%(name)s</strong> (Standardorganisation)."
 
-#: helios/templates/election_view.html:185
+#: helios/templates/election_view.html:186
 #, python-format
 msgid "Corporate identity of the pages: <strong>%(name)s</strong>."
 msgstr "Erscheinungsbild der Seiten: <strong>%(name)s</strong>."
 
-#: helios/templates/election_view.html:186
+#: helios/templates/election_view.html:187
 msgid "Only site administrators can change it."
 msgstr "Nur die Administration kann es ändern."
 
-#: helios/templates/election_view.html:192
+#: helios/templates/election_view.html:193
 msgid "Default organization"
 msgstr "Standardorganisation"
 
-#: helios/templates/election_view.html:195
+#: helios/templates/election_view.html:196
 msgid "change organization"
 msgstr "Organisation ändern"
 
-#: helios/templates/election_view.html:202 helios/templates/election_view.html:204
+#: helios/templates/election_view.html:203 helios/templates/election_view.html:205
 msgid "Embed an Election Badge"
 msgstr "Wahl-Badge einbetten"
 
-#: helios/templates/election_view.html:207
+#: helios/templates/election_view.html:208
 msgid "adding this HTML to your site displays a thin banner with direct links to voting."
 msgstr "Wenn Sie diesen HTML-Code in Ihre Website einfügen, wird ein schmales Banner mit direkten Links zur Stimmabgabe angezeigt."
 
-#: helios/templates/election_view.html:217
+#: helios/templates/election_view.html:218
 msgid "This election is complete."
 msgstr "Diese Wahl ist abgeschlossen."
 
-#: helios/templates/election_view.html:220
+#: helios/templates/election_view.html:221
 msgid "Tally"
 msgstr "Auszählung"
 
-#: helios/templates/election_view.html:222
+#: helios/templates/election_view.html:223
 #, python-format
 msgid "%(counter)s ballot was counted. Where several answers could be chosen, the shares can add up to more than 100 percent."
 msgid_plural "%(counter)s ballots were counted. Where several answers could be chosen, the shares can add up to more than 100 percent."
 msgstr[0] "%(counter)s Stimmzettel wurde gezählt. Wo mehrere Antworten wählbar waren, können die Anteile zusammen mehr als 100 Prozent ergeben."
 msgstr[1] "%(counter)s Stimmzettel wurden gezählt. Wo mehrere Antworten wählbar waren, können die Anteile zusammen mehr als 100 Prozent ergeben."
 
-#: helios/templates/election_view.html:225
+#: helios/templates/election_view.html:226
 #, python-format
 msgid "Question #%(num)s"
 msgstr "Frage %(num)s"
 
-#: helios/templates/election_view.html:227
+#: helios/templates/election_view.html:228
 msgid "Answer"
 msgstr "Antwort"
 
-#: helios/templates/election_view.html:227
+#: helios/templates/election_view.html:228
 msgid "Share of ballots"
 msgstr "Anteil der Stimmzettel"
 
-#: helios/templates/election_view.html:230
+#: helios/templates/election_view.html:231
 msgid "(tied)"
 msgstr "(Gleichstand)"
 
-#: helios/templates/election_view.html:230
+#: helios/templates/election_view.html:231
 msgid "elected"
 msgstr "gewählt"
 
-#: helios/templates/election_view.html:235
+#: helios/templates/election_view.html:236
 #, python-format
 msgid "Tie: the answers marked (tied) received the same number of votes, so %(counter)s seat is left unfilled."
 msgid_plural "Tie: the answers marked (tied) received the same number of votes, so %(counter)s seats are left unfilled."
 msgstr[0] "Gleichstand: Die mit (Gleichstand) markierten Antworten haben gleich viele Stimmen erhalten, daher bleibt %(counter)s Sitz unbesetzt."
 msgstr[1] "Gleichstand: Die mit (Gleichstand) markierten Antworten haben gleich viele Stimmen erhalten, daher bleiben %(counter)s Sitze unbesetzt."
 
-#: helios/templates/election_view.html:239
+#: helios/templates/election_view.html:240
 msgid "The tally could not be decrypted, so there is no result to show."
 msgstr "Die Auszählung konnte nicht entschlüsselt werden, daher gibt es kein Ergebnis anzuzeigen."
 
-#: helios/templates/election_view.html:246
+#: helios/templates/election_view.html:247
 msgid "Election closed. Results will be released soon."
 msgstr "Die Wahl ist geschlossen. Die Ergebnisse werden in Kürze freigegeben."
 
-#: helios/templates/election_view.html:251 helios/templates/election_view.html:271 helios/templatetags/navigation_tags.py:35
+#: helios/templates/election_view.html:252 helios/templates/election_view.html:272 helios/templatetags/navigation_tags.py:35
 msgid "Vote"
 msgstr "Abstimmen"
 
-#: helios/templates/election_view.html:252
+#: helios/templates/election_view.html:253
 #, python-format
 msgid "Vote in this %(type)s"
 msgstr "In dieser %(type)s Stimme abgeben"
 
-#: helios/templates/election_view.html:255
+#: helios/templates/election_view.html:256
 #, python-format
 msgid "This %(type)s was initially scheduled to end at %(end)s,<br /> but has been extended until %(extended)s."
 msgstr "Das Ende dieser %(type)s war ursprünglich für %(end)s geplant,<br /> wurde aber bis %(extended)s verlängert."
 
-#: helios/templates/election_view.html:258
+#: helios/templates/election_view.html:259
 #, python-format
 msgid "This %(type)s is scheduled to end at %(end)s."
 msgstr "Das Ende dieser %(type)s ist für %(end)s geplant."
 
-#: helios/templates/election_view.html:260
+#: helios/templates/election_view.html:261
 #, python-format
 msgid "This %(type)s ends at the administrator's discretion."
 msgstr "Diese %(type)s endet nach Ermessen der Wahlleitung."
 
-#: helios/templates/election_view.html:263
+#: helios/templates/election_view.html:264
 msgid "Your vote is encrypted in your browser before it is sent. You can vote again later: only your last ballot counts."
 msgstr "Ihre Stimme wird in Ihrem Browser verschlüsselt, bevor sie gesendet wird. Sie können später erneut abstimmen: Nur Ihr letzter Stimmzettel zählt."
 
-#: helios/templates/election_view.html:267
+#: helios/templates/election_view.html:268
 #, python-format
 msgid "This election is <em>private</em>. You are signed in as eligible voter <em>%(name)s</em>."
 msgstr "Diese Wahl ist <em>nicht öffentlich</em>. Sie sind als wahlberechtigte Person <em>%(name)s</em> angemeldet."
 
-#: helios/templates/election_view.html:272
+#: helios/templates/election_view.html:273
 msgid "voting is not yet open"
 msgstr "Die Stimmabgabe ist noch nicht geöffnet"
 
-#: helios/templates/election_view.html:278
+#: helios/templates/election_view.html:279
 #, python-format
 msgid "You are registered to vote in this %(type)s."
 msgstr "Sie sind in dieser %(type)s stimmberechtigt."
 
-#: helios/templates/election_view.html:280 helios/templates/email/vote_body.txt:28
+#: helios/templates/election_view.html:281 helios/templates/email/vote_body.txt:28
 #, python-format
 msgid "Your voter alias is %(alias)s."
 msgstr "Ihr Alias lautet %(alias)s."
 
-#: helios/templates/election_view.html:287
+#: helios/templates/election_view.html:288
 msgid "You are eligible to vote in this election."
 msgstr "Sie sind in dieser Wahl wahlberechtigt."
 
-#: helios/templates/election_view.html:289
+#: helios/templates/election_view.html:290
 #, python-format
 msgid "You are <em>not eligible</em> to vote in this %(type)s."
 msgstr "Sie sind in dieser %(type)s <em>nicht stimmberechtigt</em>."
 
-#: helios/templates/election_view.html:298
+#: helios/templates/election_view.html:299
 #, python-format
 msgid "This election is open to: %(eligibility)s"
 msgstr "Diese Wahl steht offen für: %(eligibility)s"
 
-#: helios/templates/election_view.html:299 helios_auth/templates/login_box.html:3 helios_auth/templates/auth/devlogin.html:21
+#: helios/templates/election_view.html:300 helios_auth/templates/login_box.html:3 helios_auth/templates/auth/devlogin.html:21
 #: server_ui/templates/base.html:51 server_ui/templates/index.html:83
 msgid "Log in"
 msgstr "Anmelden"
 
-#: helios/templates/election_view.html:299
+#: helios/templates/election_view.html:300
 msgctxt "follows a 'Log in' link"
 msgid "to check your eligibility."
 msgstr "zur Prüfung Ihrer Wahlberechtigung."
 
-#: helios/templates/election_view.html:301
+#: helios/templates/election_view.html:302
 msgid "Anyone can vote in this election."
 msgstr "Bei dieser Wahl können alle abstimmen."
 
-#: helios/templates/election_view.html:313
+#: helios/templates/election_view.html:314
 msgid "Audit Info"
 msgstr "Prüfinformationen"
 
-#: helios/templates/election_view.html:315 helios/templates/email/simple_body.txt:8
+#: helios/templates/election_view.html:316 helios/templates/email/simple_body.txt:8
 msgid "Election URL:"
 msgstr "URL der Wahl:"
 
-#: helios/templates/election_view.html:319
+#: helios/templates/election_view.html:320
 msgid "Election Fingerprint:"
 msgstr "Fingerabdruck der Wahl:"
 
-#: helios/templates/election_view.html:323
+#: helios/templates/election_view.html:324
 msgid "Your ballot tracker:"
 msgstr "Ihr Stimmzettel-Tracker:"
 
-#: helios/templates/election_view.html:331
+#: helios/templates/election_view.html:332
 msgid "Download Election Log (CSV)"
 msgstr "Wahlprotokoll herunterladen (CSV)"
 
-#: helios/templates/election_view.html:343
+#: helios/templates/election_view.html:344
 #, python-format
 msgid "verify <a target=\"_blank\" href=\"%(verifier_url)s%(election_home_url)s\">election tally</a>."
 msgstr "<a target=\"_blank\" href=\"%(verifier_url)s%(election_home_url)s\">Auszählung der Wahl</a> überprüfen."
 
-#: helios/templates/election_view.html:346
+#: helios/templates/election_view.html:347
 #, python-format
 msgid "review the <a href=\"%(vote_url)s\">voting booth</a>."
 msgstr "<a href=\"%(vote_url)s\">Wahlkabine</a> ansehen."
@@ -2736,52 +3241,52 @@ msgstr "aktuelle Stimmabgaben"
 msgid "recent problem elections"
 msgstr "aktuelle problematische Wahlen"
 
-#: helios/templates/stats.html:19
+#: helios/templates/stats.html:15
+msgid "suppressed email addresses"
+msgstr "gesperrte E-Mail-Adressen"
+
+#: helios/templates/stats.html:20
 msgid "Background tasks"
 msgstr "Hintergrundaufgaben"
 
-#: helios/templates/stats.html:20
+#: helios/templates/stats.html:21
 #, python-format
 msgid "<b>%(num)s</b> votes in queue."
 msgstr "<b>%(num)s</b> Stimmen in der Warteschlange."
 
-#: helios/templates/stats.html:20
+#: helios/templates/stats.html:21
 msgid "force it"
 msgstr "erzwingen"
 
-#: helios/templates/stats.html:22
+#: helios/templates/stats.html:23
 #, python-format
 msgid "Background tasks: <b>%(ready)s</b> waiting, <b>%(running)s</b> running (%(stuck)s for over %(minutes)s minutes, see <tt>%(cmd)s</tt>), <b>%(failed)s</b> failed in the last day."
 msgstr "Hintergrundaufgaben: <b>%(ready)s</b> wartend, <b>%(running)s</b> laufend (%(stuck)s seit über %(minutes)s Minuten, siehe <tt>%(cmd)s</tt>), <b>%(failed)s</b> fehlgeschlagen am letzten Tag."
 
-#: helios/templates/stats.html:28
+#: helios/templates/stats.html:29
 msgid "Announcement"
 msgstr "Ankündigung"
 
-#: helios/templates/stats.html:32
+#: helios/templates/stats.html:33
 msgid "Announcement banner shown on every page (leave empty for none):"
 msgstr "Ankündigungsbanner auf jeder Seite (leer lassen für keines):"
-
-#: helios/templates/stats.html:35
-msgid "Save"
-msgstr "Speichern"
 
 #: helios/templates/stats_deleted_elections.html:4 helios/templates/stats_deleted_elections.html:7 helios/templatetags/navigation_tags.py:82
 msgid "Deleted Elections"
 msgstr "Gelöschte Wahlen"
 
 #: helios/templates/stats_deleted_elections.html:10 helios/templates/stats_deleted_elections.html:11 helios/templates/stats_elections.html:9
-#: helios/templates/stats_elections.html:16 helios/templates/stats_user_search.html:10 helios/templates/voters_list.html:108
-#: helios/templates/voters_list.html:110 helios/templates/voters_manage.html:7 helios/templates/voters_manage.html:7
+#: helios/templates/stats_elections.html:16 helios/templates/stats_user_search.html:10 helios/templates/voters_list.html:112
+#: helios/templates/voters_list.html:114 helios/templates/voters_manage.html:7 helios/templates/voters_manage.html:7
 msgid "search"
 msgstr "suchen"
 
 #: helios/templates/stats_deleted_elections.html:11 helios/templates/stats_elections.html:16 helios/templates/stats_user_search.html:10
-#: helios/templates/voters_list.html:105
+#: helios/templates/voters_list.html:109
 msgid "clear search"
 msgstr "Suche zurücksetzen"
 
-#: helios/templates/stats_deleted_elections.html:17 helios/templates/stats_elections.html:22 helios/templates/voters_list.html:127
+#: helios/templates/stats_deleted_elections.html:17 helios/templates/stats_elections.html:22 helios/templates/voters_list.html:131
 #, python-format
 msgid "previous %(limit)s"
 msgstr "vorherige %(limit)s"
@@ -2866,6 +3371,63 @@ msgstr "Letzte 24 Stunden"
 #, python-format
 msgid "%(num)s recently cast votes"
 msgstr "%(num)s kürzlich abgegebene Stimmen"
+
+#: helios/templates/stats_suppressions.html:3 helios/templates/stats_suppressions.html:6
+msgid "Suppressed email addresses"
+msgstr "Gesperrte E-Mail-Adressen"
+
+#: helios/templates/stats_suppressions.html:7
+msgid "back to admin"
+msgstr "zurück zur Administration"
+
+#: helios/templates/stats_suppressions.html:9
+msgid "Helios sends no email to these addresses, in any election: they bounced for good, bounced temporarily several times, or their owner marked an email as spam. Only hashes of the addresses are stored, so the list cannot be shown; look up an address instead."
+msgstr "Helios sendet an diese Adressen keine E-Mails, in keiner Wahl: Sie waren dauerhaft oder mehrfach vorübergehend unzustellbar, oder ihr Inhaber hat eine E-Mail als Spam markiert. Gespeichert sind nur Hashwerte der Adressen; die Liste kann daher nicht angezeigt werden. Suchen Sie stattdessen nach einer Adresse."
+
+#: helios/templates/stats_suppressions.html:11
+msgid "All suppressions have been lifted."
+msgstr "Alle Sperren wurden aufgehoben."
+
+#: helios/templates/stats_suppressions.html:13
+msgid "The address has been suppressed."
+msgstr "Die Adresse wurde gesperrt."
+
+#: helios/templates/stats_suppressions.html:16
+#, python-format
+msgid "%(counter)s suppressed address"
+msgid_plural "%(counter)s suppressed addresses"
+msgstr[0] "%(counter)s gesperrte Adresse"
+msgstr[1] "%(counter)s gesperrte Adressen"
+
+#: helios/templates/stats_suppressions.html:21
+msgid "Lift all suppressions? Helios will email all these addresses again."
+msgstr "Alle Sperren aufheben? Helios sendet dann wieder an alle diese Adressen."
+
+#: helios/templates/stats_suppressions.html:24
+msgid "lift all suppressions"
+msgstr "alle Sperren aufheben"
+
+#: helios/templates/stats_suppressions.html:30
+msgid "Look up an address"
+msgstr "Adresse nachschlagen"
+
+#: helios/templates/stats_suppressions.html:37
+msgid "look up"
+msgstr "nachschlagen"
+
+#: helios/templates/stats_suppressions.html:42
+#, python-format
+msgid "<strong>%(address)s</strong> is suppressed since %(since)s:"
+msgstr "<strong>%(address)s</strong> ist gesperrt seit %(since)s:"
+
+#: helios/templates/stats_suppressions.html:45
+#, python-format
+msgid "<strong>%(address)s</strong> is not suppressed."
+msgstr "<strong>%(address)s</strong> ist nicht gesperrt."
+
+#: helios/templates/stats_suppressions.html:46
+msgid "suppress this address"
+msgstr "diese Adresse sperren"
 
 #: helios/templates/stats_user_search.html:3 helios/templates/stats_user_search.html:6 helios/templatetags/navigation_tags.py:81
 msgid "User Search"
@@ -3493,10 +4055,6 @@ msgctxt "voter group log"
 msgid "Change"
 msgstr "Änderung"
 
-#: helios/templates/votergroup_view.html:57
-msgid "Date"
-msgstr "Datum"
-
 #: helios/templates/votergroup_view.html:64
 msgid "open election"
 msgstr "Wahl öffnen"
@@ -3661,85 +4219,81 @@ msgstr "Wählerliste (CSV) hochladen"
 msgid "bulk upload voters (disabled: %(reason)s)"
 msgstr "Wählerliste (CSV) hochladen (deaktiviert: %(reason)s)"
 
-#: helios/templates/voters_list.html:63 helios/templates/voters_list.html:100
+#: helios/templates/voters_list.html:63 helios/templates/voters_list.html:104
 msgid "Download Voters as CSV"
 msgstr "Wählerverzeichnis als CSV herunterladen"
 
-#: helios/templates/voters_list.html:66
+#: helios/templates/voters_list.html:70
 #, python-format
 msgid "Are you sure you want to remove ALL %(num_voters)s voter(s)? This action cannot be undone."
 msgstr "Möchten Sie wirklich ALLE %(num_voters)s Wahlberechtigten entfernen? Dies kann nicht rückgängig gemacht werden."
 
-#: helios/templates/voters_list.html:68
+#: helios/templates/voters_list.html:72
 msgid "clear all voters"
 msgstr "Alle Wahlberechtigten entfernen"
 
-#: helios/templates/voters_list.html:75
+#: helios/templates/voters_list.html:79
 msgid "Prior Bulk Uploads:"
 msgstr "Bisherige Uploads:"
 
-#: helios/templates/voters_list.html:85
+#: helios/templates/voters_list.html:89
 #, python-format
 msgid "bytes, at %(uploaded_at)s:"
 msgstr "Bytes, am %(uploaded_at)s:"
 
-#: helios/templates/voters_list.html:87
+#: helios/templates/voters_list.html:91
 #, python-format
 msgid "done processing: %(num_voters)s voters loaded"
 msgstr "Verarbeitung abgeschlossen: %(num_voters)s Wahlberechtigte geladen"
 
-#: helios/templates/voters_list.html:89
+#: helios/templates/voters_list.html:93
 msgid "currently processing"
 msgstr "wird gerade verarbeitet"
 
-#: helios/templates/voters_list.html:91
+#: helios/templates/voters_list.html:95
 msgid "not yet processed"
 msgstr "noch nicht verarbeitet"
 
-#: helios/templates/voters_list.html:105
+#: helios/templates/voters_list.html:109
 #, python-format
 msgid "searching for <u>%(q)s</u>."
 msgstr "Suche nach <u>%(q)s</u>."
 
-#: helios/templates/voters_list.html:119
+#: helios/templates/voters_list.html:123
 #, python-format
 msgid "%(counter)s cast vote"
 msgid_plural "%(counter)s cast votes"
 msgstr[0] "%(counter)s abgegebene Stimme"
 msgstr[1] "%(counter)s abgegebene Stimmen"
 
-#: helios/templates/voters_list.html:121
+#: helios/templates/voters_list.html:125
 msgid "no votes yet"
 msgstr "noch keine Stimmen"
 
-#: helios/templates/voters_list.html:129
+#: helios/templates/voters_list.html:133
 #, python-format
 msgid "Voters %(start)s - %(end)s (of %(total_voters)s)"
 msgstr "Wahlberechtigte %(start)s - %(end)s (von %(total_voters)s)"
 
-#: helios/templates/voters_list.html:142 helios_auth/templates/ldapauth/login.html:21 helios_auth/templates/password/login.html:5
+#: helios/templates/voters_list.html:146 helios_auth/templates/ldapauth/login.html:21 helios_auth/templates/password/login.html:5
 #: helios_auth/templates/password/login.html:12 helios_auth/templates/password/login.html:21
 msgid "Login"
 msgstr "Anmelden"
 
-#: helios/templates/voters_list.html:143 helios/templates/voters_upload_confirm.html:14
-msgid "Email Address"
-msgstr "E-Mail-Adresse"
-
-#: helios/templates/voters_list.html:162 helios/templates/voters_list.html:164
+#: helios/templates/voters_list.html:166 helios/templates/voters_list.html:168
 msgid "email"
 msgstr "E-Mail"
 
-#: helios/templates/voters_list.html:167 helios/templates/voters_manage.html:33
+#: helios/templates/voters_list.html:171 helios/templates/voters_manage.html:33
 #, python-format
 msgid "are you sure you want to remove %(name)s ?"
 msgstr "Möchten Sie %(name)s wirklich entfernen?"
 
-#: helios/templates/voters_list.html:186
+#: helios/templates/voters_list.html:190
 msgid "no voters."
 msgstr "keine Wahlberechtigten."
 
-#: helios/templates/voters_list.html:188
+#: helios/templates/voters_list.html:192
 msgid "Upload a CSV file with one line per voter to add them."
 msgstr "Laden Sie eine CSV-Datei mit einer Zeile pro wahlberechtigter Person hoch, um sie hinzuzufügen."
 
@@ -3966,10 +4520,6 @@ msgstr "es gibt noch keine Wahlberechtigten"
 msgid "Please enter a name."
 msgstr "Bitte geben Sie einen Namen ein."
 
-#: helios/views.py:525
-msgid "Please enter a valid email address."
-msgstr "Bitte geben Sie eine gültige E-Mail-Adresse ein."
-
 #: helios/views.py:528 helios/views.py:543
 msgid "This election already has a trustee with this email address."
 msgstr "Diese Wahl hat bereits eine*n Treuhänder*in mit dieser E-Mail-Adresse."
@@ -4069,96 +4619,80 @@ msgstr "Ihre CSV-Datei konnte nicht verarbeitet werden: %(reason)s"
 msgid "no voter file specified, try again"
 msgstr "keine Wählerliste angegeben, bitte versuchen Sie es erneut"
 
-#: helios/views.py:1922
-msgid "Time to Vote"
-msgstr "Zeit zu wählen"
-
-#: helios/views.py:1923
-msgid "Simple"
-msgstr "Einfach"
-
-#: helios/views.py:1924
-msgid "Additional Info"
-msgstr "Zusätzliche Informationen"
-
-#: helios/views.py:1925
-msgid "Election Result"
-msgstr "Wahlergebnis"
-
 #: helios/views.py:1989
 msgid "None of the voters match this choice, so no email would be sent."
 msgstr "Auf diese Auswahl trifft keine wahlberechtigte Person zu, daher würde keine E-Mail gesendet."
 
-#: helios/views.py:2139 helios/views.py:2149 helios/views.py:2157
+#: helios/views.py:2141 helios/views.py:2151 helios/views.py:2159
 msgid "Opt Out of Helios Emails"
 msgstr "Helios-E-Mails abbestellen"
 
-#: helios/views.py:2140 helios/views.py:2150 helios/views.py:2158
+#: helios/views.py:2142 helios/views.py:2152 helios/views.py:2160
 msgid "Enter your email address to stop receiving all emails from Helios voting system."
 msgstr "Geben Sie Ihre E-Mail-Adresse ein, um keine E-Mails des Wahlsystems Helios mehr zu erhalten."
 
-#: helios/views.py:2151 helios/views.py:2228
+#: helios/views.py:2153 helios/views.py:2230
 msgid "Email address is required"
 msgstr "E-Mail-Adresse ist erforderlich"
 
-#: helios/views.py:2159 helios/views.py:2236
+#: helios/views.py:2161 helios/views.py:2238
 msgid "Invalid email address"
 msgstr "Ungültige E-Mail-Adresse"
 
-#: helios/views.py:2173
+#: helios/views.py:2175
 msgid "Opt-Out Confirmation Sent"
 msgstr "Bestätigung der Abbestellung gesendet"
 
-#: helios/views.py:2174
+#: helios/views.py:2176
 msgid "We have sent you a confirmation email. Please click the link in the email to complete your opt-out request."
 msgstr "Wir haben Ihnen eine Bestätigungs-E-Mail gesendet. Bitte klicken Sie auf den Link in der E-Mail, um die Abbestellung abzuschließen."
 
-#: helios/views.py:2188 helios/templates/optout_confirm_form.html:44
+#: helios/views.py:2190 helios/templates/optout_confirm_form.html:44
 msgid "Confirm Opt-Out"
 msgstr "Abbestellung bestätigen"
 
-#: helios/views.py:2189
+#: helios/views.py:2191
 msgid "Please confirm that you want to opt out of all Helios voting system emails."
 msgstr "Bitte bestätigen Sie, dass Sie keine E-Mails des Wahlsystems Helios mehr erhalten möchten."
 
-#: helios/views.py:2204
+#: helios/views.py:2206
 msgid "Successfully Opted Out"
 msgstr "Erfolgreich abbestellt"
 
-#: helios/views.py:2205
+#: helios/views.py:2207
 #, python-format
 msgid "The email address %(email)s has been successfully opted out of all Helios emails."
 msgstr "Die E-Mail-Adresse %(email)s erhält keine Helios-E-Mails mehr."
 
-#: helios/views.py:2216 helios/views.py:2226 helios/views.py:2234
+#: helios/views.py:2218 helios/views.py:2228 helios/views.py:2236
 msgid "Opt Back Into Helios Emails"
 msgstr "Helios-E-Mails wieder erhalten"
 
-#: helios/views.py:2217 helios/views.py:2227 helios/views.py:2235
+#: helios/views.py:2219 helios/views.py:2229 helios/views.py:2237
 msgid "Enter your email address to resume receiving emails from Helios voting system."
 msgstr "Geben Sie Ihre E-Mail-Adresse ein, um wieder E-Mails des Wahlsystems Helios zu erhalten."
 
-#: helios/views.py:2254
+#: helios/views.py:2256
 msgid "Opt-In Confirmation Sent"
 msgstr "Bestätigung gesendet"
 
-#: helios/views.py:2255
+#: helios/views.py:2257
 msgid "We have sent you a confirmation email. Please click the link in the email to complete your opt-in request."
 msgstr "Wir haben Ihnen eine Bestätigungs-E-Mail gesendet. Bitte klicken Sie auf den Link in der E-Mail, um den erneuten Empfang zu bestätigen."
 
-#: helios/views.py:2273 helios/templates/optout_confirm_form.html:44
+#: helios/views.py:2275 helios/templates/optout_confirm_form.html:44
 msgid "Confirm Opt-In"
 msgstr "E-Mail-Empfang bestätigen"
 
-#: helios/views.py:2274
+#: helios/views.py:2276
 msgid "Please confirm that you want to resume receiving emails from Helios voting system."
 msgstr "Bitte bestätigen Sie, dass Sie wieder E-Mails des Wahlsystems Helios erhalten möchten."
 
-#: helios/views.py:2289
+#: helios/views.py:2291
 msgid "Successfully Opted Back In"
 msgstr "Empfang erfolgreich wieder aktiviert"
 
-#: helios/views.py:2290
+#: helios/views.py:2292
 #, python-format
 msgid "The email address %(email)s has been successfully opted back in to Helios emails."
 msgstr "Die E-Mail-Adresse %(email)s erhält wieder Helios-E-Mails."
@@ -4179,12 +4713,7 @@ msgstr "Vorname"
 msgid "Last name"
 msgstr "Nachname"
 
-#: helios/votergroup.py:24 helios/votergroup.py:29 helios/templates/new_trustee.html:20
-#: helios/templates/new_trustee.html:32 helios/templates/votergroup_prepareelection.html:17 helios/templates/votergroup_view.html:25
-msgid "Email"
-msgstr "E-Mail"
-
-#: helios/votergroup.py:25 helios/templates/election_view.html:227
+#: helios/votergroup.py:25 helios/templates/election_view.html:228
 msgid "Votes"
 msgstr "Stimmen"
 

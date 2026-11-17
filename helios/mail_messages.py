@@ -143,6 +143,42 @@ Helios Voting System
   return subject, body, email.recipient
 
 
+def _batch_summary(email):
+  """how a bulk mailing went, for its administrator (counts as of now)"""
+  from . import mail_status, url_names
+  from .models import EmailBatch
+  from .timezones import format_local
+  batch = EmailBatch.objects.filter(id=email.params.get('batch_id'), election=email.election).first()
+  if batch is None:
+    raise Obsolete('batch_removed')
+  election = email.election
+  counts = mail_status.counts(batch.emails.all())
+  url = settings.SECURE_URL_HOST + reverse(url_names.election.ELECTION_EMAILS, args=[election.uuid])
+  subject = _("Mailing sent: %(election)s") % {'election': election.name}
+  lines = [
+    (_("sent"), counts['sent']),
+    (_("failed"), counts['failed']),
+    (_("bounced so far"), counts['bounced']),
+    (_("not sent (opted out, address suppressed, no longer applicable)"), counts['skipped']),
+  ]
+  body = _("""Your mailing %(mailing)s of %(date)s to the voters of %(election)s has been sent.
+
+%(counts)s
+
+Bounces can still arrive in the coming hours and days. Which voters were not
+reached and why, how to correct a voter's address and how to send the email
+again to the voters not reached:
+
+  %(url)s
+
+--
+%(signature)s
+""") % {'mailing': mail_status.batch_label(batch), 'date': format_local(batch.created_at), 'election': election.name,
+        'counts': '\n'.join('  %s: %d' % (label, n) for label, n in lines), 'url': url,
+        'signature': organizations.for_election(election).mail_signature}
+  return subject, body, None
+
+
 def _password_reminder(email):
   from helios_auth.auth_systems.password import password_reminder
   return password_reminder(email.user)
@@ -158,6 +194,7 @@ COMPOSERS = {
   OutgoingEmail.KIND_OPTOUT_CONFIRM: _optout_confirm,
   OutgoingEmail.KIND_OPTIN_CONFIRM: _optin_confirm,
   OutgoingEmail.KIND_PASSWORD_REMINDER: _password_reminder,
+  OutgoingEmail.KIND_BATCH_SUMMARY: _batch_summary,
 }
 
 

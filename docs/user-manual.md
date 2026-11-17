@@ -131,6 +131,17 @@ send to and click **Send**.
 Later you can use the same page to remind only the voters who haven't voted
 yet.
 
+**email delivery** (on the election page and the voters & ballots page) shows
+what became of the emails: how many were sent, are still being retried,
+failed or bounced, and which voters were not reached and why (e.g. "5.1.1
+recipient unknown"; also as CSV). Once a mailing has been sent, you also get
+a short summary by email. For a voter with a password from Helios, click
+**correct address** to fix a mistyped address; then **send again** sends the
+mailing once more, only to the voters it did not reach. An address that
+bounced for good is no longer emailed, in any election, until you correct it
+or **lift the suppression** (e.g. once a full mailbox has been emptied).
+Whether bounces are recorded at all depends on how the site is set up.
+
 ### 8. While voting is open
 
 The **voters & ballots** page shows how many votes have been cast and each

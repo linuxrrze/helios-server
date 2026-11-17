@@ -274,7 +274,8 @@ Each email gets an `OutgoingEmail` row (kind, recipient, status, attempts,
 error, `sent_at`, Message-ID) and is sent by its own task,
 `send_outgoing_email(id)`. Kinds: bulk mailing, vote-cast confirmation, vote
 removed, information for the administrator, voter password resent, trustee
-homepage link, opt-out and opt-in confirmation, account password reminder. A
+homepage link, opt-out and opt-in confirmation, account password reminder,
+summary of a bulk mailing for its administrator. A
 bulk mailing from the "email voters" page is an `EmailBatch` with the templates
 and variables and one `OutgoingEmail` per voter. Subject and body are rendered
 when the email is sent (`helios/mail_messages.py`) and not stored, as they may
@@ -396,6 +397,36 @@ the status code). A soft or unknown bounce makes it `bounced_soft`;
 `HELIOS_BOUNCE_SOFT_DAYS` count as a hard bounce. Only emails the mail server
 took (`sent`) change, and never from hard back to soft. Lifting a suppression
 keeps the row (`lifted_at`, `lifted_by`); soft bounces before it no longer count.
+
+### Email delivery page
+
+Election administrators see what became of the emails to the voters on
+`/helios/elections/<uuid>/emails/` (`helios/email_views.py`,
+`helios/mail_status.py`; linked from the election page and the voter list
+once the election is frozen): per mailing and for all emails to voters, how
+many were sent, are waiting, being retried (`deferred`), failed, bounced or not
+sent (by reason). A mailing and the mailings that resent it form a chain
+(`EmailBatch.resend_of`); a voter counts as not reached if their latest email
+of the chain failed, bounced or was skipped because their address is
+suppressed. The list of these voters gives a readable reason (common RFC 3463
+codes in words, e.g. "5.1.1 recipient unknown") and can be downloaded as CSV.
+"Send again" creates a new batch for the voters not reached whose address is
+not suppressed (keeping the mailing's choice of voters, e.g. "not voted", and
+refused for an invitation to vote after voting closed). On a voter's page the
+administrator corrects the address of a voter with a Helios password (not of
+voters who log in with an account, whose address comes from their login
+system; only while `can_modify_voters`; opted-out addresses refused), which
+also lifts a suppression of the new address, or lifts the suppression of the
+current one. Site administrators look up, suppress and lift addresses, or lift
+all suppressions, on `/helios/stats/suppressions` (only hashes are stored, so
+the list itself cannot be shown).
+
+With `HELIOS_EMAIL_BATCH_SUMMARY` (default on), a mailing sent from the "email
+voters" page (and each resend) queues the task `email_batch_summary`, which
+checks every 15 minutes whether any of its emails is still to be sent; once
+none is, it mails the counts and a link to the page to the administrator who
+sent it (`KIND_BATCH_SUMMARY`, once per mailing: `EmailBatch.summary_sent_at`).
+Bounces arriving later are only on the page.
 
 ## Public data
 

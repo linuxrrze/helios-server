@@ -1498,6 +1498,11 @@ class EmailBatch(models.Model):
   # checked again right before each email is sent. None: not recorded (a mailing
   # to one voter, or one sent before this was recorded): not checked.
   voter_constraints = models.JSONField(null=True, blank=True, default=None)
+  # a mailing sent again to those of its voters it did not reach (failed, bounced,
+  # suppressed): the first mailing (see helios.mail_status)
+  resend_of = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='resends')
+  # when the summary for the administrator was queued (helios.mail.batch_summary)
+  summary_sent_at = models.DateTimeField(null=True, blank=True)
 
   class Meta:
     app_label = 'helios'
@@ -1538,6 +1543,7 @@ class OutgoingEmail(models.Model):
   KIND_OPTOUT_CONFIRM = 'optout_confirm'
   KIND_OPTIN_CONFIRM = 'optin_confirm'
   KIND_PASSWORD_REMINDER = 'password_reminder'
+  KIND_BATCH_SUMMARY = 'batch_summary'
   KINDS = [
     (KIND_BULK, 'bulk mailing'),
     (KIND_VOTE_CAST, 'vote-cast confirmation'),
@@ -1548,6 +1554,7 @@ class OutgoingEmail(models.Model):
     (KIND_OPTOUT_CONFIRM, 'opt-out confirmation'),
     (KIND_OPTIN_CONFIRM, 'opt-in confirmation'),
     (KIND_PASSWORD_REMINDER, 'account password reminder'),
+    (KIND_BATCH_SUMMARY, 'summary of a bulk mailing for the administrator'),
   ]
   # the address of these is not kept once they are final (only masked, e***@example.org):
   # it would tell which hashed EmailOptOut belongs to whom

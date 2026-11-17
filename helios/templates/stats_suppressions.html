@@ -1,0 +1,51 @@
+{% extends TEMPLATE_BASE %}
+{% load i18n timezone_tags %}
+{% block title %}{% translate "Suppressed email addresses" %}{% endblock %}
+
+{% block content %}
+<h1 class="title">{% translate "Suppressed email addresses" %}</h1>
+<p><a href="{% url "stats@home" %}">{% translate "back to admin" %}</a></p>
+
+<p class="page-lead">{% translate "Helios sends no email to these addresses, in any election: they bounced for good, bounced temporarily several times, or their owner marked an email as spam. Only hashes of the addresses are stored, so the list cannot be shown; look up an address instead." %}</p>
+
+{% if done == "lifted_all" %}<div class="callout callout-success" role="status"><p>{% translate "All suppressions have been lifted." %}</p></div>
+{% elif done == "lifted" %}<div class="callout callout-success" role="status"><p>{% translate "The suppression has been lifted: this address is emailed again." %}</p></div>
+{% elif done == "suppressed" %}<div class="callout callout-success" role="status"><p>{% translate "The address has been suppressed." %}</p></div>{% endif %}
+
+<section class="card" aria-labelledby="supp-counts">
+<h2 id="supp-counts">{% blocktranslate trimmed count counter=total %}{{ counter }} suppressed address{% plural %}{{ counter }} suppressed addresses{% endblocktranslate %}</h2>
+<ul>
+{% for label, n in sources %}<li>{{ label }}: {{ n }}</li>{% endfor %}
+</ul>
+{% if total %}
+<form method="post" action="" onsubmit="return confirm('{% filter escapejs %}{% translate "Lift all suppressions? Helios will email all these addresses again." %}{% endfilter %}');">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+<input type="hidden" name="action" value="lift_all" />
+<button type="submit" class="button danger secondary">{% translate "lift all suppressions" %}</button>
+</form>
+{% endif %}
+</section>
+
+<section class="card" aria-labelledby="supp-lookup">
+<h2 id="supp-lookup">{% translate "Look up an address" %}</h2>
+<form method="get" action="" class="form-narrow" role="search">
+<div class="field{% if error %} has-error{% endif %}">
+  <label for="supp-email">{% translate "Email address" %}</label>
+  {% if error %}<ul class="errorlist" id="supp-error"><li>{{ error }}</li></ul>{% endif %}
+  <input type="email" id="supp-email" name="email" value="{{ email }}" class="input-wide"{% if error %} aria-invalid="true" aria-describedby="supp-error"{% endif %} />
+</div>
+<button type="submit" class="button secondary">{% translate "look up" %}</button>
+</form>
+{% if found %}
+<div class="callout {% if found.suppression %}callout-warning{% else %}callout-info{% endif %}" role="status">
+{% if found.suppression %}
+<p>{% blocktranslate trimmed with address=found.address since=found.suppression.created_at|utc_time %}<strong>{{ address }}</strong> is suppressed since {{ since }}:{% endblocktranslate %} {{ found.reason }}{% if found.suppression.status_code %} ({{ found.suppression.status_code }}){% endif %}</p>
+<form method="post" action=""><input type="hidden" name="csrf_token" value="{{ csrf_token }}" /><input type="hidden" name="email" value="{{ found.address }}" /><input type="hidden" name="action" value="lift" /><button type="submit" class="button secondary">{% translate "lift the suppression" %}</button></form>
+{% else %}
+<p>{% blocktranslate trimmed with address=found.address %}<strong>{{ address }}</strong> is not suppressed.{% endblocktranslate %}</p>
+<form method="post" action=""><input type="hidden" name="csrf_token" value="{{ csrf_token }}" /><input type="hidden" name="email" value="{{ found.address }}" /><input type="hidden" name="action" value="suppress" /><button type="submit" class="button secondary">{% translate "suppress this address" %}</button></form>
+{% endif %}
+</div>
+{% endif %}
+</section>
+{% endblock %}

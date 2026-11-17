@@ -1,0 +1,79 @@
+{% extends TEMPLATE_BASE %}
+{% load i18n timezone_tags %}
+
+{% block title %}{% blocktranslate trimmed with name=election.name %}Email delivery for {{ name }}{% endblocktranslate %}{% endblock %}
+{% block content %}
+<h1 class="title">{{ election.name }} &mdash; {% blocktranslate trimmed with voter=voter.voter_name|default:voter.voter_login_id %}Emails to {{ voter }}{% endblocktranslate %}</h1>
+<p><a href="{% url "election@emails" election.uuid %}">{% translate "back to email delivery" %}</a></p>
+
+{% if done == "changed" %}
+<div class="callout callout-success" role="status"><p>{% translate "The address has been changed. Emails to this voter go to the new address from now on; send the mailing again from the email delivery page." %}</p></div>
+{% elif done == "lifted" %}
+<div class="callout callout-success" role="status"><p>{% translate "The suppression has been lifted: this address is emailed again." %}</p></div>
+{% endif %}
+
+<dl class="summary-list">
+  <div class="summary-row"><dt>{% translate "Voter ID" %}</dt><dd>{{ voter.voter_login_id|default:"" }}</dd></div>
+  <div class="summary-row"><dt>{% translate "Email Address" %}</dt><dd>{{ address|default:"–" }}</dd></div>
+  <div class="summary-row"><dt>{% translate "Suppressed" %}</dt><dd>{% if suppression %}<span class="status-badge status-failed">{% translate "suppressed" %}</span> {{ suppression_reason }}{% if suppression.status_code %} ({{ suppression.status_code }}){% endif %}, {{ suppression.created_at|utc_time }}{% else %}{% translate "no" %}{% endif %}</dd></div>
+</dl>
+
+{% if suppression %}
+<section class="card" aria-labelledby="lift-title">
+<h2 id="lift-title">{% translate "Lift the suppression" %}</h2>
+<p>{% translate "Helios no longer sends any email to this address, in any election. If the problem has been solved (e.g. the mailbox was full or has been set up again), lift the suppression. If the address itself is wrong, correct it instead." %}</p>
+<form method="post" action="{% url "election@emails@voter@lift" election.uuid voter.uuid %}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+<button type="submit" class="button secondary">{% translate "lift the suppression" %}</button>
+</form>
+</section>
+{% endif %}
+
+<section class="card" aria-labelledby="address-title">
+<h2 id="address-title">{% translate "Correct the address" %}</h2>
+{% if not editable %}
+<p>{% translate "This voter logs in with an account; emails go to the address their login system gives. It cannot be changed here." %}</p>
+{% elif not can_modify_voters %}
+<p>{% blocktranslate trimmed with reason=modify_voters_reason %}Voters can no longer be changed: {{ reason }}.{% endblocktranslate %}</p>
+{% else %}
+<form method="post" action="" class="form-narrow" novalidate>
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+<div class="field{% if form.email.errors %} has-error{% endif %}">
+  <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+  <span class="field-hint" id="email-hint">{% translate "The voter's login and password stay the same; only where their emails go changes. A suppression of the new address is lifted." %}</span>
+  {% if form.email.errors %}<ul class="errorlist" id="email-errors">{% for error in form.email.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+  <input type="email" name="email" id="{{ form.email.id_for_label }}" value="{{ form.email.value|default:"" }}" maxlength="250" class="input-wide" autocomplete="off" aria-describedby="email-hint{% if form.email.errors %} email-errors{% endif %}"{% if form.email.errors %} aria-invalid="true"{% endif %} required />
+</div>
+<button type="submit" class="button">{% translate "Save" %}</button>
+</form>
+{% endif %}
+</section>
+
+<section aria-labelledby="emails-title">
+<h2 id="emails-title">{% translate "Emails to this voter" %}</h2>
+{% if rows %}
+<div class="table-scroll">
+<table class="election-table email-table">
+<thead><tr>
+  <th scope="col">{% translate "Email" %}</th>
+  <th scope="col">{% translate "Date" %}</th>
+  <th scope="col">{% translate "Status" %}</th>
+  <th scope="col">{% translate "Reason" %}</th>
+</tr></thead>
+<tbody>
+{% for row in rows %}
+<tr>
+  <th scope="row" class="election-name">{{ row.what }}</th>
+  <td>{{ row.at|utc_time }}</td>
+  <td><span class="status-badge status-{{ row.tone|default:"draft" }}">{{ row.status }}</span></td>
+  <td>{{ row.reason }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% else %}
+<p class="muted">{% translate "No emails have been sent to this voter yet." %}</p>
+{% endif %}
+</section>
+{% endblock %}

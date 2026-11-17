@@ -65,6 +65,12 @@ ELECTION_VOTER="election@voter"
 ELECTION_VOTER_DELETE="election@voter@delete"
 ELECTION_VOTERS_CLEAR="election@voters@clear"
 
+ELECTION_EMAILS="election@emails"
+ELECTION_EMAILS_CSV="election@emails@csv"
+ELECTION_EMAILS_RESEND="election@emails@resend"
+ELECTION_EMAILS_VOTER="election@emails@voter"
+ELECTION_EMAILS_VOTER_LIFT="election@emails@voter@lift"
+
 ELECTION_BALLOTS_LIST="election@ballots@list"
 ELECTION_BALLOTS_VOTER="election@ballots@voter"
 ELECTION_BALLOTS_VOTER_LAST="election@ballots@voter@last"

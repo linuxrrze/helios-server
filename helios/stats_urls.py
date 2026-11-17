@@ -7,6 +7,7 @@ Ben Adida (ben@adida.net)
 from django.urls import path
 
 from helios.stats_views import (home, force_queue, set_announcement, elections, recent_problem_elections, recent_votes, user_search, deleted_elections, undelete_election)
+from helios.email_views import suppressions
 import helios.stats_url_names as names
 
 urlpatterns = [
@@ -19,4 +20,5 @@ urlpatterns = [
     path('user-search', user_search, name=names.STATS_USER_SEARCH),
     path('deleted-elections', deleted_elections, name=names.STATS_DELETED_ELECTIONS),
     path('deleted-elections/<str:election_uuid>/undelete', undelete_election, name=names.STATS_UNDELETE_ELECTION),
+    path('suppressions', suppressions, name=names.STATS_SUPPRESSIONS),
 ]

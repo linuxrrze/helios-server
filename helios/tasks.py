@@ -112,6 +112,12 @@ def send_outgoing_email(outgoing_email_id):
 
 
 @task()
+def email_batch_summary(batch_id):
+    """the summary of a bulk mailing for its administrator, once it is sent (see helios.mail.batch_summary)"""
+    mail.batch_summary(batch_id)
+
+
+@task()
 def single_voter_email(voter_uuid, subject_template=None, body_template=None, extra_vars=None, language=None,
                        outgoing_email_id=None):
     """
