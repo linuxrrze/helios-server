@@ -50,6 +50,9 @@ from .security import (election_view, election_admin,
 from .view_utils import success, failure, return_json, render_template, render_text_template, find_user_to_add_as_admin
 from .workflows import homomorphic
 
+# elections deleted by their administrators or site administrators
+deletion_logger = logging.getLogger('helios.deletion')
+
 # Parameters for everything
 ELGAMAL_PARAMS = elgamal.Cryptosystem()
 
@@ -445,15 +448,19 @@ def one_election_view(request, election):
     admin_steps = election_progress.admin_steps(election, trustees)
     freeze_issues = election_progress.issues_with_links(election) if not election.frozen_at else []
     can_send_emails, email_disabled_reason = voter_email_state(election)
+    has_ballots_p = election.has_cast_ballots
+    can_delete_p = election.can_be_deleted_by(user)
   else:
     admin_steps, freeze_issues = None, []
     can_send_emails, email_disabled_reason = False, None
+    has_ballots_p = can_delete_p = False
 
   return render_template(request, 'election_view',
                          {'election' : election, 'trustees': trustees, 'admin_p': admin_p, 'user': user,
                           'status_key': status_key, 'status_label': status_label,
                           'admin_steps': admin_steps, 'freeze_issues': freeze_issues,
                           'can_send_emails': can_send_emails, 'email_disabled_reason': email_disabled_reason,
+                          'has_ballots_p': has_ballots_p, 'can_delete_p': can_delete_p,
                           'voter': voter, 'votes': votes, 'notregistered': notregistered, 'eligible_p': eligible_p,
                           'can_feature_p': can_feature_p, 'election_url' : election_url,
                           'organizations_p': organizations.enabled(),
@@ -1337,11 +1344,24 @@ def one_election_archive(request, election):
 def one_election_delete(request, election):
   """
   Soft delete an election. The election will be hidden from all users except site admins.
-  Requires POST request with CSRF protection.
+  Requires POST request with CSRF protection. Once a ballot has been cast, only
+  site administrators may delete it (Election.can_be_deleted_by), which the
+  election's log and the server log ("helios.deletion") record.
   """
   check_csrf(request)
 
+  user = get_user(request)
+  if not election.can_be_deleted_by(user):
+    return HttpResponseForbidden(_("This election has ballots and can no longer be deleted; you can archive it."))
+
+  num_ballots = CastVote.objects.filter(voter__election=election).count()
   election.soft_delete()
+  if num_ballots:
+    deletion_logger.warning("election %s (%s) deleted by site administrator %s:%s although %d ballots had been cast",
+                            election.uuid, election.short_name, user.user_type, user.user_id, num_ballots)
+  else:
+    deletion_logger.info("election %s (%s) deleted by %s:%s",
+                         election.uuid, election.short_name, user.user_type, user.user_id)
 
   # After deletion, redirect to admin's election list since the election is now invisible
   return HttpResponseRedirect(settings.SECURE_URL_HOST + reverse(url_names.ELECTIONS_ADMINISTERED))

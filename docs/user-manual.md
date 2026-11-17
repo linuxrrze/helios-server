@@ -200,6 +200,14 @@ Everyone can now see the result on the election page.
 
 ![The published result](images/manual/results-public.png)
 
+### 11. Archive the election
+
+Under **More actions**, **archive it** hides the election from your list of
+elections; **unarchive it** brings it back. An archived election can be
+deleted, but only as long as nobody has cast a ballot: once ballots have been
+cast, you can archive it but no longer delete it (site administrators still
+can, and the election's log records it).
+
 ### Voter groups
 
 For bodies that vote again and again (a council, a board), keep the members

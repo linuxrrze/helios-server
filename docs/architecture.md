@@ -58,7 +58,8 @@ All in `helios/models.py` except `User`:
   for each lifecycle step, and after tallying the `encrypted_tally` and
   `result`. Has a creator (`admin`) plus optional co-administrators
   (`admins`). Deleting an election is a soft delete (`deleted_at`); the
-  default manager hides deleted elections.
+  default manager hides deleted elections. Once a ballot has been cast, only
+  site administrators may delete it (`Election.can_be_deleted_by`).
 - **`Voter`**: one entry on an election's voter list. Either linked to a
   `User` (Google, GitHub, CAS, ...) or, for password voters, holding a
   login ID and a generated password directly. Keeps a copy of the voter's

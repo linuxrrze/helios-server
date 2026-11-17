@@ -269,6 +269,23 @@ class Election(HeliosModel):
     return self.deleted_at is not None
 
   @property
+  def has_cast_ballots(self):
+    """has a ballot been cast (also one not verified yet, or one replaced since)?"""
+    return CastVote.objects.filter(voter__election=self).exists()
+
+  def can_be_deleted_by(self, user):
+    """
+    May USER (soft-)delete the election? Its administrators only as long as no
+    ballot has been cast; after that they can only archive it. Site
+    administrators still can (e.g. for legal reasons or abuse); soft_delete
+    then records that ballots had been cast.
+    """
+    from helios.security import user_can_admin_election
+    if not user_can_admin_election(user, self):
+      return False
+    return user.admin_p or not self.has_cast_ballots
+
+  @property
   def description_bleached(self):
     return nh3.clean(self.description,
                      tags={'a', 'abbr', 'acronym', 'b', 'blockquote', 'code', 'em', 'i', 'li', 'ol', 'strong', 'ul',
@@ -739,10 +756,12 @@ class Election(HeliosModel):
   def soft_delete(self):
     """
     Soft delete the election by setting deleted_at timestamp.
-    The election will be hidden from default queries.
+    The election will be hidden from default queries. If ballots had been cast
+    (only a site administrator may then delete it, see can_be_deleted_by), the
+    log says so.
     """
     self.deleted_at = datetime.datetime.utcnow()
-    self.append_log(ElectionLog.DELETED)
+    self.append_log(ElectionLog.DELETED_WITH_BALLOTS if self.has_cast_ballots else ElectionLog.DELETED)
     self.save()
 
   def undelete(self):
@@ -920,6 +939,7 @@ class ElectionLog(models.Model):
   VOTER_FILE_ADDED = "voter file added"
   DECRYPTIONS_COMBINED = "decryptions combined"
   DELETED = "deleted"
+  DELETED_WITH_BALLOTS = "deleted by a site administrator although ballots had been cast"
   UNDELETED = "undeleted"
   VOTING_AUTO_CLOSED = "voting closed automatically: all voters have voted"
   AUTOMATIC_TALLY_FAILED = "automatic tally failed: decryptions could not be combined"
@@ -929,6 +949,7 @@ class ElectionLog(models.Model):
   MESSAGES = {
     VOTING_AUTO_CLOSED: gettext_lazy('Voting closed automatically: all voters have voted'),
     AUTOMATIC_TALLY_FAILED: gettext_lazy('The result could not be computed automatically'),
+    DELETED_WITH_BALLOTS: gettext_lazy('Deleted by a site administrator although ballots had been cast'),
   }
 
   election = models.ForeignKey(Election, on_delete=models.CASCADE)
