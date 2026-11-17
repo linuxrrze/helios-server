@@ -491,6 +491,8 @@ table.pretty .helptext { margin-top: 4px; }
 .group-table .group-name .short-name { display: block; font-size: .85rem; }
 .group-table .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .group-table .group-term { min-width: 9rem; }
+.import-errors { margin: 0 0 1em; padding-left: 1.25em; }
+.member-table .plain-list { margin: 0; padding: 0; list-style: none; }
 .content-body section.card > h2:first-child { margin-top: 0; font-size: 1.2rem; }
 /* results on phones: a shorter bar so that the share stays visible */
 @media only screen and (max-width: 40em) {

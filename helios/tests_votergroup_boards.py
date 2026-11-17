@@ -1,10 +1,16 @@
 """
 Tests for voter groups as boards: name and term of office of a group,
-initials, person group and status of its members, members without a vote.
+initials, person group and status of its members, members without a vote, and
+the CSV export and import of the members.
 """
 
+import codecs
+import csv
 import datetime
+import io
+from unittest import mock
 
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 
 from helios import votergroup as vg
@@ -320,3 +326,281 @@ class MemberEditTests(_BoardTestCase):
     self.assertEqual(VoterGroupMember.objects.get(uuid='pm1').votes, 1)
     self.assertNotContains(self.client.get('/helios/votergroup/view/p1'), 'memberedit')
 
+
+class CsvExportTests(_BoardTestCase):
+
+  def test_export(self):
+    VoterGroupMember.objects.filter(uuid='m2').update(person_group='Students', status='deputy', initials='BB', votes=0)
+    self.member('m3', '=cmd', 'Evil', 'evil@example.org')
+    self.login(self.coadmin)
+    response = self.client.get('/helios/votergroup/export/g1')
+    self.assertEqual(response.status_code, 200)
+    self.assertEqual(response['Content-Type'], 'text/csv; charset=utf-8')
+    self.assertIn('members-council.csv', response['Content-Disposition'])
+    content = response.content.decode('utf-8')
+    self.assertTrue(content.startswith('﻿'))
+    rows = list(csv.reader(io.StringIO(content[1:])))
+    self.assertEqual(rows, [
+      ['first_name', 'last_name', 'email', 'votes', 'initials', 'person_group', 'status'],
+      ['Bea', 'Bach', 'bea@example.org', '0', 'BB', 'Students', 'deputy'],
+      ['Anna', 'Arp', 'anna@example.org', '2', '', '', 'member'],
+      ["'=cmd", 'Evil', 'evil@example.org', '1', '', '', 'member'],
+    ])
+
+  def test_access(self):
+    self.login(self.stranger)
+    self.assertEqual(self.client.get('/helios/votergroup/export/g1').status_code, 404)
+    self.login(self.siteadmin)
+    response = self.client.get('/helios/votergroup/export/g1')
+    self.assertEqual(response.status_code, 403)
+    self.assertNotIn(b'anna@example.org', response.content)
+    self.assertNotContains(self.client.get('/helios/votergroup/view/g1'), '/helios/votergroup/export/')
+    # a provisioned group can be exported by its administrators
+    self.provisioned_group()
+    self.login(self.coadmin)
+    response = self.client.get('/helios/votergroup/export/p1')
+    self.assertContains(response, 'paul@example.org')
+
+
+class CsvImportTests(_BoardTestCase):
+
+  def upload(self, content, remove_missing=False, group='g1', encoding='utf-8', headers=None, **extra):
+    data = content.encode(encoding) if isinstance(content, str) else content
+    post = {'csrf_token': 'tok', 'members_file': SimpleUploadedFile('members.csv', data, content_type='text/csv')}
+    if remove_missing:
+      post['remove_missing'] = 'on'
+    post.update(extra)
+    return self.client.post('/helios/votergroup/import/%s' % group, post, **(headers or {}))
+
+  def preview(self, group='g1'):
+    return self.client.get('/helios/votergroup/import/%s/preview' % group)
+
+  def confirm(self, group='g1', **extra):
+    response = self.preview(group)
+    data = {'csrf_token': 'tok', 'confirm': '1', 'digest': response.context['digest']}
+    data.update(extra)
+    return self.client.post('/helios/votergroup/import/%s/preview' % group, data)
+
+  def emails(self):
+    return sorted(m.email for m in self.group.get_members())
+
+  def test_english_headers_with_commas(self):
+    self.login(self.owner)
+    response = self.upload('first_name,last_name,email,votes,initials,person_group,status\n'
+                           'Anna,Arp,ANNA@example.org,3,AA,Professors,member\n'
+                           'Bea,Bach,bea@example.org,1,,,\n'
+                           'Cleo,Cole,cleo@example.org,0,CC,Students,advisory\n')
+    self.assertRedirectsTo(response, '/helios/votergroup/import/g1/preview')
+    response = self.preview()
+    plan = response.context['plan']
+    self.assertEqual((len(plan['add']), len(plan['update']), len(plan['remove']), plan['unchanged']), (1, 1, 0, 1))
+    self.assertContains(response, 'Cole, Cleo')
+    self.assertContains(response, '2 &rarr; 3')
+    # nothing changed yet
+    self.assertEqual(self.emails(), ['anna@example.org', 'bea@example.org'])
+    with self.assertLogs('helios.votergroup', 'INFO') as logs:
+      response = self.confirm()
+    self.assertRedirectsTo(response, '/helios/votergroup/view/g1')
+    self.assertEqual(self.emails(), ['ANNA@example.org', 'bea@example.org', 'cleo@example.org'])
+    anna = VoterGroupMember.objects.get(uuid='m1')
+    self.assertEqual((anna.votes, anna.initials, anna.person_group), (3, 'AA', 'Professors'))
+    cleo = VoterGroupMember.objects.get(email='cleo@example.org')
+    self.assertEqual((cleo.votes, cleo.status, cleo.person_group), (0, 'advisory', 'Students'))
+    entry = self.reload().get_log().get()
+    self.assertEqual(entry.message, 'Members imported from a file: 1 added, 1 updated, 0 removed')
+    self.assertEqual(entry.params, {'added': 1, 'updated': 1, 'removed': 0})
+    self.assertIn('1 added, 1 updated, 0 removed', logs.output[0])
+    self.assertNotIn('example.org', logs.output[0].split('by')[0])
+    # the notice on the group's page, once; the pending import is gone
+    self.assertContains(self.client.get('/helios/votergroup/view/g1'), 'Members imported: 1 added')
+    self.assertNotContains(self.client.get('/helios/votergroup/view/g1'), 'Members imported: 1 added')
+    self.assertNotIn('votergroup_import', self.client.session)
+
+  def test_german_headers_semicolons_bom_and_windows_encoding(self):
+    self.login(self.owner)
+    content = ('Vorname;Nachname;E-Mail;Stimmen;Kürzel;Personengruppe;Status\r\n'
+               'Jürgen;Müller;juergen@example.org;0;JM;Wissenschaftliche Mitarbeitende;Ersatzmitglied\r\n'
+               'Gisela;Groß;gisela@example.org;;GG;Studierende;beratend\r\n'
+               'Hans;Huber;hans@example.org;1;;;Gast\r\n'
+               'Bea;Bach;bea@example.org;1;;;Mitglied\r\n')
+    for encoding, data in [('utf-8-bom', codecs.BOM_UTF8 + content.encode('utf-8')), ('cp1252', content.encode('cp1252')),
+                           ('utf-16', content.encode('utf-16'))]:
+      VoterGroupMember.objects.filter(email__in=['juergen@example.org', 'gisela@example.org', 'hans@example.org']).delete()
+      self.upload(data)
+      plan = self.preview().context['plan']
+      self.assertEqual((len(plan['add']), len(plan['update']), plan['unchanged']), (3, 0, 1), encoding)
+      self.confirm()
+      juergen = VoterGroupMember.objects.get(email='juergen@example.org')
+      self.assertEqual((juergen.first_name, juergen.last_name, juergen.votes, juergen.status, juergen.person_group),
+                       ('Jürgen', 'Müller', 0, 'deputy', 'Wissenschaftliche Mitarbeitende'), encoding)
+      gisela = VoterGroupMember.objects.get(email='gisela@example.org')
+      self.assertEqual((gisela.last_name, gisela.votes, gisela.status), ('Groß', 1, 'advisory'), encoding)
+      self.assertEqual(VoterGroupMember.objects.get(email='hans@example.org').status, 'guest')
+
+  def test_name_column_and_missing_columns_keep_values(self):
+    self.login(self.owner)
+    # "Name" is the last name; without a votes column Anna keeps her 2 votes
+    self.upload('Vorname,Name,E-Mail,Bemerkung\nAnna,Arp-Berg,anna@example.org,x\nNeu,Mann,neu@example.org,y\n')
+    response = self.preview()
+    self.assertContains(response, 'Ignored columns: Bemerkung.')
+    self.assertContains(response, 'left unchanged for existing members: Votes, Initials, Person group, Status')
+    self.confirm()
+    anna = VoterGroupMember.objects.get(uuid='m1')
+    self.assertEqual((anna.last_name, anna.votes), ('Arp-Berg', 2))
+    new = VoterGroupMember.objects.get(email='neu@example.org')
+    self.assertEqual((new.votes, new.status), (1, 'member'))
+
+  def test_remove_only_when_asked(self):
+    self.login(self.owner)
+    content = 'first_name,last_name,email\nAnna,Arp,anna@example.org\n'
+    self.upload(content)
+    self.assertEqual(self.preview().context['plan']['remove'], [])
+    self.assertContains(self.preview(), 'Members who are not in the file stay in the group.')
+    self.upload(content, remove_missing=True)
+    response = self.preview()
+    self.assertEqual([m.uuid for m in response.context['plan']['remove']], ['m2'])
+    self.assertContains(response, 'Bach, Bea')
+    self.confirm()
+    self.assertEqual(self.emails(), ['anna@example.org'])
+    self.assertEqual(self.reload().get_log().get().params, {'added': 0, 'updated': 0, 'removed': 1})
+
+  def test_errors_with_line_numbers_reject_everything(self):
+    self.login(self.owner)
+    response = self.upload('first_name,last_name,email,votes,status\n'
+                           'Neu,Mann,neu@example.org,1,member\n'
+                           '\n'
+                           'Bad,Mail,not-an-address,1,member\n'
+                           'Bad,Status,bs@example.org,1,chair\n'
+                           'Bad,Votes,bv@example.org,many,member\n'
+                           'Too,Many,tm@example.org,101,member\n'
+                           'Neu,Again,NEU@example.org,1,member\n')
+    self.assertEqual(response.status_code, 200)
+    lines = [line for line, _message in response.context['errors']]
+    self.assertEqual(lines, [4, 5, 6, 7, 8])
+    self.assertContains(response, 'Line 4:')
+    self.assertContains(response, 'Unknown status')
+    self.assertContains(response, 'already in line 2')
+    self.assertContains(response, 'The file was not imported.')
+    self.assertNotIn('votergroup_import', self.client.session)
+    self.assertEqual(self.emails(), ['anna@example.org', 'bea@example.org'])
+    self.assertEqual(self.actions(), [])
+    # in German
+    response = self.upload('Vorname;Nachname;E-Mail\nA;B;kaputt\n', headers={'HTTP_ACCEPT_LANGUAGE': 'de'})
+    self.assertContains(response, 'Zeile 2:')
+
+  def test_file_level_errors(self):
+    self.login(self.owner)
+    response = self.upload('vorname,email\nAnna,anna@example.org\n')
+    self.assertContains(response, 'The header row lacks the column(s) last_name.')
+    response = self.upload('first_name,last_name,email\n')
+    self.assertContains(response, 'The file contains no members.')
+    response = self.upload('')
+    self.assertEqual(response.status_code, 200)
+    self.assertFalse(response.context['form'].is_valid())
+    with mock.patch.object(vg, 'MAX_IMPORT_ROWS', 2):
+      response = self.upload('first_name,last_name,email\nA,B,a@example.org\nC,D,c@example.org\nE,F,e@example.org\n')
+      self.assertContains(response, 'too many rows (at most 2)')
+    with mock.patch.object(vg, 'MAX_IMPORT_BYTES', 10):
+      response = self.upload('first_name,last_name,email\nA,B,a@example.org\n')
+      self.assertContains(response, 'The file is too large')
+    self.assertEqual(self.actions(), [])
+
+  def test_ambiguous_address_in_group(self):
+    self.member('m3', 'Anna', 'Arp', 'Anna@example.org')
+    self.login(self.owner)
+    response = self.upload('first_name,last_name,email\nAnna,Arp,anna@example.org\n')
+    self.assertContains(response, 'Several members of the group have the address anna@example.org')
+
+  def test_members_changed_after_preview(self):
+    self.login(self.owner)
+    self.upload('first_name,last_name,email,votes\nAnna,Arp,anna@example.org,5\n')
+    digest = self.preview().context['digest']
+    VoterGroupMember.objects.filter(uuid='m1').update(votes=4)
+    response = self.client.post('/helios/votergroup/import/g1/preview', {'csrf_token': 'tok', 'digest': digest})
+    self.assertEqual(response.status_code, 200)
+    self.assertContains(response, 'The members of the group changed after the preview was shown.')
+    self.assertEqual(VoterGroupMember.objects.get(uuid='m1').votes, 4)
+    self.confirm()
+    self.assertEqual(VoterGroupMember.objects.get(uuid='m1').votes, 5)
+
+  def test_cancel_and_missing_pending_import(self):
+    self.login(self.owner)
+    self.assertRedirectsTo(self.preview(), '/helios/votergroup/import/g1')
+    self.upload('first_name,last_name,email\nNeu,Mann,neu@example.org\n')
+    response = self.client.post('/helios/votergroup/import/g1/preview', {'csrf_token': 'tok', 'cancel': '1'})
+    self.assertRedirectsTo(response, '/helios/votergroup/view/g1')
+    self.assertNotIn('votergroup_import', self.client.session)
+    self.assertEqual(self.emails(), ['anna@example.org', 'bea@example.org'])
+    # a pending import is only for its group
+    VoterGroup.objects.create(admin=self.owner, uuid='g2', short_name='senate')
+    self.upload('first_name,last_name,email\nNeu,Mann,neu@example.org\n')
+    self.assertRedirectsTo(self.preview('g2'), '/helios/votergroup/import/g2')
+
+  def test_export_then_import_changes_nothing(self):
+    VoterGroupMember.objects.filter(uuid='m2').update(person_group='Students', status='deputy', initials='BB', votes=0)
+    self.member('m3', '-Dash', 'Evil', 'evil@example.org')
+    self.login(self.owner)
+    exported = self.client.get('/helios/votergroup/export/g1').content
+    self.upload(exported, remove_missing=True)
+    response = self.preview()
+    plan = response.context['plan']
+    self.assertEqual((len(plan['add']), len(plan['update']), len(plan['remove']), plan['unchanged']), (0, 0, 0, 3))
+    self.assertContains(response, 'The file contains no changes.')
+
+  def test_provisioned_group_refused(self):
+    self.provisioned_group()
+    self.login(self.coadmin)
+    self.assertEqual(self.client.get('/helios/votergroup/import/p1').status_code, 403)
+    self.assertEqual(self.upload('first_name,last_name,email\nA,B,a@example.org\n', group='p1').status_code, 403)
+    self.assertEqual(self.preview('p1').status_code, 403)
+    self.assertEqual(VoterGroupMember.objects.filter(group__uuid='p1').count(), 1)
+    self.assertNotContains(self.client.get('/helios/votergroup/view/p1'), '/helios/votergroup/import/')
+
+  def test_access_and_csrf(self):
+    content = 'first_name,last_name,email\nNeu,Mann,neu@example.org\n'
+    self.login(self.owner)
+    self.assertEqual(self.upload(content, csrf_token='wrong').status_code, 400)
+    self.upload(content)
+    response = self.client.post('/helios/votergroup/import/g1/preview', {'csrf_token': 'wrong', 'digest': 'x'})
+    self.assertEqual(response.status_code, 400)
+    self.assertEqual(self.client.get('/helios/votergroup/import/g1').status_code, 200)
+    self.login(self.stranger)
+    for url in ['/helios/votergroup/import/g1', '/helios/votergroup/import/g1/preview']:
+      self.assertEqual(self.client.get(url).status_code, 404, url)
+    self.assertEqual(self.upload(content).status_code, 404)
+    self.login(self.siteadmin)
+    for url in ['/helios/votergroup/import/g1', '/helios/votergroup/import/g1/preview']:
+      self.assertEqual(self.client.get(url).status_code, 403, url)
+    self.assertEqual(self.upload(content).status_code, 403)
+    self.assertEqual(self.emails(), ['anna@example.org', 'bea@example.org'])
+
+  def test_breadcrumbs(self):
+    self.login(self.owner)
+    self.upload('first_name,last_name,email\nNeu,Mann,neu@example.org\n')
+    response = self.preview()
+    self.assertContains(response, 'href="/helios/votergroup/import/g1"')
+    self.assertContains(response, 'href="/helios/votergroup/view/g1"')
+
+
+class CsvParseTests(TestCase):
+
+  def test_delimiter(self):
+    self.assertEqual(vg.sniff_delimiter('a;b;c'), ';')
+    self.assertEqual(vg.sniff_delimiter('a,b,c'), ',')
+    self.assertEqual(vg.sniff_delimiter('a\tb\tc'), '\t')
+    self.assertEqual(vg.sniff_delimiter('email'), ',')
+
+  def test_quoted_fields_and_formula_prefix(self):
+    rows, columns, errors, ignored = vg.parse_member_csv(
+      b'"first_name";"last_name";"email"\n"\'=A";"Doe; Jr.";"a@example.org"\n')
+    self.assertEqual(errors, [])
+    self.assertEqual(rows, [{'first_name': '=A', 'last_name': 'Doe; Jr.', 'email': 'a@example.org', 'line': 2}])
+    self.assertEqual(vg.csv_safe('@x'), "'@x")
+    self.assertEqual(vg.csv_safe("O'Brien"), "O'Brien")
+
+  def test_status_words(self):
+    rows, _columns, errors, _ignored = vg.parse_member_csv(
+      'first_name,last_name,email,status\n'
+      'A,B,a@example.org,Deputy member\nC,D,c@example.org,BERATENDES MITGLIED\nE,F,e@example.org,guest\n'.encode())
+    self.assertEqual(errors, [])
+    self.assertEqual([r['status'] for r in rows], ['deputy', 'advisory', 'guest'])

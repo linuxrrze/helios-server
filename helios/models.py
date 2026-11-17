@@ -2088,8 +2088,8 @@ class VoterGroupLog(models.Model):
   appear only with their masked address ("a***@example.org") and number of
   votes, so the log does not keep a copy of former members; administrators
   appear with name and account, as on the group's administrators page
-  (accountability for who had access to the member list); provisioning and
-  prepared elections are recorded as counts. The
+  (accountability for who had access to the member list); provisioning,
+  imports from a file and prepared elections are recorded as counts. The
   group's own name and term of office are no personal data and recorded as
   they are.
   """
@@ -2100,6 +2100,7 @@ class VoterGroupLog(models.Model):
   MEMBER_ADDED = 'member added'
   MEMBER_CHANGED = 'member changed'
   MEMBER_REMOVED = 'member removed'
+  MEMBERS_IMPORTED = 'members imported'
   ADMIN_ADDED = 'admin added'
   ADMIN_REMOVED = 'admin removed'
   ADMIN_LEFT = 'admin left'
@@ -2115,6 +2116,7 @@ class VoterGroupLog(models.Model):
     MEMBER_ADDED: gettext_lazy('Member %(email)s added with %(votes)s vote(s)'),
     MEMBER_CHANGED: gettext_lazy('Member %(email)s changed, now with %(votes)s vote(s)'),
     MEMBER_REMOVED: gettext_lazy('Member %(email)s removed'),
+    MEMBERS_IMPORTED: gettext_lazy('Members imported from a file: %(added)s added, %(updated)s updated, %(removed)s removed'),
     ADMIN_ADDED: gettext_lazy('Administrator %(admin)s added'),
     ADMIN_REMOVED: gettext_lazy('Administrator %(admin)s removed'),
     ADMIN_LEFT: gettext_lazy('Administrator %(admin)s left the group'),

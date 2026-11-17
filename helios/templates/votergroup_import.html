@@ -1,0 +1,42 @@
+{% extends TEMPLATE_BASE %}
+{% load i18n %}
+{% block title %}{{group.display_name}} &mdash; {% translate "Import members" %}{% endblock %}
+{% block content %}
+<h1 class="title">{% blocktranslate trimmed with name=group.short_name %}Import members into voter group {{name}}{% endblocktranslate %}</h1>
+
+{% if errors %}
+<div class="callout callout-danger" role="alert">
+  <span class="callout-title">{% translate "The file was not imported. Please correct it and upload it again:" %}</span>
+  <ul class="import-errors">
+  {% for line, message in errors %}<li>{% if line %}{% blocktranslate trimmed %}Line {{line}}:{% endblocktranslate %} {% endif %}{{message}}</li>{% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<p>{% translate "Upload a CSV file with a header row, e.g. one exported from a spreadsheet. Members are matched by their email address: members already in the group are updated, the others are added. You will see a preview before anything is changed." %}</p>
+<div class="table-scroll">
+<table class="voters-table">
+  <caption>{% translate "Columns (in any order)" %}</caption>
+  <thead><tr><th scope="col">{% translate "Column" %}</th><th scope="col">{% translate "Also accepted" %}</th><th scope="col">{% translate "Content" %}</th></tr></thead>
+  <tbody>
+  <tr><th scope="row"><code>first_name</code></th><td><code>Vorname</code></td><td>{% translate "required" %}</td></tr>
+  <tr><th scope="row"><code>last_name</code></th><td><code>Nachname</code>, <code>Name</code></td><td>{% translate "required" %}</td></tr>
+  <tr><th scope="row"><code>email</code></th><td><code>E-Mail</code></td><td>{% translate "required; identifies the member" %}</td></tr>
+  <tr><th scope="row"><code>votes</code></th><td><code>Stimmen</code></td><td>{% translate "number of votes, 0 for no voting right; empty: 1" %}</td></tr>
+  <tr><th scope="row"><code>initials</code></th><td><code>Kürzel</code></td><td>{% translate "optional" %}</td></tr>
+  <tr><th scope="row"><code>person_group</code></th><td><code>Personengruppe</code></td><td>{% translate "optional, e.g. Professors" %}</td></tr>
+  <tr><th scope="row"><code>status</code></th><td><code>Status</code></td><td>{% translate "member, deputy, advisory or guest (also Mitglied, Ersatzmitglied, beratend, Gast); empty: member" %}</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="muted">{% blocktranslate trimmed %}Separated by commas or semicolons, UTF-8 or Windows encoding; at most {{max_rows}} rows and {{max_kb}} kB. If a column is missing, existing members keep their value. The member list you download from the group's page has the right format.{% endblocktranslate %}</p>
+
+<form class="prettyform form-narrow" action="" method="POST" enctype="multipart/form-data" id="import_members_form" novalidate>
+  <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
+  {% include "_form_fields.html" with form=form %}
+  <div class="actions">
+    <button type="submit" class="button" id="next_button">{% translate "Upload and preview" %}</button>
+    <a href="{% url "votergroup@view" group.uuid %}">{% translate "cancel" %}</a>
+  </div>
+</form>
+{% endblock %}

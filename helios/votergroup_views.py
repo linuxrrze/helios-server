@@ -13,14 +13,17 @@ log) and recorded in the group's log (VoterGroupLog), shown on the group's page
 to its administrators.
 """
 
+import hashlib
+import json
 import logging
+import time
 import uuid
 
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.db import IntegrityError, transaction
-from django.http import Http404, HttpResponseForbidden, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseForbidden, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.translation import gettext as _, pgettext
 from django.views.decorators.http import require_http_methods, require_POST
@@ -228,7 +231,7 @@ def votergroup_view(request, votergroup_uuid):
   return render_template(request, "votergroup_view", {
     'group': group, 'members': members, 'columns': _member_columns(members),
     'num_votes': sum(m.votes for m in members), 'admins': group.get_admins(), 'log_page': log_page,
-    'can_transfer': _can_transfer(user, group)})
+    'can_transfer': _can_transfer(user, group), 'notice': request.session.pop(NOTICE_SESSION_KEY, None)})
 
 
 @login_required
@@ -603,3 +606,149 @@ def votergroup_transfer(request, votergroup_uuid):
     'group': group, 'form': form, 'candidates': candidates, 'confirm': confirm, 'new_owner': new_owner,
     'matching_users': matching_users, 'by_email': by_email, 'is_owner': group.admin_id == user.pk})
 
+
+##
+## the members as a CSV file
+##
+## Export: the member list for the group's administrators (also of a
+## provisioned group). Import (not for provisioned groups): upload, preview,
+## confirm. The parsed rows wait in the session (no file is kept) until they
+## are imported or the upload is replaced; the preview is recomputed against
+## the current members, and the import is refused when the members changed
+## after the preview was shown.
+##
+
+NOTICE_SESSION_KEY = 'votergroup_notice'
+IMPORT_SESSION_KEY = 'votergroup_import'
+# a pending import is forgotten after this many seconds
+IMPORT_MAX_AGE = 60 * 60
+
+
+@login_required
+def votergroup_export(request, votergroup_uuid):
+  group = _get_group(request, votergroup_uuid)
+  response = HttpResponse(content_type='text/csv; charset=utf-8')
+  response['Content-Disposition'] = 'attachment; filename="members-%s.csv"' % group.short_name
+  # Excel recognizes UTF-8 by the byte order mark
+  response.write('﻿')
+  vg.write_members_csv(response, group.get_members())
+  logger.info('votergroup %s: members exported by %s', group.uuid, _who(get_user(request)))
+  return response
+
+
+def _pending_import(request, group):
+  pending = request.session.get(IMPORT_SESSION_KEY)
+  if not pending or pending.get('group') != group.uuid or time.time() - pending.get('at', 0) > IMPORT_MAX_AGE:
+    return None
+  return pending
+
+
+def _plan_digest(plan):
+  """A fingerprint of what the import would do, to notice changes between
+  preview and confirmation."""
+  summary = [[r['email'].lower() for r in plan['add']],
+             [[m.uuid, sorted((k, str(v[0]), str(v[1])) for k, v in changes.items())] for m, changes in plan['update']],
+             [m.uuid for m in plan['remove']], plan['unchanged']]
+  return hashlib.sha256(json.dumps(summary).encode()).hexdigest()[:32]
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def votergroup_import(request, votergroup_uuid):
+  """Upload the file; errors are shown right away, otherwise the preview."""
+  group = _get_group(request, votergroup_uuid)
+  refused = _refuse_if_provisioned(request, group)
+  if refused:
+    return refused
+  errors = ignored = None
+  if request.method == "GET":
+    form = vg.MemberImportForm()
+  else:
+    check_csrf(request)
+    form = vg.MemberImportForm(request.POST, request.FILES)
+    if form.is_valid():
+      upload = form.cleaned_data['members_file']
+      if upload.size > vg.MAX_IMPORT_BYTES:
+        rows, columns, errors, ignored = [], [], [(None, _('The file is too large (at most %(size)s kB).') % {
+          'size': vg.MAX_IMPORT_BYTES // 1024})], []
+      else:
+        rows, columns, errors, ignored = vg.parse_member_csv(upload.read())
+      user = get_user(request)
+      if not errors:
+        plan = vg.plan_import(list(group.get_members()), rows, columns, form.cleaned_data['remove_missing'])
+        errors = plan['errors']
+      if errors:
+        logger.info('votergroup %s: import by %s refused, %d error(s)', group.uuid, _who(user), len(errors))
+        request.session.pop(IMPORT_SESSION_KEY, None)
+      else:
+        request.session[IMPORT_SESSION_KEY] = {
+          'group': group.uuid, 'at': time.time(), 'rows': rows, 'columns': columns, 'ignored': ignored,
+          'remove_missing': form.cleaned_data['remove_missing']}
+        return _redirect(url_names.VOTERGROUP_IMPORT_PREVIEW, group.uuid)
+
+  return render_template(request, "votergroup_import", {
+    'group': group, 'form': form, 'errors': errors, 'ignored': ignored,
+    'max_rows': vg.MAX_IMPORT_ROWS, 'max_kb': vg.MAX_IMPORT_BYTES // 1024})
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def votergroup_import_preview(request, votergroup_uuid):
+  """What the pending import does; POST with confirm imports it, with cancel
+  forgets it."""
+  group = _get_group(request, votergroup_uuid)
+  refused = _refuse_if_provisioned(request, group)
+  if refused:
+    return refused
+  pending = _pending_import(request, group)
+  if request.method == "POST":
+    check_csrf(request)
+    if 'cancel' in request.POST:
+      request.session.pop(IMPORT_SESSION_KEY, None)
+      return _redirect(url_names.VOTERGROUP_VIEW, group.uuid)
+  if pending is None:
+    # expired, or for another group
+    return _redirect(url_names.VOTERGROUP_IMPORT, group.uuid)
+
+  user = get_user(request)
+  notice = None
+  with transaction.atomic():
+    members = list(group.get_members().select_for_update()) if request.method == "POST" else list(group.get_members())
+    plan = vg.plan_import(members, pending['rows'], pending['columns'], pending['remove_missing'])
+    digest = _plan_digest(plan)
+    if request.method == "POST" and not plan['errors']:
+      if request.POST.get('digest') != digest:
+        notice = _("The members of the group changed after the preview was shown. Please check the preview again.")
+      else:
+        for row in plan['add']:
+          VoterGroupMember.objects.create(group=group, uuid=str(uuid.uuid4()), **vg.new_member_fields(row))
+        for member, changes in plan['update']:
+          for field, (_old, new) in changes.items():
+            setattr(member, field, new)
+          member.save(update_fields=list(changes))
+        for member in plan['remove']:
+          member.delete()
+        counts = {'added': len(plan['add']), 'updated': len(plan['update']), 'removed': len(plan['remove'])}
+        group.append_log(VoterGroupLog.MEMBERS_IMPORTED, actor=user, **counts)
+        logger.info('votergroup %s: members imported by %s: %d added, %d updated, %d removed', group.uuid, _who(user),
+                    counts['added'], counts['updated'], counts['removed'])
+        request.session.pop(IMPORT_SESSION_KEY, None)
+        request.session[NOTICE_SESSION_KEY] = _(
+          'Members imported: %(added)s added, %(updated)s updated, %(removed)s removed.') % counts
+        return _redirect(url_names.VOTERGROUP_VIEW, group.uuid)
+
+  labels = {name: field.label for name, field in vg.VoterGroupMemberForm.base_fields.items()}
+  status_labels = dict(VoterGroupMember.STATUS_CHOICES)
+
+  def shown(field, value):
+    return str(status_labels.get(value, value)) if field == 'status' else value
+
+  updates = [(m, [(labels.get(f, f), shown(f, old), shown(f, new)) for f, (old, new) in changes.items()])
+             for m, changes in plan['update']]
+  adds = [vg.new_member_fields(row) for row in plan['add']]
+  for fields in adds:
+    fields['status_label'] = status_labels.get(fields['status'])
+  return render_template(request, "votergroup_import_preview", {
+    'group': group, 'plan': plan, 'adds': adds, 'updates': updates, 'digest': digest, 'notice': notice,
+    'remove_missing': pending['remove_missing'], 'ignored': pending['ignored'],
+    'missing_columns': [labels[c] for c in vg.CSV_COLUMNS if c not in pending['columns']]})

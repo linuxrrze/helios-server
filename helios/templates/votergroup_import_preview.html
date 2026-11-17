@@ -1,0 +1,85 @@
+{% extends TEMPLATE_BASE %}
+{% load i18n %}
+{% block title %}{{group.display_name}} &mdash; {% translate "Import members" %}{% endblock %}
+{% block content %}
+<h1 class="title">{% blocktranslate trimmed with name=group.short_name %}Import members into voter group {{name}}: preview{% endblocktranslate %}</h1>
+
+{% if notice %}<div class="callout callout-warning" role="alert"><p>{{notice}}</p></div>{% endif %}
+
+{% if plan.errors %}
+<div class="callout callout-danger" role="alert">
+  <span class="callout-title">{% translate "The file cannot be imported:" %}</span>
+  <ul class="import-errors">
+  {% for line, message in plan.errors %}<li>{% if line %}{% blocktranslate trimmed %}Line {{line}}:{% endblocktranslate %} {% endif %}{{message}}</li>{% endfor %}
+  </ul>
+</div>
+<p><a href="{% url "votergroup@import" group.uuid %}">{% translate "Upload another file" %}</a></p>
+{% else %}
+
+<dl class="facts">
+  <div><dt>{% translate "Added" context "import" %}</dt><dd>{{plan.add|length}}</dd></div>
+  <div><dt>{% translate "Updated" context "import" %}</dt><dd>{{plan.update|length}}</dd></div>
+  <div><dt>{% translate "Removed" context "import" %}</dt><dd>{{plan.remove|length}}</dd></div>
+  <div><dt>{% translate "Unchanged" context "import" %}</dt><dd>{{plan.unchanged}}</dd></div>
+</dl>
+{% if not remove_missing %}<p class="muted">{% translate "Members who are not in the file stay in the group." %}</p>{% endif %}
+{% if missing_columns %}<p class="muted">{% blocktranslate trimmed with columns=missing_columns|join:", " %}Not in the file, so left unchanged for existing members: {{columns}}.{% endblocktranslate %}</p>{% endif %}
+{% if ignored %}<p class="muted">{% blocktranslate trimmed with columns=ignored|join:", " %}Ignored columns: {{columns}}.{% endblocktranslate %}</p>{% endif %}
+
+{% if adds %}
+<h2>{% translate "Members to add" %}</h2>
+<div class="table-scroll">
+<table class="voters-table member-table">
+  <thead><tr><th scope="col">{% translate "Name" %}</th><th scope="col">{% translate "Email" %}</th><th scope="col" class="num">{% translate "# of votes" %}</th><th scope="col">{% translate "Person group" %}</th><th scope="col">{% translate "Status" %}</th></tr></thead>
+  <tbody>
+  {% for m in adds %}
+  <tr><th scope="row" class="member-name">{{m.last_name}}, {{m.first_name}}{% if m.initials %} <span class="member-initials muted">({{m.initials}})</span>{% endif %}</th><td class="member-email">{{m.email}}</td><td class="num">{{m.votes}}</td><td>{{m.person_group}}</td><td>{{m.status_label}}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endif %}
+
+{% if updates %}
+<h2>{% translate "Members to update" %}</h2>
+<div class="table-scroll">
+<table class="voters-table member-table">
+  <thead><tr><th scope="col">{% translate "Name" %}</th><th scope="col">{% translate "Email" %}</th><th scope="col">{% translate "Changes" %}</th></tr></thead>
+  <tbody>
+  {% for member, changes in updates %}
+  <tr><th scope="row" class="member-name">{{member.last_name}}, {{member.first_name}}</th><td class="member-email">{{member.email}}</td>
+    <td><ul class="plain-list">{% for label, old, new in changes %}<li>{{label}}: {{old|default:"–"}} &rarr; {{new|default:"–"}}</li>{% endfor %}</ul></td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endif %}
+
+{% if plan.remove %}
+<h2>{% translate "Members to remove" %}</h2>
+<div class="table-scroll">
+<table class="voters-table member-table">
+  <thead><tr><th scope="col">{% translate "Name" %}</th><th scope="col">{% translate "Email" %}</th></tr></thead>
+  <tbody>
+  {% for member in plan.remove %}
+  <tr><th scope="row" class="member-name">{{member.last_name}}, {{member.first_name}}</th><td class="member-email">{{member.email}}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endif %}
+
+<form action="" method="POST" id="confirm_import_form">
+  <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
+  <input type="hidden" name="digest" value="{{digest}}" />
+  <div class="actions">
+    {% if plan.add or plan.update or plan.remove %}
+    <button type="submit" class="button" name="confirm" value="1" id="next_button">{% translate "Import" %}</button>
+    {% else %}
+    <p>{% translate "The file contains no changes." %}</p>
+    {% endif %}
+    <button type="submit" class="link-button" name="cancel" value="1">{% translate "cancel" %}</button>
+  </div>
+</form>
+{% endif %}
+{% endblock %}

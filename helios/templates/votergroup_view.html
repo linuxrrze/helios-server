@@ -3,6 +3,7 @@
 {% block title %}{{group.display_name}}{% endblock %}
 {% block content %}
 {% include "_votergroup_heading.html" %}
+{% if notice %}<div class="callout callout-success" role="status"><p>{{notice}}</p></div>{% endif %}
 {% if group.is_provisioned %}
 <p class="callout callout-info">{% blocktranslate trimmed with source=group.admin.pretty_name %}This voter group is provisioned by the identity management ({{source}}): its name, members and administrators are managed there and cannot be changed here.{% endblocktranslate %}</p>
 {% endif %}
@@ -19,7 +20,9 @@
 
 <h2>{% translate "Members" %}</h2>
 {% if members %}
-<p class="muted">{% blocktranslate trimmed count counter=members|length %}{{counter}} member{% plural %}{{counter}} members{% endblocktranslate %}, {% blocktranslate trimmed count counter=num_votes %}{{counter}} vote{% plural %}{{counter}} votes{% endblocktranslate %}</p>
+<p class="muted">{% blocktranslate trimmed count counter=members|length %}{{counter}} member{% plural %}{{counter}} members{% endblocktranslate %}, {% blocktranslate trimmed count counter=num_votes %}{{counter}} vote{% plural %}{{counter}} votes{% endblocktranslate %}
+  &middot; <a href="{% url "votergroup@export" group.uuid %}" download>{% translate "Download as CSV file" %}</a>{% if not group.is_provisioned %}
+  &middot; <a href="{% url "votergroup@import" group.uuid %}">{% translate "Import from a CSV file" %}</a>{% endif %}</p>
 <div class="table-scroll">
 <table class="voters-table member-table">
   <caption class="screen-reader-text">{% translate "Members" %}</caption>
@@ -58,7 +61,7 @@
 </table>
 </div>
 {% else %}
-<div class="callout empty-state"><p>{% translate "no members yet" %}</p></div>
+<div class="callout empty-state"><p>{% translate "no members yet" %}</p>{% if not group.is_provisioned %}<p><a href="{% url "votergroup@import" group.uuid %}">{% translate "Import from a CSV file" %}</a></p>{% endif %}</div>
 {% endif %}
 
 <h2 id="votergroup-log">{% translate "Log" context "voter group" %}</h2>
