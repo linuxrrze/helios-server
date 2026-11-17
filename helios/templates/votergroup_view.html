@@ -1,13 +1,14 @@
 {% extends TEMPLATE_BASE %}
-{% load i18n provisioning_tags %}
-{% block title %}{{group.short_name}}{% endblock %}
+{% load i18n provisioning_tags votergroup_tags %}
+{% block title %}{{group.display_name}}{% endblock %}
 {% block content %}
-<h1 class="title">{{ group.short_name }} {% provisioned_badge group %}</h1>
+{% include "_votergroup_heading.html" %}
 {% if group.is_provisioned %}
 <p class="callout callout-info">{% blocktranslate trimmed with source=group.admin.pretty_name %}This voter group is provisioned by the identity management ({{source}}): its name, members and administrators are managed there and cannot be changed here.{% endblocktranslate %}</p>
 {% endif %}
 <p class="muted">{% if not group.is_provisioned %}{% blocktranslate trimmed with admin=group.admin.display_html_small|safe %}created by {{admin}}{% endblocktranslate %}{% else %}{% blocktranslate trimmed with source=group.admin.pretty_name %}managed by {{source}}{% endblocktranslate %}{% endif %}{% if admins %}
   &middot; {% blocktranslate trimmed count counter=admins|length %}{{counter}} more administrator{% plural %}{{counter}} more administrators{% endblocktranslate %}{% endif %}
+  {% if not group.is_provisioned %}&middot; <a href="{% url "votergroup@edit" group.uuid %}">{% translate "Name and term of office" %}</a>{% endif %}
   &middot; <a href="{% url "votergroup@admins" group.uuid %}">{% if group.is_provisioned %}{% translate "Administrators" context "voter group" %}{% else %}{% translate "Manage administrators" %}{% endif %}</a>{% if can_transfer %}
   &middot; <a href="{% url "votergroup@transfer" group.uuid %}">{% translate "Transfer ownership" %}</a>{% endif %}</p>
 
@@ -18,22 +19,33 @@
 
 <h2>{% translate "Members" %}</h2>
 {% if members %}
+<p class="muted">{% blocktranslate trimmed count counter=members|length %}{{counter}} member{% plural %}{{counter}} members{% endblocktranslate %}, {% blocktranslate trimmed count counter=num_votes %}{{counter}} vote{% plural %}{{counter}} votes{% endblocktranslate %}</p>
 <div class="table-scroll">
-<table class="voters-table">
+<table class="voters-table member-table">
+  <caption class="screen-reader-text">{% translate "Members" %}</caption>
   <thead>
   <tr>
-    <th scope="col">{% translate "First name" %}</th><th scope="col">{% translate "Last name" %}</th><th scope="col">{% translate "Email" %}</th><th scope="col" class="num">{% translate "# of votes" %}</th><th scope="col"><span class="screen-reader-text">{% translate "Actions" %}</span></th>
+    <th scope="col">{% translate "Name" %}</th>
+    {% if columns.initials %}<th scope="col">{% translate "Initials" %}</th>{% endif %}
+    {% if columns.person_group %}<th scope="col">{% translate "Person group" %}</th>{% endif %}
+    {% if columns.status %}<th scope="col">{% translate "Status" %}</th>{% endif %}
+    <th scope="col">{% translate "Email" %}</th>
+    <th scope="col" class="num">{% translate "# of votes" %}</th>
+    <th scope="col"><span class="screen-reader-text">{% translate "Actions" %}</span></th>
   </tr>
   </thead>
   <tbody>
   {% for member in members %}
   <tr>
-    <td>{{member.first_name}}</td>
-    <td>{{member.last_name}}</td>
-    <td>{{member.email}}</td>
-    <td class="num">{{member.votes}}</td>
+    <th scope="row" class="member-name">{{member.last_name}}, {{member.first_name}}</th>
+    {% if columns.initials %}<td class="member-initials">{{member.initials}}</td>{% endif %}
+    {% if columns.person_group %}<td>{{member.person_group}}</td>{% endif %}
+    {% if columns.status %}<td>{{member.get_status_display}}</td>{% endif %}
+    <td class="member-email">{{member.email}}</td>
+    <td class="num">{% if member.votes %}{{member.votes}}{% else %}<span class="no-vote">0 <span class="screen-reader-text">({% translate "no voting right" %})</span></span>{% endif %}</td>
     <td class="row-actions">
       {% if not group.is_provisioned %}
+      <a href="{% url "votergroup@memberedit" member.uuid %}">{% translate "Edit" %}<span class="screen-reader-text"> {{member.first_name}} {{member.last_name}}</span></a>
       <form class="inline-action" method="POST" action="{% url "votergroup@memberdelete" member.uuid %}" onsubmit="return confirm('{% filter escapejs %}{% translate "Remove this member from the group?" %}{% endfilter %}');">
         <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
         <button type="submit" class="link-button danger">{% translate "Delete" %}<span class="screen-reader-text"> {{member.first_name}} {{member.last_name}}</span></button>

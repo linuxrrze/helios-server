@@ -295,6 +295,8 @@ table.pretty .helptext { margin-top: 4px; }
 .provisioned-badge, .deactivated-badge { margin-left: 4px; padding: 0 8px; font-size: .75rem; font-weight: 500; }
 .provisioned-badge { color: var(--info-color); background: var(--info-bg); }
 .deactivated-badge { color: var(--warning-color); background: var(--warning-bg); }
+/* a voter group (board) whose term of office is over, see helios/templatetags/votergroup_tags.py */
+.term-ended-badge { margin-left: 4px; padding: 0 8px; font-size: .75rem; font-weight: 500; color: var(--muted-color); background: var(--surface-color); }
 
 /* --- phones and tablets ------------------------------------------------- */
 @media only screen and (max-width: 64em) {
@@ -474,6 +476,21 @@ table.pretty .helptext { margin-top: 4px; }
 .seat-table tbody th { vertical-align: middle; }
 /* keeps the hidden labels inside the scrolling table (no page-wide overflow on phones) */
 .seat-table td { position: relative; }
+/* a voter group's page: short name and term under the long name; the member table */
+.content-body .group-subtitle { margin: -.25em 0 .75em; }
+.group-subtitle .short-name { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .9rem; }
+.content-body table.member-table { width: 100%; }
+.content-body table.member-table tbody th { background: transparent; font-weight: 400; text-align: left; }
+.member-table .member-name { min-width: 10rem; }
+.member-table .member-email { overflow-wrap: anywhere; min-width: 10rem; }
+.member-table .member-initials { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .9rem; }
+.member-table .no-vote, .seat-summary .no-vote { color: var(--muted-color); }
+.content-body table.group-table { width: 100%; }
+.content-body table.group-table tbody th { background: transparent; font-weight: 400; text-align: left; }
+.group-table .group-name { min-width: 12rem; }
+.group-table .group-name .short-name { display: block; font-size: .85rem; }
+.group-table .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.group-table .group-term { min-width: 9rem; }
 .content-body section.card > h2:first-child { margin-top: 0; font-size: 1.2rem; }
 /* results on phones: a shorter bar so that the share stays visible */
 @media only screen and (max-width: 40em) {

@@ -2,27 +2,75 @@
 Voter groups: forms and the pure logic that turns a group
 into the list of password voters for a new election.
 
-A member with N votes gets N voter rows ("seats"). Before the election is
-created, the administrator can delegate any seat to another member of the
-group; that seat is then issued to the delegate instead.
+A member with N votes gets N voter rows ("seats"), a member with 0 votes (no
+voting right, e.g. a deputy or an advisory member of a board) none. Before
+the election is created, the administrator can delegate any seat to another
+member of the group; that seat is then issued to the delegate instead.
 """
 
 from django import forms
 from django.forms import formset_factory
 from django.utils.translation import gettext, gettext_lazy as _
 
+from .models import VoterGroupMember
+
 MAX_VOTES_PER_MEMBER = 100
 
 
+class DateInput(forms.DateInput):
+  """The browser's date picker; the value is sent as YYYY-MM-DD."""
+  input_type = 'date'
+
+  def __init__(self, attrs=None):
+    super().__init__(attrs=attrs, format='%Y-%m-%d')
+
+
 class VoterGroupForm(forms.Form):
+  """A new group, or the settings of a group. Everything but the short name
+  is optional (for a board: its long name and term of office)."""
   short_name = forms.SlugField(max_length=100, label=_('Short name'), help_text=_('no spaces, e.g. faculty-council'))
+  name = forms.CharField(max_length=250, required=False, label=_('Name'),
+                         help_text=_('The full name, shown as the title of the group, e.g. Faculty council of the Faculty of Sciences.'))
+  name_suffix = forms.CharField(max_length=100, required=False, label=_('Name suffix'),
+                                help_text=_('Shown after the name, e.g. the term of office in short form: 2025-2027.'))
+  term_starts_on = forms.DateField(required=False, widget=DateInput, label=_('Term of office begins on'))
+  term_ends_on = forms.DateField(required=False, widget=DateInput, label=_('Term of office ends on'),
+                                 help_text=_('After this day, the group is marked as "term ended"; it can still be used.'))
+
+  def clean(self):
+    cleaned = super().clean()
+    starts, ends = cleaned.get('term_starts_on'), cleaned.get('term_ends_on')
+    if starts and ends and ends < starts:
+      self.add_error('term_ends_on', _('The term of office cannot end before it begins.'))
+    return cleaned
 
 
 class VoterGroupMemberForm(forms.Form):
   first_name = forms.CharField(max_length=100, label=_('First name'))
   last_name = forms.CharField(max_length=100, label=_('Last name'))
   email = forms.EmailField(max_length=100, label=_('Email'))
-  votes = forms.IntegerField(min_value=1, max_value=MAX_VOTES_PER_MEMBER, initial=1, label=_('Votes'))
+  votes = forms.IntegerField(min_value=0, max_value=MAX_VOTES_PER_MEMBER, initial=1, label=_('Votes'),
+                             help_text=_('0 for members without a voting right, e.g. deputy or advisory members: they get no vote in an election prepared from the group.'))
+  initials = forms.CharField(max_length=20, required=False, label=_('Initials'),
+                             help_text=_('A short identifier, e.g. the initials.'))
+  person_group = forms.CharField(max_length=100, required=False, label=_('Person group'),
+                                 help_text=_('e.g. Professors, Students; the member list is sorted by it.'))
+  status = forms.ChoiceField(choices=VoterGroupMember.STATUS_CHOICES, initial=VoterGroupMember.STATUS_MEMBER,
+                             label=_('Status'))
+
+  def __init__(self, data=None, *args, **kwargs):
+    if data is not None and not data.get('status'):
+      # a client that doesn't know the field: a regular member
+      data = data.copy()
+      data['status'] = VoterGroupMember.STATUS_MEMBER
+    super().__init__(data, *args, **kwargs)
+
+  def clean(self):
+    cleaned = super().clean()
+    for field in ('first_name', 'last_name', 'initials', 'person_group'):
+      if isinstance(cleaned.get(field), str):
+        cleaned[field] = cleaned[field].strip()
+    return cleaned
 
 
 class VoterGroupAdminForm(forms.Form):
@@ -108,7 +156,7 @@ def _seat(first_name, last_name, email, taken):
 
 
 def initial_seats(members):
-  """One seat per vote of every member."""
+  """One seat per vote of every member (none for members with 0 votes)."""
   taken, seats = set(), []
   for m in members:
     for _ in range(m.votes):
@@ -130,3 +178,4 @@ def apply_delegations(seats, members_by_uuid):
       m = members_by_uuid[uuid]
       kept.append(_seat(m.first_name, m.last_name, m.email, taken))
   return kept
+

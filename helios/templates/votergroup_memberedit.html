@@ -1,0 +1,15 @@
+{% extends TEMPLATE_BASE %}
+{% load i18n %}
+{% block title %}{{group.display_name}} &mdash; {% translate "Edit member" %}{% endblock %}
+{% block content %}
+<h1 class="title">{% blocktranslate trimmed with name=member.full_name group=group.short_name %}Edit member {{name}} of voter group {{group}}{% endblocktranslate %}</h1>
+
+<form class="prettyform form-narrow" action="" method="POST" id="edit_member_form" novalidate>
+  <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
+  {% include "_form_fields.html" with form=votergroupmember_form %}
+  <div class="actions">
+    <button type="submit" class="button" id="next_button">{% translate "Save" %}</button>
+    <a href="{% url "votergroup@view" group.uuid %}">{% translate "cancel" %}</a>
+  </div>
+</form>
+{% endblock %}

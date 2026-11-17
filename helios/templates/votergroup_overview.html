@@ -1,8 +1,8 @@
 {% extends TEMPLATE_BASE %}
 {% load i18n provisioning_tags %}
-{% block title %}{{group.short_name}}{% endblock %}
+{% block title %}{{group.display_name}}{% endblock %}
 {% block content %}
-<h1 class="title">{{ group.short_name }} {% provisioned_badge group %}</h1>
+{% include "_votergroup_heading.html" %}
 <p class="callout callout-info">{% translate "You are a site administrator, but not an administrator of this voter group. To protect the members' personal data, only an overview is shown." %}</p>
 
 <dl class="facts">

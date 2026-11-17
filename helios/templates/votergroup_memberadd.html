@@ -1,6 +1,6 @@
 {% extends TEMPLATE_BASE %}
 {% load i18n %}
-{% block title %}{{group.short_name}} &mdash; {% translate "add member" %}{% endblock %}
+{% block title %}{{group.display_name}} &mdash; {% translate "add member" %}{% endblock %}
 {% block content %}
 <h1 class="title">{% blocktranslate trimmed with name=group.short_name %}Add a member to voter group {{name}}{% endblocktranslate %}</h1>
 

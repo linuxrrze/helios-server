@@ -1937,6 +1937,12 @@ class SiteAnnouncement(models.Model):
 ## (e.g. a council where some members hold several mandates). From a group,
 ## an administrator can create an election with one password voter per vote.
 ##
+## Any voter group can describe a board (e.g. a faculty council or a senate):
+## the optional long name, name suffix and term of office of the group, and the
+## optional initials, person group and status of its members. A member with 0
+## votes (e.g. a deputy or an advisory member) belongs to the board but gets no
+## vote in an election prepared from it.
+##
 
 class VoterGroup(HeliosModel):
   # the owner: created the group, cannot be removed; group names are unique per owner
@@ -1948,6 +1954,15 @@ class VoterGroup(HeliosModel):
   uuid = models.CharField(max_length=50, unique=True)
   short_name = models.CharField(max_length=100)
   created_at = models.DateTimeField(auto_now_add=True)
+
+  # optional, for a board: the long name ("Faculty council of the Faculty of
+  # Sciences"), a suffix shown with it (e.g. the term in short form,
+  # "2025-2027") and the term of office. After the term has ended the group is
+  # marked as such, but keeps working.
+  name = models.CharField(max_length=250, blank=True, default='')
+  name_suffix = models.CharField(max_length=100, blank=True, default='')
+  term_starts_on = models.DateField(null=True, blank=True)
+  term_ends_on = models.DateField(null=True, blank=True)
 
   # Provisioning (see helios/provisioning.py): the source that manages this group
   # ("<kind>:<name>", e.g. "scim:idm") and the source's stable reference for it.
@@ -1971,11 +1986,33 @@ class VoterGroup(HeliosModel):
   def is_provisioned(self):
     return bool(self.provisioned_by)
 
+  @property
+  def display_name(self):
+    """The long name where there is one, else the short name."""
+    return self.name or self.short_name
+
+  @property
+  def term_ended(self):
+    """Has the term of office ended (the day after term_ends_on)?"""
+    return self.term_ends_on is not None and self.term_ends_on < datetime.date.today()
+
+  def details_summary(self):
+    """Long name, suffix and term in one line for the group's log, e.g.
+    "Faculty council · 2025-2027 · 2025-10-01 – 2027-09-30" (the same in every
+    language)."""
+    term = ''
+    if self.term_starts_on or self.term_ends_on:
+      term = '%s \u2013 %s' % (self.term_starts_on.isoformat() if self.term_starts_on else '',
+                                self.term_ends_on.isoformat() if self.term_ends_on else '')
+    return ' \u00b7 '.join(p.strip() for p in (self.name, self.name_suffix, term) if p) or '\u2014'
+
   @classmethod
   def get_by_user_as_admin(cls, user):
-    """Groups the user owns or is an additional administrator of."""
-    from django.db.models import Q
+    """Groups the user owns or is an additional administrator of, with
+    num_members."""
+    from django.db.models import Count, Q
     return (cls.objects.filter(Q(admin=user) | Q(admins=user)).distinct()
+            .annotate(num_members=Count('votergroupmember', distinct=True))
             .select_related('admin').order_by('-created_at'))
 
   def get_admins(self):
@@ -1988,7 +2025,11 @@ class VoterGroup(HeliosModel):
     return bool(user) and (self.admin_id == user.pk or self.admins.filter(pk=user.pk).exists())
 
   def get_members(self):
-    return self.votergroupmember_set.order_by('last_name', 'first_name', 'id')
+    """By person group (alphabetically, members without one last), then by
+    name."""
+    no_person_group = models.Case(models.When(person_group='', then=1), default=0,
+                                  output_field=models.IntegerField())
+    return self.votergroupmember_set.order_by(no_person_group, 'person_group', 'last_name', 'first_name', 'id')
 
   def append_log(self, action, actor=None, source='', **params):
     """Record ACTION (a VoterGroupLog constant) in the group's log; PARAMS fill
@@ -2006,9 +2047,27 @@ class VoterGroupMember(HeliosModel):
   first_name = models.CharField(max_length=100)
   last_name = models.CharField(max_length=100)
   email = models.EmailField(max_length=100)
+  # 0: no voting right (e.g. a deputy or advisory member): the member gets no
+  # voter in an election prepared from the group
   votes = models.IntegerField(default=1)
   # the user a member of a provisioned group stands for (empty for members added by hand)
   user = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE, related_name='votergroup_memberships')
+
+  # optional, for a board: a short identifier (e.g. initials), the person
+  # group (e.g. "Professors", "Students") and the status of the membership
+  STATUS_MEMBER = 'member'
+  STATUS_DEPUTY = 'deputy'
+  STATUS_ADVISORY = 'advisory'
+  STATUS_GUEST = 'guest'
+  STATUS_CHOICES = [
+    (STATUS_MEMBER, gettext_lazy('Member')),
+    (STATUS_DEPUTY, gettext_lazy('Deputy member')),
+    (STATUS_ADVISORY, gettext_lazy('Advisory member')),
+    (STATUS_GUEST, gettext_lazy('Guest')),
+  ]
+  initials = models.CharField(max_length=20, blank=True, default='')
+  person_group = models.CharField(max_length=100, blank=True, default='')
+  status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_MEMBER)
 
   class Meta:
     app_label = 'helios'
@@ -2030,12 +2089,16 @@ class VoterGroupLog(models.Model):
   votes, so the log does not keep a copy of former members; administrators
   appear with name and account, as on the group's administrators page
   (accountability for who had access to the member list); provisioning and
-  prepared elections are recorded as counts.
+  prepared elections are recorded as counts. The
+  group's own name and term of office are no personal data and recorded as
+  they are.
   """
 
   CREATED = 'created'
   RENAMED = 'renamed'
+  DETAILS_CHANGED = 'details changed'
   MEMBER_ADDED = 'member added'
+  MEMBER_CHANGED = 'member changed'
   MEMBER_REMOVED = 'member removed'
   ADMIN_ADDED = 'admin added'
   ADMIN_REMOVED = 'admin removed'
@@ -2048,7 +2111,9 @@ class VoterGroupLog(models.Model):
   MESSAGES = {
     CREATED: gettext_lazy('Voter group %(name)s created'),
     RENAMED: gettext_lazy('Renamed to %(name)s'),
+    DETAILS_CHANGED: gettext_lazy('Name and term of office changed: %(details)s'),
     MEMBER_ADDED: gettext_lazy('Member %(email)s added with %(votes)s vote(s)'),
+    MEMBER_CHANGED: gettext_lazy('Member %(email)s changed, now with %(votes)s vote(s)'),
     MEMBER_REMOVED: gettext_lazy('Member %(email)s removed'),
     ADMIN_ADDED: gettext_lazy('Administrator %(admin)s added'),
     ADMIN_REMOVED: gettext_lazy('Administrator %(admin)s removed'),

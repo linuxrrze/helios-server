@@ -158,7 +158,7 @@ def user_search(request):
 
     # voter groups the user owns or co-administers; the site administrator sees
     # only their overview (see helios.votergroup_views)
-    votergroups = VoterGroup.get_by_user_as_admin(found_user).annotate(num_members=Count('votergroupmember', distinct=True))
+    votergroups = VoterGroup.get_by_user_as_admin(found_user)
 
     users_with_elections.append({
       'user': found_user,

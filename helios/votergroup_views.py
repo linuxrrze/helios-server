@@ -142,10 +142,10 @@ def votergroup_new(request):
     if form.is_valid():
       try:
         with transaction.atomic():
-          group = VoterGroup.objects.create(
-            admin=get_user(request), uuid=str(uuid.uuid4()),
-            short_name=form.cleaned_data['short_name'])
+          group = VoterGroup.objects.create(admin=get_user(request), uuid=str(uuid.uuid4()), **form.cleaned_data)
           group.append_log(VoterGroupLog.CREATED, actor=group.admin, name=group.short_name)
+          if _has_details(group):
+            group.append_log(VoterGroupLog.DETAILS_CHANGED, actor=group.admin, details=group.details_summary())
         logger.info('votergroup %s: created by %s', group.uuid, _who(group.admin))
         return _redirect(url_names.VOTERGROUP_VIEW, group.uuid)
       except IntegrityError:
@@ -155,6 +155,63 @@ def votergroup_new(request):
 
 
 LOG_ENTRIES_PER_PAGE = 20
+
+# the group's settings besides the short name (see vg.VoterGroupForm)
+DETAIL_FIELDS = ('name', 'name_suffix', 'term_starts_on', 'term_ends_on')
+
+
+def _has_details(group):
+  return any(getattr(group, f) for f in DETAIL_FIELDS)
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def votergroup_edit(request, votergroup_uuid):
+  """The group's settings: short name, long name, name suffix, term of office."""
+  group = _get_group(request, votergroup_uuid)
+  refused = _refuse_if_provisioned(request, group)
+  if refused:
+    return refused
+  fields = ('short_name',) + DETAIL_FIELDS
+  error = None
+  if request.method == "GET":
+    form = vg.VoterGroupForm(initial={f: getattr(group, f) for f in fields})
+  else:
+    check_csrf(request)
+    form = vg.VoterGroupForm(request.POST)
+    if form.is_valid():
+      user = get_user(request)
+      old = {f: getattr(group, f) for f in fields}
+      for f in fields:
+        setattr(group, f, form.cleaned_data[f])
+      try:
+        with transaction.atomic():
+          group.save(update_fields=list(fields))
+          if group.short_name != old['short_name']:
+            group.append_log(VoterGroupLog.RENAMED, actor=user, name=group.short_name)
+          if any(getattr(group, f) != old[f] for f in DETAIL_FIELDS):
+            group.append_log(VoterGroupLog.DETAILS_CHANGED, actor=user, details=group.details_summary())
+      except IntegrityError:
+        # short names are unique per owner
+        for f in fields:
+          setattr(group, f, old[f])
+        error = _("The owner of the group already has a voter group named %(short_name)s") % {
+          'short_name': form.cleaned_data['short_name']}
+      else:
+        logger.info('votergroup %s: settings changed by %s', group.uuid, _who(user))
+        return _redirect(url_names.VOTERGROUP_VIEW, group.uuid)
+
+  return render_template(request, "votergroup_edit", {'group': group, 'votergroup_form': form, 'error': error})
+
+
+def _member_columns(members):
+  """Which of the optional columns the member table shows: only those that
+  some member has a value for."""
+  return {
+    'initials': any(m.initials for m in members),
+    'person_group': any(m.person_group for m in members),
+    'status': any(m.status != VoterGroupMember.STATUS_MEMBER for m in members),
+  }
 
 
 @login_required
@@ -167,8 +224,10 @@ def votergroup_view(request, votergroup_uuid):
       'group': group, 'num_members': group.votergroupmember_set.count(), 'num_admins': group.admins.count(),
       'can_transfer': _can_transfer(user, group), 'transfer_form': vg.TransferOwnershipByEmailForm()})
   log_page = Paginator(group.get_log(), LOG_ENTRIES_PER_PAGE).get_page(request.GET.get('log_page'))
+  members = list(group.get_members())
   return render_template(request, "votergroup_view", {
-    'group': group, 'members': group.get_members(), 'admins': group.get_admins(), 'log_page': log_page,
+    'group': group, 'members': members, 'columns': _member_columns(members),
+    'num_votes': sum(m.votes for m in members), 'admins': group.get_admins(), 'log_page': log_page,
     'can_transfer': _can_transfer(user, group)})
 
 
@@ -194,6 +253,48 @@ def votergroup_memberadd(request, votergroup_uuid):
       return _redirect(url_names.VOTERGROUP_VIEW, group.uuid)
 
   return render_template(request, "votergroup_memberadd", {'votergroupmember_form': form, 'group': group})
+
+
+def _get_member(request, member_uuid):
+  """The member and its group, if the current user administers the group."""
+  try:
+    member = VoterGroupMember.objects.select_related('group__admin').get(uuid=member_uuid)
+  except VoterGroupMember.DoesNotExist:
+    raise Http404
+  _check_access(request, member.group)
+  return member, member.group
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def votergroup_memberedit(request, member_uuid):
+  member, group = _get_member(request, member_uuid)
+  refused = _refuse_if_provisioned(request, group)
+  if refused:
+    return refused
+  fields = list(vg.VoterGroupMemberForm.base_fields)
+  if request.method == "GET":
+    form = vg.VoterGroupMemberForm(initial={f: getattr(member, f) for f in fields})
+  else:
+    check_csrf(request)
+    form = vg.VoterGroupMemberForm(request.POST)
+    if form.is_valid():
+      user = get_user(request)
+      changed = [f for f in fields if getattr(member, f) != form.cleaned_data[f]]
+      if changed:
+        old_email = member.email
+        for f in changed:
+          setattr(member, f, form.cleaned_data[f])
+        with transaction.atomic():
+          member.save(update_fields=changed)
+          group.append_log(VoterGroupLog.MEMBER_CHANGED, actor=user, email=mask_address(old_email),
+                           votes=member.votes)
+        logger.info('votergroup %s: member %s (%s) changed by %s: %s', group.uuid, member.uuid,
+                    mask_address(old_email), _who(user), ', '.join(changed))
+      return _redirect(url_names.VOTERGROUP_VIEW, group.uuid)
+
+  return render_template(request, "votergroup_memberedit", {
+    'votergroupmember_form': form, 'group': group, 'member': member})
 
 
 @login_required
@@ -233,6 +334,14 @@ def votergroup_prepareelection(request, votergroup_uuid):
   other_admins = _other_admins(group, user)
   admins_form = vg.PrepareElectionAdminsForm(request.POST if request.method == "POST" else None)
   members = list(group.get_members())
+  # members without a voting right (0 votes) get no seat; they are listed on the page
+  without_vote = [m for m in members if m.votes <= 0]
+  no_votes_error = None
+  if not members:
+    no_votes_error = _("The voter group has no members.")
+  elif len(without_vote) == len(members):
+    no_votes_error = _("None of the members of the voter group has a vote, so no election can be prepared from it. "
+                       "Give at least one member one or more votes first.")
   choices = vg.delegate_choices(members)
   error = None
   prefix = short_names.prefix_for_user(user)
@@ -240,7 +349,7 @@ def votergroup_prepareelection(request, votergroup_uuid):
   if request.method == "GET":
     seat_formset = vg.SeatFormSet(initial=vg.initial_seats(members), form_kwargs={'delegate_choices': choices})
     election_form = election_forms.ElectionForm(initial={
-      'description': _("Election for voter group %(short_name)s") % {'short_name': group.short_name},
+      'description': _("Election for voter group %(short_name)s") % {'short_name': group.display_name},
       'private_p': True,
       # a board or committee: voting ends once all members have voted
       'close_when_all_voted': True,
@@ -254,8 +363,9 @@ def votergroup_prepareelection(request, votergroup_uuid):
       seats = vg.apply_delegations(seat_formset.cleaned_data, {m.uuid: m for m in members})
       election_params = dict(election_form.cleaned_data)
 
-      if not seats:
-        error = _("The voter group has no members.")
+      if no_votes_error or not seats:
+        # whatever the posted rows say: the group itself must have a vote
+        error = no_votes_error or _("The voter group has no members.")
       else:
         election_params['uuid'] = str(uuid.uuid4())
         # without a chosen address, the election is reached by its UUID
@@ -288,6 +398,7 @@ def votergroup_prepareelection(request, votergroup_uuid):
 
   return render_template(request, "votergroup_prepareelection", {
     'electionform': election_form, 'form': seat_formset, 'group': group, 'error': error,
+    'no_votes_error': no_votes_error, 'without_vote': without_vote,
     'admins_form': admins_form, 'other_admins': other_admins})
 
 
@@ -491,3 +602,4 @@ def votergroup_transfer(request, votergroup_uuid):
   return render_template(request, "votergroup_transfer", {
     'group': group, 'form': form, 'candidates': candidates, 'confirm': confirm, 'new_owner': new_owner,
     'matching_users': matching_users, 'by_email': by_email, 'is_owner': group.admin_id == user.pk})
+

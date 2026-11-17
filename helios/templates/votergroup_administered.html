@@ -1,5 +1,5 @@
 {% extends TEMPLATE_BASE %}
-{% load i18n provisioning_tags %}
+{% load i18n provisioning_tags votergroup_tags %}
 {% block title %}{% translate "Voter groups" %}{% endblock %}
 {% block content %}
 <h1 class="title">{% translate "Voter groups you administer" %}</h1>
@@ -8,11 +8,28 @@
 <p class="actions"><a class="button" href="{% url "votergroup@new" %}">{% translate "Create new voter group" %}</a></p>
 
 {% if votergroups %}
-<ul class="election-list">
-{% for group in votergroups %}
-  <li><a href="{% url "votergroup@view" group.uuid %}">{{group.short_name}}</a> {% provisioned_badge group %}{% if group.admin != user and not group.is_provisioned %} <span class="muted">{% blocktranslate trimmed with owner=group.admin.pretty_name %}(managed by {{owner}}){% endblocktranslate %}</span>{% endif %}</li>
+<div class="table-scroll">
+<table class="group-table">
+<caption class="screen-reader-text">{% translate "Voter groups you administer" %}</caption>
+<thead><tr>
+  <th scope="col">{% translate "Name" %}</th>
+  <th scope="col">{% translate "Term of office" %}</th>
+  <th scope="col" class="num">{% translate "Members" %}</th>
+</tr></thead>
+<tbody>
+{% for group in votergroups %}{% term_of_office group as term %}
+<tr>
+  <th scope="row" class="group-name"><a href="{% url "votergroup@view" group.uuid %}">{{group.display_name}}</a>{% if group.name_suffix %} {{group.name_suffix}}{% endif %}
+    {% provisioned_badge group %} {% term_ended_badge group %}
+    {% if group.name %}<span class="short-name muted">{{group.short_name}}</span>{% endif %}
+    {% if group.admin != user and not group.is_provisioned %}<span class="muted">{% blocktranslate trimmed with owner=group.admin.pretty_name %}(managed by {{owner}}){% endblocktranslate %}</span>{% endif %}</th>
+  <td class="group-term">{% if term %}{{term}}{% else %}<span class="muted" aria-label="{% translate "no term of office set" %}">&ndash;</span>{% endif %}</td>
+  <td class="num">{{group.num_members}}</td>
+</tr>
 {% endfor %}
-</ul>
+</tbody>
+</table>
+</div>
 {% else %}
 <div class="callout empty-state"><p>{% translate "none yet" %}</p></div>
 {% endif %}

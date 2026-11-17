@@ -69,6 +69,8 @@ OTHER_PAGES = {
   # a group's page; its label is the group's name
   names.VOTERGROUP_VIEW: (None, names.VOTERGROUP_ADMINISTERED),
   names.VOTERGROUP_MEMBERADD: (gettext_lazy('Add a member'), names.VOTERGROUP_VIEW),
+  names.VOTERGROUP_MEMBEREDIT: (gettext_lazy('Edit member'), names.VOTERGROUP_VIEW),
+  names.VOTERGROUP_EDIT: (pgettext_lazy('voter group', 'Settings'), names.VOTERGROUP_VIEW),
   names.VOTERGROUP_PREPAREELECTION: (gettext_lazy('Create election'), names.VOTERGROUP_VIEW),
   names.VOTERGROUP_ADMINS: (pgettext_lazy('voter group', 'Administrators'), names.VOTERGROUP_VIEW),
   names.VOTERGROUP_ADMINS_ADD: (pgettext_lazy('voter group', 'Add administrator'), names.VOTERGROUP_ADMINS),
@@ -83,9 +85,10 @@ OTHER_PAGES = {
 }
 
 # pages of one voter group: their URLs take the group's uuid
-GROUP_PAGES = (names.VOTERGROUP_VIEW, names.VOTERGROUP_MEMBERADD, names.VOTERGROUP_PREPAREELECTION,
-               names.VOTERGROUP_ADMINS, names.VOTERGROUP_ADMINS_ADD, names.VOTERGROUP_ADMINS_REMOVE,
-               names.VOTERGROUP_TRANSFER)
+# (the member page's URL takes the member's uuid, but as the last crumb it isn't linked)
+GROUP_PAGES = (names.VOTERGROUP_VIEW, names.VOTERGROUP_MEMBERADD, names.VOTERGROUP_MEMBEREDIT,
+               names.VOTERGROUP_EDIT, names.VOTERGROUP_PREPAREELECTION, names.VOTERGROUP_ADMINS, names.VOTERGROUP_ADMINS_ADD,
+               names.VOTERGROUP_ADMINS_REMOVE, names.VOTERGROUP_TRANSFER)
 
 
 def _url_name(context):

@@ -1,0 +1,8 @@
+{% load i18n provisioning_tags votergroup_tags %}{% comment %}
+The title of a voter group's page: the long name where there is one (with its
+suffix), else the short name; below it the short name and the term of office.
+{% endcomment %}{% term_of_office group as term %}
+<h1 class="title">{{ group.display_name }}{% if group.name and group.name_suffix %} <span class="muted">{{ group.name_suffix }}</span>{% endif %} {% provisioned_badge group %} {% term_ended_badge group %}</h1>
+{% if group.name or term or group.name_suffix %}
+<p class="group-subtitle muted">{% if group.name %}<span class="short-name">{{ group.short_name }}</span>{% elif group.name_suffix %}{{ group.name_suffix }}{% endif %}{% if term %}{% if group.name or group.name_suffix %} &middot; {% endif %}{% translate "Term of office:" %} {{ term }}{% endif %}</p>
+{% endif %}
