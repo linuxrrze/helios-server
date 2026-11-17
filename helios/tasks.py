@@ -63,7 +63,8 @@ def close_voting_if_all_voted(election):
     have (Election.close_voting_if_all_voted), and tell its administrator, in
     the same transaction. The tally is not computed: that stays the
     administrator's step. The email is in the site's language, since a voter's
-    ballot triggers it.
+    ballot (or an administrator removing the last voter who hadn't voted,
+    views.voter_delete) triggers it.
     """
     with transaction.atomic():
         if not election.close_voting_if_all_voted():

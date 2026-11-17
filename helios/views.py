@@ -1237,7 +1237,12 @@ If you believe this was done in error, please contact the election administrator
       election.append_log("Voter %s/%s removed after election was frozen" % (voter.voter_type,voter.voter_id))
 
     voter.delete()
-          
+
+    # the voter may have been the last one who hadn't voted (close_when_all_voted);
+    # does nothing before the freeze, once voting has ended, or without voters left
+    if election.frozen_at:
+      tasks.close_voting_if_all_voted(election)
+
   return HttpResponseRedirect(settings.SECURE_URL_HOST + reverse(voters_list_pretty, args=[election.uuid]))
 
 @election_admin(frozen=False)

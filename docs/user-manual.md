@@ -154,7 +154,8 @@ until you compute the tally.
 
 With **Close voting when everyone has voted**, the election page says so
 while voting is open. As soon as the last voter on the list has cast their
-ballot (a voter with several votes has to cast each of them), voting ends:
+ballot (a voter with several votes has to cast each of them), or you remove
+the last voter who hasn't voted from the list, voting ends:
 the election page notes that voting was closed automatically because all
 voters have voted, the election log records it, and you get an email. Voters
 who come to the booth after that are told that voting has ended. The tally

@@ -579,7 +579,8 @@ class Election(HeliosModel):
     With close_when_all_voted, end voting once every voter on the list has a
     cast ballot (a voter with several votes has several Voter rows, each of
     which must have voted), the same way computing the tally does: by setting
-    voting_ended_at. Called after a ballot is verified and stored.
+    voting_ended_at. Called after a ballot is verified and stored, and after
+    a voter is removed (the last one who hadn't voted, maybe).
 
     Safe against two last ballots stored at the same time: the check runs with
     the election row locked, after the caller's ballot was committed, so the

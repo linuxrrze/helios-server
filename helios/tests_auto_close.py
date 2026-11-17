@@ -328,6 +328,80 @@ class AutoCloseTests(ElectionSetup, TestCase):
     self.assertTrue(election.has_complete_result)
 
 
+class VoterRemovalTests(ElectionSetup, TestCase):
+  """removing the last voter who hasn't voted ends voting, too (views.voter_delete)"""
+
+  def remove(self, election, voter):
+    response = self.client.post('/helios/elections/%s/voters/%s/delete' % (election.uuid, voter.uuid),
+                                {'csrf_token': 'tok'})
+    self.assertEqual(response.status_code, 302)
+
+  def test_removing_the_last_voter_who_has_not_voted_closes(self):
+    election = self.make_election(voters=('a', 'b', 'c'))
+    a, b, c = self.voters(election)
+    self.cast(a)
+    self.cast(b)
+    self.assertIsNone(self.reload(election).voting_ended_at)
+    self.remove(election, c)
+    election = self.reload(election)
+    self.assertIsNotNone(election.voting_ended_at)
+    self.assertTrue(election.voting_has_stopped())
+    self.assertEqual(self.auto_close_logs(election).count(), 1)
+    self.assertEqual(len(self.admin_mails(election, 'voting closed')), 1)
+
+  def test_removing_a_voter_while_others_have_not_voted(self):
+    election = self.make_election(voters=('a', 'b', 'c'))
+    a, b, c = self.voters(election)
+    self.cast(a)
+    # a voter who has voted, and one who hasn't: c still hasn't voted
+    self.remove(election, a)
+    self.remove(election, b)
+    election = self.reload(election)
+    self.assertIsNone(election.voting_ended_at)
+    self.assertFalse(self.auto_close_logs(election).exists())
+
+  def test_removing_all_voters_does_not_close(self):
+    election = self.make_election()
+    for voter in self.voters(election):
+      self.remove(election, voter)
+    election = self.reload(election)
+    self.assertEqual(election.num_voters, 0)
+    self.assertIsNone(election.voting_ended_at)
+    self.assertFalse(self.auto_close_logs(election).exists())
+    self.assertEqual(self.admin_mails(election, 'voting closed'), [])
+
+  def test_not_when_off(self):
+    election = self.make_election(close_when_all_voted=False)
+    a, b = self.voters(election)
+    self.cast(a)
+    self.remove(election, b)
+    self.assertIsNone(self.reload(election).voting_ended_at)
+
+  def test_not_before_the_freeze(self):
+    election = self.make_election(freeze=False)
+    a, b = self.voters(election)
+    # not possible through the booth before the freeze; set directly to check the guard
+    Voter.objects.filter(pk=a.pk).update(vote_hash='x', cast_at=datetime.datetime.utcnow())
+    self.remove(election, b)
+    election = self.reload(election)
+    self.assertIsNone(election.voting_ended_at)
+    self.assertFalse(self.auto_close_logs(election).exists())
+
+  def test_not_after_voting_has_ended(self):
+    election = self.make_election()
+    a, b = self.voters(election)
+    self.cast(a)
+    ended_at = datetime.datetime.utcnow() - datetime.timedelta(minutes=5)
+    election.voting_ends_at = ended_at
+    election.save()
+    self.remove(election, b)
+    election = self.reload(election)
+    self.assertEqual(election.voting_ends_at, ended_at)
+    self.assertIsNone(election.voting_ended_at)
+    self.assertFalse(self.auto_close_logs(election).exists())
+    self.assertEqual(self.admin_mails(election, 'voting closed'), [])
+
+
 class OneStepTallyTests(ElectionSetup, TestCase):
 
   def tally(self, election):
