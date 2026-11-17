@@ -49,7 +49,14 @@
     max_above_count: '{% filter escapejs %}{% blocktranslate with max="__MAX__" count="__COUNT__" %}The maximum of {{max}} answers is more than the {{count}} answers of this question. Lower the maximum or choose "unlimited".{% endblocktranslate %}{% endfilter %}',
     saved: '{% filter escapejs %}{% translate "The questions have been saved." %}{% endfilter %}',
     save_failed: '{% filter escapejs %}{% translate "The questions could not be saved. Please try again." %}{% endfilter %}',
-    leave_unsaved: '{% filter escapejs %}{% translate "Your input for the questions has not been saved yet and will be lost. Leave this page anyway?" %}{% endfilter %}'
+    leave_unsaved: '{% filter escapejs %}{% translate "Your input for the questions has not been saved yet and will be lost. Leave this page anyway?" %}{% endfilter %}',
+    // the answers of the "Yes / No / Abstain" button; the ballot stores the
+    // text, so they are in the language of the administrator's page
+    preset_answers: ['{% filter escapejs %}{% translate "Yes" context "answer option" %}{% endfilter %}',
+                     '{% filter escapejs %}{% translate "No" context "answer option" %}{% endfilter %}',
+                     '{% filter escapejs %}{% translate "Abstain" context "answer option" %}{% endfilter %}'],
+    preset_replace: '{% filter escapejs %}{% blocktranslate with answers="__ANSWERS__" %}Replace the answers entered so far with {{answers}}?{% endblocktranslate %}{% endfilter %}',
+    preset_filled: '{% filter escapejs %}{% blocktranslate with answers="__ANSWERS__" %}Answers filled in: {{answers}}. Voters choose exactly one of them.{% endblocktranslate %}{% endfilter %}'
   };
 
   // gettext text with %(num)s, usable in the jTemplate (no braces there)
@@ -132,6 +139,37 @@
   function add_answers(el, num) {
     for (var i = 0; i < num; i++)
       add_answer(el, false);
+  }
+
+  // "Yes / No / Abstain": put these three answers into the form and let voters
+  // choose exactly one (minimum 1, maximum 1), so that abstaining is an
+  // explicit choice. Answers already entered are only replaced after asking.
+  function preset_yes_no_abstain(button) {
+    var form = $(button).closest('form');
+    var container = form.find('.answers-container');
+    var answers = TEXTS.preset_answers;
+    // rows with a text or a link; nothing to ask if they are these answers already
+    var entered = 0, same = true;
+    container.find('.answer-row').each(function() {
+      var text = $(this).find('input.answer').val().trim();
+      var url = $(this).find('input.url-input').val().trim();
+      if (!text && !url)
+        return;
+      if (url || text !== answers[entered])
+        same = false;
+      entered++;
+    });
+    var names = answers.join(', ');
+    if (entered && !(same && entered == answers.length) &&
+        !window.confirm(fill(TEXTS.preset_replace, {ANSWERS: names})))
+      return;
+    container.empty();
+    $(answers).each(function(i, a) { container.append(createAnswerRowHTML(a)); });
+    renumber_answers(container);
+    form[0].min.value = '1';
+    form[0].max.value = '1';
+    show_form_error(form[0], '');
+    announce(fill(TEXTS.preset_filled, {ANSWERS: names}));
   }
 
   // remove an answer row; the last remaining row is only cleared

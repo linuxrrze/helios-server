@@ -162,3 +162,34 @@ class SaveQuestionsViewTests(TestCase):
     self.assertIn("if (!evt.defaultPrevented) leaving();", content)
     # the setup navigation is there to be guarded
     self.assertIn('class="setup-pager"', content)
+
+  def test_yes_no_abstain_button(self):
+    """Both question forms offer "Yes / No / Abstain" as a real button, described by a hint"""
+    response = self.client.get('/static/helios/static_templates/question.html')
+    template = b''.join(response.streaming_content).decode()
+    self.assertEqual(template.count('<button type="button" class="btn-secondary answer-preset" onclick="preset_yes_no_abstain(this)"'), 2)
+    self.assertIn('aria-describedby="new_question_preset_hint">{gettext("Yes / No / Abstain")}</button>', template)
+    self.assertIn('<p class="field-hint" id="new_question_preset_hint">', template)
+    catalog = self.client.get('/jsi18n/', HTTP_ACCEPT_LANGUAGE='de').content.decode()
+    self.assertIn('"Ja / Nein / Enthaltung"', catalog)
+
+  def test_yes_no_abstain_answers_in_page_language(self):
+    """The answers are filled in as text in the language of the editor page"""
+    url = '/helios/elections/%s/questions' % self.election.uuid
+    content = self.client.get(url).content.decode()
+    self.assertIn("preset_answers: ['Yes',\n                     'No',\n                     'Abstain']", content)
+    self.assertIn('function preset_yes_no_abstain(button)', content)
+    self.assertIn("window.confirm(fill(TEXTS.preset_replace", content)
+    content = self.client.get(url, HTTP_ACCEPT_LANGUAGE='de').content.decode()
+    self.assertIn("preset_answers: ['Ja',\n                     'Nein',\n                     'Enthaltung']", content)
+    self.assertIn("preset_replace: 'Möchten Sie die bisher eingegebenen Antworten durch __ANSWERS__ ersetzen?'", content)
+
+  def test_yes_no_abstain_question_saved(self):
+    """A question as the button fills it in (exactly one of three answers) is accepted"""
+    for answers in (["Yes", "No", "Abstain"], ["Ja", "Nein", "Enthaltung"]):
+      new = [question(answers=answers, answer_urls=["", "", ""], min=1, max=1)]
+      self.assertIsNone(models.Election.questions_problem(new))
+      response = self.post(json.dumps(new))
+      self.assertEqual(response.status_code, 200)
+      self.assertEqual(response.content, b"SUCCESS")
+      self.assertEqual(self.stored(), new)

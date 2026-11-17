@@ -301,7 +301,8 @@
 .content-body .answer-row { grid-template-columns: minmax(7.5rem, auto) 1fr auto; align-items: start; }
 .content-body .answer-label { font-weight: 600; color: var(--text-color, #1f2933); }
 .content-body .answer-remove { align-self: center; font-size: .95rem; }
-.content-body .add-answer { margin-top: 4px; }
+.content-body .answer-tools { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.content-body .answers-section .field-hint { margin: 8px 0 0; }
 .content-body .form-error[hidden], .content-body #question_editor_error[hidden] { display: none; }
 @media only screen and (max-width: 40em) {
   .content-body .answer-row { grid-template-columns: 1fr auto; }

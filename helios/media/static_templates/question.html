@@ -100,9 +100,13 @@
       <div id="answer_table_{$T.question$index}" class="answers-container">
         <!-- Answers will be dynamically added here -->
       </div>
-      <button type="button" class="btn-secondary add-answer" onclick="add_answer($('#answer_table_{$T.question$index}'), true)">
-        + {gettext("Add answer")}
-      </button>
+      <div class="answer-tools">
+        <button type="button" class="btn-secondary add-answer" onclick="add_answer($('#answer_table_{$T.question$index}'), true)">
+          + {gettext("Add answer")}
+        </button>
+        <button type="button" class="btn-secondary answer-preset" onclick="preset_yes_no_abstain(this)" aria-describedby="q{$T.question$index}_preset_hint">{gettext("Yes / No / Abstain")}</button>
+      </div>
+      <p class="field-hint" id="q{$T.question$index}_preset_hint">{gettext("“Yes / No / Abstain” fills in these three answers; voters then choose exactly one of them.")}</p>
     </fieldset>
 
     <div class="callout callout-danger form-error" role="alert" hidden></div>
@@ -175,9 +179,13 @@
       <div id="answer_table" class="answers-container">
         <!-- Answers will be dynamically added here -->
       </div>
-      <button type="button" class="btn-secondary add-answer" onclick="add_answer($('#answer_table'), true)">
-        + {gettext("Add answer")}
-      </button>
+      <div class="answer-tools">
+        <button type="button" class="btn-secondary add-answer" onclick="add_answer($('#answer_table'), true)">
+          + {gettext("Add answer")}
+        </button>
+        <button type="button" class="btn-secondary answer-preset" onclick="preset_yes_no_abstain(this)" aria-describedby="new_question_preset_hint">{gettext("Yes / No / Abstain")}</button>
+      </div>
+      <p class="field-hint" id="new_question_preset_hint">{gettext("“Yes / No / Abstain” fills in these three answers; voters then choose exactly one of them.")}</p>
     </fieldset>
 
     <div class="callout callout-danger form-error" role="alert" hidden></div>

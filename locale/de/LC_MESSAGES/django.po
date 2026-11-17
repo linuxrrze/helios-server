@@ -2229,6 +2229,31 @@ msgstr "Die Fragen konnten nicht gespeichert werden. Bitte versuchen Sie es erne
 msgid "Your input for the questions has not been saved yet and will be lost. Leave this page anyway?"
 msgstr "Ihre Eingaben zu den Fragen sind noch nicht gespeichert und gehen verloren. Möchten Sie die Seite trotzdem verlassen?"
 
+#: helios/templates/election_questions.html:55
+msgctxt "answer option"
+msgid "Yes"
+msgstr "Ja"
+
+#: helios/templates/election_questions.html:56
+msgctxt "answer option"
+msgid "No"
+msgstr "Nein"
+
+#: helios/templates/election_questions.html:57
+msgctxt "answer option"
+msgid "Abstain"
+msgstr "Enthaltung"
+
+#: helios/templates/election_questions.html:58
+#, python-format
+msgid "Replace the answers entered so far with %(answers)s?"
+msgstr "Möchten Sie die bisher eingegebenen Antworten durch %(answers)s ersetzen?"
+
+#: helios/templates/election_questions.html:59
+#, python-format
+msgid "Answers filled in: %(answers)s. Voters choose exactly one of them."
+msgstr "Antworten eingetragen: %(answers)s. Wahlberechtigte wählen genau eine davon."
+
 #: helios/templates/election_register.html:5 helios/templatetags/navigation_tags.py:34
 msgid "Register"
 msgstr "Registrieren"
