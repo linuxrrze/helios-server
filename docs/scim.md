@@ -134,6 +134,16 @@ Group names are unique per client (case-insensitive) and at most 100 characters 
 must be users provisioned by the same client; other members (unknown ids, nested groups) are
 ignored and logged.
 
+**Board details.** Voter groups can describe boards (see the [user manual](user-manual.md#voter-groups)):
+a long name, name suffix and term of office for the group, initials, person group and status for
+its members. SCIM has no natural source for them: a group carries only `displayName` (which
+becomes the group's short name and also selects the role and administrator groups),
+`externalId` and its members; a user's attributes describe the person, not their role in a
+particular board. So these fields stay empty for provisioned groups (members: status "member",
+one vote) and, like the rest of a provisioned group, can't be changed in Helios. The member list
+of a provisioned group can be downloaded as a CSV file by its administrators; importing a file
+is refused.
+
 **Group log.** Besides the server log (logger `helios.provisioning`), changes made by SCIM are
 recorded in the group's log on the group's page, shown to its administrators with "SCIM:
 &lt;client&gt;" as the author: created, renamed, and member updates as counts ("2 added, 1
@@ -147,8 +157,9 @@ Provisioned entities show the badge "Provisioned (SCIM: &lt;client&gt;)" (voter 
 pages, election and voter group administrators, the site administrators' user search). The
 server refuses, with an explanation (HTTP 403), every change to
 
-- a provisioned voter group: adding or removing members, adding or removing administrators,
-  transferring the ownership;
+- a provisioned voter group: adding, changing or removing members, importing members from a
+  file, changing its name or term of office, adding or removing administrators, transferring the
+  ownership;
 - a provisioned user's name and email address (kept on login, see section 2).
 
 Roles have no editing page in Helios; `manage.py merge_duplicate_users` skips provisioned users.

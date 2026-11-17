@@ -82,7 +82,10 @@ All in `helios/models.py` except `User`:
   member lists (with votes) from which elections are prepared, with an owner
   (`admin`), additional administrators (`admins`) and a log of changes shown
   to the group's administrators. Site administrators who don't administer a
-  group see only its overview (`helios/votergroup_views.py`).
+  group see only its overview (`helios/votergroup_views.py`). Optional board
+  fields: long name, name suffix and term of office of the group; initials,
+  person group and status of its members; members with 0 votes get no voter.
+  Members can be exported and imported as CSV (`helios/votergroup.py`).
 - **`EmailOptOut`**: SHA-256 hashes of email addresses that asked not to
   receive Helios email.
 - **`EmailSuppression`**: SHA-256 hashes of addresses Helios no longer

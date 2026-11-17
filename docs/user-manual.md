@@ -211,6 +211,52 @@ the election no longer depends on the group. For such elections, **Close
 voting when everyone has voted** is checked in advance; uncheck it if the
 vote should stay open until its end time.
 
+**Boards and committees.** Any voter group can describe a board, e.g. a
+faculty council or a senate; nothing needs to be switched on. Under **Name and
+term of office** on the group's page, give its full name ("Faculty council of
+the Faculty of Sciences"), a name suffix shown after it (e.g. the term in
+short form, "2025-2027") and the first and last day of the term of office.
+The full name then becomes the title of the group, with the short name below
+it; the list of voter groups shows the name, the term and the number of
+members. After the last day of the term, the group is marked **Term ended**;
+it keeps working as before. The short name can be changed there, too.
+
+Each member can have, besides name, email and number of votes, **initials**
+(a short identifier), a **person group** (e.g. "Professors", "Students") and a
+**status**: member, deputy member, advisory member or guest. The member list
+is sorted by person group (members without one last), then by name; columns
+nobody has a value for are left out. **Edit** next to a member changes these
+fields. A member with **0 votes** has no voting right, e.g. a deputy or an
+advisory member: they stay in the group but get no voter when an election is
+prepared from it (the page lists them as "no vote"). If no member has a vote,
+no election can be prepared. The status does not change the votes by itself:
+give deputies and advisory members 0 votes where they don't vote.
+
+**Member lists as CSV files.** **Download as CSV file** on the group's page
+gives the member list (UTF-8 with header row and the columns `first_name`,
+`last_name`, `email`, `votes`, `initials`, `person_group`, `status`; status
+as `member`, `deputy`, `advisory` or `guest`). **Import from a CSV file**
+reads such a file, e.g. a list kept in a spreadsheet: a header row is
+required, the columns may come in any order, and German column names are
+accepted as well (`Vorname`, `Nachname` or `Name`, `E-Mail`, `Stimmen`,
+`Kürzel`, `Personengruppe`, `Status` with `Mitglied`, `Ersatzmitglied`,
+`beratend`, `Gast`). Commas and semicolons as separators and UTF-8 or
+Windows encodings are recognized; a file has at most 2000 rows and 1 MB.
+Members are matched by email address (case-insensitive): members already in
+the group are updated, the others added. Members who are not in the file stay
+in the group unless **Remove members who are not in the file** is checked.
+A column that is missing from the file leaves the existing members' values
+alone; an empty cell sets the default (1 vote, status member, no initials or
+person group). Nothing changes before you confirm the **preview**, which
+shows how many members are added, updated, removed and unchanged, with the
+changes in detail. If any row has an error (e.g. an invalid address, an
+unknown status, an address twice), the whole file is refused with the line
+numbers of the errors. The uploaded file is not kept: its rows wait in your
+session until you import or cancel them (at most an hour). Only the group's
+administrators can download or import the member list; groups provisioned by
+an identity management (see [SCIM](scim.md)) can be downloaded but not
+imported into.
+
 A group can have several administrators. On the group's page, follow
 **Manage administrators** and add people by the email (or username) they log
 in with; they must have logged in to Helios once, and with several login
@@ -238,9 +284,10 @@ Member lists, changes and preparing elections are refused. The admin page's
 **user search** lists the groups a user owns or administers.
 
 The group's page shows its **log** to its administrators, newest first:
-creation, members added or removed, administrators added, removed or leaving,
-ownership transfers and elections prepared from the group. To keep personal
-data to a minimum, members appear only with a masked address
+creation, changes to its name and term of office, members added, changed or
+removed, imports from a file (as counts), administrators added, removed or
+leaving, ownership transfers and elections prepared from the group. To keep
+personal data to a minimum, members appear only with a masked address
 (`a***@example.org`) and their number of votes; administrators appear with
 name and account. The server logs the same changes (logger
 `helios.votergroup`, email addresses masked as in the mail log).
