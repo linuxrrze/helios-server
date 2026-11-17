@@ -1,0 +1,31 @@
+Return-path: <>
+Envelope-to: bounce+{{token}}@bounces.example.org
+Delivery-date: Tue, 17 Nov 2026 10:03:40 +0100
+X-Failed-Recipients: voter@example.net
+Auto-Submitted: auto-replied
+From: Mail Delivery System <Mailer-Daemon@mail.example.net>
+To: bounce+{{token}}@bounces.example.org
+Subject: Mail delivery failed: returning message to sender
+Message-Id: <E1vKx2Q-0001aB-7T@mail.example.net>
+Date: Tue, 17 Nov 2026 10:03:40 +0100
+
+This message was created automatically by mail delivery software.
+
+A message that you sent could not be delivered to one or more of its
+recipients. This is a permanent error. The following address(es) failed:
+
+  voter@example.net
+    SMTP error from remote mail server after RCPT TO:<voter@example.net>:
+    host mx2.example.net [192.0.2.11]: 550 5.1.1 <voter@example.net>... User unknown
+
+------ This is a copy of the message's headers. ------
+
+Return-path: <bounce+{{token}}@bounces.example.org>
+Received: from vote.example.org ([192.0.2.25])
+	by mail.example.net with esmtps (TLS1.3) (Exim 4.92)
+	id 1vKx2P-0001a9-9X
+	for voter@example.net; Tue, 17 Nov 2026 10:03:39 +0100
+Subject: Board election - time to vote
+From: Helios <helios@example.org>
+To: Voter One <voter@example.net>
+Message-ID: {{message_id}}

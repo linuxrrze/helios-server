@@ -1,0 +1,55 @@
+Return-Path: <>
+Delivered-To: bounce+{{token}}@bounces.example.org
+Date: Tue, 17 Nov 2026 14:02:10 +0100 (CET)
+From: MAILER-DAEMON@relay.example.org (Mail Delivery System)
+Subject: Delayed Mail (still being retried)
+To: bounce+{{token}}@bounces.example.org
+Auto-Submitted: auto-replied
+MIME-Version: 1.0
+Content-Type: multipart/report; report-type=delivery-status;
+	boundary="6CdE3k4de5z2sTq.1763384530/relay.example.org"
+Message-Id: <20261117130210.6CdE3k4de5z2sTq@relay.example.org>
+
+This is a MIME-encapsulated message.
+
+--6CdE3k4de5z2sTq.1763384530/relay.example.org
+Content-Description: Notification
+Content-Type: text/plain; charset=us-ascii
+
+This is the mail system at host relay.example.org.
+
+####################################################################
+# THIS IS A WARNING ONLY.  YOU DO NOT NEED TO RESEND YOUR MESSAGE. #
+####################################################################
+
+Your message could not be delivered for more than 4 hour(s).
+It will be retried until it is 5 day(s) old.
+
+<voter@example.net>: connect to mx.example.net[192.0.2.10]:25: Connection
+    timed out
+
+--6CdE3k4de5z2sTq.1763384530/relay.example.org
+Content-Description: Delivery report
+Content-Type: message/delivery-status
+
+Reporting-MTA: dns; relay.example.org
+Arrival-Date: Tue, 17 Nov 2026 10:02:10 +0100 (CET)
+
+Final-Recipient: rfc822; voter@example.net
+Original-Recipient: rfc822;voter@example.net
+Action: delayed
+Status: 4.4.1
+Diagnostic-Code: X-Postfix; connect to mx.example.net[192.0.2.10]:25:
+    Connection timed out
+Will-Retry-Until: Sun, 22 Nov 2026 10:02:10 +0100 (CET)
+
+--6CdE3k4de5z2sTq.1763384530/relay.example.org
+Content-Description: Undelivered Message Headers
+Content-Type: text/rfc822-headers
+
+Return-Path: <bounce+{{token}}@bounces.example.org>
+Subject: Board election - time to vote
+From: Helios <helios@example.org>
+To: Voter One <voter@example.net>
+
+--6CdE3k4de5z2sTq.1763384530/relay.example.org--

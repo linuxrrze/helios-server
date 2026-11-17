@@ -9,6 +9,7 @@ services, nginx in front of them, PostgreSQL on the same host. For Docker Compos
 | `helios.env.example` | `/etc/helios/helios.env` (all configuration and secrets) |
 | `helios-web.service` | `/etc/systemd/system/helios-web.service` (gunicorn, unix socket) |
 | `helios-worker.service` | `/etc/systemd/system/helios-worker.service` (background tasks) |
+| `helios-bounces.service`, `helios-bounces.timer` | `/etc/systemd/system/` (optional: reads the bounce mailbox every 5 minutes, see below) |
 | `nginx-helios.conf` | `/etc/nginx/sites-available/helios` |
 | `nginx-helios-security-headers.conf` | `/etc/nginx/snippets/helios-security-headers.conf` (Content Security Policy etc. for the files nginx serves itself) |
 
@@ -69,7 +70,28 @@ systemctl restart helios-web helios-worker
 
 Don't update while an election is open.
 
-Configuration changes take effect after `systemctl restart helios-web helios-worker`.
+Configuration changes take effect after `systemctl restart helios-web helios-worker` (the
+bounce timer's runs read the file anew each time).
+
+## Bounces (optional)
+
+With bounce handling configured (`HELIOS_BOUNCE_DOMAIN`, `HELIOS_BOUNCE_SECRET` and the
+`HELIOS_BOUNCE_IMAP_*` settings in `/etc/helios/helios.env`; DNS and mailbox as in
+[INSTALL.md](../../INSTALL.md#bounces)), `manage.py process_bounces` reads the bounce mailbox.
+The timer runs it every 5 minutes as a oneshot service:
+
+```sh
+cp deploy/systemd/helios-bounces.service deploy/systemd/helios-bounces.timer /etc/systemd/system/
+systemctl daemon-reload
+systemctl start helios-bounces.service       # once by hand: check that it can log in
+journalctl -u helios-bounces.service -n 20   # "0 processed, 0 ignored, ...; 0 old mails deleted"
+systemctl enable --now helios-bounces.timer
+systemctl list-timers helios-bounces.timer
+```
+
+A run that fails (mailbox unreachable, wrong password, not configured) shows up as a failed
+unit in `systemctl --failed` and in the journal; the next run tries again. The service needs no
+restart after configuration changes (each run reads `/etc/helios/helios.env`).
 
 ## Security headers of the booth and verifier
 

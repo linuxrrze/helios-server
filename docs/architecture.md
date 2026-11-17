@@ -85,6 +85,11 @@ All in `helios/models.py` except `User`:
   group see only its overview (`helios/votergroup_views.py`).
 - **`EmailOptOut`**: SHA-256 hashes of email addresses that asked not to
   receive Helios email.
+- **`EmailSuppression`**: SHA-256 hashes of addresses Helios no longer
+  mails because they bounced or complained (global, liftable);
+  **`BounceEvent`**: what a bounce about an `OutgoingEmail` said;
+  **`ProcessedBounceMail`**: the mails of the bounce mailbox already handled.
+  See Email.
 
 ## Election lifecycle
 
@@ -289,8 +294,8 @@ have voted since; mailings to one voter, and those from before this was kept,
 are not checked) is not sent (status `skipped_obsolete`, the reason in
 `last_error_code`: `voter_removed`, `trustee_removed`, `election_deleted`,
 `voter_email_cutoff`, `voting_closed`, `no_longer_selected`); opted-out voters are skipped
-(`skipped_optout`, without their address). A hook for a suppression list
-(`helios.mail.suppressed`) is there, the list itself not yet.
+(`skipped_optout`, without their address), and addresses on the suppression
+list (`skipped_suppressed`, the source in `last_error_code`; see Bounces).
 
 `helios/mail_errors.py` judges errors of the mail server. RFC 3463 enhanced
 status codes (`5.1.1`, `4.2.2`) win over the three-digit reply code:
@@ -345,6 +350,52 @@ that it cannot be matched to the hashed `EmailOptOut`.
 `HELIOS_VOTER_EMAIL_CUTOFF_WEEKS` weeks after `tallying_finished_at`. Nothing
 in the tally workflow sets that field yet, so in practice the cutoff doesn't
 apply.
+
+### Bounces
+
+Bounces only come back with SMTP and VERP (above). `manage.py process_bounces`
+(every 5 minutes: `deploy/systemd/helios-bounces.timer`, or cron) reads the
+bounce mailbox over IMAP with TLS (`helios/bounce_mailbox.py`): `UID SEARCH
+UNSEEN` in `HELIOS_BOUNCE_IMAP_FOLDER`, each mail fetched without marking it
+read, judged by `helios/bounces.py`, and moved to `processed`, `ignored`,
+`unmatched` or `error` (created if missing; with `COPY` + `\Deleted` where the
+server lacks `MOVE`). Mails there are deleted after
+`HELIOS_BOUNCE_RETENTION_DAYS`. A `ProcessedBounceMail` row (folder,
+UIDVALIDITY, UID, Message-ID) is written in the same transaction as the
+bounce's effect: a mail found again (its move failed, the mailbox was rebuilt,
+two runs at once) is only moved, never counted twice. One mail that cannot be
+read goes to `error` and the run goes on.
+
+1. The email: a valid token (HMAC checked in constant time, case-insensitive)
+   in `Delivered-To`, `X-Original-To`, `Envelope-To`, `To`, the DSN's
+   `Original-Envelope-Id`, or the returned headers of our email (`Return-Path`,
+   e.g. in a complaint). None: `unmatched`.
+2. A complaint (`multipart/report; report-type=feedback-report`, ARF):
+   `BounceEvent` of type complaint and the address suppressed; with
+   `HELIOS_BOUNCE_COMPLAINT_OPTOUT` also opted out (`EmailOptOut`, hashed).
+3. A DSN (`report-type=delivery-status`, RFC 3464), per recipient Action,
+   Status, Diagnostic-Code, Final-Recipient: failed with 5.x.x is a hard
+   bounce, failed with 4.x.x a soft one, delayed is only logged.
+4. Otherwise an automatic reply (`Auto-Submitted` other than `no`,
+   `X-Autoreply`, `Precedence: auto_reply`, out-of-office subjects) or any other
+   mail that does not look like a bounce (sender, subject,
+   `X-Failed-Recipients`): `ignored`.
+5. A non-standard bounce (old Exchange, qmail, Exim without DSN, freemail
+   providers): the email is known from the token, only the kind is guessed from
+   status codes (5.x.x/5xx hard, 4.x.x/4xx soft) and typical phrases in the
+   text before the returned copy of our email; unclear is `unknown`, counted as
+   soft.
+
+A `BounceEvent` (email, hashed address, type, status code, the diagnostic text
+shortened to 500 characters, time) is all that is kept of a bounce. A hard
+bounce makes the email `bounced_hard` and puts the address on the suppression
+list (`EmailSuppression`: global for all elections, hashed like
+`EmailOptOut`, with source hard bounce / soft bounces / complaint / manual and
+the status code). A soft or unknown bounce makes it `bounced_soft`;
+`HELIOS_BOUNCE_SOFT_LIMIT` of them for the address within
+`HELIOS_BOUNCE_SOFT_DAYS` count as a hard bounce. Only emails the mail server
+took (`sent`) change, and never from hard back to soft. Lifting a suppression
+keeps the row (`lifted_at`, `lifted_by`); soft bounces before it no longer count.
 
 ## Public data
 

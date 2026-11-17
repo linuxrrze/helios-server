@@ -1,0 +1,54 @@
+Return-Path: <>
+Received: from localhost (localhost)
+	by mail.example.net (8.15.2/8.15.2) id 5AH93eQ1012345;
+	Tue, 17 Nov 2026 10:03:40 +0100
+Date: Tue, 17 Nov 2026 10:03:40 +0100
+From: Mail Delivery Subsystem <MAILER-DAEMON@mail.example.net>
+Message-Id: <202611170903.5AH93eQ1012345@mail.example.net>
+To: <BOUNCE+{{TOKEN}}@BOUNCES.EXAMPLE.ORG>
+MIME-Version: 1.0
+Content-Type: multipart/report; report-type=delivery-status;
+	boundary="5AH93eQ1012345.1763370220/mail.example.net"
+Subject: Returned mail: see transcript for details
+Auto-Submitted: auto-generated (failure)
+
+This is a MIME-encapsulated message
+
+--5AH93eQ1012345.1763370220/mail.example.net
+
+The original message was received at Tue, 17 Nov 2026 10:03:39 +0100
+from vote.example.org [192.0.2.25]
+
+   ----- The following addresses had permanent fatal errors -----
+<voter@example.net>
+    (reason: 550 5.1.1 <voter@example.net>... User unknown)
+
+   ----- Transcript of session follows -----
+... while talking to mx.example.net.:
+>>> DATA
+<<< 550 5.1.1 <voter@example.net>... User unknown
+550 5.1.1 <voter@example.net>... User unknown
+
+--5AH93eQ1012345.1763370220/mail.example.net
+Content-Type: message/delivery-status
+
+Reporting-MTA: dns; mail.example.net
+Received-From-MTA: DNS; vote.example.org
+Arrival-Date: Tue, 17 Nov 2026 10:03:39 +0100
+
+Final-Recipient: RFC822; voter@example.net
+Action: failed
+Status: 5.1.1
+Remote-MTA: DNS; mx.example.net
+Diagnostic-Code: SMTP; 550 5.1.1 <voter@example.net>... User unknown
+Last-Attempt-Date: Tue, 17 Nov 2026 10:03:40 +0100
+
+--5AH93eQ1012345.1763370220/mail.example.net
+Content-Type: text/rfc822-headers
+
+Return-Path: <bounce+{{token}}@bounces.example.org>
+Subject: Board election - time to vote
+From: Helios <helios@example.org>
+To: Voter One <voter@example.net>
+
+--5AH93eQ1012345.1763370220/mail.example.net--

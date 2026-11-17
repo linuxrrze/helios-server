@@ -1,0 +1,36 @@
+Return-Path: <>
+Delivered-To: bounce+{{token}}@bounces.example.org
+From: Mail Delivery Subsystem <mailer-daemon@googlemail.example>
+To: bounce+{{token}}@bounces.example.org
+Auto-Submitted: auto-replied
+Subject: Delivery Status Notification (Failure)
+Date: Tue, 17 Nov 2026 01:06:01 -0800 (PST)
+Message-ID: <6744a0bd.050a0220.1b2c3d.0002.GMR@mx.google.example>
+MIME-Version: 1.0
+Content-Type: multipart/report; boundary="000000000000b1b2c3d4e5f60718"; report-type=delivery-status
+
+--000000000000b1b2c3d4e5f60718
+Content-Type: text/plain; charset="UTF-8"
+
+** Message not delivered **
+
+Your message couldn't be delivered to voter@example.net because the recipient's inbox is out of storage space.
+
+--000000000000b1b2c3d4e5f60718
+Content-Type: message/delivery-status
+
+Reporting-MTA: dns; googlemail.example
+
+Final-Recipient: rfc822; voter@example.net
+Action: failed
+Status: 4.2.2
+Diagnostic-Code: smtp; 452-4.2.2 The recipient's inbox is out of storage space.
+ 452 4.2.2 Please direct the recipient to https://support.google.example/mail/?p=OverQuotaTemp
+
+--000000000000b1b2c3d4e5f60718
+Content-Type: text/rfc822-headers
+
+Return-Path: <bounce+{{token}}@bounces.example.org>
+Subject: Board election - time to vote
+
+--000000000000b1b2c3d4e5f60718--

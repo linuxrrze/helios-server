@@ -1,0 +1,45 @@
+Return-Path: <fbl@feedback.example.net>
+Delivered-To: bounce@bounces.example.org
+From: Feedback Loop <fbl@feedback.example.net>
+To: abuse@bounces.example.org
+Subject: complaint about message from 192.0.2.25
+Date: Tue, 17 Nov 2026 11:00:00 +0000
+Message-ID: <fbl.20261117110000.1234@feedback.example.net>
+MIME-Version: 1.0
+Content-Type: multipart/report; report-type=feedback-report;
+	boundary="part1_13d.2e68ed54_boundary"
+
+--part1_13d.2e68ed54_boundary
+Content-Type: text/plain; charset="US-ASCII"
+Content-Transfer-Encoding: 7bit
+
+This is an email abuse report for an email message received from IP
+192.0.2.25 on Tue, 17 Nov 2026 10:02:10 +0000.
+
+--part1_13d.2e68ed54_boundary
+Content-Type: message/feedback-report
+
+Feedback-Type: abuse
+User-Agent: ExampleFBL/1.0
+Version: 1
+Original-Mail-From: <bounce+{{token}}@bounces.example.org>
+Original-Rcpt-To: <voter@example.net>
+Arrival-Date: Tue, 17 Nov 2026 10:02:10 +0000
+Source-IP: 192.0.2.25
+Reported-Domain: example.org
+
+--part1_13d.2e68ed54_boundary
+Content-Type: message/rfc822
+Content-Disposition: inline
+
+Return-Path: <bounce+{{token}}@bounces.example.org>
+Received: from vote.example.org (vote.example.org [192.0.2.25])
+	by mx.feedback.example.net; Tue, 17 Nov 2026 10:02:10 +0000
+Subject: Board election - time to vote
+From: Helios <helios@example.org>
+To: voter@example.net
+Message-ID: {{message_id}}
+
+Dear voter, please vote.
+
+--part1_13d.2e68ed54_boundary--

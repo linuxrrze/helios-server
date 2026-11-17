@@ -128,6 +128,23 @@ DNS and mail server (the domain names are examples; the sender domain is that of
 * The relay Helios sends through must allow the envelope sender `bounce+…@bounces.example.org`
   for the login of `EMAIL_HOST_USER` (an authenticating relay often restricts senders).
 
+Reading the bounces: set `HELIOS_BOUNCE_IMAP_HOST`, `HELIOS_BOUNCE_IMAP_USER` and
+`HELIOS_BOUNCE_IMAP_PASSWORD` (IMAP over TLS) and run every few minutes
+
+```
+uv run python manage.py process_bounces
+```
+
+With systemd: `deploy/systemd/helios-bounces.timer` ([deploy/systemd/README.md](deploy/systemd/README.md#bounces-optional)).
+With Docker Compose: the commented-out `bounces` service in `deploy/docker-compose.yml`, or a cron
+job on the host (`docker compose exec -T worker python manage.py process_bounces`). Each run
+prints how many mails went to which folder; it fails (non-zero exit status) when the mailbox
+cannot be reached or bounce handling is not configured.
+
+To check the setup, send an email to a voter with a non-existent address at a domain you
+control (e.g. `nobody-12345@example.org`): after the next run, its `OutgoingEmail` has the status
+`bounced_hard` and the address is on the suppression list (`EmailSuppression`).
+
 ## Upgrading from Celery and RabbitMQ
 
 Older versions of Helios used Celery with RabbitMQ. To upgrade:

@@ -11,7 +11,7 @@ same Helios settings; they differ only where the setup differs.
 | | Docker Compose | systemd + nginx |
 |---|---|---|
 | File | `deploy/.env` (template [deploy/.env.example](../deploy/.env.example)) | `/etc/helios/helios.env` (template [deploy/systemd/helios.env.example](../deploy/systemd/helios.env.example)) |
-| Read by | Compose, for `${...}` in `docker-compose.yml` and as the containers' environment | `helios-web.service` and `helios-worker.service` (`EnvironmentFile`), and by `sh` for `manage.py` commands |
+| Read by | Compose, for `${...}` in `docker-compose.yml` and as the containers' environment | `helios-web.service`, `helios-worker.service` and `helios-bounces.service` (`EnvironmentFile`), and by `sh` for `manage.py` commands |
 | Only here | `HELIOS_IMAGE`, `POSTGRES_PASSWORD` (Compose itself, not Helios) | `DATABASE_URL`, e.g. `postgres://helios@/helios` over the local socket |
 | Database | `DATABASE_URL` is set by `docker-compose.yml` (overrides the file) | in the file |
 | Local mail server | `EMAIL_HOST=host.docker.internal` (`localhost` is the container itself) | `EMAIL_HOST=localhost` |
@@ -161,6 +161,31 @@ Only with SMTP: with Mailgun or Amazon SES, bounce handling is off.
 |---|---|---|
 | `HELIOS_BOUNCE_DOMAIN` | empty (off) | Domain of the envelope senders, e.g. `bounces.example.org`: a subdomain of the domain of `DEFAULT_FROM_EMAIL` (DMARC alignment), with an MX and a mailbox that receives `bounce+…@` (see [INSTALL.md](../INSTALL.md#bounces)). |
 | `HELIOS_BOUNCE_SECRET` | empty (off) | Key of the HMAC in the envelope sender, so that nobody can forge bounces and get voters' addresses suppressed. A long random value (at least 16 characters; Helios refuses to start without it when `HELIOS_BOUNCE_DOMAIN` is set and `DEBUG=0`). Changing it invalidates the bounces of emails sent before. |
+
+`manage.py process_bounces` reads the bounces from the mailbox of the bounce domain over IMAP
+(run it every few minutes: `deploy/systemd/helios-bounces.timer`, or cron in a container) and
+moves each mail into one of the folders `processed`, `ignored` (out-of-office and other replies),
+`unmatched` (no valid token: spam, forged or old bounces) and `error` (unreadable), which it
+creates. A permanent bounce (5.x.x) puts the address on the **suppression list**, which applies
+to all elections: Helios no longer sends to it (status `skipped_suppressed`) until an election
+administrator corrects the voter's address or lifts it, or a site administrator lifts it. A
+temporary bounce (4.x.x, e.g. mailbox full; or one whose kind is unclear) only counts; several
+within a few days count as a permanent one. Delay notices are only logged. A complaint (the
+recipient marked the email as spam, ARF feedback report) also suppresses the address.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `HELIOS_BOUNCE_IMAP_HOST` | empty (off) | IMAP server of the bounce mailbox. |
+| `HELIOS_BOUNCE_IMAP_PORT` | `993` (`143` with STARTTLS) | Port. |
+| `HELIOS_BOUNCE_IMAP_STARTTLS` | `0` | `0`: TLS from the start (port 993). `1`: STARTTLS. Unencrypted IMAP is not possible; the certificate and host name are checked. |
+| `HELIOS_BOUNCE_IMAP_USER` | empty | Login of the mailbox. |
+| `HELIOS_BOUNCE_IMAP_PASSWORD` | empty | Its password. |
+| `HELIOS_BOUNCE_IMAP_FOLDER` | `INBOX` | Folder the bounces arrive in. Only unread mails are handled: don't read them there with a mail client. |
+| `HELIOS_BOUNCE_RETENTION_DAYS` | `30` | Days after which the mails in `processed`, `ignored`, `unmatched` and `error` are deleted (from their arrival). Helios itself keeps only what a bounce said (status code, shortened explanation), never the mail. |
+| `HELIOS_BOUNCE_SOFT_LIMIT` | `3` | Temporary bounces of an address … |
+| `HELIOS_BOUNCE_SOFT_DAYS` | `14` | … within this many days put it on the suppression list. |
+| `HELIOS_BOUNCE_COMPLAINT_OPTOUT` | `0` | `1`: a complaint also opts the address out of all Helios emails, as if its owner had used the opt-out link (stored hashed). Off by default: an opt-out also refuses the address when voters are uploaded and can only be undone by its owner, while a complaint may be a mistaken click; the suppression list already stops the emails, and administrators can lift it. |
+
 
 **Other ways to send** (instead of SMTP):
 

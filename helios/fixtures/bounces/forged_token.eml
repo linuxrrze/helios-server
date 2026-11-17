@@ -1,0 +1,10 @@
+Return-Path: <>
+Delivered-To: bounce+1-aaaaaaaaaaaaaaaa@bounces.example.org
+From: MAILER-DAEMON@attacker.example.net
+To: bounce+1-aaaaaaaaaaaaaaaa@bounces.example.org
+Subject: Undelivered Mail Returned to Sender
+Date: Tue, 17 Nov 2026 10:09:00 +0100
+Message-ID: <forged.1@attacker.example.net>
+Content-Type: text/plain
+
+550 5.1.1 User unknown

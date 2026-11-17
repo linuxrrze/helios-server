@@ -899,6 +899,24 @@ if HELIOS_BOUNCE_DOMAIN and not DEBUG and not TESTING:
       "%s It is needed with HELIOS_BOUNCE_DOMAIN: set it to a long random value, e.g. the output of: "
       "python3 -c \"import secrets; print(secrets.token_urlsafe(32))\"" % _problem)
 
+# `manage.py process_bounces` (helios.bounces) reads the bounces from this IMAP
+# mailbox, over TLS only (port 993; STARTTLS=1: port 143 with STARTTLS), and
+# moves them to the folders processed, ignored, unmatched or error, from which
+# they are deleted after RETENTION_DAYS.
+HELIOS_BOUNCE_IMAP_HOST = get_from_env('HELIOS_BOUNCE_IMAP_HOST', '')
+HELIOS_BOUNCE_IMAP_STARTTLS = (get_from_env('HELIOS_BOUNCE_IMAP_STARTTLS', '0') == '1')
+HELIOS_BOUNCE_IMAP_PORT = int(get_from_env('HELIOS_BOUNCE_IMAP_PORT', '143' if HELIOS_BOUNCE_IMAP_STARTTLS else '993'))
+HELIOS_BOUNCE_IMAP_USER = get_from_env('HELIOS_BOUNCE_IMAP_USER', '')
+HELIOS_BOUNCE_IMAP_PASSWORD = get_from_env('HELIOS_BOUNCE_IMAP_PASSWORD', '')
+HELIOS_BOUNCE_IMAP_FOLDER = get_from_env('HELIOS_BOUNCE_IMAP_FOLDER', 'INBOX')
+HELIOS_BOUNCE_RETENTION_DAYS = int(get_from_env('HELIOS_BOUNCE_RETENTION_DAYS', '30'))
+# temporary bounces of an address: this many within this many days suppress it like a permanent one
+HELIOS_BOUNCE_SOFT_LIMIT = int(get_from_env('HELIOS_BOUNCE_SOFT_LIMIT', '3'))
+HELIOS_BOUNCE_SOFT_DAYS = int(get_from_env('HELIOS_BOUNCE_SOFT_DAYS', '14'))
+# a complaint (the recipient marked an email as spam) always suppresses the address;
+# 1: also opts it out of all Helios emails (EmailOptOut, which also refuses it in voter lists)
+HELIOS_BOUNCE_COMPLAINT_OPTOUT = (get_from_env('HELIOS_BOUNCE_COMPLAINT_OPTOUT', '0') == '1')
+
 # set up logging
 import logging
 

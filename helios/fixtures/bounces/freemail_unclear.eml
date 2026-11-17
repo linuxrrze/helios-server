@@ -1,0 +1,13 @@
+Return-Path: <>
+Delivered-To: bounce+{{token}}@bounces.example.org
+From: "Mail System" <mailer-daemon@freemail.example.net>
+To: bounce+{{token}}@bounces.example.org
+Subject: Undeliverable message
+Date: Tue, 17 Nov 2026 10:08:00 +0100
+Message-ID: <nd.20261117100800.77@freemail.example.net>
+Content-Type: text/plain; charset=utf-8
+
+Your message to voter@example.net could not be processed.
+
+Original message:
+Subject: Board election - time to vote

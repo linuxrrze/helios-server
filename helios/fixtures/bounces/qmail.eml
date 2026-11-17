@@ -1,0 +1,24 @@
+Return-Path: <>
+Delivered-To: bounce+{{token}}@bounces.example.org
+Received: (qmail 12345 invoked for bounce); 17 Nov 2026 09:07:00 -0000
+Date: 17 Nov 2026 09:07:00 -0000
+From: MAILER-DAEMON@mail.example.net
+To: bounce+{{token}}@bounces.example.org
+Subject: failure notice
+
+Hi. This is the qmail-send program at mail.example.net.
+I'm afraid I wasn't able to deliver your message to the following addresses.
+This is a permanent error; I've given up. Sorry it didn't work out.
+
+<voter@example.net>:
+Sorry, no mailbox here by that name. (#5.1.1)
+
+--- Below this line is a copy of the message.
+
+Return-Path: <bounce+{{token}}@bounces.example.org>
+Received: (qmail 12340 invoked from network); 17 Nov 2026 09:06:59 -0000
+Subject: Board election - time to vote
+From: Helios <helios@example.org>
+To: Voter One <voter@example.net>
+
+Dear Voter One, please vote. Your password is 4.2.2-not-a-code 550

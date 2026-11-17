@@ -1611,7 +1611,7 @@ class OutgoingEmail(models.Model):
   created_at = models.DateTimeField(auto_now_add=True)
   sent_at = models.DateTimeField(null=True, blank=True)
   message_id = models.CharField(max_length=255, blank=True, default='')
-  # for matching bounces to the email (VERP), not used yet
+  # for matching bounces to the email: its VERP token (helios.verp), if it was sent with one
   bounce_token = models.CharField(max_length=64, blank=True, default='')
 
   class Meta:
@@ -1661,6 +1661,139 @@ class EmailPausePeriod(models.Model):
 
   def __str__(self):
     return 'EmailPausePeriod %s - %s' % (self.started_at, self.ended_at)
+
+
+class EmailSuppression(models.Model):
+  """
+  An address Helios no longer sends to (global, for all elections): it bounced
+  for good, bounced temporarily too often, its owner marked an email as spam,
+  or a site administrator put it here. Hashed like EmailOptOut. Lifting it
+  (LIFTED_AT) keeps the row: soft bounces before that no longer count.
+  See helios.bounces.
+  """
+  SOURCE_HARD_BOUNCE = 'hard_bounce'
+  SOURCE_SOFT_BOUNCES = 'soft_bounces'
+  SOURCE_COMPLAINT = 'complaint'
+  SOURCE_MANUAL = 'manual'
+  SOURCES = [
+    (SOURCE_HARD_BOUNCE, 'permanent bounce'),
+    (SOURCE_SOFT_BOUNCES, 'repeated temporary bounces'),
+    (SOURCE_COMPLAINT, 'marked as spam'),
+    (SOURCE_MANUAL, 'added by a site administrator'),
+  ]
+
+  email_hash = models.CharField(max_length=64, unique=True, help_text="SHA-256 hash of lowercase email")
+  source = models.CharField(max_length=20, choices=SOURCES)
+  # the enhanced status code of the bounce ('5.1.1'), if any
+  status_code = models.CharField(max_length=16, blank=True, default='')
+  reason = models.CharField(max_length=500, blank=True, default='')
+  # when it was (last) suppressed
+  created_at = models.DateTimeField()
+  lifted_at = models.DateTimeField(null=True, blank=True)
+  lifted_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+
+  class Meta:
+    app_label = 'helios'
+
+  def __str__(self):
+    return 'EmailSuppression %s... (%s%s)' % (self.email_hash[:8], self.source, ', lifted' if self.lifted_at else '')
+
+  @classmethod
+  def for_address(cls, address):
+    """the active suppression of ADDRESS, or None"""
+    email_hash = utils.hash_email(address)
+    if not email_hash:
+      return None
+    return cls.objects.filter(email_hash=email_hash, lifted_at__isnull=True).first()
+
+  @classmethod
+  def is_suppressed(cls, address):
+    email_hash = utils.hash_email(address)
+    return bool(email_hash) and cls.objects.filter(email_hash=email_hash, lifted_at__isnull=True).exists()
+
+  @classmethod
+  def suppress(cls, address=None, source=SOURCE_MANUAL, status_code='', reason='', email_hash=None):
+    """suppress ADDRESS (or EMAIL_HASH); an active suppression keeps its source. Returns it."""
+    email_hash = email_hash or utils.hash_email(address)
+    if not email_hash:
+      return None
+    now = datetime.datetime.utcnow()
+    with transaction.atomic():
+      suppression, created = cls.objects.select_for_update().get_or_create(
+        email_hash=email_hash, defaults={'source': source, 'status_code': status_code[:16],
+                                         'reason': reason[:500], 'created_at': now})
+      if not created and suppression.lifted_at:
+        suppression.source, suppression.status_code, suppression.reason = source, status_code[:16], reason[:500]
+        suppression.created_at, suppression.lifted_at, suppression.lifted_by = now, None, None
+        suppression.save()
+    return suppression
+
+  @classmethod
+  def lift(cls, address=None, user=None, email_hash=None):
+    """lift the suppression of ADDRESS (or EMAIL_HASH); True if there was one"""
+    email_hash = email_hash or utils.hash_email(address)
+    if not email_hash:
+      return False
+    return bool(cls.objects.filter(email_hash=email_hash, lifted_at__isnull=True).update(
+      lifted_at=datetime.datetime.utcnow(), lifted_by=user if user is not None and user.pk else None))
+
+
+class BounceEvent(models.Model):
+  """
+  A bounce or complaint about an email (helios.bounces): what it said, not the
+  bounce mail itself. Lives as long as its email (and so its election).
+  """
+  HARD = 'hard'
+  SOFT = 'soft'
+  UNKNOWN = 'unknown'
+  COMPLAINT = 'complaint'
+  TYPES = [
+    (HARD, 'permanent bounce'),
+    (SOFT, 'temporary bounce'),
+    (UNKNOWN, 'unclear bounce (counts as temporary)'),
+    (COMPLAINT, 'complaint (marked as spam)'),
+  ]
+
+  outgoing_email = models.ForeignKey(OutgoingEmail, on_delete=models.CASCADE, related_name='bounce_events')
+  # the hashed address the email went to (soft bounces are counted per address, across elections)
+  email_hash = models.CharField(max_length=64, blank=True, default='', db_index=True)
+  bounce_type = models.CharField(max_length=16, choices=TYPES)
+  # RFC 3463 enhanced status code ('5.1.1'), or the SMTP reply code ('550'), if any
+  status_code = models.CharField(max_length=16, blank=True, default='')
+  # the remote server's explanation (Diagnostic-Code), shortened
+  diagnostic = models.CharField(max_length=500, blank=True, default='')
+  created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+  class Meta:
+    app_label = 'helios'
+
+  def __str__(self):
+    return 'BounceEvent %s (%s %s)' % (self.outgoing_email_id, self.bounce_type, self.status_code)
+
+
+class ProcessedBounceMail(models.Model):
+  """
+  A mail of the bounce mailbox that `manage.py process_bounces` has handled
+  (by folder, UIDVALIDITY and UID, and by Message-ID), so that none is handled
+  twice, e.g. when moving it to another folder failed. Kept for
+  HELIOS_BOUNCE_RETENTION_DAYS.
+  """
+  folder = models.CharField(max_length=200)
+  uidvalidity = models.BigIntegerField()
+  uid = models.BigIntegerField()
+  message_id = models.CharField(max_length=255, blank=True, default='', db_index=True)
+  # the folder it went to: processed, ignored, unmatched or error
+  result = models.CharField(max_length=16)
+  processed_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+  class Meta:
+    app_label = 'helios'
+    constraints = [
+      models.UniqueConstraint(fields=['folder', 'uidvalidity', 'uid'], name='helios_processedbouncemail_once'),
+    ]
+
+  def __str__(self):
+    return 'ProcessedBounceMail %s/%s/%s (%s)' % (self.folder, self.uidvalidity, self.uid, self.result)
 
 
 class SiteAnnouncement(models.Model):

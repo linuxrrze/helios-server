@@ -1,0 +1,10 @@
+Return-Path: <voter@example.net>
+Delivered-To: bounce+{{token}}@bounces.example.org
+From: Voter One <voter@example.net>
+To: bounce+{{token}}@bounces.example.org
+Subject: Re: Board election - time to vote
+Date: Tue, 17 Nov 2026 10:30:00 +0100
+Message-ID: <reply.1@example.net>
+Content-Type: text/plain; charset=utf-8
+
+Thanks, I have voted. Where can I see the result?

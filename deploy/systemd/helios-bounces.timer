@@ -1,0 +1,13 @@
+# /etc/systemd/system/helios-bounces.timer
+# Runs helios-bounces.service every 5 minutes (a run still going on is not started twice).
+[Unit]
+Description=Read the Helios bounce mailbox every 5 minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+RandomizedDelaySec=30s
+Persistent=true
+
+[Install]
+WantedBy=timers.target

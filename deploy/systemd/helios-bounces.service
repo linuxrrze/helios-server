@@ -1,0 +1,23 @@
+# /etc/systemd/system/helios-bounces.service
+# Reads the bounce mailbox (HELIOS_BOUNCE_IMAP_*) once: records bounces and complaints
+# about Helios emails and suppresses addresses that bounce. Started by
+# helios-bounces.timer; only needed with HELIOS_BOUNCE_DOMAIN (see INSTALL.md, "Bounces").
+[Unit]
+Description=Helios bounce processing
+After=network-online.target postgresql.service
+Wants=network-online.target
+Requires=postgresql.service
+
+[Service]
+Type=oneshot
+User=helios
+Group=helios
+WorkingDirectory=/opt/helios/helios-server
+EnvironmentFile=/etc/helios/helios.env
+ExecStart=/opt/helios/helios-server/.venv/bin/python manage.py process_bounces
+TimeoutStartSec=600
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes

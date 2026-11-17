@@ -43,7 +43,7 @@ import contextlib
 import datetime
 import logging
 import random
-from email.utils import make_msgid
+from email.utils import make_msgid, parseaddr
 from typing import Callable, NamedTuple, Optional
 
 from django.conf import settings
@@ -59,7 +59,7 @@ from . import mail_messages
 from . import organizations
 from . import verp
 from .mail_backend import mask_address
-from .models import EmailBatch, EmailOptOut, EmailPausePeriod, EmailSendingPause, OutgoingEmail
+from .models import EmailBatch, EmailOptOut, EmailPausePeriod, EmailSendingPause, EmailSuppression, OutgoingEmail
 
 logger = logging.getLogger(__name__)
 
@@ -92,10 +92,11 @@ def voter_opted_out(voter):
 
 def suppressed(email, recipient):
   """
-  True if the address is not to be mailed (hard bounces, complaints). A hook for
-  the suppression list, which does not exist yet.
+  the active EmailSuppression of the address the email is to go to (it bounced
+  for good, too often, or its owner marked an email as spam; helios.bounces), or None
   """
-  return False
+  address = parseaddr(recipient or '')[1]
+  return EmailSuppression.for_address(address) if address else None
 
 
 ##
@@ -429,8 +430,11 @@ def _claim(email_id, now):
       _finish(email, OutgoingEmail.FAILED, error_code='render_error', error_text='%s: %s' % (type(e).__name__, e))
       return None
 
-    if suppressed(email, recipient):
-      _finish(email, OutgoingEmail.SKIPPED_SUPPRESSED)
+    suppression = suppressed(email, recipient)
+    if suppression:
+      logger.info("email %s (%s) not sent: address suppressed (%s)", email.id, email.kind, suppression.source)
+      _finish(email, OutgoingEmail.SKIPPED_SUPPRESSED, error_code=suppression.source,
+              error_text=suppression.status_code)
       return None
 
     email.status = OutgoingEmail.SENDING

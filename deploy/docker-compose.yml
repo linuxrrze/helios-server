@@ -113,5 +113,15 @@ services:
       migrate:
         condition: service_completed_successfully
 
+  # Bounces (optional, with HELIOS_BOUNCE_* in .env; see ../INSTALL.md, "Bounces"): reads the
+  # bounce mailbox every 5 minutes. Instead of this service, a cron job on the host works too:
+  #   */5 * * * *  cd /path/to/deploy && docker compose exec -T worker python manage.py process_bounces
+  # bounces:
+  #   <<: *helios
+  #   command: ["sh", "-c", "while true; do python manage.py process_bounces; sleep 300; done"]
+  #   depends_on:
+  #     migrate:
+  #       condition: service_completed_successfully
+
 volumes:
   pgdata:

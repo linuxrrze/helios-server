@@ -1,0 +1,43 @@
+Return-path: <>
+Envelope-to: bounce+{{token}}@bounces.example.org
+X-Failed-Recipients: voter@example.net
+Auto-Submitted: auto-replied
+From: Mail Delivery System <Mailer-Daemon@mail.example.net>
+To: bounce+{{token}}@bounces.example.org
+Content-Type: multipart/report; report-type=delivery-status; boundary=1763370220-eximdsn-1804289383
+MIME-Version: 1.0
+Subject: Mail delivery failed: returning message to sender
+Message-Id: <E1vKx3R-0002bC-8U@mail.example.net>
+Date: Tue, 17 Nov 2026 10:03:40 +0100
+
+--1763370220-eximdsn-1804289383
+Content-type: text/plain; charset=us-ascii
+
+This message was created automatically by mail delivery software.
+
+A message that you sent could not be delivered to one or more of its
+recipients. This is a permanent error. The following address(es) failed:
+
+  voter@example.net
+    Unrouteable address
+
+--1763370220-eximdsn-1804289383
+Content-type: message/delivery-status
+
+Reporting-MTA: dns; mail.example.net
+Original-Envelope-ID: {{token}}
+
+Action: failed
+Final-Recipient: rfc822;voter@example.net
+Status: 5.0.0
+Diagnostic-Code: X-Exim; Unrouteable address
+
+--1763370220-eximdsn-1804289383
+Content-type: text/rfc822-headers
+
+Return-path: <bounce+{{token}}@bounces.example.org>
+Subject: Board election - time to vote
+From: Helios <helios@example.org>
+To: Voter One <voter@example.net>
+
+--1763370220-eximdsn-1804289383--
