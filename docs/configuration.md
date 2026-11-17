@@ -135,7 +135,9 @@ EMAIL_HOST_PASSWORD=...
 throttling, server unreachable) is deferred and tried again; one it refuses for good
 (unknown mailbox) fails at once. The n-th retry waits min(`HELIOS_EMAIL_RETRY_BASE` · 2ⁿ,
 `HELIOS_EMAIL_RETRY_CAP`) · random(0.5…1.5) seconds; with the defaults 5, 10, 20, 40, 80, 160 and
-320 minutes (about 10 hours for all 8 attempts). When the mail server cannot be reached or
+320 minutes (about 10 hours for all 8 attempts). An email of a mailing to some of the voters
+(e.g. those who have not voted) is not sent to a voter who no longer belongs to them when it is
+due (who has voted since). When the mail server cannot be reached or
 refuses the login or sender address, sending is paused for all emails, and a refused login is
 reported to `ADMIN_EMAIL` and Rollbar. `manage.py resume_email` ends a pause after fixing the
 settings.
@@ -145,7 +147,7 @@ settings.
 | `HELIOS_EMAIL_RETRY_BASE` | `300` | Seconds before the first retry; each further retry waits twice as long. |
 | `HELIOS_EMAIL_RETRY_CAP` | `21600` | Longest wait between two attempts, in seconds (6 hours). |
 | `HELIOS_EMAIL_MAX_ATTEMPTS` | `8` | Attempts after which an email counts as failed. |
-| `HELIOS_EMAIL_MAX_AGE` | `172800` | Seconds after queueing (48 hours) after which an email that has not gone out counts as failed. |
+| `HELIOS_EMAIL_MAX_AGE` | `172800` | Seconds after queueing (48 hours) after which an email that has not gone out counts as failed. Time during which sending was paused (mail server unreachable or refusing the login) does not count: after an outage the waiting emails still go out. |
 
 **Other ways to send** (instead of SMTP):
 

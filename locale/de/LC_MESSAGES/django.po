@@ -537,65 +537,65 @@ msgstr "ungültige Wählerart „%(voter_type)s“ für die Wähler-ID „%(vote
 msgid "invalid voter email '%(voter_email)s' for voter id '%(voter_id)s'"
 msgstr "ungültige E-Mail-Adresse „%(voter_email)s“ für die Wähler-ID „%(voter_id)s“"
 
-#: helios/models.py:1765
+#: helios/models.py:1800
 #, python-format
 msgid "Voter group %(name)s created"
 msgstr "Wählergruppe %(name)s erstellt"
 
-#: helios/models.py:1766
+#: helios/models.py:1801
 #, python-format
 msgid "Renamed to %(name)s"
 msgstr "Umbenannt in %(name)s"
 
-#: helios/models.py:1767
+#: helios/models.py:1802
 #, python-format
 msgid "Member %(email)s added with %(votes)s vote(s)"
 msgstr "Mitglied %(email)s mit %(votes)s Stimme(n) hinzugefügt"
 
-#: helios/models.py:1768
+#: helios/models.py:1803
 #, python-format
 msgid "Member %(email)s removed"
 msgstr "Mitglied %(email)s entfernt"
 
-#: helios/models.py:1769
+#: helios/models.py:1804
 #, python-format
 msgid "Administrator %(admin)s added"
 msgstr "Administrator*in %(admin)s hinzugefügt"
 
-#: helios/models.py:1770
+#: helios/models.py:1805
 #, python-format
 msgid "Administrator %(admin)s removed"
 msgstr "Administrator*in %(admin)s entfernt"
 
-#: helios/models.py:1771
+#: helios/models.py:1806
 #, python-format
 msgid "Administrator %(admin)s left the group"
 msgstr "Administrator*in %(admin)s hat die Gruppe verlassen"
 
-#: helios/models.py:1772
+#: helios/models.py:1807
 #, python-format
 msgid "Ownership transferred from %(old_owner)s to %(new_owner)s"
 msgstr "Besitz von %(old_owner)s an %(new_owner)s übertragen"
 
-#: helios/models.py:1773
+#: helios/models.py:1808
 #, python-format
 msgid "Election %(name)s prepared with %(voters)s voter(s)"
 msgstr "Wahl %(name)s mit %(voters)s Wahlberechtigten vorbereitet"
 
-#: helios/models.py:1774
+#: helios/models.py:1809
 #, python-format
 msgid "Members updated: %(added)s added, %(removed)s removed; %(admins)s administrator(s)"
 msgstr "Mitglieder aktualisiert: %(added)s hinzugefügt, %(removed)s entfernt; %(admins)s Administrator*in(nen)"
 
-#: helios/models.py:1778
+#: helios/models.py:1813
 msgid "Transferred by a site administrator."
 msgstr "Übertragen durch eine Administrator*in der Website."
 
-#: helios/models.py:1779
+#: helios/models.py:1814
 msgid "The previous owner is no longer an administrator."
 msgstr "Die bisherige Besitzer*in ist nicht mehr Administrator*in."
 
-#: helios/models.py:1780
+#: helios/models.py:1815
 msgid "The other administrators of the group were added to the election administrators."
 msgstr "Die anderen Administrator*innen der Gruppe wurden zur Wahlleitung hinzugefügt."
 
@@ -4089,76 +4089,76 @@ msgstr "Wahlergebnis"
 msgid "None of the voters match this choice, so no email would be sent."
 msgstr "Auf diese Auswahl trifft keine wahlberechtigte Person zu, daher würde keine E-Mail gesendet."
 
-#: helios/views.py:2134 helios/views.py:2144 helios/views.py:2152
+#: helios/views.py:2139 helios/views.py:2149 helios/views.py:2157
 msgid "Opt Out of Helios Emails"
 msgstr "Helios-E-Mails abbestellen"
 
-#: helios/views.py:2135 helios/views.py:2145 helios/views.py:2153
+#: helios/views.py:2140 helios/views.py:2150 helios/views.py:2158
 msgid "Enter your email address to stop receiving all emails from Helios voting system."
 msgstr "Geben Sie Ihre E-Mail-Adresse ein, um keine E-Mails des Wahlsystems Helios mehr zu erhalten."
 
-#: helios/views.py:2146 helios/views.py:2223
+#: helios/views.py:2151 helios/views.py:2228
 msgid "Email address is required"
 msgstr "E-Mail-Adresse ist erforderlich"
 
-#: helios/views.py:2154 helios/views.py:2231
+#: helios/views.py:2159 helios/views.py:2236
 msgid "Invalid email address"
 msgstr "Ungültige E-Mail-Adresse"
 
-#: helios/views.py:2168
+#: helios/views.py:2173
 msgid "Opt-Out Confirmation Sent"
 msgstr "Bestätigung der Abbestellung gesendet"
 
-#: helios/views.py:2169
+#: helios/views.py:2174
 msgid "We have sent you a confirmation email. Please click the link in the email to complete your opt-out request."
 msgstr "Wir haben Ihnen eine Bestätigungs-E-Mail gesendet. Bitte klicken Sie auf den Link in der E-Mail, um die Abbestellung abzuschließen."
 
-#: helios/views.py:2183 helios/templates/optout_confirm_form.html:44
+#: helios/views.py:2188 helios/templates/optout_confirm_form.html:44
 msgid "Confirm Opt-Out"
 msgstr "Abbestellung bestätigen"
 
-#: helios/views.py:2184
+#: helios/views.py:2189
 msgid "Please confirm that you want to opt out of all Helios voting system emails."
 msgstr "Bitte bestätigen Sie, dass Sie keine E-Mails des Wahlsystems Helios mehr erhalten möchten."
 
-#: helios/views.py:2199
+#: helios/views.py:2204
 msgid "Successfully Opted Out"
 msgstr "Erfolgreich abbestellt"
 
-#: helios/views.py:2200
+#: helios/views.py:2205
 #, python-format
 msgid "The email address %(email)s has been successfully opted out of all Helios emails."
 msgstr "Die E-Mail-Adresse %(email)s erhält keine Helios-E-Mails mehr."
 
-#: helios/views.py:2211 helios/views.py:2221 helios/views.py:2229
+#: helios/views.py:2216 helios/views.py:2226 helios/views.py:2234
 msgid "Opt Back Into Helios Emails"
 msgstr "Helios-E-Mails wieder erhalten"
 
-#: helios/views.py:2212 helios/views.py:2222 helios/views.py:2230
+#: helios/views.py:2217 helios/views.py:2227 helios/views.py:2235
 msgid "Enter your email address to resume receiving emails from Helios voting system."
 msgstr "Geben Sie Ihre E-Mail-Adresse ein, um wieder E-Mails des Wahlsystems Helios zu erhalten."
 
-#: helios/views.py:2249
+#: helios/views.py:2254
 msgid "Opt-In Confirmation Sent"
 msgstr "Bestätigung gesendet"
 
-#: helios/views.py:2250
+#: helios/views.py:2255
 msgid "We have sent you a confirmation email. Please click the link in the email to complete your opt-in request."
 msgstr "Wir haben Ihnen eine Bestätigungs-E-Mail gesendet. Bitte klicken Sie auf den Link in der E-Mail, um den erneuten Empfang zu bestätigen."
 
-#: helios/views.py:2268 helios/templates/optout_confirm_form.html:44
+#: helios/views.py:2273 helios/templates/optout_confirm_form.html:44
 msgid "Confirm Opt-In"
 msgstr "E-Mail-Empfang bestätigen"
 
-#: helios/views.py:2269
+#: helios/views.py:2274
 msgid "Please confirm that you want to resume receiving emails from Helios voting system."
 msgstr "Bitte bestätigen Sie, dass Sie wieder E-Mails des Wahlsystems Helios erhalten möchten."
 
-#: helios/views.py:2284
+#: helios/views.py:2289
 msgid "Successfully Opted Back In"
 msgstr "Empfang erfolgreich wieder aktiviert"
 
-#: helios/views.py:2285
+#: helios/views.py:2290
 #, python-format
 msgid "The email address %(email)s has been successfully opted back in to Helios emails."
 msgstr "Die E-Mail-Adresse %(email)s erhält wieder Helios-E-Mails."

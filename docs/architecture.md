@@ -274,10 +274,14 @@ fails a request, the cast-vote verification or another task.
 Right before sending, the task locks the row and checks again: an email that
 is no longer queued, deferred or "sending" is left alone (no duplicates); one
 whose voter or trustee was removed, whose election was deleted, a bulk mailing
-past `HELIOS_VOTER_EMAIL_CUTOFF_WEEKS`, or an invitation to vote or voter
-password after voting closed is not sent (status `skipped_obsolete`, the reason
-in `last_error_code`: `voter_removed`, `trustee_removed`, `election_deleted`,
-`voter_email_cutoff`, `voting_closed`); opted-out voters are skipped
+past `HELIOS_VOTER_EMAIL_CUTOFF_WEEKS`, an invitation to vote or voter
+password after voting closed, or an email of a mailing to a voter no longer
+among the voters it was for (the choice on the "email voters" page, e.g. "not
+voted", is kept as `EmailBatch.voter_constraints`; a reminder skips voters who
+have voted since; mailings to one voter, and those from before this was kept,
+are not checked) is not sent (status `skipped_obsolete`, the reason in
+`last_error_code`: `voter_removed`, `trustee_removed`, `election_deleted`,
+`voter_email_cutoff`, `voting_closed`, `no_longer_selected`); opted-out voters are skipped
 (`skipped_optout`, without their address). A hook for a suppression list
 (`helios.mail.suppressed`) is there, the list itself not yet.
 
@@ -298,7 +302,12 @@ state lives in the `OutgoingEmail`, not in the task table. The n-th retry waits
 `min(HELIOS_EMAIL_RETRY_BASE * 2^n, HELIOS_EMAIL_RETRY_CAP) * random(0.5, 1.5)`
 (configuration errors as if three more attempts had failed); after
 `HELIOS_EMAIL_MAX_ATTEMPTS` attempts or `HELIOS_EMAIL_MAX_AGE` after it was
-queued the email is `failed`. A task that finds its email deferred to later is
+queued the email is `failed`. Time during which sending was paused does not
+count towards `HELIOS_EMAIL_MAX_AGE`: each run of mail server failures, from the
+first until an email goes out again, is an `EmailPausePeriod`, and an email's
+deadline moves by the paused time since it was queued (an outage still going on
+counts until now). While the mail server is down or refuses us, only attempts
+end an email, so emails waiting for it still go out afterwards. A task that finds its email deferred to later is
 an outdated one and does nothing.
 
 When the mail server cannot be reached or refuses our configuration, sending

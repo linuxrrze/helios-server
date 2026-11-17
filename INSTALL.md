@@ -91,7 +91,8 @@ uv run python manage.py requeue_stuck_tasks --older-than 120
   `HELIOS_EMAIL_RETRY_CAP`), until `HELIOS_EMAIL_MAX_ATTEMPTS` or
   `HELIOS_EMAIL_MAX_AGE` ([docs/configuration.md](docs/configuration.md#4-email)). When
   the mail server cannot be reached or refuses the login or sender address,
-  sending is paused for all emails and resumes by itself; a refused login is also
+  sending is paused for all emails and resumes by itself (the pause does not count
+  towards `HELIOS_EMAIL_MAX_AGE`, so the waiting emails still go out); a refused login is also
   reported to `ADMIN_EMAIL` (as far as that mail gets through) and Rollbar, and
   logged as an error. After fixing the mail settings, send the waiting emails
   right away:

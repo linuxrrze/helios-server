@@ -18,7 +18,8 @@ for an invitation to vote, ...). Errors of the mail server are judged by
 helios.mail_errors: a permanent one fails the email, a temporary one defers it
 and the task queues itself again for later (the n-th retry after
 min(HELIOS_EMAIL_RETRY_BASE * 2^n, HELIOS_EMAIL_RETRY_CAP) * random(0.5, 1.5)
-seconds), until HELIOS_EMAIL_MAX_ATTEMPTS or HELIOS_EMAIL_MAX_AGE. When the mail
+seconds), until HELIOS_EMAIL_MAX_ATTEMPTS or HELIOS_EMAIL_MAX_AGE (not counting the
+time sending was paused, EmailPausePeriod). When the mail
 server cannot be reached or refuses our login, sending is paused for all emails
 (EmailSendingPause); the first email after the pause tests the server again.
 
@@ -46,6 +47,7 @@ from django.conf import settings
 from django.core.mail import EmailMultiAlternatives, mail_admins
 from django.core.mail.utils import DNS_NAME
 from django.db import IntegrityError, transaction
+from django.db.models import Q
 from django.utils import timezone, translation
 
 from helios_auth.auth_systems import AUTH_SYSTEMS
@@ -53,7 +55,7 @@ from . import mail_errors
 from . import mail_messages
 from . import organizations
 from .mail_backend import mask_address
-from .models import EmailBatch, EmailOptOut, EmailSendingPause, OutgoingEmail
+from .models import EmailBatch, EmailOptOut, EmailPausePeriod, EmailSendingPause, OutgoingEmail
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +69,8 @@ CONFIG_EXTRA_STEPS = 3
 PRIORITY = 5
 BULK_PRIORITY = 0
 
-# not sent to voters who opted out
+# not sent to voters who opted out. Not so the notice that an administrator removed
+# a voter's vote (KIND_VOTE_REMOVED): it is always sent.
 OPTOUT_KINDS = (OutgoingEmail.KIND_BULK, OutgoingEmail.KIND_VOTER_PASSWORD, OutgoingEmail.KIND_VOTE_CAST)
 # not sent once their voter is removed
 VOTER_KINDS = OPTOUT_KINDS
@@ -95,11 +98,19 @@ def suppressed(email, recipient):
 ## queueing
 ##
 
-def create_batch(election, subject_template, body_template, extra_vars, language='', triggered_by=None):
-  """a new bulk mailing; its emails are added by helios.tasks.voters_email"""
+def create_batch(election, subject_template, body_template, extra_vars, language='', triggered_by=None,
+                 voter_constraints=None):
+  """
+  a new bulk mailing; its emails are added by helios.tasks.voters_email.
+  VOTER_CONSTRAINTS (include, exclude): the voters it is for, checked again before
+  each email is sent (None: not checked, e.g. a mailing to one voter)
+  """
+  if voter_constraints is not None:
+    include, exclude = voter_constraints
+    voter_constraints = {'include': include or None, 'exclude': exclude or None}
   return EmailBatch.objects.create(
     election=election, subject_template=subject_template, body_template=body_template,
-    extra_vars=extra_vars or {}, language=language or '',
+    extra_vars=extra_vars or {}, language=language or '', voter_constraints=voter_constraints,
     triggered_by=triggered_by if triggered_by and triggered_by.pk else None)
 
 
@@ -178,21 +189,29 @@ def _pause(error, now):
   pause.paused_until = now + datetime.timedelta(seconds=retry_delay(steps))
   if begins:
     pause.since = now
+    if not EmailPausePeriod.objects.filter(ended_at__isnull=True).exists():
+      EmailPausePeriod.objects.create(started_at=now)
   pause.error_code, pause.error_text = error.code[:32], error.text
   pause.save()
   logger.warning("email sending paused until %s: %s", pause.paused_until, error.text)
   return begins
 
 
+def _close_pause_periods(now):
+  EmailPausePeriod.objects.filter(ended_at__isnull=True).update(ended_at=now)
+
+
 def _end_pause():
   if EmailSendingPause.objects.filter(pk=1, failures__gt=0).update(failures=0, paused_until=None, since=None):
+    _close_pause_periods(timezone.now())
     logger.info("email sending resumed: the mail server took an email again")
 
 
 def resume_sending():
   """end a pause now (e.g. after fixing the configuration); emails deferred by it are queued again"""
-  EmailSendingPause.objects.filter(pk=1).update(failures=0, paused_until=None, since=None)
   now = timezone.now()
+  EmailSendingPause.objects.filter(pk=1).update(failures=0, paused_until=None, since=None)
+  _close_pause_periods(now)
   count = 0
   for email_id, kind in OutgoingEmail.objects.filter(status=OutgoingEmail.DEFERRED).values_list('id', 'kind'):
     with transaction.atomic():
@@ -200,6 +219,26 @@ def resume_sending():
         enqueue(email_id, kind)
         count += 1
   return count
+
+
+def paused_seconds(since, until):
+  """seconds between SINCE and UNTIL during which sending was paused (a pause still going on counts until UNTIL)"""
+  periods = EmailPausePeriod.objects.filter(started_at__lt=until).filter(
+    Q(ended_at__isnull=True) | Q(ended_at__gt=since))
+  total = 0.0
+  for started_at, ended_at in periods.values_list('started_at', 'ended_at'):
+    total += max((min(ended_at or until, until) - max(started_at, since)).total_seconds(), 0)
+  return total
+
+
+def max_age_deadline(email, now):
+  """
+  when EMAIL counts as too old to be sent: HELIOS_EMAIL_MAX_AGE after it was
+  queued, plus the time sending was paused since then (an outage of the mail
+  server does not use up the time of the emails waiting for it)
+  """
+  return email.created_at + datetime.timedelta(
+    seconds=settings.HELIOS_EMAIL_MAX_AGE + paused_seconds(email.created_at, now))
 
 
 def _report_pause(error):
@@ -269,6 +308,9 @@ def _obsolete_reason(email):
       return 'voter_email_cutoff'
     if mail_messages.voter_templates(email)[1] in VOTING_TEMPLATES and election.voting_has_stopped():
       return 'voting_closed'
+    # e.g. a reminder to those who have not voted, to a voter who has voted since
+    if email.batch_id and not email.batch.selects(email.voter):
+      return 'no_longer_selected'
   return None
 
 
@@ -354,7 +396,7 @@ def _claim(email_id, now):
       logger.info("Skipping email to opted-out voter %s", email.voter.uuid)
       _finish(email, OutgoingEmail.SKIPPED_OPTOUT)
       return None
-    if email.status != OutgoingEmail.QUEUED and now >= email.created_at + datetime.timedelta(seconds=settings.HELIOS_EMAIL_MAX_AGE):
+    if email.status != OutgoingEmail.QUEUED and now >= max_age_deadline(email, now):
       _finish(email, OutgoingEmail.FAILED, error_code=email.last_error_code or 'max_age',
               error_text='given up after %d attempts (too old): %s' % (email.attempts, email.last_error_text))
       return None
@@ -416,8 +458,10 @@ def _after_failure(email, error):
     else:
       steps = email.attempts - 1 + (CONFIG_EXTRA_STEPS if error.category == mail_errors.CONFIG else 0)
       next_attempt_at = now + datetime.timedelta(seconds=retry_delay(steps))
-      max_age = email.created_at + datetime.timedelta(seconds=settings.HELIOS_EMAIL_MAX_AGE)
-      if email.attempts >= settings.HELIOS_EMAIL_MAX_ATTEMPTS or next_attempt_at > max_age:
+      # the mail server is down or refuses us: the email waits for the pause, whose time
+      # does not count (checked when it is due), only its attempts do
+      too_old = (error.category == mail_errors.TEMPORARY and next_attempt_at > max_age_deadline(email, now))
+      if email.attempts >= settings.HELIOS_EMAIL_MAX_ATTEMPTS or too_old:
         logger.warning("email %s failed after %d attempts: %s", email.id, email.attempts, error.text)
         _finish(email, OutgoingEmail.FAILED,
                 error_text='given up after %d attempts: %s' % (email.attempts, error.text))

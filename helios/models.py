@@ -1493,12 +1493,31 @@ class EmailBatch(models.Model):
   language = models.CharField(max_length=16, blank=True, default='')
   triggered_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
   created_at = models.DateTimeField(auto_now_add=True)
+  # which voters the mailing is for, as filters on the election's voters
+  # ({'include': {'vote_hash': None}, 'exclude': None}: those who have not voted);
+  # checked again right before each email is sent. None: not recorded (a mailing
+  # to one voter, or one sent before this was recorded): not checked.
+  voter_constraints = models.JSONField(null=True, blank=True, default=None)
 
   class Meta:
     app_label = 'helios'
 
   def __str__(self):
     return 'EmailBatch %s (%s, %s)' % (self.id, self.election_id, self.body_template)
+
+  def selects(self, voter):
+    """True if VOTER is (still) among the voters the mailing is for"""
+    if self.voter_constraints is None:
+      return True
+    include, exclude = self.voter_constraints.get('include'), self.voter_constraints.get('exclude')
+    if not include and not exclude:
+      return True
+    voters = self.election.voter_set.filter(id=voter.id)
+    if include:
+      voters = voters.filter(**include)
+    if exclude:
+      voters = voters.exclude(**exclude)
+    return voters.exists()
 
 
 class OutgoingEmail(models.Model):
@@ -1626,6 +1645,22 @@ class EmailSendingPause(models.Model):
 
   def __str__(self):
     return 'EmailSendingPause until %s (%d failures)' % (self.paused_until, self.failures)
+
+
+class EmailPausePeriod(models.Model):
+  """
+  A time during which sending emails was paused (helios.mail): from the first
+  failure of the mail server until an email went out again (ENDED_AT None: still
+  going on). Does not count towards HELIOS_EMAIL_MAX_AGE of the emails waiting.
+  """
+  started_at = models.DateTimeField()
+  ended_at = models.DateTimeField(null=True, blank=True)
+
+  class Meta:
+    app_label = 'helios'
+
+  def __str__(self):
+    return 'EmailPausePeriod %s - %s' % (self.started_at, self.ended_at)
 
 
 class SiteAnnouncement(models.Model):

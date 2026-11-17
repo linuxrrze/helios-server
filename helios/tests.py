@@ -3517,6 +3517,9 @@ class VotersEmailOpenRegTests(WebTest):
         self.assertEqual(kwargs['election_id'], self.election.id)
         self.assertEqual(kwargs['voter_constraints_include'], {'vote_hash': None})
         self.assertIsNone(kwargs['voter_constraints_exclude'])
+        # kept with the mailing, checked again before each email is sent
+        batch = models.EmailBatch.objects.get(id=kwargs['batch_id'])
+        self.assertEqual(batch.voter_constraints, {'include': {'vote_hash': None}, 'exclude': None})
 
     def test_post_to_choice_without_recipients_is_rejected(self):
         self.register_voter()

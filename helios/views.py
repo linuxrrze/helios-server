@@ -2004,12 +2004,17 @@ def voters_email(request, election):
       # the mailing (helios.mail), with its emails added and sent in the background
       language = translation.get_language()
       with transaction.atomic():
-        batch = mail.create_batch(election, subject_template, body_template, extra_vars,
-                                  language=language, triggered_by=get_user(request))
         if voter:
+          batch = mail.create_batch(election, subject_template, body_template, extra_vars,
+                                    language=language, triggered_by=get_user(request))
           mail.queue(OutgoingEmail.KIND_BULK, voter=voter, batch=batch)
         else:
           voter_constraints_include, voter_constraints_exclude = VOTERS_EMAIL_CONSTRAINTS[email_form.cleaned_data['send_to']]
+          # the choice of voters is kept with the mailing and checked again before each email
+          # is sent: a reminder to those who have not voted skips those who have voted since
+          batch = mail.create_batch(election, subject_template, body_template, extra_vars,
+                                    language=language, triggered_by=get_user(request),
+                                    voter_constraints=(voter_constraints_include, voter_constraints_exclude))
           tasks.voters_email.enqueue(election_id = election.id, batch_id = batch.id, voter_constraints_include = voter_constraints_include, voter_constraints_exclude = voter_constraints_exclude, language = language)
 
       # this batch process is all async, so we can return a nice note

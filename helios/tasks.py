@@ -70,7 +70,8 @@ def voters_email(election_id, subject_template=None, body_template=None, extra_v
     """
     election = Election.objects.get(id=election_id)
     if batch_id is None:
-        batch = mail.create_batch(election, subject_template, body_template, extra_vars, language=language)
+        batch = mail.create_batch(election, subject_template, body_template, extra_vars, language=language,
+                                  voter_constraints=(voter_constraints_include, voter_constraints_exclude))
     else:
         batch = EmailBatch.objects.get(id=batch_id, election=election)
 

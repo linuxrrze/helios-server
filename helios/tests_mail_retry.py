@@ -24,7 +24,8 @@ from django_tasks_db.models import DBTaskResult
 from helios import mail as helios_mail
 from helios import mail_errors, tasks
 from helios.mail_errors import CONFIG, PERMANENT, SYSTEM, TEMPORARY
-from helios.models import CastVote, Election, EmailOptOut, EmailSendingPause, OutgoingEmail, Trustee, Voter
+from helios.models import (CastVote, Election, EmailOptOut, EmailPausePeriod, EmailSendingPause, OutgoingEmail,
+                           Trustee, Voter)
 from helios_auth.models import User
 
 SCRIPTED_BACKEND = 'helios.tests_mail_retry.ScriptedBackend'
@@ -253,6 +254,51 @@ class RetryTests(TestCase):
     self.assertIn('too old', other.last_error_text)
     self.assertEqual(ScriptedBackend.calls, 1)
 
+  @override_settings(HELIOS_EMAIL_MAX_AGE=3600)
+  def test_time_paused_does_not_count_towards_max_age(self):
+    now = timezone.now()
+    hours_ago = now - datetime.timedelta(hours=2)
+    waited = self.queue_bulk()
+    control = self.queue_bulk(voter=self.make_voter('voter1@example.net'))
+    OutgoingEmail.objects.filter(id__in=[waited.id, control.id]).update(
+      status=OutgoingEmail.DEFERRED, attempts=1, created_at=hours_ago, next_attempt_at=now - datetime.timedelta(minutes=1))
+    # an outage of 1h45 since: 15 minutes of its hour used up
+    EmailPausePeriod.objects.create(started_at=now - datetime.timedelta(minutes=110),
+                                    ended_at=now - datetime.timedelta(minutes=5))
+    self.assertAlmostEqual(helios_mail.paused_seconds(hours_ago, now), 105 * 60, delta=1)
+    # the control email is of another time: from before the outage only part counts
+    OutgoingEmail.objects.filter(id=control.id).update(created_at=now - datetime.timedelta(hours=5))
+    run_tasks()
+    self.assertEqual(self.reload(waited).status, OutgoingEmail.SENT)
+    self.assertEqual(self.reload(control).status, OutgoingEmail.FAILED)   # 5h - 1h45 > 1h
+
+  @override_settings(HELIOS_EMAIL_MAX_AGE=60)
+  def test_emails_outlast_an_outage(self):
+    ScriptedBackend.outcomes = [smtplib.SMTPServerDisconnected('gone'), smtplib.SMTPServerDisconnected('gone')]
+    with self.assertLogs('helios.mail', level='ERROR'):
+      email = self.queue_bulk()
+      other = self.queue_bulk(voter=self.make_voter('voter1@example.net'))
+      run_tasks()
+    # the mail server is down: no age limit for the next attempt, only the attempts count
+    self.assertEqual((self.reload(email).status, self.reload(other).status),
+                     (OutgoingEmail.DEFERRED, OutgoingEmail.DEFERRED))
+    self.assertEqual((email.attempts, other.attempts), (1, 0))
+    period = EmailPausePeriod.objects.get()
+    self.assertIsNone(period.ended_at)
+    # long after MAX_AGE, the outage is still going on
+    two_days_ago = timezone.now() - datetime.timedelta(days=2)
+    OutgoingEmail.objects.update(created_at=two_days_ago)
+    EmailPausePeriod.objects.update(started_at=two_days_ago)
+    time_passes()
+    run_tasks()
+    self.assertEqual((self.reload(email).status, email.attempts), (OutgoingEmail.DEFERRED, 2))
+    self.assertEqual(self.reload(other).status, OutgoingEmail.DEFERRED)
+    # the mail server is back: they go out, and the outage is over
+    time_passes()
+    run_tasks()
+    self.assertEqual((self.reload(email).status, self.reload(other).status), (OutgoingEmail.SENT, OutgoingEmail.SENT))
+    self.assertIsNotNone(EmailPausePeriod.objects.get().ended_at)
+
   def test_permanent_error_fails_at_once(self):
     ScriptedBackend.outcomes = [refused(550, b'5.1.1 <voter0@example.net>: Recipient address rejected')]
     email = self.queue_bulk()
@@ -417,6 +463,43 @@ class RetryTests(TestCase):
       tallying_finished_at=datetime.datetime.utcnow() - datetime.timedelta(weeks=4))
     run_tasks()
     self.assertEqual(self.reload(email).last_error_code, 'voter_email_cutoff')
+
+  def send_mailing(self, voter_constraints_include, voter_constraints_exclude):
+    """a mailing as the "email voters" page sends it, its emails added and queued (not sent yet)"""
+    batch = helios_mail.create_batch(self.election, 'email/vote_subject.txt', 'email/vote_body.txt',
+                                     {'custom_subject': 'Reminder', 'custom_message': 'Please vote.'}, language='en',
+                                     voter_constraints=(voter_constraints_include, voter_constraints_exclude))
+    tasks.voters_email.call(election_id=self.election.id, batch_id=batch.id, language='en',
+                            voter_constraints_include=voter_constraints_include,
+                            voter_constraints_exclude=voter_constraints_exclude)
+    return batch
+
+  def test_reminder_to_a_voter_who_has_voted_since(self):
+    other = self.make_voter('voter1@example.net')
+    batch = self.send_mailing({'vote_hash': None}, None)   # to those who have not voted
+    self.assertEqual(batch.voter_constraints, {'include': {'vote_hash': None}, 'exclude': None})
+    self.assertEqual(batch.emails.count(), 2)
+    # voter0 votes before the emails go out
+    Voter.objects.filter(id=self.voter.id).update(vote_hash='HASH')
+    run_tasks()
+    email = batch.emails.get(voter=self.voter)
+    self.assertEqual((email.status, email.last_error_code), (OutgoingEmail.SKIPPED_OBSOLETE, 'no_longer_selected'))
+    self.assertEqual(batch.emails.get(voter=other).status, OutgoingEmail.SENT)
+    self.assertEqual([m.to for m in mail.outbox], [['"Voter voter1@example.net" <voter1@example.net>']])
+
+  def test_mailing_to_all_or_without_recorded_choice(self):
+    voted = self.make_voter('voter1@example.net')
+    Voter.objects.filter(id=voted.id).update(vote_hash='HASH')
+    # to all voters: recorded, everyone stays chosen
+    batch = self.send_mailing(None, None)
+    self.assertEqual(batch.voter_constraints, {'include': None, 'exclude': None})
+    run_tasks()
+    self.assertEqual(batch.emails.filter(status=OutgoingEmail.SENT).count(), 2)
+    # a mailing from before the choice was recorded (or to one voter): not checked
+    old = self.queue_bulk('vote', voter=voted)
+    self.assertIsNone(old.batch.voter_constraints)
+    run_tasks()
+    self.assertEqual(self.reload(old).status, OutgoingEmail.SENT)
 
   def test_election_deleted_or_voter_removed(self):
     email = self.queue_bulk()
